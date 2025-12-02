@@ -1,0 +1,240 @@
+{
+  "eventId": "37c0dcc6-881b-483f-98f9-2d376b9a9eba",
+  "createdAt": "2025-12-02T18:01:37.808Z",
+  "data": {
+    "responseId": "dW4eDDD",
+    "submissionId": "dW4eDDD",
+    "respondentId": "re8jYl",
+    "formId": "nrPBW5",
+    "formName": "Inserimento Spese",
+    "createdAt": "2025-12-02T09:16:30.000Z",
+    "fields": [
+      {
+        "key": "question_XxpoaL",
+        "label": "Data",
+        "type": "INPUT_DATE",
+        "value": "2025-12-02"
+      },
+      {
+        "key": "question_KY9xjX",
+        "label": "Mese",
+        "type": "DROPDOWN",
+        "value": [
+          "3fba1491-eee9-40ad-aee8-25f3d3df866c"
+        ],
+        "options": [
+          {
+            "id": "4b50b321-dbd6-4932-96c8-f4b7d9c297fa",
+            "text": "Gennaio"
+          },
+          {
+            "id": "6859cf2d-fbab-4d68-af66-a8a4ef4106c9",
+            "text": "Febbraio"
+          },
+          {
+            "id": "06566ffd-ca08-4a37-8f6e-95227f63f408",
+            "text": "Marzo"
+          },
+          {
+            "id": "56d78844-afaf-45c2-8a2b-0765859a0ff1",
+            "text": "Aprile"
+          },
+          {
+            "id": "a6f67b4d-b167-4825-9004-8caa35110cd7",
+            "text": "Maggio"
+          },
+          {
+            "id": "ceee7082-0c78-49b8-b71b-7e795ffe2f1d",
+            "text": "Giugno"
+          },
+          {
+            "id": "2a8cb088-56cd-4d46-9611-ca6a3817c30a",
+            "text": "Luglio"
+          },
+          {
+            "id": "37270a88-af55-4d06-986a-5aeda6778c5a",
+            "text": "Agosto"
+          },
+          {
+            "id": "9e338487-59b0-476b-94a1-8e33ab78e177",
+            "text": "Settembre"
+          },
+          {
+            "id": "6a4fe72d-07df-4bcb-a71b-a0f2dcf759e0",
+            "text": "Ottobre"
+          },
+          {
+            "id": "047ef97e-fd15-4438-a8ef-0b95ca24163b",
+            "text": "Novembre"
+          },
+          {
+            "id": "3fba1491-eee9-40ad-aee8-25f3d3df866c",
+            "text": "Dicembre"
+          }
+        ]
+      },
+      {
+        "key": "question_LZeK2l",
+        "label": "Causale",
+        "type": "INPUT_TEXT",
+        "value": "ricarica satispay"
+      },
+      {
+        "key": "question_pbQo28",
+        "label": "Categoria",
+        "type": "DROPDOWN",
+        "value": [
+          "6e02c3ea-3113-4a70-a307-4e12f535703f"
+        ],
+        "options": [
+          {
+            "id": "7fd93a51-9850-4301-85ff-c433bbdf574d",
+            "text": "Altro"
+          },
+          {
+            "id": "36023881-292e-4f6d-bd5d-16ba4c89658a",
+            "text": "Altre Entrate"
+          },
+          {
+            "id": "005c416b-dcde-4268-9fcd-9116c10a1c0f",
+            "text": "Bar e Ristoranti"
+          },
+          {
+            "id": "29c55a49-f0ce-4eb3-9c22-b8dcef820a3e",
+            "text": "Casa e Utenze"
+          },
+          {
+            "id": "0530eb4d-dc10-4392-b591-b142eb272f6a",
+            "text": "Shopping"
+          },
+          {
+            "id": "fa38e45c-f301-4523-b505-be036fe51ed2",
+            "text": "Stipendio"
+          },
+          {
+            "id": "4d34c3f8-1e92-4414-882d-bbe0080d4fe0",
+            "text": "Tasse"
+          },
+          {
+            "id": "467de72a-b1db-4487-85bf-c39f86664f84",
+            "text": "Auto e Moto"
+          },
+          {
+            "id": "71218026-5e1f-400a-a965-dc5b41b91656",
+            "text": "Salute"
+          },
+          {
+            "id": "28230bde-ad54-4a3d-82bd-a5d6bc45e242",
+            "text": "Soldi da genitori"
+          },
+          {
+            "id": "ac0d483b-2e87-4f02-8e6d-423656a93ddf",
+            "text": "Viaggi e Trasporti"
+          },
+          {
+            "id": "f78b050d-fbc0-41e2-8605-ac98709c4faf",
+            "text": "Spesa"
+          },
+          {
+            "id": "1fa5dc01-3679-4d9a-8d6e-2fb5d2d4cb16",
+            "text": "Svago e Intrattenimento"
+          },
+          {
+            "id": "6e02c3ea-3113-4a70-a307-4e12f535703f",
+            "text": "Trasferimenti"
+          }
+        ]
+      },
+      {
+        "key": "question_1AL4a1",
+        "label": "Conto",
+        "type": "DROPDOWN",
+        "value": [
+          "9a9fa562-32f0-451d-a6c4-ef2f419b097e"
+        ],
+        "options": [
+          {
+            "id": "5393cc54-1e73-48fb-b5e1-87f7732c8c3e",
+            "text": "Allianz"
+          },
+          {
+            "id": "930eddbd-ac31-417a-8d94-ad1b8f6bc7c7",
+            "text": "N26"
+          },
+          {
+            "id": "85f29494-d722-4c7e-81ec-a71a04f874e1",
+            "text": "Revolut"
+          },
+          {
+            "id": "f5507891-b891-428a-9175-d502b2a93b01",
+            "text": "Buddybank"
+          },
+          {
+            "id": "9a9fa562-32f0-451d-a6c4-ef2f419b097e",
+            "text": "Satispay"
+          },
+          {
+            "id": "b9126019-f446-4cb2-a364-627e5f0334d9",
+            "text": "Paypal"
+          },
+          {
+            "id": "0f66b4ba-b027-42b0-a586-a013f5f80ee9",
+            "text": "Cash"
+          },
+          {
+            "id": "8d70bb70-9075-436e-ba4f-399bc79953f8",
+            "text": "Investimenti"
+          },
+          {
+            "id": "a1e66a84-b36a-4295-9121-1587390e50b1",
+            "text": "Buoni Pasto"
+          },
+          {
+            "id": "ee468809-d553-48af-9b9c-5b994c3af53d",
+            "text": "ING - CC"
+          },
+          {
+            "id": "54c214fc-f5ba-44b1-ab9a-f9256373073d",
+            "text": "ING - CD"
+          }
+        ]
+      },
+      {
+        "key": "question_MeWaxk",
+        "label": "Direzione",
+        "type": "DROPDOWN",
+        "value": [
+          "6b6fea61-d989-4140-b153-9d19cfc8f600"
+        ],
+        "options": [
+          {
+            "id": "6b6fea61-d989-4140-b153-9d19cfc8f600",
+            "text": "Entrata"
+          },
+          {
+            "id": "aa2de7f2-b8f2-403c-af0d-811a472f9db6",
+            "text": "Uscita"
+          }
+        ]
+      },
+      {
+        "key": "question_J9QlPK",
+        "label": "Importo Entrata",
+        "type": "INPUT_NUMBER",
+        "value": 49.51
+      },
+      {
+        "key": "question_gDEqlD",
+        "label": "Importo Uscita",
+        "type": "INPUT_NUMBER",
+        "value": null
+      },
+      {
+        "key": "question_yPB4QX",
+        "label": "Inserisci la ricevuta",
+        "type": "FILE_UPLOAD",
+        "value": null
+      }
+    ]
+  }
+}

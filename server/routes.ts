@@ -298,61 +298,78 @@ export async function registerRoutes(
       
       const payload = req.body;
       
-      // Tally sends: { eventType: "FORM_RESPONSE", data: { fields: [...], submissionId: ... } }
-      if (payload.eventType !== "FORM_RESPONSE") {
-        return res.status(200).json({ status: "ignored", reason: "Not a form response" });
-      }
-
+      // Tally sends data directly or wrapped in eventType for webhooks
       const fields = payload.data?.fields || [];
       
-      // Extract field values by label (case-insensitive)
-      const getFieldValue = (labelPattern: RegExp): string => {
-        const field = fields.find((f: any) => labelPattern.test(f.label?.toLowerCase() || ''));
-        if (!field) return '';
-        
-        // Handle different field types
-        if (field.value) {
-          if (typeof field.value === 'string') return field.value;
-          if (Array.isArray(field.value)) return field.value[0] || '';
-          if (typeof field.value === 'object' && field.value.raw) return field.value.raw;
+      if (fields.length === 0) {
+        return res.status(400).json({ error: "No fields found in payload" });
+      }
+
+      // Helper to get field by label pattern
+      const getField = (labelPattern: RegExp): any => {
+        return fields.find((f: any) => labelPattern.test(f.label?.toLowerCase() || ''));
+      };
+
+      // Helper to get text value from a dropdown field (value is array of IDs)
+      const getDropdownText = (field: any): string => {
+        if (!field || !field.value || !Array.isArray(field.value) || field.value.length === 0) {
+          return '';
         }
+        const selectedId = field.value[0];
+        const option = field.options?.find((o: any) => o.id === selectedId);
+        return option?.text || '';
+      };
+
+      // Helper to get simple value (string, number, or first array element)
+      const getSimpleValue = (field: any): string => {
+        if (!field) return '';
+        const val = field.value;
+        if (val === null || val === undefined) return '';
+        if (typeof val === 'string') return val;
+        if (typeof val === 'number') return val.toString();
+        if (Array.isArray(val)) return val[0]?.toString() || '';
         return '';
       };
 
-      // Extract transaction data from Tally fields
-      // Expected field labels: Data/Date, Descrizione/Description, Importo/Amount, 
-      // Entrata/Income, Uscita/Expense, Conto/Account, Categoria/Category
-      const dateValue = getFieldValue(/^(data|date)$/i);
-      const description = getFieldValue(/^(descrizione|description|desc)$/i);
-      const amountValue = getFieldValue(/^(importo|amount|ammontare)$/i);
-      const incomeValue = getFieldValue(/^(entrata|income|entrate)$/i);
-      const expenseValue = getFieldValue(/^(uscita|expense|uscite|spesa)$/i);
-      const accountName = getFieldValue(/^(conto|account)$/i);
-      const categoryName = getFieldValue(/^(categoria|category)$/i);
+      // Extract fields
+      const dateField = getField(/^data$/i);
+      const descriptionField = getField(/^(causale|descrizione|description)$/i);
+      const categoryField = getField(/^categoria$/i);
+      const accountField = getField(/^conto$/i);
+      const directionField = getField(/^direzione$/i);
+      const incomeAmountField = getField(/^importo\s*entrata$/i);
+      const expenseAmountField = getField(/^importo\s*uscita$/i);
 
-      // Determine amount and type
+      // Get values
+      const dateValue = getSimpleValue(dateField);
+      const description = getSimpleValue(descriptionField);
+      const categoryName = getDropdownText(categoryField);
+      const accountName = getDropdownText(accountField);
+      const direction = getDropdownText(directionField);
+      
+      // Get amounts (Tally sends numbers directly for INPUT_NUMBER)
+      const incomeAmount = incomeAmountField?.value ? parseFloat(incomeAmountField.value) || 0 : 0;
+      const expenseAmount = expenseAmountField?.value ? parseFloat(expenseAmountField.value) || 0 : 0;
+
+      // Determine amount and type based on direction or which amount field is filled
       let amount = 0;
       let type: 'income' | 'expense' = 'expense';
       
-      if (incomeValue && parseEuropeanNumber(incomeValue) > 0) {
-        amount = parseEuropeanNumber(incomeValue);
+      if (direction.toLowerCase() === 'entrata' || incomeAmount > 0) {
+        amount = incomeAmount > 0 ? incomeAmount : expenseAmount;
         type = 'income';
-      } else if (expenseValue && parseEuropeanNumber(expenseValue) > 0) {
-        amount = parseEuropeanNumber(expenseValue);
+      } else {
+        amount = expenseAmount > 0 ? expenseAmount : incomeAmount;
         type = 'expense';
-      } else if (amountValue) {
-        amount = parseEuropeanNumber(amountValue);
-        // If single amount field, check for a type field
-        const typeValue = getFieldValue(/^(tipo|type)$/i);
-        if (typeValue && /^(entrata|income)$/i.test(typeValue)) {
-          type = 'income';
-        }
       }
+
+      console.log("Parsed Tally data:", { dateValue, description, categoryName, accountName, direction, amount, type });
 
       if (!description || amount <= 0) {
         return res.status(400).json({ 
           error: "Invalid transaction data", 
-          details: { description, amount, fields: fields.map((f: any) => f.label) }
+          details: { description, amount, direction, incomeAmount, expenseAmount },
+          fields: fields.map((f: any) => ({ label: f.label, value: f.value }))
         });
       }
 
