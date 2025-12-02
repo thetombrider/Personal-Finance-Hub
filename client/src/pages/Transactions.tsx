@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, Edit2, Calendar as CalendarIcon } from "lucide-react";
-import { useState } from "react";
+import { Plus, Trash2, Edit2, Calendar as CalendarIcon, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -29,11 +29,19 @@ const transactionSchema = z.object({
 
 type TransactionFormValues = z.infer<typeof transactionSchema>;
 
+type SortField = 'date' | 'description' | 'category' | 'account' | 'amount';
+type SortDirection = 'asc' | 'desc';
+
+const ITEMS_PER_PAGE = 50;
+
 export default function Transactions() {
   const { transactions, accounts, categories, addTransaction, updateTransaction, deleteTransaction, deleteTransactions, formatCurrency, isLoading } = useFinance();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [sortField, setSortField] = useState<SortField>('date');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
@@ -46,6 +54,66 @@ export default function Transactions() {
       type: "expense",
     },
   });
+
+  const getAccountName = (id: number) => accounts.find(a => a.id === id)?.name || "Unknown";
+  const getCategory = (id: number) => categories.find(c => c.id === id);
+  const getCategoryName = (id: number) => getCategory(id)?.name || "Unknown";
+
+  const sortedTransactions = useMemo(() => {
+    const sorted = [...transactions].sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortField) {
+        case 'date':
+          comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
+          break;
+        case 'description':
+          comparison = a.description.localeCompare(b.description);
+          break;
+        case 'category':
+          comparison = getCategoryName(a.categoryId).localeCompare(getCategoryName(b.categoryId));
+          break;
+        case 'account':
+          comparison = getAccountName(a.accountId).localeCompare(getAccountName(b.accountId));
+          break;
+        case 'amount':
+          const amountA = a.type === 'income' ? parseFloat(a.amount) : -parseFloat(a.amount);
+          const amountB = b.type === 'income' ? parseFloat(b.amount) : -parseFloat(b.amount);
+          comparison = amountA - amountB;
+          break;
+      }
+      
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+    
+    return sorted;
+  }, [transactions, sortField, sortDirection, accounts, categories]);
+
+  const totalPages = Math.ceil(sortedTransactions.length / ITEMS_PER_PAGE);
+  
+  const paginatedTransactions = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return sortedTransactions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [sortedTransactions, currentPage]);
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+    setCurrentPage(1);
+  };
+
+  const SortIcon = ({ field }: { field: SortField }) => {
+    if (sortField !== field) {
+      return <ArrowUpDown size={14} className="ml-1 text-muted-foreground" />;
+    }
+    return sortDirection === 'asc' 
+      ? <ArrowUp size={14} className="ml-1" />
+      : <ArrowDown size={14} className="ml-1" />;
+  };
 
   const onSubmit = async (data: TransactionFormValues) => {
     const formattedData = {
@@ -94,10 +162,10 @@ export default function Transactions() {
   };
 
   const toggleAll = () => {
-    if (selectedIds.size === transactions.length) {
+    if (selectedIds.size === paginatedTransactions.length) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(transactions.map(t => t.id)));
+      setSelectedIds(new Set(paginatedTransactions.map(t => t.id)));
     }
   };
 
@@ -107,9 +175,6 @@ export default function Transactions() {
       setSelectedIds(new Set());
     }
   };
-
-  const getAccountName = (id: number) => accounts.find(a => a.id === id)?.name || "Unknown";
-  const getCategory = (id: number) => categories.find(c => c.id === id);
 
   if (isLoading) {
     return (
@@ -127,7 +192,7 @@ export default function Transactions() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-heading font-bold text-foreground">Transactions</h1>
-            <p className="text-muted-foreground">Track every penny</p>
+            <p className="text-muted-foreground">Track every penny ({transactions.length} total)</p>
           </div>
 
           <div className="flex items-center gap-2">
@@ -319,29 +384,74 @@ export default function Transactions() {
               <TableRow>
                 <TableHead className="w-[50px]">
                   <Checkbox 
-                    checked={transactions.length > 0 && selectedIds.size === transactions.length}
+                    checked={paginatedTransactions.length > 0 && selectedIds.size === paginatedTransactions.length}
                     onCheckedChange={toggleAll}
                     aria-label="Select all"
                     data-testid="checkbox-select-all"
                   />
                 </TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Account</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50 transition-colors select-none"
+                  onClick={() => handleSort('date')}
+                  data-testid="header-date"
+                >
+                  <div className="flex items-center">
+                    Date
+                    <SortIcon field="date" />
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50 transition-colors select-none"
+                  onClick={() => handleSort('description')}
+                  data-testid="header-description"
+                >
+                  <div className="flex items-center">
+                    Description
+                    <SortIcon field="description" />
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50 transition-colors select-none"
+                  onClick={() => handleSort('category')}
+                  data-testid="header-category"
+                >
+                  <div className="flex items-center">
+                    Category
+                    <SortIcon field="category" />
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50 transition-colors select-none"
+                  onClick={() => handleSort('account')}
+                  data-testid="header-account"
+                >
+                  <div className="flex items-center">
+                    Account
+                    <SortIcon field="account" />
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="text-right cursor-pointer hover:bg-muted/50 transition-colors select-none"
+                  onClick={() => handleSort('amount')}
+                  data-testid="header-amount"
+                >
+                  <div className="flex items-center justify-end">
+                    Amount
+                    <SortIcon field="amount" />
+                  </div>
+                </TableHead>
                 <TableHead className="w-[100px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {transactions.length === 0 ? (
+              {paginatedTransactions.length === 0 ? (
                  <TableRow>
                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                      No transactions yet. Add one to get started.
                    </TableCell>
                  </TableRow>
               ) : (
-                transactions.map((transaction) => {
+                paginatedTransactions.map((transaction) => {
                   const category = getCategory(transaction.categoryId);
                   const isSelected = selectedIds.has(transaction.id);
                   return (
@@ -382,6 +492,62 @@ export default function Transactions() {
               )}
             </TableBody>
           </Table>
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t">
+              <div className="text-sm text-muted-foreground">
+                Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, sortedTransactions.length)} of {sortedTransactions.length} transactions
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  data-testid="button-prev-page"
+                >
+                  <ChevronLeft size={16} />
+                  Previous
+                </Button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum: number;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={currentPage === pageNum ? "default" : "outline"}
+                        size="sm"
+                        className="w-8 h-8 p-0"
+                        onClick={() => setCurrentPage(pageNum)}
+                        data-testid={`button-page-${pageNum}`}
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  data-testid="button-next-page"
+                >
+                  Next
+                  <ChevronRight size={16} />
+                </Button>
+              </div>
+            </div>
+          )}
         </Card>
       </div>
     </Layout>
