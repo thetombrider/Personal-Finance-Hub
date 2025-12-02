@@ -1,0 +1,3231 @@
+Data;Mese;Descrizione;Importo Entrata;Importo Uscita;Categoria;Conto
+01/01/2025;Gennaio;mc;;15,35 €;Bar e Ristoranti;Buddybank
+01/01/2025;Gennaio;bar;;2,40 €;Bar e Ristoranti;Satispay
+01/01/2025;Gennaio;ricarica buoni pasto;168,00 €;;Altre Entrate;Buoni Pasto
+02/01/2025;Gennaio;spesa;;23,28 €;Spesa;Buddybank
+02/01/2025;Gennaio;spesa;;24,00 €;Spesa;Buoni Pasto
+03/01/2025;Gennaio;skipass;;55,00 €;Svago e Intrattenimento;Buddybank
+03/01/2025;Gennaio;cinema;;42,50 €;Svago e Intrattenimento;Buddybank
+03/01/2025;Gennaio;cinema;20,00 €;;Svago e Intrattenimento;Cash
+06/01/2025;Gennaio;aws;;4,16 €;Casa e Utenze;Buddybank
+06/01/2025;Gennaio;ricarica satispay;;42,28 €;Trasferimenti;Buddybank
+06/01/2025;Gennaio;ape;;5,00 €;Bar e Ristoranti;Cash
+06/01/2025;Gennaio;ricarica satispay;42,28 €;;Trasferimenti;Satispay
+07/01/2025;Gennaio;bar;;2,20 €;Bar e Ristoranti;Cash
+07/01/2025;Gennaio;spesa;;1,80 €;Spesa;Cash
+07/01/2025;Gennaio;erogazione liberale savona startup;;1,00 €;Altro;Satispay
+07/01/2025;Gennaio;spesa;;8,00 €;Spesa;Buoni Pasto
+08/01/2025;Gennaio;chiusura n26;;746,07 €;Trasferimenti;N26
+09/01/2025;Gennaio;macellaio;;5,50 €;Spesa;Cash
+09/01/2025;Gennaio;focaccia;;2,00 €;Spesa;Cash
+09/01/2025;Gennaio;lettiera gatto;;3,99 €;Spesa;Buddybank
+09/01/2025;Gennaio;avvio cc arancio;;1,00 €;Trasferimenti;Buddybank
+09/01/2025;Gennaio;chiusura n26;746,07 €;;Trasferimenti;Revolut
+09/01/2025;Gennaio;caffè;;1,20 €;Bar e Ristoranti;Satispay
+09/01/2025;Gennaio;imposta di bollo CD;;9,50 €;Altro;ING - CD
+09/01/2025;Gennaio;avvio cc arancio;1,00 €;;Trasferimenti;ING - CC
+10/01/2025;Gennaio;trasferimento;;50,00 €;Trasferimenti;Buddybank
+10/01/2025;Gennaio;trasferimento;1,00 €;;Trasferimenti;Buddybank
+10/01/2025;Gennaio;benzina;;29,34 €;Viaggi e Trasporti;Buddybank
+10/01/2025;Gennaio;pranzo;;5,50 €;Bar e Ristoranti;Buddybank
+10/01/2025;Gennaio;trasferimento;50,00 €;;Trasferimenti;ING - CC
+10/01/2025;Gennaio;trasferimento;;1,00 €;Trasferimenti;ING - CC
+10/01/2025;Gennaio;pranzo;;8,00 €;Bar e Ristoranti;Buoni Pasto
+11/01/2025;Gennaio;brunch;;50,00 €;Bar e Ristoranti;Buddybank
+11/01/2025;Gennaio;backblaze;;1,90 €;Casa e Utenze;Buddybank
+11/01/2025;Gennaio;bar ikea;;5,20 €;Bar e Ristoranti;Buddybank
+11/01/2025;Gennaio;borsone patagonia;;24,98 €;Shopping;Buddybank
+11/01/2025;Gennaio;cinema;;23,00 €;Svago e Intrattenimento;Buddybank
+11/01/2025;Gennaio;acqua;;2,60 €;Bar e Ristoranti;Cash
+12/01/2025;Gennaio;iliad;;9,99 €;Casa e Utenze;Buddybank
+12/01/2025;Gennaio;birre;;12,00 €;Bar e Ristoranti;Buddybank
+12/01/2025;Gennaio;trasferimento;;45,70 €;Trasferimenti;ING - CD
+12/01/2025;Gennaio;trasferimento;45,70 €;;Trasferimenti;ING - CC
+13/01/2025;Gennaio;quota associativa savona startup 2025;;10,00 €;Altro;Buddybank
+13/01/2025;Gennaio;bla bla car;24,00 €;;Viaggi e Trasporti;Buddybank
+13/01/2025;Gennaio;pranzo;;6,40 €;Bar e Ristoranti;Buddybank
+13/01/2025;Gennaio;benza vespa;;11,10 €;Viaggi e Trasporti;Buddybank
+13/01/2025;Gennaio;bla bla car;10,00 €;;Viaggi e Trasporti;Paypal
+13/01/2025;Gennaio;pranzo;;8,00 €;Bar e Ristoranti;Buoni Pasto
+14/01/2025;Gennaio;organizer cavi;;21,99 €;Shopping;Buddybank
+14/01/2025;Gennaio;comp;0,15 €;;Altro;Cash
+14/01/2025;Gennaio;gastronomia;;32,00 €;Spesa;Buoni Pasto
+15/01/2025;Gennaio;caffè focaccia;;3,70 €;Bar e Ristoranti;Buddybank
+15/01/2025;Gennaio;bla bla car;12,00 €;;Viaggi e Trasporti;Buddybank
+15/01/2025;Gennaio;trasferimento;;40,01 €;Trasferimenti;Revolut
+15/01/2025;Gennaio;bar;;3,70 €;Bar e Ristoranti;Satispay
+15/01/2025;Gennaio;trasferimento;40,01 €;;Trasferimenti;ING - CC
+16/01/2025;Gennaio;mc;;10,15 €;Bar e Ristoranti;Buddybank
+16/01/2025;Gennaio;unipolmove;;102,20 €;Viaggi e Trasporti;ING - CC
+18/01/2025;Gennaio;pizza;;12,08 €;Bar e Ristoranti;Buddybank
+18/01/2025;Gennaio;colazione bar;;6,20 €;Bar e Ristoranti;Satispay
+18/01/2025;Gennaio;natta;;8,00 €;Spesa;Buoni Pasto
+19/01/2025;Gennaio;packing cubes;;34,99 €;Shopping;Buddybank
+19/01/2025;Gennaio;natta;;16,00 €;Spesa;Buoni Pasto
+20/01/2025;Gennaio;trasferimento;;300,00 €;Trasferimenti;Buddybank
+20/01/2025;Gennaio;trasferimento;300,00 €;;Trasferimenti;ING - CC
+20/01/2025;Gennaio;casa del formaggio;;16,00 €;Spesa;Buoni Pasto
+21/01/2025;Gennaio;benzina;;50,27 €;Viaggi e Trasporti;Buddybank
+21/01/2025;Gennaio;pranzo;;5,00 €;Bar e Ristoranti;ING - CC
+21/01/2025;Gennaio;parcheggio;;2,00 €;Viaggi e Trasporti;ING - CC
+21/01/2025;Gennaio;pranzo;;8,00 €;Bar e Ristoranti;Buoni Pasto
+22/01/2025;Gennaio;pranzo;;3,30 €;Bar e Ristoranti;Buddybank
+22/01/2025;Gennaio;ape;;14,50 €;Bar e Ristoranti;ING - CC
+22/01/2025;Gennaio;pranzo;;8,00 €;Bar e Ristoranti;Buoni Pasto
+23/01/2025;Gennaio;kfc;;1,50 €;Bar e Ristoranti;Satispay
+24/01/2025;Gennaio;bar;;4,90 €;Bar e Ristoranti;Satispay
+24/01/2025;Gennaio;benzina;;47,70 €;Viaggi e Trasporti;ING - CC
+24/01/2025;Gennaio;hamericas;;20,83 €;Bar e Ristoranti;ING - CC
+25/01/2025;Gennaio;birra;;5,00 €;Bar e Ristoranti;Buddybank
+25/01/2025;Gennaio;pizza;;30,00 €;Bar e Ristoranti;Buddybank
+26/01/2025;Gennaio;felpa;;39,95 €;Shopping;Buddybank
+26/01/2025;Gennaio;bollino residenti;;6,00 €;Auto e Moto;Satispay
+26/01/2025;Gennaio;pranzo alassio;;42,00 €;Bar e Ristoranti;ING - CC
+27/01/2025;Gennaio;anthropic;;5,86 €;Casa e Utenze;ING - CC
+27/01/2025;Gennaio;google one;;2,99 €;Casa e Utenze;Paypal
+27/01/2025;Gennaio;spesa;;24,00 €;Spesa;Buoni Pasto
+28/01/2025;Gennaio;bla bla car;12,00 €;;Viaggi e Trasporti;Buddybank
+28/01/2025;Gennaio;cursor;;19,26 €;Casa e Utenze;Revolut
+28/01/2025;Gennaio;burger;;2,80 €;Bar e Ristoranti;Satispay
+28/01/2025;Gennaio;palestra;;79,60 €;Svago e Intrattenimento;ING - CC
+29/01/2025;Gennaio;pranzo;;11,00 €;Bar e Ristoranti;Buddybank
+29/01/2025;Gennaio;bar colaz;;2,40 €;Bar e Ristoranti;Satispay
+29/01/2025;Gennaio;benzina;;28,20 €;Viaggi e Trasporti;ING - CC
+30/01/2025;Gennaio;pranzo;;20,18 €;Bar e Ristoranti;ING - CC
+31/01/2025;Gennaio;trasferimento;150,00 €;;Trasferimenti;Revolut
+31/01/2025;Gennaio;pranzo;;2,00 €;Bar e Ristoranti;Buddybank
+31/01/2025;Gennaio;stipendio;1.799,00 €;;Stipendio;ING - CC
+31/01/2025;Gennaio;commissione tasso di cambio;;0,12 €;Altro;ING - CC
+31/01/2025;Gennaio;trasferimento;;150,00 €;Trasferimenti;ING - CC
+31/01/2025;Gennaio;mc;;9,55 €;Bar e Ristoranti;ING - CC
+31/01/2025;Gennaio;bla bla car;24,00 €;;Viaggi e Trasporti;Paypal
+31/01/2025;Gennaio;pranzo;;8,00 €;Bar e Ristoranti;Buoni Pasto
+01/02/2025;Febbraio;colazione bar;;10,40 €;Bar e Ristoranti;Satispay
+01/02/2025;Febbraio;pastificio savona;;3,00 €;Spesa;Satispay
+01/02/2025;Febbraio;birre;;12,00 €;Bar e Ristoranti;ING - CC
+01/02/2025;Febbraio;cena fronte del porto;;11,50 €;Bar e Ristoranti;ING - CC
+01/02/2025;Febbraio;ricarica buoni pasto;112,00 €;;Altre Entrate;Buoni Pasto
+02/02/2025;Febbraio;aws;;4,04 €;Casa e Utenze;Buddybank
+02/02/2025;Febbraio;rata airpods 4;;36,00 €;Shopping;Buddybank
+02/02/2025;Febbraio;metro milano;;4,40 €;Viaggi e Trasporti;ING - CC
+02/02/2025;Febbraio;pranzo vaze;;10,00 €;Bar e Ristoranti;Paypal
+03/02/2025;Febbraio;pac;370,00 €;;Trasferimenti;Investimenti
+03/02/2025;Febbraio;trasferimento;52,39 €;;Trasferimenti;Buddybank
+03/02/2025;Febbraio;spesa;2,00 €;;Spesa;Cash
+03/02/2025;Febbraio;commissioni;;0,07 €;Altro;Buddybank
+03/02/2025;Febbraio;ricarica satispay;43,10 €;;Trasferimenti;Satispay
+03/02/2025;Febbraio;caffè;;2,40 €;Bar e Ristoranti;Satispay
+03/02/2025;Febbraio;pac;;170,00 €;Trasferimenti;ING - CC
+03/02/2025;Febbraio;pac;;200,00 €;Trasferimenti;ING - CC
+03/02/2025;Febbraio;bla bla car;24,00 €;;Viaggi e Trasporti;Paypal
+03/02/2025;Febbraio;trasferimento;;52,39 €;Trasferimenti;Paypal
+03/02/2025;Febbraio;spesa;;32,00 €;Spesa;Buoni Pasto
+04/02/2025;Febbraio;custodia airpods;;15,99 €;Shopping;Revolut
+04/02/2025;Febbraio;trasferimento pt;300,00 €;;Trasferimenti;Revolut
+04/02/2025;Febbraio;trasferimento pt;;300,00 €;Trasferimenti;ING - CC
+05/02/2025;Febbraio;caffè bar;;3,70 €;Bar e Ristoranti;Satispay
+05/02/2025;Febbraio;ricarica satispay;;43,10 €;Trasferimenti;ING - CC
+05/02/2025;Febbraio;pranzo porto;;19,30 €;Bar e Ristoranti;ING - CC
+06/02/2025;Febbraio;bar;;2,40 €;Bar e Ristoranti;Satispay
+06/02/2025;Febbraio;macellaio;;15,40 €;Spesa;Satispay
+06/02/2025;Febbraio;spesa;;10,19 €;Spesa;ING - CC
+06/02/2025;Febbraio;spesa;;2,80 €;Spesa;ING - CC
+07/02/2025;Febbraio;caffè;;1,20 €;Bar e Ristoranti;Satispay
+07/02/2025;Febbraio;benzina;;50,61 €;Viaggi e Trasporti;ING - CC
+07/02/2025;Febbraio;pranzo;;2,00 €;Bar e Ristoranti;ING - CC
+07/02/2025;Febbraio;pranzo;;8,00 €;Bar e Ristoranti;Buoni Pasto
+08/02/2025;Febbraio;benzina;;53,01 €;Viaggi e Trasporti;ING - CC
+09/02/2025;Febbraio;caffè;;6,10 €;Bar e Ristoranti;Satispay
+10/02/2025;Febbraio;amazon prime;;4,99 €;Casa e Utenze;Revolut
+10/02/2025;Febbraio;bla bla car;10,00 €;;Viaggi e Trasporti;Paypal
+11/02/2025;Febbraio;backblaze;;1,98 €;Casa e Utenze;Buddybank
+11/02/2025;Febbraio;prelievo;20,00 €;;Trasferimenti;Cash
+11/02/2025;Febbraio;parcheggio;;4,00 €;Viaggi e Trasporti;Cash
+11/02/2025;Febbraio;benzina;;15,00 €;Viaggi e Trasporti;Cash
+11/02/2025;Febbraio;prelievo;;20,00 €;Trasferimenti;ING - CC
+11/02/2025;Febbraio;pranzo;;16,00 €;Bar e Ristoranti;Buoni Pasto
+12/02/2025;Febbraio;iliad;;9,99 €;Casa e Utenze;Buddybank
+12/02/2025;Febbraio;cursor;;19,82 €;Casa e Utenze;Revolut
+12/02/2025;Febbraio;commissioni;;0,03 €;Altro;Buddybank
+12/02/2025;Febbraio;bla bla car;12,00 €;;Viaggi e Trasporti;Paypal
+13/02/2025;Febbraio;bar;;3,70 €;Bar e Ristoranti;Satispay
+13/02/2025;Febbraio;pescheria;;11,69 €;Spesa;ING - CC
+13/02/2025;Febbraio;macellaio;;18,90 €;Spesa;ING - CC
+13/02/2025;Febbraio;birra;;7,00 €;Bar e Ristoranti;ING - CC
+15/02/2025;Febbraio;cinema;;20,00 €;Svago e Intrattenimento;Buddybank
+15/02/2025;Febbraio;acqua;;1,20 €;Bar e Ristoranti;Cash
+15/02/2025;Febbraio;esselunga;;5,72 €;Spesa;Buddybank
+15/02/2025;Febbraio;cena club nautico;;74,00 €;Bar e Ristoranti;ING - CC
+15/02/2025;Febbraio;libro;;14,70 €;Shopping;ING - CC
+15/02/2025;Febbraio;spesa;;16,00 €;Spesa;Buoni Pasto
+16/02/2025;Febbraio;pizze;;26,79 €;Bar e Ristoranti;Buddybank
+16/02/2025;Febbraio;cursor;;19,33 €;Casa e Utenze;Revolut
+16/02/2025;Febbraio;github copilot;;8,55 €;Casa e Utenze;Buddybank
+17/02/2025;Febbraio;referral fee revolut;30,00 €;;Altre Entrate;Revolut
+17/02/2025;Febbraio;cacciaviti di precisione x pc;;11,99 €;Shopping;Revolut
+18/02/2025;Febbraio;rimborso airpods;199,00 €;;Shopping;Buddybank
+18/02/2025;Febbraio;bar;;3,70 €;Bar e Ristoranti;Satispay
+18/02/2025;Febbraio;icloud+;;0,99 €;Casa e Utenze;Paypal
+20/02/2025;Febbraio;caffè;;2,40 €;Bar e Ristoranti;Satispay
+20/02/2025;Febbraio;panetteria;;6,50 €;Spesa;ING - CC
+20/02/2025;Febbraio;birra;;6,00 €;Bar e Ristoranti;ING - CC
+21/02/2025;Febbraio;caffè;;1,20 €;Bar e Ristoranti;Satispay
+21/02/2025;Febbraio;benzina;;40,41 €;Viaggi e Trasporti;ING - CC
+21/02/2025;Febbraio;pranzo;;5,90 €;Bar e Ristoranti;ING - CC
+21/02/2025;Febbraio;cena bardo;;60,00 €;Bar e Ristoranti;ING - CC
+21/02/2025;Febbraio;pranzo;;8,00 €;Bar e Ristoranti;Buoni Pasto
+22/02/2025;Febbraio;benzina;;51,65 €;Viaggi e Trasporti;ING - CC
+22/02/2025;Febbraio;sati;0,29 €;;Altre Entrate;ING - CC
+22/02/2025;Febbraio;sati;0,14 €;;Altre Entrate;ING - CC
+23/02/2025;Febbraio;pranzo piste;;25,00 €;Bar e Ristoranti;ING - CC
+23/02/2025;Febbraio;pizze;;15,00 €;Bar e Ristoranti;ING - CC
+23/02/2025;Febbraio;bla bla car;10,00 €;;Viaggi e Trasporti;Paypal
+24/02/2025;Febbraio;ricarica satispay;44,60 €;;Trasferimenti;Satispay
+24/02/2025;Febbraio;rata airpods;;36,00 €;Shopping;ING - CC
+24/02/2025;Febbraio;ricarica satispay;;44,60 €;Trasferimenti;ING - CC
+25/02/2025;Febbraio;bla bla car;;14,89 €;Viaggi e Trasporti;Buddybank
+25/02/2025;Febbraio;bla bla car;;2,68 €;Viaggi e Trasporti;Buddybank
+25/02/2025;Febbraio;mc;;3,10 €;Bar e Ristoranti;ING - CC
+25/02/2025;Febbraio;treno sv mi;;18,80 €;Viaggi e Trasporti;Paypal
+26/02/2025;Febbraio;caffè;;1,20 €;Bar e Ristoranti;Satispay
+26/02/2025;Febbraio;benzina;;31,07 €;Viaggi e Trasporti;ING - CC
+26/02/2025;Febbraio;esselunga;;3,86 €;Spesa;ING - CC
+27/02/2025;Febbraio;bla bla car;24,00 €;;Viaggi e Trasporti;Paypal
+28/02/2025;Febbraio;trasferimento;500,00 €;;Trasferimenti;Revolut
+28/02/2025;Febbraio;panettiere;;2,85 €;Spesa;Satispay
+28/02/2025;Febbraio;stipendio;1.814,00 €;;Stipendio;ING - CC
+28/02/2025;Febbraio;pranzo;;4,00 €;Bar e Ristoranti;ING - CC
+28/02/2025;Febbraio;pizza;;15,00 €;Bar e Ristoranti;ING - CC
+28/02/2025;Febbraio;trasferimento;;500,00 €;Trasferimenti;ING - CC
+28/02/2025;Febbraio;metro;;4,40 €;Viaggi e Trasporti;ING - CC
+28/02/2025;Febbraio;google one;;2,99 €;Casa e Utenze;Paypal
+28/02/2025;Febbraio;pranzo;;8,00 €;Bar e Ristoranti;Buoni Pasto
+01/03/2025;Marzo;parrucchiere;;25,00 €;Salute;ING - CC
+01/03/2025;Marzo;spesa;;7,61 €;Spesa;ING - CC
+01/03/2025;Marzo;lampadina e presa smart tapo;;21,98 €;Shopping;ING - CC
+01/03/2025;Marzo;mc;;6,65 €;Bar e Ristoranti;ING - CC
+01/03/2025;Marzo;ape;;17,00 €;Bar e Ristoranti;ING - CC
+02/03/2025;Marzo;commissioni;;0,09 €;Altro;Buddybank
+02/03/2025;Marzo;spesa;;16,00 €;Spesa;Buoni Pasto
+03/03/2025;Marzo;bar;;3,70 €;Bar e Ristoranti;Satispay
+03/03/2025;Marzo;pollo mercato;;33,47 €;Spesa;ING - CC
+03/03/2025;Marzo;ricarica buoni pasto;152,00 €;;Altre Entrate;Buoni Pasto
+04/03/2025;Marzo;pac;200,00 €;;Trasferimenti;Investimenti
+04/03/2025;Marzo;xeon;170,00 €;;Trasferimenti;Investimenti
+04/03/2025;Marzo;cursor;;1,12 €;Casa e Utenze;Revolut
+04/03/2025;Marzo;bla bla car;;12,39 €;Viaggi e Trasporti;Buddybank
+04/03/2025;Marzo;aws;;4,98 €;Casa e Utenze;Buddybank
+04/03/2025;Marzo;pac;;200,00 €;Trasferimenti;ING - CC
+04/03/2025;Marzo;xeon;;170,00 €;Trasferimenti;ING - CC
+04/03/2025;Marzo;tag nfc x home automation;;11,99 €;Shopping;ING - CC
+04/03/2025;Marzo;treno;;18,80 €;Viaggi e Trasporti;Paypal
+05/03/2025;Marzo;caffè;;2,40 €;Bar e Ristoranti;Satispay
+05/03/2025;Marzo;pranzo porto;;16,30 €;Bar e Ristoranti;Buddybank
+06/03/2025;Marzo;focaccia;;4,20 €;Spesa;Satispay
+06/03/2025;Marzo;rimborso bla bla car;10,00 €;;Viaggi e Trasporti;Buddybank
+06/03/2025;Marzo;pranzo;;6,00 €;Bar e Ristoranti;ING - CC
+06/03/2025;Marzo;metro;;4,40 €;Viaggi e Trasporti;ING - CC
+06/03/2025;Marzo;cibiclette;;14,00 €;Bar e Ristoranti;ING - CC
+06/03/2025;Marzo;pranzo;;8,00 €;Bar e Ristoranti;Buoni Pasto
+07/03/2025;Marzo;dominio thetombrider.xyz;;7,80 €;Shopping;Buddybank
+07/03/2025;Marzo;birre;;18,00 €;Bar e Ristoranti;Buddybank
+07/03/2025;Marzo;benzina;;12,60 €;Viaggi e Trasporti;ING - CC
+07/03/2025;Marzo;spesa;;32,00 €;Spesa;Buoni Pasto
+08/03/2025;Marzo;gelato;;7,00 €;Bar e Ristoranti;Satispay
+08/03/2025;Marzo;cinese;;30,92 €;Bar e Ristoranti;Buddybank
+09/03/2025;Marzo;pansotti;;10,90 €;Spesa;Satispay
+09/03/2025;Marzo;gelato;;3,00 €;Bar e Ristoranti;Satispay
+10/03/2025;Marzo;risparmi;50,00 €;;Trasferimenti;Revolut
+10/03/2025;Marzo;metro;;2,20 €;Viaggi e Trasporti;Buddybank
+10/03/2025;Marzo;libri;;17,90 €;Shopping;Revolut
+10/03/2025;Marzo;metro;;2,20 €;Viaggi e Trasporti;Buddybank
+10/03/2025;Marzo;risparmi;;50,00 €;Trasferimenti;ING - CC
+10/03/2025;Marzo;addebito carta di credito;;63,08 €;Shopping;ING - CC
+10/03/2025;Marzo;pranzo;;2,00 €;Bar e Ristoranti;ING - CC
+10/03/2025;Marzo;pranzo;;8,00 €;Bar e Ristoranti;Buoni Pasto
+11/03/2025;Marzo;caffè;;3,70 €;Bar e Ristoranti;Satispay
+11/03/2025;Marzo;backblaze;;1,71 €;Casa e Utenze;ING - CC
+11/03/2025;Marzo;tassi di cambio;;0,03 €;Altro;ING - CC
+12/03/2025;Marzo;github copilot;;9,63 €;Casa e Utenze;Buddybank
+12/03/2025;Marzo;macellaio;;21,12 €;Spesa;Allianz
+12/03/2025;Marzo;burger;;3,30 €;Bar e Ristoranti;Buddybank
+12/03/2025;Marzo;commissioni bancarie;;0,11 €;Altro;Buddybank
+12/03/2025;Marzo;openai;;6,09 €;Casa e Utenze;Buddybank
+12/03/2025;Marzo;prime;;4,99 €;Casa e Utenze;ING - CC
+13/03/2025;Marzo;caffè;;2,40 €;Bar e Ristoranti;Satispay
+13/03/2025;Marzo;pranzo;;17,00 €;Bar e Ristoranti;ING - CC
+13/03/2025;Marzo;iliad;;9,99 €;Casa e Utenze;ING - CC
+14/03/2025;Marzo;dentifricio;;6,19 €;Spesa;ING - CC
+14/03/2025;Marzo;bla bla car;;14,89 €;Viaggi e Trasporti;ING - CC
+14/03/2025;Marzo;pizza;;15,00 €;Bar e Ristoranti;ING - CC
+14/03/2025;Marzo;unipolmove;;195,40 €;Viaggi e Trasporti;ING - CC
+15/03/2025;Marzo;caffè;;2,40 €;Bar e Ristoranti;Satispay
+16/03/2025;Marzo;multa;;37,97 €;Altro;Buddybank
+17/03/2025;Marzo;ricarica satispay;43,75 €;;Trasferimenti;Satispay
+17/03/2025;Marzo;bar;;6,40 €;Bar e Ristoranti;Satispay
+17/03/2025;Marzo;cena farinata;;20,00 €;Bar e Ristoranti;Buddybank
+17/03/2025;Marzo;ricarica satispay;;43,75 €;Trasferimenti;ING - CC
+17/03/2025;Marzo;bla bla car;12,00 €;;Viaggi e Trasporti;ING - CC
+18/03/2025;Marzo;pizze;;18,31 €;Bar e Ristoranti;Buddybank
+18/03/2025;Marzo;birrette;;3,18 €;Bar e Ristoranti;Buddybank
+18/03/2025;Marzo;pizze e birrette rimborso pa;25,00 €;;Bar e Ristoranti;Cash
+18/03/2025;Marzo;icloud;;0,99 €;Casa e Utenze;ING - CC
+19/03/2025;Marzo;caffè;;2,40 €;Bar e Ristoranti;Satispay
+20/03/2025;Marzo;bla bla car;12,00 €;;Viaggi e Trasporti;Satispay
+20/03/2025;Marzo;bar;;2,40 €;Bar e Ristoranti;Satispay
+20/03/2025;Marzo;regalo compleanno;400,00 €;;Altre Entrate;Cash
+21/03/2025;Marzo;versamento;;425,00 €;Trasferimenti;Cash
+21/03/2025;Marzo;versamento;425,00 €;;Trasferimenti;Buddybank
+21/03/2025;Marzo;pranzo;;14,20 €;Bar e Ristoranti;Buddybank
+21/03/2025;Marzo;trasferimento;;239,55 €;Trasferimenti;Buddybank
+21/03/2025;Marzo;trasferimento;239,55 €;;Trasferimenti;Revolut
+21/03/2025;Marzo;gondoni;;9,90 €;Salute;Buddybank
+21/03/2025;Marzo;parcheggio;;2,00 €;Viaggi e Trasporti;ING - CC
+22/03/2025;Marzo;caffè succo;;5,00 €;Bar e Ristoranti;Satispay
+22/03/2025;Marzo;hotel londra;;488,63 €;Svago e Intrattenimento;Revolut
+22/03/2025;Marzo;boots;;1,92 €;Spesa;Revolut
+22/03/2025;Marzo;uniqlo;;40,59 €;Shopping;Revolut
+22/03/2025;Marzo;deliveroo;;16,72 €;Bar e Ristoranti;Revolut
+22/03/2025;Marzo;tfl;;3,47 €;Viaggi e Trasporti;ING - CC
+23/03/2025;Marzo;tfl;;10,37 €;Viaggi e Trasporti;Revolut
+23/03/2025;Marzo;tfl;;3,38 €;Viaggi e Trasporti;Revolut
+23/03/2025;Marzo;sticker e acqua;;3,49 €;Shopping;Revolut
+23/03/2025;Marzo;cena brewmaster;;52,12 €;Bar e Ristoranti;Revolut
+24/03/2025;Marzo;tfl;;10,73 €;Viaggi e Trasporti;Revolut
+24/03/2025;Marzo;costa coffee;;5,81 €;Bar e Ristoranti;Revolut
+24/03/2025;Marzo;bici;;3,48 €;Viaggi e Trasporti;Revolut
+24/03/2025;Marzo;regalo mamma;;23,32 €;Shopping;Revolut
+24/03/2025;Marzo;tesco;;1,52 €;Spesa;Revolut
+24/03/2025;Marzo;commissioni;;4,19 €;Altro;Buddybank
+24/03/2025;Marzo;bla bla car;12,00 €;;Viaggi e Trasporti;Paypal
+25/03/2025;Marzo;tfl;;10,37 €;Viaggi e Trasporti;Revolut
+25/03/2025;Marzo;costa coffee;;17,66 €;Bar e Ristoranti;Revolut
+25/03/2025;Marzo;regalo papà;;29,14 €;Shopping;Revolut
+25/03/2025;Marzo;fish and chips;;39,50 €;Bar e Ristoranti;Revolut
+25/03/2025;Marzo;cafe nero;;18,43 €;Bar e Ristoranti;Revolut
+25/03/2025;Marzo;lime;;14,06 €;Viaggi e Trasporti;Buddybank
+26/03/2025;Marzo;metro;;2,20 €;Viaggi e Trasporti;Revolut
+26/03/2025;Marzo;pac extra;300,00 €;;Trasferimenti;Investimenti
+26/03/2025;Marzo;rata airpods;;35,99 €;Shopping;ING - CC
+26/03/2025;Marzo;pranzo;;2,00 €;Bar e Ristoranti;ING - CC
+26/03/2025;Marzo;pac extra;;300,00 €;Trasferimenti;ING - CC
+26/03/2025;Marzo;pranzo;;8,00 €;Bar e Ristoranti;Buoni Pasto
+27/03/2025;Marzo;pranzo;;16,00 €;Bar e Ristoranti;Buoni Pasto
+27/03/2025;Marzo;trasferimento chiusura conto;;183,67 €;Trasferimenti;Allianz
+27/03/2025;Marzo;trasferimento chiusura conto;183,67 €;;Trasferimenti;ING - CC
+27/03/2025;Marzo;pranzo;;2,00 €;Bar e Ristoranti;ING - CC
+27/03/2025;Marzo;benzina;;50,39 €;Viaggi e Trasporti;ING - CC
+28/03/2025;Marzo;bar;;3,70 €;Bar e Ristoranti;Satispay
+28/03/2025;Marzo;bla bla car;23,00 €;;Viaggi e Trasporti;Paypal
+28/03/2025;Marzo;prelievo;40,00 €;;Trasferimenti;Cash
+28/03/2025;Marzo;garage;;28,00 €;Auto e Moto;Cash
+28/03/2025;Marzo;prelievo;;40,00 €;Trasferimenti;Buddybank
+28/03/2025;Marzo;google one;;2,99 €;Casa e Utenze;Paypal
+29/03/2025;Marzo;frappe;;3,00 €;Bar e Ristoranti;Satispay
+29/03/2025;Marzo;spritz;;7,00 €;Bar e Ristoranti;Cash
+30/03/2025;Marzo;bla bla car;;12,39 €;Viaggi e Trasporti;ING - CC
+30/03/2025;Marzo;frappe;;3,00 €;Bar e Ristoranti;Satispay
+31/03/2025;Marzo;stipendio;1.792,00 €;;Stipendio;ING - CC
+31/03/2025;Marzo;trasferimento;;400,00 €;Trasferimenti;ING - CC
+31/03/2025;Marzo;trasferimento;2.000,00 €;;Trasferimenti;ING - CC
+31/03/2025;Marzo;trasferimento;;2.000,00 €;Trasferimenti;ING - CD
+31/03/2025;Marzo;caffè;;2,40 €;Bar e Ristoranti;Satispay
+31/03/2025;Marzo;macelleria;;10,95 €;Spesa;Satispay
+31/03/2025;Marzo;trasferimento;400,00 €;;Trasferimenti;Revolut
+31/03/2025;Marzo;commissioni;;0,12 €;Altro;Buddybank
+31/03/2025;Marzo;openai;;6,80 €;Casa e Utenze;Buddybank
+01/04/2025;Aprile;cena workshop;;21,50 €;Bar e Ristoranti;ING - CC
+01/04/2025;Aprile;bar;;2,40 €;Bar e Ristoranti;Satispay
+02/04/2025;Aprile;metro;;6,60 €;Viaggi e Trasporti;ING - CC
+02/04/2025;Aprile;pranzo;;14,50 €;Bar e Ristoranti;ING - CC
+02/04/2025;Aprile;bar;;2,40 €;Bar e Ristoranti;Satispay
+02/04/2025;Aprile;aws;;0,92 €;Casa e Utenze;Buddybank
+03/04/2025;Aprile;macellaio;;12,30 €;Spesa;ING - CC
+03/04/2025;Aprile;carta igienica e scottex;;7,18 €;Spesa;ING - CC
+03/04/2025;Aprile;bar;;4,00 €;Bar e Ristoranti;Satispay
+03/04/2025;Aprile;contorni;;3,80 €;Spesa;Satispay
+03/04/2025;Aprile;fornaio;;4,00 €;Bar e Ristoranti;Satispay
+03/04/2025;Aprile;commissioni;;0,02 €;Altro;Buddybank
+04/04/2025;Aprile;spesa;;32,00 €;Spesa;Buoni Pasto
+04/04/2025;Aprile;risparmi;;2.300,00 €;Trasferimenti;ING - CC
+04/04/2025;Aprile;pac;;470,00 €;Trasferimenti;ING - CC
+04/04/2025;Aprile;risparmi;2.300,00 €;;Trasferimenti;Investimenti
+04/04/2025;Aprile;pac;470,00 €;;Trasferimenti;Investimenti
+05/04/2025;Aprile;benza;;16,14 €;Viaggi e Trasporti;ING - CC
+05/04/2025;Aprile;negroni;;7,00 €;Bar e Ristoranti;ING - CC
+06/04/2025;Aprile;spesa;;40,00 €;Spesa;Buoni Pasto
+06/04/2025;Aprile;colazione e pranzo baracchetta top;;42,50 €;Bar e Ristoranti;ING - CC
+06/04/2025;Aprile;spesa psta fresca;;4,60 €;Spesa;Satispay
+07/04/2025;Aprile;ricarica buoni pasto;160,00 €;;Altre Entrate;Buoni Pasto
+07/04/2025;Aprile;ricarica satispay;;48,45 €;Trasferimenti;ING - CC
+07/04/2025;Aprile;ricarica satispay;48,45 €;;Trasferimenti;Satispay
+07/04/2025;Aprile;caffè;;2,40 €;Bar e Ristoranti;Satispay
+09/04/2025;Aprile;mc;;10,70 €;Bar e Ristoranti;ING - CC
+09/04/2025;Aprile;aws;;1,00 €;Casa e Utenze;ING - CC
+09/04/2025;Aprile;bar;;2,40 €;Bar e Ristoranti;Satispay
+10/04/2025;Aprile;pranzo;;16,00 €;Bar e Ristoranti;Buoni Pasto
+10/04/2025;Aprile;bus;;2,20 €;Viaggi e Trasporti;ING - CC
+10/04/2025;Aprile;magliette;;9,00 €;Shopping;ING - CC
+10/04/2025;Aprile;ravio sarpi;;15,00 €;Bar e Ristoranti;ING - CC
+10/04/2025;Aprile;prime;;4,99 €;Casa e Utenze;ING - CC
+10/04/2025;Aprile;addebito carta di credito;;94,66 €;Shopping;ING - CC
+11/04/2025;Aprile;pranzo;;8,00 €;Bar e Ristoranti;Buoni Pasto
+11/04/2025;Aprile;backblaze;;1,88 €;Casa e Utenze;ING - CC
+11/04/2025;Aprile;unipolmove;;76,00 €;Viaggi e Trasporti;ING - CC
+11/04/2025;Aprile;pranzo;;5,90 €;Bar e Ristoranti;Satispay
+12/04/2025;Aprile;birra;;7,74 €;Bar e Ristoranti;ING - CC
+12/04/2025;Aprile;iliad;;9,99 €;Casa e Utenze;ING - CC
+12/04/2025;Aprile;commissioni;;0,04 €;Altro;ING - CC
+12/04/2025;Aprile;github copilot;;9,32 €;Casa e Utenze;Buddybank
+13/04/2025;Aprile;benzina;;40,99 €;Viaggi e Trasporti;ING - CC
+13/04/2025;Aprile;lavaggio;;7,00 €;Auto e Moto;ING - CC
+14/04/2025;Aprile;bla bla car;€ 23,00;;Viaggi e Trasporti;Paypal
+15/04/2025;Aprile;trasferimento;€ 1.090,00;;Trasferimenti;ING - CC
+15/04/2025;Aprile;trasferimento;€ 300,00;;Trasferimenti;ING - CC
+15/04/2025;Aprile;palestra personal trainer;;300,00 €;Salute;ING - CC
+15/04/2025;Aprile;piselli;;4,69 €;Spesa;ING - CC
+15/04/2025;Aprile;trasferimento;;1.090,00 €;Trasferimenti;Revolut
+15/04/2025;Aprile;trasferimento;;300,00 €;Trasferimenti;Revolut
+15/04/2025;Aprile;fornaio;;6,76 €;Spesa;Satispay
+15/04/2025;Aprile;caffè;;1,20 €;Bar e Ristoranti;Satispay
+16/04/2025;Aprile;xxx;;14,95 €;Shopping;ING - CC
+17/04/2025;Aprile;versamento xeon;;1.090,00 €;Trasferimenti;ING - CC
+17/04/2025;Aprile;xxx;;12,99 €;Shopping;ING - CC
+17/04/2025;Aprile;spesa;;8,62 €;Spesa;ING - CC
+17/04/2025;Aprile;bar;;2,40 €;Bar e Ristoranti;Satispay
+17/04/2025;Aprile;pizze deliveroo;;32,09 €;Bar e Ristoranti;Paypal
+17/04/2025;Aprile;birra;;5,00 €;Bar e Ristoranti;Paypal
+17/04/2025;Aprile;feltrinelli;;6,20 €;Shopping;Paypal
+18/04/2025;Aprile;tagliando moto;;130,00 €;Auto e Moto;ING - CC
+18/04/2025;Aprile;carta igienica;;3,58 €;Spesa;ING - CC
+18/04/2025;Aprile;parrucchiere;;25,00 €;Salute;Satispay
+18/04/2025;Aprile;caffè;;3,40 €;Bar e Ristoranti;Satispay
+18/04/2025;Aprile;icloud;;0,99 €;Casa e Utenze;Paypal
+19/04/2025;Aprile;spesa;;16,00 €;Spesa;Buoni Pasto
+19/04/2025;Aprile;caffè;;2,40 €;Bar e Ristoranti;ING - CC
+19/04/2025;Aprile;boccola tappatrice;;14,90 €;Shopping;ING - CC
+19/04/2025;Aprile;versamento xeon;€ 1.090,00;;Trasferimenti;Investimenti
+19/04/2025;Aprile;spesa;€ 8,00;;Spesa;Paypal
+20/04/2025;Aprile;spesa pasquetta;;23,47 €;Spesa;ING - CC
+21/04/2025;Aprile;ricarica satispay;;49,46 €;Trasferimenti;ING - CC
+21/04/2025;Aprile;ricarica satispay;€ 49,46;;Trasferimenti;Satispay
+22/04/2025;Aprile;lavanderia;;18,00 €;Casa e Utenze;ING - CC
+22/04/2025;Aprile;bar;;3,70 €;Bar e Ristoranti;Satispay
+22/04/2025;Aprile;macellaio;;8,20 €;Spesa;Satispay
+22/04/2025;Aprile;caffè;;1,30 €;Bar e Ristoranti;Satispay
+23/04/2025;Aprile;spesa;;32,00 €;Spesa;Buoni Pasto
+23/04/2025;Aprile;benzina;;42,82 €;Viaggi e Trasporti;ING - CC
+23/04/2025;Aprile;parcheggio;;7,50 €;Viaggi e Trasporti;ING - CC
+23/04/2025;Aprile;spesa;;4,62 €;Spesa;ING - CC
+24/04/2025;Aprile;spazzolino e dentifricio;;7,40 €;Salute;ING - CC
+24/04/2025;Aprile;bar;;2,60 €;Bar e Ristoranti;Satispay
+25/04/2025;Aprile;spesa;;8,00 €;Spesa;Buoni Pasto
+25/04/2025;Aprile;pranzo antibes;;37,00 €;Bar e Ristoranti;ING - CC
+25/04/2025;Aprile;parcheggio mentone;;2,30 €;Viaggi e Trasporti;ING - CC
+25/04/2025;Aprile;autogrill x bubi;;8,79 €;Spesa;ING - CC
+25/04/2025;Aprile;spesa;;7,63 €;Spesa;ING - CC
+25/04/2025;Aprile;parcheggio;;2,70 €;Viaggi e Trasporti;ING - CC
+25/04/2025;Aprile;DA TROVARE;;1,00 €;Altro;Cash
+26/04/2025;Aprile;mc;;1,40 €;Bar e Ristoranti;ING - CC
+26/04/2025;Aprile;bar bianca;;4,30 €;Bar e Ristoranti;Satispay
+26/04/2025;Aprile;gelato;;3,00 €;Bar e Ristoranti;Satispay
+27/04/2025;Aprile;spesa coop;;24,00 €;Spesa;Buoni Pasto
+27/04/2025;Aprile;spesa;;11,46 €;Spesa;ING - CC
+27/04/2025;Aprile;gelato;;6,50 €;Bar e Ristoranti;Satispay
+28/04/2025;Aprile;libro;;9,48 €;Shopping;ING - CC
+28/04/2025;Aprile;regalo compleanno marti;;29,00 €;Shopping;ING - CC
+28/04/2025;Aprile;focaccia;;6,60 €;Spesa;Satispay
+28/04/2025;Aprile;prelievo;;40,00 €;Trasferimenti;Buddybank
+28/04/2025;Aprile;prelievo;€ 40,00;;Trasferimenti;Cash
+28/04/2025;Aprile;garage;;28,00 €;Auto e Moto;Cash
+28/04/2025;Aprile;the;;0,99 €;Spesa;Cash
+28/04/2025;Aprile;google one;;2,99 €;Casa e Utenze;Paypal
+29/04/2025;Aprile;pranzo;;16,00 €;Bar e Ristoranti;Buoni Pasto
+29/04/2025;Aprile;metro;;4,40 €;Viaggi e Trasporti;ING - CC
+29/04/2025;Aprile;parcheggio;;2,00 €;Viaggi e Trasporti;ING - CC
+29/04/2025;Aprile;xxx;;6,72 €;Shopping;ING - CC
+29/04/2025;Aprile;mc;;13,78 €;Bar e Ristoranti;ING - CC
+29/04/2025;Aprile;benzina;;40,79 €;Viaggi e Trasporti;ING - CC
+29/04/2025;Aprile;pranzo;;3,00 €;Bar e Ristoranti;Cash
+29/04/2025;Aprile;ricarica macchinette;;3,50 €;Altro;Cash
+30/04/2025;Aprile;stipendio;€ 1.784,00;;Stipendio;ING - CC
+30/04/2025;Aprile;bla bla car;;11,19 €;Viaggi e Trasporti;ING - CC
+30/04/2025;Aprile;bla bla car;;14,89 €;Viaggi e Trasporti;ING - CC
+30/04/2025;Aprile;spesa;;10,60 €;Spesa;ING - CC
+30/04/2025;Aprile;macelleria;;9,95 €;Spesa;ING - CC
+30/04/2025;Aprile;negroni;;7,00 €;Bar e Ristoranti;ING - CC
+30/04/2025;Aprile;bar;;4,00 €;Bar e Ristoranti;Satispay
+30/04/2025;Aprile;panettiere;;5,34 €;Spesa;Satispay
+30/04/2025;Aprile;bla bla car;€ 12,00;;Viaggi e Trasporti;Paypal
+01/05/2025;Maggio;benzina moto;;15,16 €;Viaggi e Trasporti;ING - CC
+01/05/2025;Maggio;ape;;7,00 €;Bar e Ristoranti;ING - CC
+01/05/2025;Maggio;gelato;;6,00 €;Bar e Ristoranti;Cash
+02/05/2025;Maggio;focaccia formaggio;;13,30 €;Bar e Ristoranti;ING - CC
+02/05/2025;Maggio;benzina;;7,23 €;Viaggi e Trasporti;ING - CC
+02/05/2025;Maggio;pac;;170,00 €;Trasferimenti;ING - CC
+02/05/2025;Maggio;fondo emergenza;;600,00 €;Trasferimenti;ING - CC
+02/05/2025;Maggio;pac;€ 170,00;;Trasferimenti;Investimenti
+02/05/2025;Maggio;fondo emergenza;€ 600,00;;Trasferimenti;Investimenti
+02/05/2025;Maggio;birra;;6,00 €;Bar e Ristoranti;Paypal
+03/05/2025;Maggio;pedaggio;;6,30 €;Viaggi e Trasporti;ING - CC
+03/05/2025;Maggio;pranzo laigue;;20,70 €;Bar e Ristoranti;ING - CC
+03/05/2025;Maggio;macellaio;;8,35 €;Spesa;ING - CC
+03/05/2025;Maggio;verduriere;;3,30 €;Spesa;ING - CC
+03/05/2025;Maggio;risparmi;;200,00 €;Trasferimenti;ING - CC
+03/05/2025;Maggio;spesa;;5,99 €;Spesa;ING - CC
+03/05/2025;Maggio;risparmi;€ 200,00;;Trasferimenti;ING - CD
+05/05/2025;Maggio;ricarica buoni pasto;152,00 €;;Altre Entrate;Buoni Pasto
+05/05/2025;Maggio;spesa;;64,00 €;Spesa;Buoni Pasto
+05/05/2025;Maggio;ricarica satispay;;45,54 €;Trasferimenti;ING - CC
+05/05/2025;Maggio;caffè;;2,40 €;Bar e Ristoranti;Satispay
+05/05/2025;Maggio;ricarica satispay;45,54 €;;Trasferimenti;Satispay
+06/05/2025;Maggio;bar;;14,00 €;Bar e Ristoranti;ING - CC
+06/05/2025;Maggio;bar;7,00 €;;Bar e Ristoranti;Satispay
+07/05/2025;Maggio;pranzo;;14,50 €;Bar e Ristoranti;ING - CC
+07/05/2025;Maggio;metro;;2,20 €;Viaggi e Trasporti;ING - CC
+07/05/2025;Maggio;bar;;2,70 €;Bar e Ristoranti;Satispay
+08/05/2025;Maggio;bus e metro;;4,40 €;Viaggi e Trasporti;ING - CC
+08/05/2025;Maggio;pranzo;;12,80 €;Bar e Ristoranti;ING - CC
+08/05/2025;Maggio;ricarica macchinette;;5,00 €;Bar e Ristoranti;Buddybank
+10/05/2025;Maggio;pastificio;;4,50 €;Spesa;Satispay
+10/05/2025;Maggio;fornaio;;5,60 €;Spesa;Satispay
+10/05/2025;Maggio;pastificio;5,00 €;;Spesa;Revolut
+10/05/2025;Maggio;colletta alimentare;;3,53 €;Spesa;Satispay
+10/05/2025;Maggio;prime;;4,99 €;Casa e Utenze;ING - CC
+10/05/2025;Maggio;addebito carta di credito;;125,50 €;Shopping;ING - CC
+10/05/2025;Maggio;ape;;12,00 €;Bar e Ristoranti;Satispay
+10/05/2025;Maggio;pizza;;14,50 €;Bar e Ristoranti;Satispay
+11/05/2025;Maggio;gelato;;3,00 €;Bar e Ristoranti;Satispay
+11/05/2025;Maggio;spesa;;6,98 €;Spesa;ING - CC
+11/05/2025;Maggio;spesa;;14,67 €;Spesa;ING - CC
+11/05/2025;Maggio;commissioni cambi;;0,04 €;Altro;ING - CC
+12/05/2025;Maggio;ricarica satispay;;41,23 €;Trasferimenti;ING - CC
+12/05/2025;Maggio;ricarica satispay;41,23 €;;Trasferimenti;Satispay
+12/05/2025;Maggio;bar;;4,00 €;Bar e Ristoranti;Satispay
+12/05/2025;Maggio;github copilot;;9,30 €;Casa e Utenze;Buddybank
+12/05/2025;Maggio;iliad;;9,99 €;Casa e Utenze;ING - CC
+13/05/2025;Maggio;pranzo;;8,00 €;Bar e Ristoranti;Buoni Pasto
+13/05/2025;Maggio;fornaio;;6,70 €;Spesa;Satispay
+13/05/2025;Maggio;pranzo;;6,90 €;Bar e Ristoranti;ING - CC
+13/05/2025;Maggio;metro;;4,40 €;Viaggi e Trasporti;ING - CC
+13/05/2025;Maggio;cena pizza isola;;23,90 €;Bar e Ristoranti;ING - CC
+13/05/2025;Maggio;metro;;2,20 €;Viaggi e Trasporti;ING - CC
+14/05/2025;Maggio;unipolmove;;88,00 €;Viaggi e Trasporti;ING - CC
+15/05/2025;Maggio;pranzo;;8,00 €;Bar e Ristoranti;Buoni Pasto
+15/05/2025;Maggio;metro;;2,20 €;Viaggi e Trasporti;ING - CC
+15/05/2025;Maggio;pranzo;;2,50 €;Bar e Ristoranti;ING - CC
+15/05/2025;Maggio;metro;;2,20 €;Viaggi e Trasporti;ING - CC
+16/05/2025;Maggio;colaz franco;;5,60 €;Bar e Ristoranti;Satispay
+16/05/2025;Maggio;gelato;;6,00 €;Bar e Ristoranti;Satispay
+16/05/2025;Maggio;siga;;6,70 €;Altro;ING - CC
+16/05/2025;Maggio;treno;;4,00 €;Viaggi e Trasporti;Paypal
+17/05/2025;Maggio;spesa;;24,00 €;Spesa;Buoni Pasto
+17/05/2025;Maggio;pranzo costa azzurra;;28,00 €;Bar e Ristoranti;ING - CC
+17/05/2025;Maggio;spesa;;18,95 €;Spesa;ING - CC
+18/05/2025;Maggio;focaccia;;10,00 €;Spesa;Satispay
+18/05/2025;Maggio;pizza;;9,00 €;Bar e Ristoranti;ING - CC
+18/05/2025;Maggio;saldo tricount laigueglia;;58,25 €;Bar e Ristoranti;ING - CC
+18/05/2025;Maggio;icloud;;0,99 €;Casa e Utenze;Paypal
+19/05/2025;Maggio;ricarica macchinette;;16,00 €;Bar e Ristoranti;Buoni Pasto
+19/05/2025;Maggio;pranzo;;8,00 €;Bar e Ristoranti;Buoni Pasto
+19/05/2025;Maggio;metro;;4,40 €;Viaggi e Trasporti;ING - CC
+19/05/2025;Maggio;pranzo;;3,90 €;Bar e Ristoranti;ING - CC
+19/05/2025;Maggio;mc;;6,85 €;Bar e Ristoranti;ING - CC
+19/05/2025;Maggio;acqua;;1,30 €;Bar e Ristoranti;ING - CC
+19/05/2025;Maggio;nurofen;;6,20 €;Salute;ING - CC
+21/05/2025;Maggio;bar;;4,00 €;Bar e Ristoranti;Satispay
+21/05/2025;Maggio;spesa;;8,17 €;Spesa;ING - CC
+23/05/2025;Maggio;bar;;2,40 €;Bar e Ristoranti;Satispay
+23/05/2025;Maggio;frappè;;3,00 €;Bar e Ristoranti;Satispay
+24/05/2025;Maggio;gelato;3,80 €;;Bar e Ristoranti;Revolut
+24/05/2025;Maggio;gelato;;7,60 €;Bar e Ristoranti;ING - CC
+24/05/2025;Maggio;pizza;;15,25 €;Bar e Ristoranti;ING - CC
+24/05/2025;Maggio;caffè;;2,50 €;Bar e Ristoranti;Satispay
+25/05/2025;Maggio;spesa;;32,00 €;Spesa;Buoni Pasto
+25/05/2025;Maggio;lasagne;;6,00 €;Spesa;ING - CC
+25/05/2025;Maggio;cochina;;2,07 €;Spesa;ING - CC
+25/05/2025;Maggio;pantaloni trekking;;44,99 €;Shopping;Buddybank
+25/05/2025;Maggio;caffè;;1,60 €;Bar e Ristoranti;Buddybank
+25/05/2025;Maggio;benzina moto;;16,30 €;Viaggi e Trasporti;ING - CC
+25/05/2025;Maggio;prelievo;;40,00 €;Trasferimenti;ING - CC
+25/05/2025;Maggio;prelievo;40,00 €;;Trasferimenti;Cash
+25/05/2025;Maggio;spesa;;1,18 €;Spesa;ING - CC
+25/05/2025;Maggio;bar;;2,40 €;Bar e Ristoranti;Satispay
+26/05/2025;Maggio;macelleria;;9,50 €;Spesa;Cash
+26/05/2025;Maggio;garage;;28,00 €;Auto e Moto;Cash
+26/05/2025;Maggio;burgerino;;1,50 €;Bar e Ristoranti;ING - CC
+26/05/2025;Maggio;vino;;8,00 €;Bar e Ristoranti;Revolut
+26/05/2025;Maggio;ricarica satispay;44,20 €;;Trasferimenti;Satispay
+26/05/2025;Maggio;ricarica satispay;;44,20 €;Trasferimenti;ING - CC
+27/05/2025;Maggio;bollo moto leoncino;;57,50 €;Auto e Moto;Revolut
+27/05/2025;Maggio;macchinette;;4,00 €;Bar e Ristoranti;ING - CC
+28/05/2025;Maggio;metro;;4,40 €;Viaggi e Trasporti;ING - CC
+28/05/2025;Maggio;birre;;8,00 €;Bar e Ristoranti;ING - CC
+28/05/2025;Maggio;mutande;;12,90 €;Shopping;ING - CC
+29/05/2025;Maggio;pranzo;;8,00 €;Bar e Ristoranti;Buoni Pasto
+29/05/2025;Maggio;google one;;2,99 €;Casa e Utenze;Allianz
+29/05/2025;Maggio;metro;;4,40 €;Viaggi e Trasporti;ING - CC
+29/05/2025;Maggio;pranzo;;5,00 €;Bar e Ristoranti;ING - CC
+29/05/2025;Maggio;the;;0,59 €;Spesa;ING - CC
+30/05/2025;Maggio;stipendio;1.792,00 €;;Stipendio;ING - CC
+30/05/2025;Maggio;risparmi;;500,00 €;Trasferimenti;ING - CC
+30/05/2025;Maggio;risparmi;€ 500,00;;Trasferimenti;ING - CD
+30/05/2025;Maggio;birre;;10,00 €;Bar e Ristoranti;ING - CC
+30/05/2025;Maggio;pizza;;14,00 €;Bar e Ristoranti;ING - CC
+31/05/2025;Maggio;macellaio;;15,60 €;Spesa;Satispay
+31/05/2025;Maggio;colaz bar;;6,10 €;Bar e Ristoranti;Satispay
+01/06/2025;Giugno;bla bla car;;13,59 €;Bar e Ristoranti;ING - CC
+01/06/2025;Giugno;sushi;;70,00 €;Bar e Ristoranti;ING - CC
+01/06/2025;Giugno;spesa;;1,95 €;Spesa;ING - CC
+02/06/2025;Giugno;caffè;;2,40 €;Bar e Ristoranti;Satispay
+02/06/2025;Giugno;caffè;;2,40 €;Bar e Ristoranti;Satispay
+02/06/2025;Giugno;cibo gatto;;6,24 €;Spesa;ING - CC
+02/06/2025;Giugno;popcorn caramelle pepsi;;9,50 €;Bar e Ristoranti;ING - CC
+03/06/2025;Giugno;cena oww;;64,00 €;Bar e Ristoranti;Buoni Pasto
+03/06/2025;Giugno;pranzo;;24,10 €;Bar e Ristoranti;ING - CC
+03/06/2025;Giugno;fondi monetari;;100,00 €;Trasferimenti;ING - CC
+03/06/2025;Giugno;pac;;170,00 €;Trasferimenti;ING - CC
+03/06/2025;Giugno;metro;;4,40 €;Viaggi e Trasporti;ING - CC
+03/06/2025;Giugno;fondi monetari;100,00 €;;Trasferimenti;Investimenti
+03/06/2025;Giugno;pac;170,00 €;;Trasferimenti;Investimenti
+03/06/2025;Giugno;pranzo;€ 11,00;;Bar e Ristoranti;Paypal
+04/06/2025;Giugno;regalo zio;;25,00 €;Altro;ING - CC
+04/06/2025;Giugno;ape;;7,00 €;Bar e Ristoranti;ING - CC
+04/06/2025;Giugno;bar;;2,40 €;Bar e Ristoranti;Satispay
+05/06/2025;Giugno;bar;;3,70 €;Bar e Ristoranti;Satispay
+06/06/2025;Giugno;ricarica buoni pasto;€ 128,00;;Altre Entrate;Buoni Pasto
+06/06/2025;Giugno;parrucchiere;;25,00 €;Salute;ING - CC
+06/06/2025;Giugno;bar;;2,40 €;Bar e Ristoranti;Satispay
+06/06/2025;Giugno;cena ghironda;;21,50 €;Bar e Ristoranti;ING - CC
+07/06/2025;Giugno;cena marmorassi;;20,50 €;Bar e Ristoranti;ING - CC
+07/06/2025;Giugno;colaz baia del corvo;;6,00 €;Bar e Ristoranti;ING - CC
+07/06/2025;Giugno;pranzo scaletto;;17,00 €;Bar e Ristoranti;ING - CC
+07/06/2025;Giugno;DA TROVARE;;17,15 €;Altro;Revolut
+08/06/2025;Giugno;birra;;4,00 €;Bar e Ristoranti;ING - CC
+08/06/2025;Giugno;bar;;4,10 €;Bar e Ristoranti;Satispay
+08/06/2025;Giugno;mc;;5,20 €;Bar e Ristoranti;Satispay
+08/06/2025;Giugno;blabla car;;12,39 €;Viaggi e Trasporti;ING - CC
+09/06/2025;Giugno;bar;;2,40 €;Bar e Ristoranti;Satispay
+09/06/2025;Giugno;ricarica satispay;;46,70 €;Trasferimenti;ING - CC
+09/06/2025;Giugno;ricarica satispay;46,70 €;;Trasferimenti;Satispay
+09/06/2025;Giugno;pollo;;15,84 €;Spesa;ING - CC
+10/06/2025;Giugno;frappé;;3,00 €;Bar e Ristoranti;Satispay
+10/06/2025;Giugno;prime;;4,99 €;Casa e Utenze;ING - CC
+10/06/2025;Giugno;birra;;6,00 €;Bar e Ristoranti;ING - CC
+10/06/2025;Giugno;addebito carta di credito;;167,78 €;Shopping;ING - CC
+10/06/2025;Giugno;bar;;2,40 €;Bar e Ristoranti;Satispay
+11/06/2025;Giugno;pranzo;;8,00 €;Bar e Ristoranti;Buoni Pasto
+11/06/2025;Giugno;backblaze;;1,86 €;Casa e Utenze;ING - CC
+11/06/2025;Giugno;unipolmove;;42,20 €;Viaggi e Trasporti;ING - CC
+11/06/2025;Giugno;metro;;2,20 €;Viaggi e Trasporti;ING - CC
+11/06/2025;Giugno;pranzo;;2,50 €;Bar e Ristoranti;ING - CC
+11/06/2025;Giugno;moes;;10,00 €;Bar e Ristoranti;ING - CC
+11/06/2025;Giugno;bici lime;;3,99 €;Viaggi e Trasporti;Paypal
+11/06/2025;Giugno;bar;;2,40 €;Bar e Ristoranti;Satispay
+12/06/2025;Giugno;iliad;;9,99 €;Casa e Utenze;ING - CC
+12/06/2025;Giugno;metro;;4,40 €;Viaggi e Trasporti;ING - CC
+12/06/2025;Giugno;pranzo;;8,00 €;Bar e Ristoranti;Buoni Pasto
+12/06/2025;Giugno;pranzo;;2,00 €;Bar e Ristoranti;ING - CC
+13/06/2025;Giugno;spesa;;32,00 €;Spesa;Buoni Pasto
+13/06/2025;Giugno;github copilot;;9,13 €;Casa e Utenze;Buddybank
+13/06/2025;Giugno;spesa;;4,80 €;Spesa;ING - CC
+13/06/2025;Giugno;caffè;;2,40 €;Bar e Ristoranti;Satispay
+14/06/2025;Giugno;spesa;;16,00 €;Spesa;Buoni Pasto
+14/06/2025;Giugno;piadine;;19,80 €;Bar e Ristoranti;ING - CC
+14/06/2025;Giugno;macedonia caffè;;7,60 €;Bar e Ristoranti;ING - CC
+14/06/2025;Giugno;bar;;6,00 €;Bar e Ristoranti;ING - CC
+14/06/2025;Giugno;spesa;;3,90 €;Spesa;Revolut
+14/06/2025;Giugno;gelato;;3,00 €;Bar e Ristoranti;Satispay
+14/06/2025;Giugno;birre;;10,00 €;Bar e Ristoranti;Satispay
+15/06/2025;Giugno;birra turco;;5,00 €;Bar e Ristoranti;ING - CC
+15/06/2025;Giugno;birra e panissa turco;;9,00 €;Bar e Ristoranti;ING - CC
+15/06/2025;Giugno;acquisto non identificato;;9,50 €;Altro;ING - CC
+15/06/2025;Giugno;caffè e focaz;;1,80 €;Bar e Ristoranti;ING - CC
+15/06/2025;Giugno;birra;;5,00 €;Bar e Ristoranti;ING - CC
+16/06/2025;Giugno;benzina;;15,64 €;Viaggi e Trasporti;ING - CC
+16/06/2025;Giugno;spiaggia varigotti;;57,00 €;Svago e Intrattenimento;ING - CC
+16/06/2025;Giugno;cena molo;;110,00 €;Bar e Ristoranti;ING - CC
+16/06/2025;Giugno;caffè bar;;4,80 €;Bar e Ristoranti;Satispay
+17/06/2025;Giugno;bar;;2,40 €;Bar e Ristoranti;Satispay
+17/06/2025;Giugno;frappe;;3,00 €;Bar e Ristoranti;Satispay
+18/06/2025;Giugno;icloud;;0,99 €;Casa e Utenze;Paypal
+18/06/2025;Giugno;birra;;4,00 €;Bar e Ristoranti;ING - CC
+18/06/2025;Giugno;ricarica;€ 3,00;;Altre Entrate;Allianz
+18/06/2025;Giugno;bar;;4,00 €;Bar e Ristoranti;Satispay
+18/06/2025;Giugno;giroconto;€ 3,00;;Altre Entrate;Allianz
+19/06/2025;Giugno;pranzo;;8,00 €;Bar e Ristoranti;Buoni Pasto
+19/06/2025;Giugno;fornaio;;6,17 €;Spesa;ING - CC
+19/06/2025;Giugno;metro;;4,40 €;Viaggi e Trasporti;ING - CC
+19/06/2025;Giugno;pranzo;;5,00 €;Bar e Ristoranti;ING - CC
+19/06/2025;Giugno;caffè;;1,20 €;Bar e Ristoranti;Satispay
+20/06/2025;Giugno;gelato;;2,40 €;Bar e Ristoranti;ING - CC
+22/06/2025;Giugno;pesce;;8,50 €;Bar e Ristoranti;ING - CC
+23/06/2025;Giugno;restituzione caparra;€ 600,00;;Altre Entrate;ING - CC
+23/06/2025;Giugno;restituzione caparra;;600,00 €;Trasferimenti;ING - CC
+23/06/2025;Giugno;restituzione caparra;€ 600,00;;Trasferimenti;Allianz
+23/06/2025;Giugno;treno;;15,60 €;Viaggi e Trasporti;ING - CC
+23/06/2025;Giugno;ricarica satispay;;41,00 €;Trasferimenti;ING - CC
+23/06/2025;Giugno;ricarica satispay;€ 41,00;;Trasferimenti;Satispay
+24/06/2025;Giugno;ricarica lime;;3,99 €;Viaggi e Trasporti;Paypal
+24/06/2025;Giugno;coca;;3,00 €;Bar e Ristoranti;ING - CC
+24/06/2025;Giugno;siga;;5,50 €;Altro;ING - CC
+24/06/2025;Giugno;pranzo;;2,00 €;Bar e Ristoranti;ING - CC
+24/06/2025;Giugno;pranzo;;8,00 €;Bar e Ristoranti;Buoni Pasto
+24/06/2025;Giugno;pranzo;;2,00 €;Bar e Ristoranti;ING - CC
+25/06/2025;Giugno;ricarica macchinette;;8,00 €;Bar e Ristoranti;Buoni Pasto
+25/06/2025;Giugno;pranzo;;8,00 €;Bar e Ristoranti;Buoni Pasto
+25/06/2025;Giugno;pranzo;;4,96 €;Bar e Ristoranti;ING - CC
+25/06/2025;Giugno;mc;;11,25 €;Bar e Ristoranti;ING - CC
+25/06/2025;Giugno;of;;3,79 €;Altro;ING - CC
+25/06/2025;Giugno;metro;;2,20 €;Viaggi e Trasporti;ING - CC
+26/06/2025;Giugno;bar;;3,70 €;Bar e Ristoranti;Satispay
+26/06/2025;Giugno;spesa;;19,42 €;Spesa;ING - CC
+26/06/2025;Giugno;focaccia;;5,40 €;Spesa;Satispay
+27/06/2025;Giugno;spostamento;;50,00 €;Trasferimenti;ING - CD
+27/06/2025;Giugno;prelievo;€ 40,00;;Trasferimenti;Cash
+27/06/2025;Giugno;garage;;28,00 €;Auto e Moto;Cash
+27/06/2025;Giugno;frappè;;3,00 €;Bar e Ristoranti;Satispay
+27/06/2025;Giugno;gelato;;1,50 €;Bar e Ristoranti;Satispay
+27/06/2025;Giugno;spostamento;€ 50,00;;Trasferimenti;ING - CC
+27/06/2025;Giugno;prelievo;;40,00 €;Trasferimenti;ING - CC
+27/06/2025;Giugno;cena fuoritutti;;23,00 €;Bar e Ristoranti;ING - CC
+28/06/2025;Giugno;caffè;;2,00 €;Bar e Ristoranti;Cash
+28/06/2025;Giugno;google one;;2,99 €;Casa e Utenze;Allianz
+28/06/2025;Giugno;pizza focaz concerto;;14,75 €;Bar e Ristoranti;Satispay
+28/06/2025;Giugno;gelato;;1,80 €;Bar e Ristoranti;Satispay
+29/06/2025;Giugno;spesa;;4,20 €;Spesa;Satispay
+29/06/2025;Giugno;bar bianca;;4,00 €;Bar e Ristoranti;Satispay
+30/06/2025;Giugno;stipendio;€ 1.801,00;;Stipendio;ING - CC
+30/06/2025;Giugno;risparmi;;500,00 €;Trasferimenti;ING - CC
+30/06/2025;Giugno;risparmi;€ 500,00;;Trasferimenti;ING - CD
+30/06/2025;Giugno;risparmi;;100,00 €;Trasferimenti;ING - CD
+30/06/2025;Giugno;risparmi;€ 100,00;;Trasferimenti;ING - CC
+30/06/2025;Giugno;fondo vacanze;;100,00 €;Trasferimenti;ING - CC
+30/06/2025;Giugno;fondo vacanze;€ 100,00;;Trasferimenti;Revolut
+30/06/2025;Giugno;ricarica satispay;;38,35 €;Trasferimenti;ING - CC
+30/06/2025;Giugno;ricarica satispay;€ 38,35;;Trasferimenti;Satispay
+30/06/2025;Giugno;colazione bar bianca;;5,80 €;Bar e Ristoranti;Satispay
+30/06/2025;Giugno;canone conto corrente;;11,40 €;Casa e Utenze;Allianz
+01/07/2025;Luglio;biglietto lucio corsi;;30,00 €;Svago e Intrattenimento;Satispay
+01/07/2025;Luglio;colazione bar bianca;;6,30 €;Bar e Ristoranti;Satispay
+01/07/2025;Luglio;DA TROVARE;;0,87 €;Altro;Allianz
+01/07/2025;Luglio;buoni pasto;€ 168,00;;Altre Entrate;Buoni Pasto
+01/07/2025;Luglio;ricarica buoni pasto;168,00 €;;Altre Entrate;Buoni Pasto
+02/07/2025;Luglio;lovable;;21,71 €;Casa e Utenze;ING - CC
+02/07/2025;Luglio;pranzo foc al form;;20,70 €;Bar e Ristoranti;ING - CC
+02/07/2025;Luglio;cinese lin;€ 9,00;;Bar e Ristoranti;Revolut
+02/07/2025;Luglio;cinese;;26,58 €;Bar e Ristoranti;ING - CC
+03/07/2025;Luglio;pizza;;11,08 €;Bar e Ristoranti;ING - CC
+03/07/2025;Luglio;pac;;270,00 €;Trasferimenti;ING - CC
+03/07/2025;Luglio;pac;€ 270,00;;Trasferimenti;Investimenti
+03/07/2025;Luglio;caffè bar;;4,10 €;Bar e Ristoranti;Satispay
+04/07/2025;Luglio;treno 17/7;;6,00 €;Viaggi e Trasporti;Revolut
+04/07/2025;Luglio;lavaggio auto;;5,00 €;Auto e Moto;ING - CC
+04/07/2025;Luglio;pranzo;;8,60 €;Spesa;ING - CC
+04/07/2025;Luglio;multa;;30,90 €;Auto e Moto;ING - CC
+04/07/2025;Luglio;bar;;2,40 €;Bar e Ristoranti;Satispay
+04/07/2025;Luglio;benzina;;38,36 €;Viaggi e Trasporti;ING - CC
+06/07/2025;Luglio;caffè;;2,60 €;Bar e Ristoranti;ING - CC
+07/07/2025;Luglio;cinema;;18,00 €;Svago e Intrattenimento;ING - CC
+07/07/2025;Luglio;ape bardo;;7,80 €;Bar e Ristoranti;ING - CC
+07/07/2025;Luglio;ricarica satispay;;48,60 €;Trasferimenti;ING - CC
+07/07/2025;Luglio;ricarica satispay;€ 48,60;;Trasferimenti;Satispay
+08/07/2025;Luglio;benzina;;39,06 €;Viaggi e Trasporti;ING - CC
+08/07/2025;Luglio;mc;;14,20 €;Bar e Ristoranti;ING - CC
+09/07/2025;Luglio;pranzo;;8,00 €;Bar e Ristoranti;Buoni Pasto
+09/07/2025;Luglio;bus;;2,20 €;Viaggi e Trasporti;ING - CC
+09/07/2025;Luglio;pranzo;;2,71 €;Bar e Ristoranti;ING - CC
+10/07/2025;Luglio;addebito carta di credito;;220,41 €;Shopping;ING - CC
+10/07/2025;Luglio;bus;;2,20 €;Viaggi e Trasporti;ING - CC
+10/07/2025;Luglio;bla bla car;;13,59 €;Viaggi e Trasporti;ING - CC
+10/07/2025;Luglio;metro;;2,20 €;Viaggi e Trasporti;ING - CC
+10/07/2025;Luglio;pranzo;;8,00 €;Bar e Ristoranti;Buoni Pasto
+10/07/2025;Luglio;pranzo;;3,90 €;Bar e Ristoranti;ING - CC
+10/07/2025;Luglio;spesa;;16,97 €;Spesa;ING - CC
+11/07/2025;Luglio;multa revisione;;123,59 €;Auto e Moto;ING - CC
+11/07/2025;Luglio;bar;;2,70 €;Bar e Ristoranti;Satispay
+11/07/2025;Luglio;gelato;;3,00 €;Bar e Ristoranti;Satispay
+11/07/2025;Luglio;riparazione parabrezza + revisione;;560,00 €;Auto e Moto;Allianz
+11/07/2025;Luglio;backblaze;;1,72 €;Casa e Utenze;ING - CC
+11/07/2025;Luglio;prime;;4,99 €;Casa e Utenze;ING - CC
+11/07/2025;Luglio;money packing cubes bubi;€ 26,00;;Altre Entrate;Paypal
+11/07/2025;Luglio;packing cubes bubi;;25,64 €;Shopping;ING - CC
+11/07/2025;Luglio;trasferimento;€ 26,00;;Trasferimenti;ING - CC
+11/07/2025;Luglio;saldo telaietti moto;;100,00 €;Auto e Moto;ING - CC
+11/07/2025;Luglio;trasferimento;;26,00 €;Trasferimenti;Paypal
+11/07/2025;Luglio;pizza;;16,00 €;Bar e Ristoranti;ING - CC
+12/07/2025;Luglio;macellaio;;14,80 €;Spesa;Satispay
+12/07/2025;Luglio;sabbia gatto;;4,00 €;Spesa;Cash
+12/07/2025;Luglio;iliad;;9,99 €;Casa e Utenze;ING - CC
+12/07/2025;Luglio;acconto borse laterali;;50,00 €;Auto e Moto;ING - CC
+12/07/2025;Luglio;birre;;3,15 €;Spesa;Cash
+13/07/2025;Luglio;pastificio;;6,20 €;Bar e Ristoranti;Satispay
+14/07/2025;Luglio;bar;;2,40 €;Bar e Ristoranti;Satispay
+14/07/2025;Luglio;focaccia;;4,60 €;Spesa;Satispay
+15/07/2025;Luglio;bar;;3,60 €;Bar e Ristoranti;Satispay
+15/07/2025;Luglio;pesto;;4,00 €;Spesa;Satispay
+16/07/2025;Luglio;trasferimento;;200,00 €;Trasferimenti;ING - CD
+16/07/2025;Luglio;trasferimento;€ 200,00;;Trasferimenti;ING - CC
+16/07/2025;Luglio;bar;;2,40 €;Bar e Ristoranti;Satispay
+16/07/2025;Luglio;saldo borse moto;;89,00 €;Auto e Moto;ING - CC
+17/07/2025;Luglio;bar;;2,40 €;Bar e Ristoranti;Satispay
+17/07/2025;Luglio;focaccia e the;;3,10 €;Spesa;Satispay
+17/07/2025;Luglio;pranzo;;8,00 €;Bar e Ristoranti;Buoni Pasto
+17/07/2025;Luglio;pranzo;;2,26 €;Bar e Ristoranti;Cash
+17/07/2025;Luglio;metro;;4,40 €;Viaggi e Trasporti;ING - CC
+18/07/2025;Luglio;ghini laura ???;;14,82 €;Altro;ING - CC
+18/07/2025;Luglio;icloud;;0,99 €;Casa e Utenze;ING - CC
+18/07/2025;Luglio;incasso borsa di studio;€ 2.000,00;;Altre Entrate;ING - CC
+18/07/2025;Luglio;risparmi;;1.000,00 €;Trasferimenti;ING - CC
+18/07/2025;Luglio;risparmi;€ 1.000,00;;Trasferimenti;ING - CD
+18/07/2025;Luglio;fondo vacanze;;150,00 €;Trasferimenti;ING - CC
+18/07/2025;Luglio;fondo vacanze;€ 150,00;;Trasferimenti;Revolut
+18/07/2025;Luglio;cambio gomme;;440,00 €;Auto e Moto;ING - CC
+18/07/2025;Luglio;parrucchiere;;25,00 €;Salute;ING - CC
+18/07/2025;Luglio;siga;;5,00 €;Altro;ING - CC
+19/07/2025;Luglio;gelato;;6,00 €;Bar e Ristoranti;ING - CC
+19/07/2025;Luglio;prelievo;;70,00 €;Trasferimenti;ING - CC
+19/07/2025;Luglio;prelievo;€ 70,00;;Trasferimenti;Cash
+20/07/2025;Luglio;ape;;7,00 €;Bar e Ristoranti;ING - CC
+20/07/2025;Luglio;lucchetti borse moto;;15,80 €;Shopping;ING - CC
+21/07/2025;Luglio;sciarbo dolce;;6,00 €;Bar e Ristoranti;ING - CC
+21/07/2025;Luglio;ferramenta;;15,00 €;Casa e Utenze;Cash
+21/07/2025;Luglio;cena mentelocale;;24,75 €;Bar e Ristoranti;ING - CC
+22/07/2025;Luglio;yogurt;;6,00 €;Bar e Ristoranti;ING - CC
+22/07/2025;Luglio;ricarica satispay;€ 49,20;;Trasferimenti;Satispay
+22/07/2025;Luglio;ricarica satispay;;49,20 €;Trasferimenti;ING - CC
+22/07/2025;Luglio;;;2,60 €;Bar e Ristoranti;Satispay
+22/07/2025;Luglio;bar;;3,70 €;Bar e Ristoranti;Satispay
+22/07/2025;Luglio;amaro;;4,00 €;Bar e Ristoranti;ING - CC
+23/07/2025;Luglio;bar;;2,40 €;Bar e Ristoranti;Satispay
+23/07/2025;Luglio;bla bla car;€ 10,00;;Viaggi e Trasporti;Paypal
+23/07/2025;Luglio;mcdelivery;;15,34 €;Bar e Ristoranti;ING - CC
+24/07/2025;Luglio;bar;;2,40 €;Bar e Ristoranti;Satispay
+24/07/2025;Luglio;benzina;;39,79 €;Viaggi e Trasporti;ING - CC
+24/07/2025;Luglio;pranzo;;8,00 €;Bar e Ristoranti;Buoni Pasto
+24/07/2025;Luglio;pranzo;;5,00 €;Bar e Ristoranti;ING - CC
+24/07/2025;Luglio;tolto cash da broker;;30,93 €;Trasferimenti;Investimenti
+24/07/2025;Luglio;tolto cash da broker;€ 30,93;;Trasferimenti;ING - CC
+25/07/2025;Luglio;visura pra;;7,50 €;Auto e Moto;ING - CC
+25/07/2025;Luglio;bla bla car;€ 12,00;;Viaggi e Trasporti;Paypal
+25/07/2025;Luglio;ape;;13,00 €;Bar e Ristoranti;ING - CC
+25/07/2025;Luglio;cena fuoritutti;;18,50 €;Bar e Ristoranti;ING - CC
+25/07/2025;Luglio;bar;;4,90 €;Bar e Ristoranti;Satispay
+26/07/2025;Luglio;benzina;;16,97 €;Viaggi e Trasporti;ING - CC
+26/07/2025;Luglio;pranzo ormea;;26,50 €;Bar e Ristoranti;Cash
+26/07/2025;Luglio;caffè;;2,60 €;Bar e Ristoranti;Satispay
+26/07/2025;Luglio;acqua;;4,20 €;Spesa;ING - CC
+26/07/2025;Luglio;gelato;;3,00 €;Bar e Ristoranti;Satispay
+27/07/2025;Luglio;prenotazione orbetello 1;;70,00 €;Svago e Intrattenimento;Revolut
+27/07/2025;Luglio;bar bianca colaz;;4,60 €;Bar e Ristoranti;Satispay
+27/07/2025;Luglio;decathlon;;13,48 €;Shopping;Revolut
+27/07/2025;Luglio;sagra;;20,00 €;Bar e Ristoranti;Cash
+27/07/2025;Luglio;birra;;5,00 €;Bar e Ristoranti;ING - CC
+27/07/2025;Luglio;birra;;5,00 €;Bar e Ristoranti;Revolut
+27/07/2025;Luglio;bis primo;;5,00 €;Bar e Ristoranti;Revolut
+27/07/2025;Luglio;torta;;5,00 €;Bar e Ristoranti;Cash
+27/07/2025;Luglio;of;;9,38 €;Altro;ING - CC
+28/07/2025;Luglio;benzina;;18,00 €;Viaggi e Trasporti;ING - CC
+28/07/2025;Luglio;google one;;2,99 €;Casa e Utenze;ING - CC
+28/07/2025;Luglio;albergo orbetello 2;;130,00 €;Svago e Intrattenimento;Revolut
+28/07/2025;Luglio;bla bla car;€ 6,50;;Viaggi e Trasporti;Paypal
+28/07/2025;Luglio;pranzo;;8,00 €;Bar e Ristoranti;Buoni Pasto
+28/07/2025;Luglio;pranzo;;2,00 €;Bar e Ristoranti;ING - CC
+28/07/2025;Luglio;ricarica macchinette;;8,00 €;Bar e Ristoranti;Buoni Pasto
+28/07/2025;Luglio;parcheggio;;2,00 €;Viaggi e Trasporti;Cash
+28/07/2025;Luglio;lavaggio auto;;7,00 €;Auto e Moto;Revolut
+28/07/2025;Luglio;benzina;;44,37 €;Viaggi e Trasporti;Revolut
+28/07/2025;Luglio;acqua;;1,00 €;Bar e Ristoranti;ING - CC
+28/07/2025;Luglio;rimborso tasse unito;€ 150,20;;Altre Entrate;ING - CC
+29/07/2025;Luglio;bla bla car;€ 12,00;;Viaggi e Trasporti;Paypal
+29/07/2025;Luglio;spesa;;1,00 €;Spesa;Satispay
+29/07/2025;Luglio;spesa;;24,00 €;Spesa;Buoni Pasto
+29/07/2025;Luglio;bar;;2,40 €;Bar e Ristoranti;Satispay
+29/07/2025;Luglio;prelievo;;40,00 €;Trasferimenti;Revolut
+29/07/2025;Luglio;prelievo;€ 40,00;;Trasferimenti;Cash
+29/07/2025;Luglio;garage;;28,00 €;Auto e Moto;Cash
+30/07/2025;Luglio;prenotazione casa del chiodo;;60,94 €;Svago e Intrattenimento;Revolut
+30/07/2025;Luglio;bar;;2,40 €;Bar e Ristoranti;Satispay
+30/07/2025;Luglio;ape;;10,00 €;Bar e Ristoranti;Revolut
+31/07/2025;Luglio;bar;;2,40 €;Bar e Ristoranti;Satispay
+31/07/2025;Luglio;stipendio;€ 1.594,00;;Stipendio;ING - CC
+31/07/2025;Luglio;saldo spotify 2023 2024 2025 a ele;;129,50 €;Casa e Utenze;ING - CC
+31/07/2025;Luglio;spesa;;9,34 €;Spesa;Revolut
+31/07/2025;Luglio;macelleria;;7,20 €;Spesa;Satispay
+31/07/2025;Luglio;risparmi;;600,00 €;Trasferimenti;ING - CC
+31/07/2025;Luglio;risparmi;€ 600,00;;Trasferimenti;ING - CD
+01/08/2025;Agosto;benzina;;11,71 €;Viaggi e Trasporti;Revolut
+01/08/2025;Agosto;dominio portflow.it;;1,22 €;Altro;Paypal
+01/08/2025;Agosto;solo pizza;;31,00 €;Bar e Ristoranti;Revolut
+01/08/2025;Agosto;siga;;11,00 €;Altro;Revolut
+01/08/2025;Agosto;pac;;270,00 €;Trasferimenti;ING - CC
+01/08/2025;Agosto;pac;€ 270,00;;Trasferimenti;Investimenti
+01/08/2025;Agosto;ricarica buoni pasto;144,00 €;;Altre Entrate;Buoni Pasto
+02/08/2025;Agosto;prenotazione albergo volastra;;60,62 €;Svago e Intrattenimento;Revolut
+02/08/2025;Agosto;pedaggio;;2,55 €;Viaggi e Trasporti;Revolut
+02/08/2025;Agosto;lovable;;22,39 €;Casa e Utenze;ING - CC
+02/08/2025;Agosto;pranzo recco;;22,54 €;Bar e Ristoranti;Revolut
+02/08/2025;Agosto;bar rapallo;;5,50 €;Bar e Ristoranti;Revolut
+02/08/2025;Agosto;cena angiò ceré;;46,50 €;Bar e Ristoranti;Revolut
+03/08/2025;Agosto;albergo agriturismo ceré;;42,50 €;Svago e Intrattenimento;Revolut
+03/08/2025;Agosto;mc la spezia;;15,00 €;Bar e Ristoranti;Revolut
+03/08/2025;Agosto;caffè mc;;2,00 €;Bar e Ristoranti;Revolut
+03/08/2025;Agosto;acqua;;1,00 €;Bar e Ristoranti;Revolut
+03/08/2025;Agosto;benzina;;15,08 €;Viaggi e Trasporti;Revolut
+04/08/2025;Agosto;cena palaia;;20,00 €;Bar e Ristoranti;Revolut
+04/08/2025;Agosto;albergo palaia;;72,87 €;Svago e Intrattenimento;Revolut
+04/08/2025;Agosto;caffè;;1,50 €;Bar e Ristoranti;Revolut
+04/08/2025;Agosto;benzina;;5,89 €;Viaggi e Trasporti;Revolut
+04/08/2025;Agosto;san galgano;;6,00 €;Svago e Intrattenimento;Revolut
+04/08/2025;Agosto;ricarica satispay;;46,80 €;Trasferimenti;ING - CC
+04/08/2025;Agosto;ricarica satispay;€ 46,80;;Trasferimenti;Satispay
+05/08/2025;Agosto;cochine;;7,00 €;Bar e Ristoranti;Revolut
+05/08/2025;Agosto;pranzo feniglia;;23,00 €;Bar e Ristoranti;Revolut
+05/08/2025;Agosto;spesa orbetello;;20,69 €;Spesa;Revolut
+05/08/2025;Agosto;cena porto santo stefano pizza phermento;;36,00 €;Bar e Ristoranti;Revolut
+06/08/2025;Agosto;pranzo orbetello;;9,00 €;Bar e Ristoranti;Revolut
+06/08/2025;Agosto;benzina;;14,19 €;Viaggi e Trasporti;Revolut
+07/08/2025;Agosto;spesa;;5,20 €;Spesa;Revolut
+07/08/2025;Agosto;trasferimento;;200,00 €;Trasferimenti;ING - CC
+07/08/2025;Agosto;trasferimento;€ 200,00;;Trasferimenti;Revolut
+07/08/2025;Agosto;ristorante;;4,00 €;Bar e Ristoranti;Revolut
+07/08/2025;Agosto;gelati;;5,80 €;Bar e Ristoranti;Revolut
+07/08/2025;Agosto;cena cala piatti;;120,00 €;Bar e Ristoranti;ING - CC
+07/08/2025;Agosto;benzina;;14,36 €;Viaggi e Trasporti;ING - CC
+08/08/2025;Agosto;succo;;3,50 €;Bar e Ristoranti;Revolut
+08/08/2025;Agosto;pranzo castagneto carducci;;24,00 €;Bar e Ristoranti;Revolut
+08/08/2025;Agosto;prelievo da ing;;100,00 €;Trasferimenti;ING - CC
+08/08/2025;Agosto;prelievo da ing;€ 100,00;;Trasferimenti;Cash
+08/08/2025;Agosto;ape rinforzato rosignano;;47,00 €;Bar e Ristoranti;Cash
+09/08/2025;Agosto;colazione livorno;;9,35 €;Bar e Ristoranti;Revolut
+09/08/2025;Agosto;bar;;8,43 €;Bar e Ristoranti;Revolut
+09/08/2025;Agosto;pedaggio;;2,50 €;Viaggi e Trasporti;Revolut
+09/08/2025;Agosto;mc;;7,30 €;Bar e Ristoranti;Revolut
+09/08/2025;Agosto;mc;;3,85 €;Bar e Ristoranti;Revolut
+09/08/2025;Agosto;sagra volastra;;20,50 €;Bar e Ristoranti;Revolut
+09/08/2025;Agosto;sagra volastra;;7,00 €;Bar e Ristoranti;Revolut
+10/08/2025;Agosto;colazione sestri levante;;9,50 €;Bar e Ristoranti;Revolut
+10/08/2025;Agosto;nastro isolante;;1,00 €;Auto e Moto;ING - CC
+10/08/2025;Agosto;lavaggio moto;;2,00 €;Auto e Moto;Cash
+10/08/2025;Agosto;birra;;5,00 €;Bar e Ristoranti;ING - CC
+10/08/2025;Agosto;solo pizza;;22,00 €;Bar e Ristoranti;Cash
+10/08/2025;Agosto;addebito carta di credito;;103,45 €;Shopping;ING - CC
+11/08/2025;Agosto;macelleria;;5,50 €;Spesa;Satispay
+11/08/2025;Agosto;gastronomia;;16,00 €;Spesa;Cash
+11/08/2025;Agosto;verduriere;;10,00 €;Spesa;Cash
+11/08/2025;Agosto;parcella commercialista;;80,00 €;Altro;ING - CC
+11/08/2025;Agosto;prime;;4,99 €;Casa e Utenze;ING - CC
+12/08/2025;Agosto;frappè;;2,00 €;Bar e Ristoranti;Cash
+12/08/2025;Agosto;github copilot;;18,41 €;Casa e Utenze;Paypal
+12/08/2025;Agosto;iliad;;9,99 €;Casa e Utenze;ING - CC
+13/08/2025;Agosto;bar;;14,00 €;Bar e Ristoranti;ING - CC
+13/08/2025;Agosto;mc;;14,39 €;Bar e Ristoranti;ING - CC
+13/08/2025;Agosto;backblaze;;1,82 €;Casa e Utenze;ING - CC
+14/08/2025;Agosto;bar;;4,00 €;Bar e Ristoranti;Satispay
+14/08/2025;Agosto;assicurazione moto;;20,87 €;Auto e Moto;Paypal
+14/08/2025;Agosto;gelato;;3,00 €;Bar e Ristoranti;Cash
+14/08/2025;Agosto;cena green;;14,00 €;Bar e Ristoranti;Revolut
+14/08/2025;Agosto;assicurazione moto;;271,10 €;Auto e Moto;ING - CC
+14/08/2025;Agosto;spesa ferragosto;;16,39 €;Spesa;ING - CC
+14/08/2025;Agosto;spesa ferragosto;;8,28 €;Spesa;ING - CC
+15/08/2025;Agosto;benzina;;43,10 €;Viaggi e Trasporti;Revolut
+16/08/2025;Agosto;trasferimento;;100,00 €;Trasferimenti;Revolut
+16/08/2025;Agosto;trasferimento;€ 100,00;;Trasferimenti;ING - CC
+17/08/2025;Agosto;caffè;;1,30 €;Bar e Ristoranti;Satispay
+18/08/2025;Agosto;caffè;;1,30 €;Bar e Ristoranti;Satispay
+18/08/2025;Agosto;gelato;;3,00 €;Bar e Ristoranti;Satispay
+18/08/2025;Agosto;cartine;;1,00 €;Altro;Satispay
+18/08/2025;Agosto;trasferimento;;150,00 €;Trasferimenti;ING - CD
+18/08/2025;Agosto;icloud;;0,99 €;Casa e Utenze;ING - CC
+18/08/2025;Agosto;trasferimento;€ 150,00;;Trasferimenti;ING - CC
+18/08/2025;Agosto;bollo auto fiat 500 2025;;152,45 €;Auto e Moto;ING - CC
+18/08/2025;Agosto;unipolmove;;94,40 €;Viaggi e Trasporti;ING - CC
+19/08/2025;Agosto;spesa;;8,04 €;Spesa;ING - CC
+20/08/2025;Agosto;ugetti;;3,60 €;Bar e Ristoranti;Satispay
+20/08/2025;Agosto;regalo gian;;18,99 €;Shopping;ING - CC
+21/08/2025;Agosto;regalo regi;;9,60 €;Altro;Revolut
+21/08/2025;Agosto;trasferimento;;200,00 €;Trasferimenti;ING - CD
+21/08/2025;Agosto;spesa;;10,50 €;Spesa;Revolut
+21/08/2025;Agosto;panino campo smith;;9,50 €;Bar e Ristoranti;Revolut
+21/08/2025;Agosto;frappé;;3,00 €;Bar e Ristoranti;Satispay
+21/08/2025;Agosto;amaro;;4,00 €;Bar e Ristoranti;Revolut
+21/08/2025;Agosto;trasferimento;€ 200,00;;Trasferimenti;ING - CC
+21/08/2025;Agosto;benzina;;30,81 €;Viaggi e Trasporti;ING - CC
+21/08/2025;Agosto;regalo regi;€ 1,30;;Altro;Paypal
+22/08/2025;Agosto;caffè;;2,40 €;Bar e Ristoranti;Satispay
+22/08/2025;Agosto;cena porto;;17,50 €;Bar e Ristoranti;ING - CC
+23/08/2025;Agosto;colaz bar;;5,80 €;Bar e Ristoranti;Satispay
+23/08/2025;Agosto;benzina;;17,26 €;Viaggi e Trasporti;ING - CC
+23/08/2025;Agosto;pranzo noli;;9,75 €;Bar e Ristoranti;ING - CC
+23/08/2025;Agosto;cena faiallo;;26,50 €;Bar e Ristoranti;ING - CC
+24/08/2025;Agosto;fornaio;;6,50 €;Spesa;ING - CC
+25/08/2025;Agosto;bar;;2,40 €;Bar e Ristoranti;Satispay
+25/08/2025;Agosto;spesa;;5,83 €;Spesa;Revolut
+25/08/2025;Agosto;fermenti lattici;;29,90 €;Salute;ING - CC
+25/08/2025;Agosto;ricarica satispay;;30,90 €;Trasferimenti;ING - CC
+25/08/2025;Agosto;ricarica satispay;€ 30,90;;Trasferimenti;Satispay
+25/08/2025;Agosto;crediti anthropic;;5,28 €;Altro;ING - CC
+25/08/2025;Agosto;bar;;2,40 €;Bar e Ristoranti;Satispay
+26/08/2025;Agosto;bar;;2,40 €;Bar e Ristoranti;Satispay
+26/08/2025;Agosto;dominio scadenzeauto.it;;4,88 €;Altro;ING - CC
+27/08/2025;Agosto;bar;;2,40 €;Bar e Ristoranti;Satispay
+27/08/2025;Agosto;trasferimento;;100,00 €;Trasferimenti;ING - CD
+27/08/2025;Agosto;benzina;;29,46 €;Viaggi e Trasporti;ING - CC
+27/08/2025;Agosto;trasferimento;€ 100,00;;Trasferimenti;ING - CC
+27/08/2025;Agosto;ape citylife;;10,00 €;Bar e Ristoranti;ING - CC
+27/08/2025;Agosto;birra;;9,00 €;Bar e Ristoranti;ING - CC
+27/08/2025;Agosto;ricarica buoni pasto;168,00 €;;Altre Entrate;Buoni Pasto
+28/08/2025;Agosto;bla bla car;€ 18,00;;Viaggi e Trasporti;Paypal
+28/08/2025;Agosto;pranzo;;3,23 €;Bar e Ristoranti;Revolut
+28/08/2025;Agosto;pranzo;;8,00 €;Bar e Ristoranti;Buoni Pasto
+28/08/2025;Agosto;gelato;;3,50 €;Bar e Ristoranti;Satispay
+28/08/2025;Agosto;benzina;;20,05 €;Viaggi e Trasporti;ING - CC
+29/08/2025;Agosto;bla bla car;€ 12,00;;Viaggi e Trasporti;Paypal
+29/08/2025;Agosto;bar;;6,50 €;Bar e Ristoranti;Satispay
+29/08/2025;Agosto;stipendio;€ 1.594,00;;Stipendio;ING - CC
+29/08/2025;Agosto;trasferimento;;500,00 €;Trasferimenti;ING - CC
+29/08/2025;Agosto;trasferimento;€ 500,00;;Trasferimenti;ING - CD
+29/08/2025;Agosto;prelievo;;40,00 €;Trasferimenti;ING - CC
+29/08/2025;Agosto;prelievo;€ 40,00;;Trasferimenti;Cash
+29/08/2025;Agosto;garage;;28,00 €;Auto e Moto;Cash
+29/08/2025;Agosto;spesa;;16,00 €;Spesa;Buoni Pasto
+29/08/2025;Agosto;spesa;;5,42 €;Spesa;ING - CC
+30/08/2025;Agosto;colaz scaletto;;9,00 €;Bar e Ristoranti;ING - CC
+30/08/2025;Agosto;pizza;;9,58 €;Bar e Ristoranti;ING - CC
+30/08/2025;Agosto;google one;;2,99 €;Casa e Utenze;ING - CC
+31/08/2025;Agosto;gelato;;3,00 €;Bar e Ristoranti;Satispay
+01/09/2025;Settembre;colaz bar bianca;;11,60 €;Bar e Ristoranti;Satispay
+01/09/2025;Settembre;bla bla car;€ 24,00;;Viaggi e Trasporti;Paypal
+01/09/2025;Settembre;cavo iphone e libro supabase;;37,98 €;Shopping;ING - CC
+01/09/2025;Settembre;pac;€ 270,00;;Trasferimenti;Investimenti
+01/09/2025;Settembre;pac;;270,00 €;Trasferimenti;ING - CC
+02/09/2025;Settembre;pranzo;;2,00 €;Bar e Ristoranti;Cash
+02/09/2025;Settembre;pranzo;;16,00 €;Bar e Ristoranti;Buoni Pasto
+02/09/2025;Settembre;benzina;;34,17 €;Viaggi e Trasporti;ING - CC
+02/09/2025;Settembre;benzina;;21,03 €;Viaggi e Trasporti;ING - CC
+02/09/2025;Settembre;bar bianca;;8,60 €;Bar e Ristoranti;ING - CC
+03/09/2025;Settembre;bar;;2,40 €;Bar e Ristoranti;Satispay
+03/09/2025;Settembre;anthropic;;0,57 €;Altro;ING - CC
+04/09/2025;Settembre;farmacia;;20,00 €;Salute;ING - CC
+05/09/2025;Settembre;investimento wayla;;250,00 €;Trasferimenti;ING - CD
+05/09/2025;Settembre;investimento wayla;€ 250,00;;Trasferimenti;Investimenti
+05/09/2025;Settembre;investimento wayla;;250,00 €;Trasferimenti;ING - CC
+05/09/2025;Settembre;investimento wayla;€ 250,00;;Trasferimenti;ING - CC
+05/09/2025;Settembre;cena drop;;19,10 €;Bar e Ristoranti;ING - CC
+06/09/2025;Settembre;colaz bar;;5,20 €;Bar e Ristoranti;Satispay
+06/09/2025;Settembre;pasta fresca;;3,70 €;Spesa;Satispay
+06/09/2025;Settembre;pizza da paro;;10,00 €;Bar e Ristoranti;Paypal
+06/09/2025;Settembre;birre;;12,00 €;Bar e Ristoranti;ING - CC
+06/09/2025;Settembre;spesa x ape da pie;;10,64 €;Spesa;ING - CC
+06/09/2025;Settembre;parrucchiere;;25,00 €;Salute;ING - CC
+07/09/2025;Settembre;cibo gatto;;6,04 €;Spesa;ING - CC
+08/09/2025;Settembre;ricarica satispay;€ 49,80;;Trasferimenti;Satispay
+08/09/2025;Settembre;bar;;2,40 €;Bar e Ristoranti;Satispay
+08/09/2025;Settembre;http catcher;;3,99 €;Shopping;Paypal
+08/09/2025;Settembre;ricarica satispay;;49,80 €;Trasferimenti;ING - CC
+09/09/2025;Settembre;bar;;2,40 €;Bar e Ristoranti;Satispay
+09/09/2025;Settembre;bla bla car;€ 12,00;;Viaggi e Trasporti;Paypal
+09/09/2025;Settembre;cochine;;8,00 €;Bar e Ristoranti;Satispay
+09/09/2025;Settembre;metro;;6,60 €;Viaggi e Trasporti;ING - CC
+09/09/2025;Settembre;benzina;;28,34 €;Viaggi e Trasporti;ING - CC
+09/09/2025;Settembre;pranzo;;12,24 €;Bar e Ristoranti;ING - CC
+09/09/2025;Settembre;parcheggio;;2,50 €;Viaggi e Trasporti;ING - CC
+09/09/2025;Settembre;donazione wfp gaza;;10,20 €;Viaggi e Trasporti;ING - CC
+09/09/2025;Settembre;parrucchiere;;25,00 €;Salute;ING - CC
+09/09/2025;Settembre;unipolmove;;102,10 €;Viaggi e Trasporti;ING - CC
+10/09/2025;Settembre;bla bla car;36,00 €;;Viaggi e Trasporti;Paypal
+10/09/2025;Settembre;trasferimento;;89,31 €;Trasferimenti;Paypal
+10/09/2025;Settembre;trasferimento;€ 89,31;;Trasferimenti;ING - CC
+10/09/2025;Settembre;prime;;4,99 €;Viaggi e Trasporti;ING - CC
+10/09/2025;Settembre;directa rubricazione;;50,00 €;Trasferimenti;ING - CD
+10/09/2025;Settembre;directa rubricazione;€ 50,00;;Trasferimenti;ING - CC
+10/09/2025;Settembre;directa rubricazione;;50,00 €;Trasferimenti;ING - CC
+10/09/2025;Settembre;directa rubricazione;€ 50,00;;Trasferimenti;Investimenti
+10/09/2025;Settembre;addebito carta di credito;;103,45 €;Shopping;ING - CC
+12/09/2025;Settembre;bar;;6,10 €;Bar e Ristoranti;Satispay
+12/09/2025;Settembre;iliad;;9,99 €;Casa e Utenze;ING - CC
+12/09/2025;Settembre;github copilot;;12,61 €;Casa e Utenze;Allianz
+12/09/2025;Settembre;cena boutique della birra;;43,00 €;Bar e Ristoranti;ING - CC
+13/09/2025;Settembre;backblaze;;1,81 €;Casa e Utenze;ING - CC
+13/09/2025;Settembre;rotondo;;13,50 €;Bar e Ristoranti;ING - CC
+13/09/2025;Settembre;mc;;10,10 €;Bar e Ristoranti;ING - CC
+13/09/2025;Settembre;regalo pa;;24,00 €;Altro;ING - CC
+13/09/2025;Settembre;spesa;;8,00 €;Spesa;Buoni Pasto
+14/09/2025;Settembre;birre;;10,00 €;Bar e Ristoranti;ING - CC
+14/09/2025;Settembre;colaz berge;;7,10 €;Bar e Ristoranti;Satispay
+14/09/2025;Settembre;cochine;;7,00 €;Bar e Ristoranti;Satispay
+14/09/2025;Settembre;benzina;;15,31 €;Viaggi e Trasporti;ING - CC
+14/09/2025;Settembre;bla bla car;;12,39 €;Viaggi e Trasporti;ING - CC
+16/09/2025;Settembre;bla bla car;;14,89 €;Viaggi e Trasporti;ING - CC
+16/09/2025;Settembre;ricarica satispay;;33,00 €;Trasferimenti;ING - CC
+16/09/2025;Settembre;ricarica satispay;€ 33,00;;Trasferimenti;Satispay
+18/09/2025;Settembre;icloud;;0,99 €;Casa e Utenze;ING - CC
+17/09/2025;Settembre;bar;;2,40 €;Bar e Ristoranti;Satispay
+18/09/2025;Settembre;bar;;2,40 €;Bar e Ristoranti;Satispay
+18/09/2025;Settembre;metro;;2,20 €;Viaggi e Trasporti;ING - CC
+18/09/2025;Settembre;pranzo;;8,00 €;Bar e Ristoranti;Buoni Pasto
+18/09/2025;Settembre;pranzo;;2,26 €;Bar e Ristoranti;ING - CC
+18/09/2025;Settembre;ricarica macchinette;;5,00 €;Bar e Ristoranti;ING - CC
+18/09/2025;Settembre;bus;;2,20 €;Viaggi e Trasporti;ING - CC
+18/09/2025;Settembre;birre;;12,00 €;Bar e Ristoranti;Satispay
+19/09/2025;Settembre;pranzo;;8,00 €;Bar e Ristoranti;Buoni Pasto
+22/09/2025;Settembre;bar;;2,40 €;Bar e Ristoranti;Satispay
+22/09/2025;Settembre;crediti ai;;4,95 €;Altro;ING - CC
+23/09/2025;Settembre;bla bla car;;12,39 €;Viaggi e Trasporti;ING - CC
+23/09/2025;Settembre;bla bla car;;14,89 €;Viaggi e Trasporti;ING - CC
+24/09/2025;Settembre;bar;;3,70 €;Bar e Ristoranti;Satispay
+24/09/2025;Settembre;fornaio;;5,30 €;Spesa;Satispay
+24/09/2025;Settembre;bla bla car;;14,89 €;Viaggi e Trasporti;ING - CC
+19/09/2025;Settembre;pranzo;;4,50 €;Bar e Ristoranti;ING - CC
+19/09/2025;Settembre;radler;;12,00 €;Bar e Ristoranti;ING - CC
+20/09/2025;Settembre;colaz bar bicocca;;11,30 €;Bar e Ristoranti;ING - CC
+20/09/2025;Settembre;siga;;6,20 €;Altro;ING - CC
+20/09/2025;Settembre;giannasi;;23,45 €;Bar e Ristoranti;ING - CC
+21/09/2025;Settembre;cinese sarpi;;9,00 €;Bar e Ristoranti;ING - CC
+21/09/2025;Settembre;cochine;;6,00 €;Bar e Ristoranti;ING - CC
+25/09/2025;Settembre;metro;;2,20 €;Viaggi e Trasporti;ING - CC
+25/09/2025;Settembre;pranzo;;16,00 €;Bar e Ristoranti;Buoni Pasto
+25/09/2025;Settembre;pranzo;;2,90 €;Bar e Ristoranti;ING - CC
+25/09/2025;Settembre;zity;;13,34 €;Viaggi e Trasporti;ING - CC
+25/09/2025;Settembre;metro;;2,20 €;Viaggi e Trasporti;ING - CC
+26/09/2025;Settembre;pranzo;;8,00 €;Bar e Ristoranti;Buoni Pasto
+26/09/2025;Settembre;pranzo;;2,00 €;Bar e Ristoranti;ING - CC
+26/09/2025;Settembre;metro;;2,20 €;Viaggi e Trasporti;ING - CC
+26/09/2025;Settembre;spesa;;15,91 €;Spesa;ING - CC
+27/09/2025;Settembre;bar;;2,40 €;Bar e Ristoranti;Satispay
+27/09/2025;Settembre;miele di betta;;11,00 €;Shopping;Revolut
+27/09/2025;Settembre;ape;;7,00 €;Bar e Ristoranti;ING - CC
+28/09/2025;Settembre;pizza e focaccia;;11,62 €;Bar e Ristoranti;Satispay
+28/09/2025;Settembre;caffè e acqua;;3,00 €;Bar e Ristoranti;ING - CC
+27/09/2025;Settembre;google one;;2,99 €;Casa e Utenze;ING - CC
+27/09/2025;Settembre;bla bla car;€ 12,39;;Viaggi e Trasporti;ING - CC
+12/09/2025;Settembre;farmacia;;2,00 €;Salute;ING - CC
+27/09/2025;Settembre;DA TROVARE;;1,55 €;Altro;Revolut
+29/09/2025;Settembre;caffè;;2,40 €;Bar e Ristoranti;Satispay
+29/09/2025;Settembre;cochina;;1,95 €;Spesa;ING - CC
+30/09/2025;Settembre;stipendio;€ 1.585,00;;Stipendio;ING - CC
+30/09/2025;Settembre;risparmi;;100,00 €;Trasferimenti;ING - CC
+30/09/2025;Settembre;risparmi;€ 100,00;;Trasferimenti;ING - CD
+29/09/2025;Settembre;ricarica satispay;;47,02 €;Trasferimenti;ING - CC
+29/09/2025;Settembre;ricarica satispay;€ 47,02;;Trasferimenti;Satispay
+30/09/2025;Settembre;caffè;;3,70 €;Bar e Ristoranti;Satispay
+30/09/2025;Settembre;prelievo;;40,00 €;Trasferimenti;ING - CC
+30/09/2025;Settembre;prelievo;€ 40,00;;Trasferimenti;Cash
+30/09/2025;Settembre;garage;;28,00 €;Auto e Moto;Cash
+30/09/2025;Settembre;benzina;;43,32 €;Viaggi e Trasporti;ING - CC
+30/09/2025;Settembre;pizza;;22,00 €;Bar e Ristoranti;ING - CC
+01/10/2025;Ottobre;macellaio;;16,10 €;Spesa;ING - CC
+02/10/2025;Ottobre;bar;;2,40 €;Bar e Ristoranti;Satispay
+02/10/2025;Ottobre;merenda;;2,00 €;Bar e Ristoranti;Cash
+02/10/2025;Ottobre;pranzo;;12,24 €;Bar e Ristoranti;ING - CC
+02/10/2025;Ottobre;metro;;6,60 €;Viaggi e Trasporti;ING - CC
+02/10/2025;Ottobre;burger king;;20,90 €;Bar e Ristoranti;ING - CC
+03/10/2025;Ottobre;bla bla car;€ 12,00;;Viaggi e Trasporti;Paypal
+04/10/2025;Ottobre;bar;;4,00 €;Bar e Ristoranti;Cash
+04/10/2025;Ottobre;benzina;;46,59 €;Viaggi e Trasporti;ING - CC
+02/10/2025;Ottobre;pac;€ 270,00;;Trasferimenti;Investimenti
+02/10/2025;Ottobre;pac;;270,00 €;Trasferimenti;ING - CC
+04/10/2025;Ottobre;cena oulx;;64,50 €;Bar e Ristoranti;ING - CC
+05/10/2025;Ottobre;zabaione;;3,50 €;Bar e Ristoranti;Cash
+05/10/2025;Ottobre;caffè;;3,10 €;Bar e Ristoranti;ING - CC
+06/10/2025;Ottobre;pranzo;;8,00 €;Bar e Ristoranti;Buoni Pasto
+06/10/2025;Ottobre;parcheggio;;4,00 €;Viaggi e Trasporti;ING - CC
+06/10/2025;Ottobre;pranzo;;2,00 €;Bar e Ristoranti;ING - CC
+06/10/2025;Ottobre;siga;;6,80 €;Altro;ING - CC
+06/10/2025;Ottobre;metro;;2,20 €;Viaggi e Trasporti;ING - CC
+06/10/2025;Ottobre;parcheggio;;4,00 €;Viaggi e Trasporti;ING - CC
+06/10/2025;Ottobre;openai api;;5,53 €;Altro;ING - CC
+07/10/2025;Ottobre;bar;;3,20 €;Bar e Ristoranti;Satispay
+07/10/2025;Ottobre;spesa;;6,59 €;Spesa;ING - CC
+07/10/2025;Ottobre;benzina;;10,08 €;Viaggi e Trasporti;ING - CC
+07/10/2025;Ottobre;birra;;6,00 €;Bar e Ristoranti;Paypal
+08/10/2025;Ottobre;bar;;3,70 €;Bar e Ristoranti;Satispay
+08/10/2025;Ottobre;benzina;;20,00 €;Viaggi e Trasporti;ING - CC
+09/10/2025;Ottobre;bar;;2,40 €;Bar e Ristoranti;Satispay
+10/10/2025;Ottobre;bar;;6,20 €;Bar e Ristoranti;Satispay
+10/10/2025;Ottobre;prime;;4,99 €;Casa e Utenze;ING - CC
+10/10/2025;Ottobre;spesa;;5,30 €;Spesa;ING - CC
+10/10/2025;Ottobre;cinese delivery;;28,80 €;Bar e Ristoranti;ING - CC
+11/10/2025;Ottobre;caffè;;4,50 €;Bar e Ristoranti;ING - CC
+11/10/2025;Ottobre;birre laigue;;15,00 €;Bar e Ristoranti;ING - CC
+11/10/2025;Ottobre;backblaze;;1,77 €;Casa e Utenze;ING - CC
+11/10/2025;Ottobre;unipolmove;;67,40 €;Viaggi e Trasporti;ING - CC
+11/10/2025;Ottobre;ape;;7,00 €;Bar e Ristoranti;Paypal
+12/10/2025;Ottobre;colaz;;12,60 €;Bar e Ristoranti;Satispay
+12/10/2025;Ottobre;birre;;10,00 €;Bar e Ristoranti;ING - CC
+12/10/2025;Ottobre;bar;;6,10 €;Bar e Ristoranti;Satispay
+12/10/2025;Ottobre;github copilot;;11,22 €;Casa e Utenze;Paypal
+12/10/2025;Ottobre;boutique cena;;45,00 €;Bar e Ristoranti;ING - CC
+13/10/2025;Ottobre;bla bla car;;14,89 €;Viaggi e Trasporti;ING - CC
+13/10/2025;Ottobre;pranzo;;8,00 €;Bar e Ristoranti;Buoni Pasto
+13/10/2025;Ottobre;pranzo;;5,00 €;Bar e Ristoranti;ING - CC
+14/10/2025;Ottobre;lime;;3,99 €;Viaggi e Trasporti;Paypal
+14/10/2025;Ottobre;pranzo;;8,00 €;Bar e Ristoranti;Buoni Pasto
+14/10/2025;Ottobre;metro;;2,20 €;Viaggi e Trasporti;ING - CC
+14/10/2025;Ottobre;pranzo;;2,00 €;Bar e Ristoranti;ING - CC
+13/10/2025;Ottobre;ricarica satispay;;45,10 €;Trasferimenti;ING - CC
+13/10/2025;Ottobre;ricarica satispay;€ 45,10;;Trasferimenti;Satispay
+15/10/2025;Ottobre;bar;;2,40 €;Bar e Ristoranti;Satispay
+10/10/2025;Ottobre;addebito carta di credito;;135,81 €;Shopping;ING - CC
+12/10/2025;Ottobre;iliad;;9,99 €;Casa e Utenze;ING - CC
+16/10/2025;Ottobre;bar;;2,40 €;Bar e Ristoranti;Satispay
+16/10/2025;Ottobre;tabacchi;;8,70 €;Altro;ING - CC
+16/10/2025;Ottobre;fornaio;;4,75 €;Bar e Ristoranti;Satispay
+17/10/2025;Ottobre;bar;;2,40 €;Bar e Ristoranti;Satispay
+18/10/2025;Ottobre;icloud;;0,99 €;Casa e Utenze;Paypal
+18/10/2025;Ottobre;telecomando garage;;20,00 €;Auto e Moto;ING - CC
+18/10/2025;Ottobre;bar;;2,40 €;Bar e Ristoranti;Satispay
+18/10/2025;Ottobre;benzina;;28,49 €;Viaggi e Trasporti;ING - CC
+18/10/2025;Ottobre;mc;;19,86 €;Bar e Ristoranti;ING - CC
+19/10/2025;Ottobre;bla bla car;;12,39 €;Viaggi e Trasporti;ING - CC
+19/10/2025;Ottobre;colaz bar;;10,00 €;Bar e Ristoranti;ING - CC
+19/10/2025;Ottobre;cooltra;;5,29 €;Viaggi e Trasporti;ING - CC
+19/10/2025;Ottobre;pizza berberè;;15,00 €;Bar e Ristoranti;ING - CC
+19/10/2025;Ottobre;muji x mamma;;34,55 €;Shopping;ING - CC
+19/10/2025;Ottobre;metro;;4,40 €;Viaggi e Trasporti;ING - CC
+19/10/2025;Ottobre;metro;;2,20 €;Viaggi e Trasporti;ING - CC
+20/10/2025;Ottobre;rimborso mamma muji;€ 35,00;;Shopping;Cash
+20/10/2025;Ottobre;bar;;2,40 €;Bar e Ristoranti;Satispay
+21/10/2025;Ottobre;bar;;2,40 €;Bar e Ristoranti;Satispay
+22/10/2025;Ottobre;bar;;2,40 €;Bar e Ristoranti;Satispay
+22/10/2025;Ottobre;pranzo;;16,00 €;Bar e Ristoranti;Buoni Pasto
+22/10/2025;Ottobre;metro;;4,40 €;Viaggi e Trasporti;ING - CC
+22/10/2025;Ottobre;metro;;4,40 €;Viaggi e Trasporti;ING - CC
+23/10/2025;Ottobre;pranzo;;20,00 €;Bar e Ristoranti;Cash
+23/10/2025;Ottobre;pranzo;€ 10,00;;Bar e Ristoranti;Satispay
+23/10/2025;Ottobre;metro;;6,60 €;Viaggi e Trasporti;ING - CC
+23/10/2025;Ottobre;nhero;;41,00 €;Bar e Ristoranti;ING - CC
+24/10/2025;Ottobre;borraccia;;5,99 €;Shopping;ING - CC
+24/10/2025;Ottobre;birre;;10,00 €;Bar e Ristoranti;Cash
+25/10/2025;Ottobre;burger king spuntino;;4,00 €;Bar e Ristoranti;ING - CC
+25/10/2025;Ottobre;spesa;;22,81 €;Spesa;ING - CC
+25/10/2025;Ottobre;spesa coop;;16,00 €;;
+25/10/2025;Ottobre;spesa coop;;22,31 €;;
+26/10/2025;Ottobre;tossini;;12,88 €;Spesa;ING - CC
+26/10/2025;Ottobre;tossini;;5,72 €;Spesa;ING - CC
+26/10/2025;Ottobre;parcheggio camogli;;5,00 €;Viaggi e Trasporti;ING - CC
+26/10/2025;Ottobre;starbucks;;6,80 €;Bar e Ristoranti;ING - CC
+26/10/2025;Ottobre;metro ge;;2,00 €;Viaggi e Trasporti;ING - CC
+26/10/2025;Ottobre;spesa;;16,00 €;Spesa;Buoni Pasto
+26/10/2025;Ottobre;spesa;;1,52 €;Spesa;ING - CC
+27/10/2025;Ottobre;bar;;2,40 €;Bar e Ristoranti;Satispay
+27/10/2025;Ottobre;google one;;2,99 €;Casa e Utenze;ING - CC
+27/10/2025;Ottobre;ghironda;;22,50 €;Bar e Ristoranti;ING - CC
+28/10/2025;Ottobre;bar;;2,40 €;Bar e Ristoranti;Satispay
+28/10/2025;Ottobre;prelievo;€ 40,00;;Trasferimenti;Cash
+28/10/2025;Ottobre;prelievo;;40,00 €;Trasferimenti;ING - CC
+28/10/2025;Ottobre;bus;;1,30 €;Viaggi e Trasporti;ING - CC
+28/10/2025;Ottobre;garage;;28,00 €;Auto e Moto;Cash
+29/10/2025;Ottobre;bla bla car;;16,19 €;Viaggi e Trasporti;ING - CC
+30/10/2025;Ottobre;bar;;2,40 €;Bar e Ristoranti;Satispay
+31/10/2025;Ottobre;stipendio;€ 1.809,00;;Stipendio;ING - CC
+31/10/2025;Ottobre;risparmi;;500,00 €;Trasferimenti;ING - CC
+31/10/2025;Ottobre;risparmi;€ 500,00;;Trasferimenti;ING - CD
+31/10/2025;Ottobre;pac;;270,00 €;Trasferimenti;ING - CC
+31/10/2025;Ottobre;pac;€ 270,00;;Trasferimenti;Investimenti
+31/10/2025;Ottobre;acquisto domini tommasominuto.it e tommasominuto.com;;4,76 €;Altro;ING - CC
+31/10/2025;Ottobre;cena ramen;;47,00 €;Bar e Ristoranti;ING - CC
+01/11/2025;Novembre;metro;;2,20 €;Viaggi e Trasporti;ING - CC
+02/11/2025;Novembre;bar;;3,70 €;Bar e Ristoranti;ING - CC
+02/11/2025;Novembre;cursor;;17,36 €;Casa e Utenze;ING - CC
+03/11/2025;Novembre;pranzo;;6,60 €;Bar e Ristoranti;ING - CC
+03/11/2025;Novembre;pranzo;;8,00 €;Bar e Ristoranti;Buoni Pasto
+03/11/2025;Novembre;metro;;4,40 €;Viaggi e Trasporti;ING - CC
+04/11/2025;Novembre;treno;;4,00 €;Viaggi e Trasporti;Paypal
+04/11/2025;Novembre;ricarica macchinette;;8,00 €;Bar e Ristoranti;Buoni Pasto
+04/11/2025;Novembre;pranzo centevot;;13,50 €;Bar e Ristoranti;Satispay
+04/11/2025;Novembre;metro;;7,60 €;Viaggi e Trasporti;ING - CC
+04/11/2025;Novembre;ricarica scuter;;0,50 €;Viaggi e Trasporti;ING - CC
+05/11/2025;Novembre;bar;;2,40 €;Bar e Ristoranti;Satispay
+06/11/2025;Novembre;bar;;3,70 €;Bar e Ristoranti;Satispay
+06/11/2025;Novembre;fornaio;;9,60 €;Spesa;Satispay
+06/11/2025;Novembre;regalo gianluca meroni;;10,00 €;Altro;ING - CC
+06/11/2025;Novembre;sketchup mamma;;62,36 €;Altro;Allianz
+06/11/2025;Novembre;sketchup mamma;;2,30 €;Altro;Paypal
+08/11/2025;Novembre;birra;;9,00 €;Bar e Ristoranti;ING - CC
+08/11/2025;Novembre;birra;;2,00 €;Bar e Ristoranti;Cash
+09/11/2025;Novembre;bla bla car;;14,89 €;Viaggi e Trasporti;ING - CC
+09/11/2025;Novembre;bla bla car;;14,89 €;Viaggi e Trasporti;ING - CC
+09/11/2025;Novembre;spesa esselunga albenga;;56,00 €;Spesa;Buoni Pasto
+10/11/2025;Novembre;bar;;2,40 €;Bar e Ristoranti;Satispay
+10/11/2025;Novembre;ricarica satispay;;47,95 €;Trasferimenti;ING - CC
+10/11/2025;Novembre;ricarica satispay;€ 47,95;;Trasferimenti;Satispay
+10/11/2025;Novembre;addebito carta di credito;;107,81 €;Shopping;ING - CC
+10/11/2025;Novembre;prime;;4,99 €;Casa e Utenze;ING - CC
+08/11/2025;Novembre;parrucchiere;;25,00 €;Salute;ING - CC
+08/11/2025;Novembre;cursor;;18,08 €;Casa e Utenze;ING - CC
+11/11/2025;Novembre;bar;;2,40 €;Bar e Ristoranti;Satispay
+11/11/2025;Novembre;pranzo;;3,90 €;Bar e Ristoranti;ING - CC
+11/11/2025;Novembre;pranzo;;8,00 €;Bar e Ristoranti;Buoni Pasto
+11/11/2025;Novembre;metro;;2,20 €;Viaggi e Trasporti;ING - CC
+11/11/2025;Novembre;metro;;2,20 €;Viaggi e Trasporti;ING - CC
+12/11/2025;Novembre;of;;3,70 €;Casa e Utenze;ING - CC
+12/11/2025;Novembre;bar;;2,40 €;Bar e Ristoranti;Satispay
+12/11/2025;Novembre;iliad;;9,99 €;Casa e Utenze;ING - CC
+11/11/2025;Novembre;backblaze;;1,79 €;Casa e Utenze;ING - CC
+12/11/2025;Novembre;unipolmove;;131,50 €;Viaggi e Trasporti;ING - CC
+12/11/2025;Novembre;openrouter crediti;;10,00 €;Casa e Utenze;ING - CC
+12/11/2025;Novembre;github copilot;;14,00 €;Casa e Utenze;ING - CC
+12/11/2025;Novembre;github copilot;;14,00 €;Casa e Utenze;ING - CC
+14/11/2025;Novembre;igiene dentale;;102,00 €;Salute;ING - CC
+14/11/2025;Novembre;spesa;;9,00 €;Spesa;ING - CC
+15/11/2025;Novembre;salmone;;14,50 €;Spesa;ING - CC
+15/11/2025;Novembre;caffè;;2,40 €;Bar e Ristoranti;Satispay
+15/11/2025;Novembre;bla bla car;;14,89 €;Viaggi e Trasporti;ING - CC
+15/11/2025;Novembre;spesa;;12,47 €;Spesa;ING - CC
+16/11/2025;Novembre;bar;;9,11 €;Bar e Ristoranti;Satispay
+17/11/2025;Novembre;metro;;4,40 €;Viaggi e Trasporti;ING - CC
+17/11/2025;Novembre;pranzo;;11,43 €;Bar e Ristoranti;ING - CC
+17/11/2025;Novembre;cavo ethernet;;7,99 €;Shopping;ING - CC
+18/11/2025;Novembre;icloud;;0,99 €;Casa e Utenze;ING - CC
+18/11/2025;Novembre;bar;;2,40 €;Bar e Ristoranti;Satispay
+20/11/2025;Novembre;bar;;2,40 €;Bar e Ristoranti;Satispay
+20/11/2025;Novembre;pranzo;;5,90 €;Bar e Ristoranti;ING - CC
+20/11/2025;Novembre;pranzo;;8,00 €;Bar e Ristoranti;Buoni Pasto
+20/11/2025;Novembre;ape;;10,00 €;Bar e Ristoranti;ING - CC
+21/11/2025;Novembre;birre;;8,00 €;Bar e Ristoranti;ING - CC
+21/11/2025;Novembre;cena hamericas;;39,60 €;Bar e Ristoranti;ING - CC
+22/11/2025;Novembre;treno;;23,50 €;Viaggi e Trasporti;ING - CC
+22/11/2025;Novembre;fire tv stick;;19,99 €;Shopping;ING - CC
+07/11/2025;Novembre;sketchup mamma;€ 65,00;;Altro;Allianz
+24/11/2025;Novembre;bar;;2,40 €;Bar e Ristoranti;Satispay
+24/11/2025;Novembre;bla bla car;;12,39 €;Viaggi e Trasporti;ING - CC
+25/11/2025;Novembre;bar;;3,70 €;Bar e Ristoranti;Satispay
+25/11/2025;Novembre;pile x tracker;;9,40 €;Auto e Moto;ING - CC
+25/11/2025;Novembre;siga;;9,50 €;Altro;ING - CC
+25/11/2025;Novembre;focaccia;;3,90 €;Spesa;Satispay
+26/11/2025;Novembre;panettiere;;9,90 €;Spesa;Satispay
+27/11/2025;Novembre;bar;;2,40 €;Bar e Ristoranti;Satispay
+27/11/2025;Novembre;focaccia x colleghi;;14,50 €;Spesa;ING - CC
+27/11/2025;Novembre;metro;;2,20 €;Viaggi e Trasporti;ING - CC
+27/11/2025;Novembre;pranzo;;8,00 €;Bar e Ristoranti;Buoni Pasto
+27/11/2025;Novembre;pranzo;;4,40 €;Bar e Ristoranti;ING - CC
+28/11/2025;Novembre;google one;;2,99 €;Casa e Utenze;ING - CC
+28/11/2025;Novembre;bus;;2,20 €;Viaggi e Trasporti;ING - CC
+28/11/2025;Novembre;stipendio;€ 1.601,00;;Stipendio;ING - CC
+28/11/2025;Novembre;pranzo;;8,00 €;Bar e Ristoranti;Buoni Pasto
+28/11/2025;Novembre;pranzo;;5,60 €;Bar e Ristoranti;ING - CC
+28/11/2025;Novembre;cooltra;;4,51 €;Viaggi e Trasporti;ING - CC
+28/11/2025;Novembre;ape faina;;19,00 €;Bar e Ristoranti;ING - CC
+28/11/2025;Novembre;metro;;2,20 €;Bar e Ristoranti;ING - CC
+29/11/2025;Novembre;bar;;12,60 €;Casa e Utenze;ING - CC
+29/11/2025;Novembre;fuorimano merenda;;9,50 €;Bar e Ristoranti;ING - CC
+01/12/2025;Dicembre;parcheggio;;10,00 €;Viaggi e Trasporti;ING - CC
+01/12/2025;Dicembre;benzina;;25,35 €;Viaggi e Trasporti;ING - CC
+02/12/2025;Dicembre;rimborso parziale igiene orale metasalute;€ 45,00;;Salute;Buddybank
+02/12/2025;Dicembre;affitto anticipato gennaio 2026;;675,00 €;Casa e Utenze;ING - CC
+02/12/2025;Dicembre;bar;;2,40 €;Bar e Ristoranti;Satispay
+02/12/2025;Dicembre;ricarica satispay;€ 49,51;;Trasferimenti;Satispay
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;
+;;;;;;

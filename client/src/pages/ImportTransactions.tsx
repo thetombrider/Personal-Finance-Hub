@@ -115,8 +115,11 @@ export default function ImportTransactions() {
   const parseDate = (value: string) => {
     if (!value) return new Date().toISOString();
     
+    // Clean the value
+    const cleanValue = value.trim();
+    
     // First, try DD/MM/YYYY or DD-MM-YYYY or DD.MM.YYYY (European format)
-    const parts = value.split(/[-/.]/);
+    const parts = cleanValue.split(/[-/.]/);
     if (parts.length === 3) {
       const [first, second, third] = parts;
       
@@ -126,7 +129,20 @@ export default function ImportTransactions() {
         const m = parseInt(second);
         const y = parseInt(third);
         if (d >= 1 && d <= 31 && m >= 1 && m <= 12) {
-          const parsed = new Date(y, m - 1, d);
+          const parsed = new Date(y, m - 1, d, 12, 0, 0); // Use noon to avoid timezone issues
+          if (isValid(parsed)) return parsed.toISOString();
+        }
+      }
+      
+      // If third part is 2 digits (short year like "25" for 2025), assume DD/MM/YY
+      if (third && third.length === 2) {
+        const d = parseInt(first);
+        const m = parseInt(second);
+        let y = parseInt(third);
+        // Convert 2-digit year: 00-99 -> 2000-2099
+        y = y + 2000;
+        if (d >= 1 && d <= 31 && m >= 1 && m <= 12) {
+          const parsed = new Date(y, m - 1, d, 12, 0, 0);
           if (isValid(parsed)) return parsed.toISOString();
         }
       }
@@ -137,15 +153,15 @@ export default function ImportTransactions() {
         const m = parseInt(second);
         const d = parseInt(third);
         if (d >= 1 && d <= 31 && m >= 1 && m <= 12) {
-          const parsed = new Date(y, m - 1, d);
+          const parsed = new Date(y, m - 1, d, 12, 0, 0);
           if (isValid(parsed)) return parsed.toISOString();
         }
       }
     }
     
     // Try standard ISO format as fallback
-    const date = new Date(value);
-    if (isValid(date)) return date.toISOString();
+    const date = new Date(cleanValue);
+    if (isValid(date) && date.getFullYear() >= 2000) return date.toISOString();
     
     return new Date().toISOString(); // Ultimate fallback
   };
