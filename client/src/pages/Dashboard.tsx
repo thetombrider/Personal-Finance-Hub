@@ -69,13 +69,19 @@ export default function Dashboard() {
     return data;
   }, [transactions, timeRange, selectedAccount, selectedCategory, transferCategoryId]);
 
-  // Category data (excluding transfers)
+  // Category data (excluding transfers) - filtered by time range
   const categoryData = useMemo(() => {
-    const expenseTx = transactions.filter(t => 
-      t.type === 'expense' && 
-      t.categoryId !== transferCategoryId &&
-      (selectedAccount === "all" || t.accountId === parseInt(selectedAccount))
-    );
+    const months = parseInt(timeRange);
+    const startDate = startOfMonth(subMonths(new Date(), months - 1));
+    const endDate = endOfMonth(new Date());
+    
+    const expenseTx = transactions.filter(t => {
+      const tDate = parseISO(t.date);
+      return t.type === 'expense' && 
+        t.categoryId !== transferCategoryId &&
+        (selectedAccount === "all" || t.accountId === parseInt(selectedAccount)) &&
+        tDate >= startDate && tDate <= endDate;
+    });
     const catMap = new Map<string, number>();
     
     expenseTx.forEach(t => {
@@ -87,7 +93,7 @@ export default function Dashboard() {
     });
 
     return Array.from(catMap.entries()).map(([name, value]) => ({ name, value }));
-  }, [transactions, selectedAccount, categories, transferCategoryId]);
+  }, [transactions, selectedAccount, categories, transferCategoryId, timeRange]);
 
   // Net Worth evolution over time
   const netWorthData = useMemo(() => {
