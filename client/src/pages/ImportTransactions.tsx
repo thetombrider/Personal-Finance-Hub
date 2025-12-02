@@ -259,6 +259,12 @@ export default function ImportTransactions() {
     });
   };
 
+  const getValidTransactionCount = () => {
+    return csvData
+      .map(row => getTransactionFromRow(row))
+      .filter(t => t.accountId && parseFloat(t.amount) > 0).length;
+  };
+
   const handleImport = async () => {
     // If no specific account column is mapped, require a selected account
     if ((!mapping.account || mapping.account === 'none') && !selectedAccount) return;
@@ -534,7 +540,12 @@ export default function ImportTransactions() {
                   <AlertCircle size={18} className="mt-0.5 shrink-0" />
                   <div>
                     Please verify the data above matches your expectations. 
-                    Importing will create {csvData.length} transactions.
+                    Importing will create {getValidTransactionCount()} transactions.
+                    {csvData.length !== getValidTransactionCount() && (
+                      <span className="text-muted-foreground ml-1">
+                        ({csvData.length - getValidTransactionCount()} empty/invalid rows will be skipped)
+                      </span>
+                    )}
                   </div>
                 </div>
 
