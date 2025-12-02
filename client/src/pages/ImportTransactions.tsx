@@ -114,20 +114,40 @@ export default function ImportTransactions() {
 
   const parseDate = (value: string) => {
     if (!value) return new Date().toISOString();
-    // Try standard formats
+    
+    // First, try DD/MM/YYYY or DD-MM-YYYY or DD.MM.YYYY (European format)
+    const parts = value.split(/[-/.]/);
+    if (parts.length === 3) {
+      const [first, second, third] = parts;
+      
+      // If third part is 4 digits (year), assume DD/MM/YYYY
+      if (third && third.length === 4) {
+        const d = parseInt(first);
+        const m = parseInt(second);
+        const y = parseInt(third);
+        if (d >= 1 && d <= 31 && m >= 1 && m <= 12) {
+          const parsed = new Date(y, m - 1, d);
+          if (isValid(parsed)) return parsed.toISOString();
+        }
+      }
+      
+      // If first part is 4 digits (year), assume YYYY-MM-DD
+      if (first && first.length === 4) {
+        const y = parseInt(first);
+        const m = parseInt(second);
+        const d = parseInt(third);
+        if (d >= 1 && d <= 31 && m >= 1 && m <= 12) {
+          const parsed = new Date(y, m - 1, d);
+          if (isValid(parsed)) return parsed.toISOString();
+        }
+      }
+    }
+    
+    // Try standard ISO format as fallback
     const date = new Date(value);
     if (isValid(date)) return date.toISOString();
     
-    // Try DD/MM/YYYY
-    try {
-      const [d, m, y] = value.split(/[-/.]/);
-      if (d && m && y) {
-        const parsed = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
-        if (isValid(parsed)) return parsed.toISOString();
-      }
-    } catch (e) {}
-    
-    return new Date().toISOString(); // Fallback
+    return new Date().toISOString(); // Ultimate fallback
   };
 
   const getTransactionFromRow = (row: any) => {

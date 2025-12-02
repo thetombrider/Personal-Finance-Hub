@@ -11,7 +11,7 @@ import { format, subMonths, isSameMonth, parseISO, startOfMonth, endOfMonth } fr
 export default function Dashboard() {
   const { accounts, transactions, categories, formatCurrency } = useFinance();
   const [timeRange, setTimeRange] = useState("12"); // months
-  const [selectedAccount, setSelectedAccount] = useState("all");
+  const [selectedAccount, setSelectedAccount] = useState<string>("all");
 
   const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
   
@@ -20,10 +20,11 @@ export default function Dashboard() {
   const monthlyStats = useMemo(() => {
     const stats = transactions.filter(t => {
       const date = parseISO(t.date);
-      return isSameMonth(date, currentMonth) && (selectedAccount === "all" || t.accountId === selectedAccount);
+      return isSameMonth(date, currentMonth) && (selectedAccount === "all" || t.accountId === parseInt(selectedAccount));
     }).reduce((acc, t) => {
-      if (t.type === 'income') acc.income += t.amount;
-      else acc.expense += t.amount;
+      const amount = parseFloat(t.amount) || 0;
+      if (t.type === 'income') acc.income += amount;
+      else acc.expense += amount;
       return acc;
     }, { income: 0, expense: 0 });
     return stats;
@@ -40,11 +41,11 @@ export default function Dashboard() {
       
       const monthTx = transactions.filter(t => {
         const tDate = parseISO(t.date);
-        return tDate >= monthStart && tDate <= monthEnd && (selectedAccount === "all" || t.accountId === selectedAccount);
+        return tDate >= monthStart && tDate <= monthEnd && (selectedAccount === "all" || t.accountId === parseInt(selectedAccount));
       });
 
-      const income = monthTx.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-      const expense = monthTx.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+      const income = monthTx.filter(t => t.type === 'income').reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+      const expense = monthTx.filter(t => t.type === 'expense').reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
 
       data.push({
         name: format(date, 'MMM'),
@@ -58,14 +59,14 @@ export default function Dashboard() {
 
   // Category data
   const categoryData = useMemo(() => {
-    const expenseTx = transactions.filter(t => t.type === 'expense' && (selectedAccount === "all" || t.accountId === selectedAccount));
-    const catMap = new Map();
+    const expenseTx = transactions.filter(t => t.type === 'expense' && (selectedAccount === "all" || t.accountId === parseInt(selectedAccount)));
+    const catMap = new Map<string, number>();
     
     expenseTx.forEach(t => {
       const cat = categories.find(c => c.id === t.categoryId);
       if (cat) {
         const current = catMap.get(cat.name) || 0;
-        catMap.set(cat.name, current + t.amount);
+        catMap.set(cat.name, current + (parseFloat(t.amount) || 0));
       }
     });
 
@@ -92,7 +93,7 @@ export default function Dashboard() {
               <SelectContent>
                 <SelectItem value="all">All Accounts</SelectItem>
                 {accounts.map(acc => (
-                  <SelectItem key={acc.id} value={acc.id}>{acc.name}</SelectItem>
+                  <SelectItem key={acc.id} value={acc.id.toString()}>{acc.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
