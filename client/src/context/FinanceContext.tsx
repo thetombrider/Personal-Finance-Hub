@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode, useMemo } from "react";
 import { startOfMonth, endOfMonth, isWithinInterval, subMonths, parseISO } from "date-fns";
 
 // Types
@@ -8,7 +8,8 @@ export interface Account {
   id: string;
   name: string;
   type: AccountType;
-  balance: number;
+  startingBalance: number;
+  balance: number; // Computed: startingBalance + transactions
   currency: string;
   color: string;
 }
@@ -32,11 +33,11 @@ export interface Transaction {
 }
 
 // Mock Data
-const INITIAL_ACCOUNTS: Account[] = [
-  { id: "1", name: "Main Checking", type: "checking", balance: 2450.50, currency: "EUR", color: "#3b82f6" },
-  { id: "2", name: "High Yield Savings", type: "savings", balance: 12000.00, currency: "EUR", color: "#10b981" },
-  { id: "3", name: "Amex Gold", type: "credit", balance: -450.20, currency: "EUR", color: "#f59e0b" },
-  { id: "4", name: "Wallet Cash", type: "cash", balance: 85.00, currency: "EUR", color: "#6366f1" },
+const INITIAL_ACCOUNTS: Omit<Account, "balance">[] = [
+  { id: "1", name: "Main Checking", type: "checking", startingBalance: 200.50, currency: "EUR", color: "#3b82f6" },
+  { id: "2", name: "High Yield Savings", type: "savings", startingBalance: 12000.00, currency: "EUR", color: "#10b981" },
+  { id: "3", name: "Amex Gold", type: "credit", startingBalance: -330.20, currency: "EUR", color: "#f59e0b" },
+  { id: "4", name: "Wallet Cash", type: "cash", startingBalance: 85.00, currency: "EUR", color: "#6366f1" },
 ];
 
 const INITIAL_CATEGORIES: Category[] = [
@@ -63,8 +64,8 @@ interface FinanceContextType {
   accounts: Account[];
   categories: Category[];
   transactions: Transaction[];
-  addAccount: (account: Omit<Account, "id">) => void;
-  updateAccount: (id: string, account: Partial<Account>) => void;
+  addAccount: (account: Omit<Account, "id" | "balance">) => void;
+  updateAccount: (id: string, account: Partial<Omit<Account, "balance">>) => void;
   deleteAccount: (id: string) => void;
   addCategory: (category: Omit<Category, "id">) => void;
   updateCategory: (id: string, category: Partial<Category>) => void;
@@ -80,9 +81,18 @@ const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
 
 export function FinanceProvider({ children }: { children: ReactNode }) {
   // Load from local storage or use initial data
-  const [accounts, setAccounts] = useState<Account[]>(() => {
+  // We store "raw" accounts without the computed balance
+  const [rawAccounts, setRawAccounts] = useState<Omit<Account, "balance">[]>(() => {
     const saved = localStorage.getItem("accounts");
-    return saved ? JSON.parse(saved) : INITIAL_ACCOUNTS;
+    // Migration: If saved data doesn't have startingBalance (old version), use balance as startingBalance
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed.length > 0 && parsed[0].startingBalance === undefined) {
+        return parsed.map((acc: any) => ({ ...acc, startingBalance: acc.balance || 0 }));
+      }
+      return parsed;
+    }
+    return INITIAL_ACCOUNTS;
   });
 
   const [categories, setCategories] = useState<Category[]>(() => {
@@ -96,21 +106,35 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   });
 
   // Save to local storage on change
-  useEffect(() => { localStorage.setItem("accounts", JSON.stringify(accounts)); }, [accounts]);
+  useEffect(() => { localStorage.setItem("accounts", JSON.stringify(rawAccounts)); }, [rawAccounts]);
   useEffect(() => { localStorage.setItem("categories", JSON.stringify(categories)); }, [categories]);
   useEffect(() => { localStorage.setItem("transactions", JSON.stringify(transactions)); }, [transactions]);
 
-  const addAccount = (account: Omit<Account, "id">) => {
+  // Compute balances
+  const accounts = useMemo(() => {
+    return rawAccounts.map(account => {
+      const accountTransactions = transactions.filter(t => t.accountId === account.id);
+      const total = accountTransactions.reduce((sum, t) => {
+        return sum + (t.type === 'income' ? t.amount : -t.amount);
+      }, 0);
+      return {
+        ...account,
+        balance: (account.startingBalance || 0) + total
+      } as Account;
+    });
+  }, [rawAccounts, transactions]);
+
+  const addAccount = (account: Omit<Account, "id" | "balance">) => {
     const newAccount = { ...account, id: Math.random().toString(36).substr(2, 9) };
-    setAccounts([...accounts, newAccount]);
+    setRawAccounts([...rawAccounts, newAccount]);
   };
 
-  const updateAccount = (id: string, updated: Partial<Account>) => {
-    setAccounts(accounts.map(acc => acc.id === id ? { ...acc, ...updated } : acc));
+  const updateAccount = (id: string, updated: Partial<Omit<Account, "balance">>) => {
+    setRawAccounts(rawAccounts.map(acc => acc.id === id ? { ...acc, ...updated } : acc));
   };
 
   const deleteAccount = (id: string) => {
-    setAccounts(accounts.filter(acc => acc.id !== id));
+    setRawAccounts(rawAccounts.filter(acc => acc.id !== id));
   };
 
   const addCategory = (category: Omit<Category, "id">) => {
@@ -129,31 +153,13 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   const addTransaction = (transaction: Omit<Transaction, "id">) => {
     const newTransaction = { ...transaction, id: Math.random().toString(36).substr(2, 9) };
     setTransactions([newTransaction, ...transactions]);
-    
-    // Update account balance
-    const account = accounts.find(a => a.id === transaction.accountId);
-    if (account) {
-      const balanceChange = transaction.type === 'income' ? transaction.amount : -transaction.amount;
-      updateAccount(account.id, { balance: account.balance + balanceChange });
-    }
   };
 
   const updateTransaction = (id: string, updated: Partial<Transaction>) => {
-    // This is complex because we need to revert the old balance effect and apply the new one
-    // For simplicity in this mockup, we'll just update the record, but in a real app we'd handle balance integrity
     setTransactions(transactions.map(tx => tx.id === id ? { ...tx, ...updated } : tx));
   };
 
   const deleteTransaction = (id: string) => {
-    const tx = transactions.find(t => t.id === id);
-    if (tx) {
-      // Revert balance
-      const account = accounts.find(a => a.id === tx.accountId);
-      if (account) {
-        const balanceChange = tx.type === 'income' ? -tx.amount : tx.amount;
-        updateAccount(account.id, { balance: account.balance + balanceChange });
-      }
-    }
     setTransactions(transactions.filter(tx => tx.id !== id));
   };
 

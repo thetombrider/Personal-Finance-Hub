@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 const accountSchema = z.object({
   name: z.string().min(2, "Name is required"),
   type: z.enum(["checking", "savings", "credit", "investment", "cash"]),
-  balance: z.coerce.number(),
+  startingBalance: z.coerce.number(),
   currency: z.string().default("EUR"),
   color: z.string().default("#3b82f6"),
 });
@@ -34,7 +34,7 @@ export default function Accounts() {
     defaultValues: {
       name: "",
       type: "checking",
-      balance: 0,
+      startingBalance: 0,
       currency: "EUR",
       color: "#3b82f6",
     },
@@ -56,7 +56,7 @@ export default function Accounts() {
     form.reset({
       name: account.name,
       type: account.type,
-      balance: account.balance,
+      startingBalance: account.startingBalance,
       currency: account.currency,
       color: account.color,
     });
@@ -96,7 +96,7 @@ export default function Accounts() {
               form.reset({
                 name: "",
                 type: "checking",
-                balance: 0,
+                startingBalance: 0,
                 currency: "EUR",
                 color: "#3b82f6",
               });
@@ -153,10 +153,10 @@ export default function Accounts() {
                     />
                     <FormField
                       control={form.control}
-                      name="balance"
+                      name="startingBalance"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Current Balance</FormLabel>
+                          <FormLabel>Starting Balance</FormLabel>
                           <FormControl>
                             <Input type="number" step="0.01" {...field} />
                           </FormControl>
@@ -177,6 +177,7 @@ export default function Accounts() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {accounts.map((account) => {
             const Icon = getIcon(account.type);
+            const isNegative = account.balance < 0;
             return (
               <Card key={account.id} className="group relative overflow-hidden transition-all hover:shadow-md">
                 <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
@@ -203,11 +204,16 @@ export default function Accounts() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className={cn(
-                    "text-2xl font-bold font-heading mt-2",
-                    account.balance < 0 ? "text-destructive" : "text-foreground"
-                  )}>
-                    {formatCurrency(account.balance)}
+                  <div className="flex flex-col gap-1 mt-2">
+                    <div className={cn(
+                      "text-2xl font-bold font-heading",
+                      isNegative ? "text-destructive" : "text-foreground"
+                    )}>
+                      {formatCurrency(account.balance)}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Starting: {formatCurrency(account.startingBalance)}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
