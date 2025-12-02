@@ -3,13 +3,10 @@ import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ArrowUpRight, ArrowDownRight, Wallet, TrendingUp, Activity } from "lucide-react";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis, PieChart, Pie, Cell, BarChart, Bar } from "recharts";
 import { useState, useMemo } from "react";
 import { format, subMonths, isSameMonth, parseISO, startOfMonth, endOfMonth } from "date-fns";
-import { it } from "date-fns/locale";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 export default function Dashboard() {
   const { accounts, transactions, categories, formatCurrency } = useFinance();
@@ -91,89 +88,6 @@ export default function Dashboard() {
 
     return Array.from(catMap.entries()).map(([name, value]) => ({ name, value }));
   }, [transactions, selectedAccount, categories, transferCategoryId]);
-
-  // Generate list of months for tables
-  const monthsList = useMemo(() => {
-    const months = parseInt(timeRange);
-    const list = [];
-    for (let i = months - 1; i >= 0; i--) {
-      const date = subMonths(new Date(), i);
-      list.push({
-        date,
-        key: format(date, 'yyyy-MM'),
-        label: format(date, 'MMM', { locale: it })
-      });
-    }
-    return list;
-  }, [timeRange]);
-
-  // Monthly data by Account (rows: accounts, columns: months) - shows net (income - expense)
-  const accountMonthlyData = useMemo(() => {
-    const data: Record<string, Record<string, number>> = {};
-    
-    accounts.forEach(acc => {
-      data[acc.name] = {};
-      monthsList.forEach(m => {
-        data[acc.name][m.key] = 0;
-      });
-    });
-
-    transactions.forEach(t => {
-      const account = accounts.find(a => a.id === t.accountId);
-      if (!account) return;
-      
-      const tDate = parseISO(t.date);
-      const monthKey = format(tDate, 'yyyy-MM');
-      
-      if (data[account.name] && data[account.name][monthKey] !== undefined) {
-        const amount = parseFloat(t.amount) || 0;
-        if (t.type === 'income') {
-          data[account.name][monthKey] += amount;
-        } else {
-          data[account.name][monthKey] -= amount;
-        }
-      }
-    });
-
-    return data;
-  }, [transactions, accounts, monthsList]);
-
-  // Monthly data by Category (rows: categories, columns: months) - shows net (income - expense)
-  const categoryMonthlyData = useMemo(() => {
-    const data: Record<string, Record<string, number>> = {};
-    
-    // Include all categories except transfers
-    const relevantCategories = categories.filter(c => 
-      c.name.toLowerCase() !== 'trasferimenti'
-    );
-    
-    relevantCategories.forEach(cat => {
-      data[cat.name] = {};
-      monthsList.forEach(m => {
-        data[cat.name][m.key] = 0;
-      });
-    });
-
-    transactions.forEach(t => {
-      const category = categories.find(c => c.id === t.categoryId);
-      if (!category || category.name.toLowerCase() === 'trasferimenti') return;
-      if (!data[category.name]) return;
-      
-      const tDate = parseISO(t.date);
-      const monthKey = format(tDate, 'yyyy-MM');
-      
-      if (data[category.name][monthKey] !== undefined) {
-        const amount = parseFloat(t.amount) || 0;
-        if (t.type === 'income') {
-          data[category.name][monthKey] += amount;
-        } else {
-          data[category.name][monthKey] -= amount;
-        }
-      }
-    });
-
-    return data;
-  }, [transactions, categories, monthsList]);
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
@@ -356,135 +270,6 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* Monthly Recap Tables */}
-        <div className="space-y-6">
-          {/* Table 1: Monthly by Account */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Flusso per Conto</CardTitle>
-              <CardDescription>Riepilogo mensile entrate/uscite nette per ogni conto</CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              <ScrollArea className="w-full">
-                <div className="min-w-[600px]">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="sticky left-0 bg-card z-10 min-w-[120px]">Conto</TableHead>
-                        {monthsList.map(m => (
-                          <TableHead key={m.key} className="text-center min-w-[70px] capitalize">{m.label}</TableHead>
-                        ))}
-                        <TableHead className="text-center min-w-[80px] font-semibold">Totale</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {Object.entries(accountMonthlyData).map(([accountName, months]) => {
-                        const total = Object.values(months).reduce((sum, val) => sum + val, 0);
-                        return (
-                          <TableRow key={accountName}>
-                            <TableCell className="sticky left-0 bg-card z-10 font-medium">{accountName}</TableCell>
-                            {monthsList.map(m => {
-                              const val = months[m.key];
-                              return (
-                                <TableCell key={m.key} className={`text-center text-sm ${val > 0 ? 'text-emerald-600' : val < 0 ? 'text-rose-600' : ''}`}>
-                                  {val !== 0 ? formatCurrency(val) : '-'}
-                                </TableCell>
-                              );
-                            })}
-                            <TableCell className={`text-center font-semibold ${total > 0 ? 'text-emerald-600' : total < 0 ? 'text-rose-600' : ''}`}>
-                              {total !== 0 ? formatCurrency(total) : '-'}
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                      <TableRow className="bg-muted/50 font-semibold">
-                        <TableCell className="sticky left-0 bg-muted/50 z-10">Totale</TableCell>
-                        {monthsList.map(m => {
-                          const monthTotal = Object.values(accountMonthlyData).reduce((sum, acc) => sum + (acc[m.key] || 0), 0);
-                          return (
-                            <TableCell key={m.key} className={`text-center ${monthTotal > 0 ? 'text-emerald-600' : monthTotal < 0 ? 'text-rose-600' : ''}`}>
-                              {monthTotal !== 0 ? formatCurrency(monthTotal) : '-'}
-                            </TableCell>
-                          );
-                        })}
-                        <TableCell className="text-center">
-                          {formatCurrency(Object.values(accountMonthlyData).reduce((sum, acc) => 
-                            sum + Object.values(acc).reduce((s, v) => s + v, 0), 0
-                          ))}
-                        </TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </div>
-                <ScrollBar orientation="horizontal" />
-              </ScrollArea>
-            </CardContent>
-          </Card>
-
-          {/* Table 2: Monthly by Category */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Flusso per Categoria</CardTitle>
-              <CardDescription>Riepilogo mensile entrate/uscite nette per ogni categoria</CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              <ScrollArea className="w-full">
-                <div className="min-w-[600px]">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="sticky left-0 bg-card z-10 min-w-[120px]">Categoria</TableHead>
-                        {monthsList.map(m => (
-                          <TableHead key={m.key} className="text-center min-w-[70px] capitalize">{m.label}</TableHead>
-                        ))}
-                        <TableHead className="text-center min-w-[80px] font-semibold">Totale</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {Object.entries(categoryMonthlyData).map(([catName, months]) => {
-                        const total = Object.values(months).reduce((sum, val) => sum + val, 0);
-                        if (total === 0) return null;
-                        return (
-                          <TableRow key={catName}>
-                            <TableCell className="sticky left-0 bg-card z-10 font-medium">{catName}</TableCell>
-                            {monthsList.map(m => {
-                              const val = months[m.key];
-                              return (
-                                <TableCell key={m.key} className={`text-center text-sm ${val > 0 ? 'text-emerald-600' : val < 0 ? 'text-rose-600' : ''}`}>
-                                  {val !== 0 ? formatCurrency(val) : '-'}
-                                </TableCell>
-                              );
-                            })}
-                            <TableCell className={`text-center font-semibold ${total > 0 ? 'text-emerald-600' : total < 0 ? 'text-rose-600' : ''}`}>
-                              {total !== 0 ? formatCurrency(total) : '-'}
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                      <TableRow className="bg-muted/50 font-semibold">
-                        <TableCell className="sticky left-0 bg-muted/50 z-10">Totale</TableCell>
-                        {monthsList.map(m => {
-                          const monthTotal = Object.values(categoryMonthlyData).reduce((sum, cat) => sum + (cat[m.key] || 0), 0);
-                          return (
-                            <TableCell key={m.key} className={`text-center ${monthTotal > 0 ? 'text-emerald-600' : monthTotal < 0 ? 'text-rose-600' : ''}`}>
-                              {monthTotal !== 0 ? formatCurrency(monthTotal) : '-'}
-                            </TableCell>
-                          );
-                        })}
-                        <TableCell className="text-center">
-                          {formatCurrency(Object.values(categoryMonthlyData).reduce((sum, cat) => 
-                            sum + Object.values(cat).reduce((s, v) => s + v, 0), 0
-                          ))}
-                        </TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </div>
-                <ScrollBar orientation="horizontal" />
-              </ScrollArea>
-            </CardContent>
-          </Card>
-        </div>
       </div>
     </Layout>
   );

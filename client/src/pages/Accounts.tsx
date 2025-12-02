@@ -6,12 +6,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, Edit2, Wallet, CreditCard, PiggyBank, Banknote, Building2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { format, subMonths, parseISO } from "date-fns";
+import { it } from "date-fns/locale";
 
 const accountSchema = z.object({
   name: z.string().min(2, "Name is required"),
@@ -24,9 +28,10 @@ const accountSchema = z.object({
 type AccountFormValues = z.infer<typeof accountSchema>;
 
 export default function Accounts() {
-  const { accounts, addAccount, updateAccount, deleteAccount, formatCurrency, isLoading } = useFinance();
+  const { accounts, transactions, addAccount, updateAccount, deleteAccount, formatCurrency, isLoading } = useFinance();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [timeRange, setTimeRange] = useState('12');
 
   const form = useForm<AccountFormValues>({
     resolver: zodResolver(accountSchema),
@@ -38,6 +43,50 @@ export default function Accounts() {
       color: "#3b82f6",
     },
   });
+
+  const monthsList = useMemo(() => {
+    const months = parseInt(timeRange);
+    const list = [];
+    for (let i = months - 1; i >= 0; i--) {
+      const date = subMonths(new Date(), i);
+      list.push({
+        date,
+        key: format(date, 'yyyy-MM'),
+        label: format(date, 'MMM', { locale: it })
+      });
+    }
+    return list;
+  }, [timeRange]);
+
+  const accountMonthlyData = useMemo(() => {
+    const data: Record<string, Record<string, number>> = {};
+    
+    accounts.forEach(acc => {
+      data[acc.name] = {};
+      monthsList.forEach(m => {
+        data[acc.name][m.key] = 0;
+      });
+    });
+
+    transactions.forEach(t => {
+      const account = accounts.find(a => a.id === t.accountId);
+      if (!account) return;
+      
+      const tDate = parseISO(t.date);
+      const monthKey = format(tDate, 'yyyy-MM');
+      
+      if (data[account.name] && data[account.name][monthKey] !== undefined) {
+        const amount = parseFloat(t.amount) || 0;
+        if (t.type === 'income') {
+          data[account.name][monthKey] += amount;
+        } else {
+          data[account.name][monthKey] -= amount;
+        }
+      }
+    });
+
+    return data;
+  }, [transactions, accounts, monthsList]);
 
   const onSubmit = async (data: AccountFormValues) => {
     const formattedData = {
@@ -234,6 +283,83 @@ export default function Accounts() {
             );
           })}
         </div>
+
+        {/* Monthly Flow by Account Table */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg">Flusso per Conto</CardTitle>
+                <CardDescription>Riepilogo mensile entrate/uscite nette per ogni conto</CardDescription>
+              </div>
+              <Select value={timeRange} onValueChange={setTimeRange}>
+                <SelectTrigger className="w-[140px]" data-testid="select-time-range">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="6">Ultimi 6 mesi</SelectItem>
+                  <SelectItem value="12">Ultimi 12 mesi</SelectItem>
+                  <SelectItem value="24">Ultimi 24 mesi</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            <ScrollArea className="w-full">
+              <div className="min-w-[600px]">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="sticky left-0 bg-card z-10 min-w-[120px]">Conto</TableHead>
+                      {monthsList.map(m => (
+                        <TableHead key={m.key} className="text-center min-w-[70px] capitalize">{m.label}</TableHead>
+                      ))}
+                      <TableHead className="text-center min-w-[80px] font-semibold">Totale</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {Object.entries(accountMonthlyData).map(([accountName, months]) => {
+                      const total = Object.values(months).reduce((sum, val) => sum + val, 0);
+                      return (
+                        <TableRow key={accountName}>
+                          <TableCell className="sticky left-0 bg-card z-10 font-medium">{accountName}</TableCell>
+                          {monthsList.map(m => {
+                            const val = months[m.key];
+                            return (
+                              <TableCell key={m.key} className={`text-center text-sm ${val > 0 ? 'text-emerald-600' : val < 0 ? 'text-rose-600' : ''}`}>
+                                {val !== 0 ? formatCurrency(val) : '-'}
+                              </TableCell>
+                            );
+                          })}
+                          <TableCell className={`text-center font-semibold ${total > 0 ? 'text-emerald-600' : total < 0 ? 'text-rose-600' : ''}`}>
+                            {total !== 0 ? formatCurrency(total) : '-'}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                    <TableRow className="bg-muted/50 font-semibold">
+                      <TableCell className="sticky left-0 bg-muted/50 z-10">Totale</TableCell>
+                      {monthsList.map(m => {
+                        const monthTotal = Object.values(accountMonthlyData).reduce((sum, acc) => sum + (acc[m.key] || 0), 0);
+                        return (
+                          <TableCell key={m.key} className={`text-center ${monthTotal > 0 ? 'text-emerald-600' : monthTotal < 0 ? 'text-rose-600' : ''}`}>
+                            {monthTotal !== 0 ? formatCurrency(monthTotal) : '-'}
+                          </TableCell>
+                        );
+                      })}
+                      <TableCell className="text-center">
+                        {formatCurrency(Object.values(accountMonthlyData).reduce((sum, acc) => 
+                          sum + Object.values(acc).reduce((s, v) => s + v, 0), 0
+                        ))}
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
+              <ScrollBar orientation="horizontal" />
+            </ScrollArea>
+          </CardContent>
+        </Card>
       </div>
     </Layout>
   );
