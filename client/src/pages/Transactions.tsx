@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, Edit2, Calendar as CalendarIcon, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Trash2, Edit2, Calendar as CalendarIcon, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Search, X } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,6 +17,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 const transactionSchema = z.object({
   amount: z.coerce.number().min(0.01, "Amount must be positive"),
@@ -42,6 +43,13 @@ export default function Transactions() {
   const [sortField, setSortField] = useState<SortField>('date');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [currentPage, setCurrentPage] = useState(1);
+  
+  // Filter states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterAccountId, setFilterAccountId] = useState<string>('all');
+  const [filterCategoryId, setFilterCategoryId] = useState<string>('all');
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
 
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
@@ -59,8 +67,43 @@ export default function Transactions() {
   const getCategory = (id: number) => categories.find(c => c.id === id);
   const getCategoryName = (id: number) => getCategory(id)?.name || "Unknown";
 
+  // Filter transactions
+  const filteredTransactions = useMemo(() => {
+    return transactions.filter(t => {
+      // Search filter
+      if (searchQuery && !t.description.toLowerCase().includes(searchQuery.toLowerCase())) {
+        return false;
+      }
+      
+      // Account filter
+      if (filterAccountId !== 'all' && t.accountId !== parseInt(filterAccountId)) {
+        return false;
+      }
+      
+      // Category filter
+      if (filterCategoryId !== 'all' && t.categoryId !== parseInt(filterCategoryId)) {
+        return false;
+      }
+      
+      // Date range filter
+      const transactionDate = new Date(t.date);
+      if (dateFrom && transactionDate < dateFrom) {
+        return false;
+      }
+      if (dateTo) {
+        const endOfDay = new Date(dateTo);
+        endOfDay.setHours(23, 59, 59, 999);
+        if (transactionDate > endOfDay) {
+          return false;
+        }
+      }
+      
+      return true;
+    });
+  }, [transactions, searchQuery, filterAccountId, filterCategoryId, dateFrom, dateTo]);
+
   const sortedTransactions = useMemo(() => {
-    const sorted = [...transactions].sort((a, b) => {
+    const sorted = [...filteredTransactions].sort((a, b) => {
       let comparison = 0;
       
       switch (sortField) {
@@ -87,7 +130,18 @@ export default function Transactions() {
     });
     
     return sorted;
-  }, [transactions, sortField, sortDirection, accounts, categories]);
+  }, [filteredTransactions, sortField, sortDirection, accounts, categories]);
+
+  const clearFilters = () => {
+    setSearchQuery('');
+    setFilterAccountId('all');
+    setFilterCategoryId('all');
+    setDateFrom(undefined);
+    setDateTo(undefined);
+    setCurrentPage(1);
+  };
+
+  const hasActiveFilters = searchQuery || filterAccountId !== 'all' || filterCategoryId !== 'all' || dateFrom || dateTo;
 
   const totalPages = Math.ceil(sortedTransactions.length / ITEMS_PER_PAGE);
   
@@ -377,6 +431,129 @@ export default function Transactions() {
             </Dialog>
           </div>
         </div>
+
+        {/* Filter Bar */}
+        <Card className="p-4">
+          <div className="flex flex-wrap gap-4 items-end">
+            {/* Search */}
+            <div className="flex-1 min-w-[200px]">
+              <Label htmlFor="search" className="text-sm font-medium mb-1.5 block">Cerca</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="search"
+                  placeholder="Cerca nella descrizione..."
+                  value={searchQuery}
+                  onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+                  className="pl-9"
+                  data-testid="input-search"
+                />
+              </div>
+            </div>
+
+            {/* Date From */}
+            <div className="w-[160px]">
+              <Label className="text-sm font-medium mb-1.5 block">Da</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !dateFrom && "text-muted-foreground"
+                    )}
+                    data-testid="button-date-from"
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dateFrom ? format(dateFrom, "dd/MM/yyyy") : "Seleziona"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={dateFrom}
+                    onSelect={(date) => { setDateFrom(date); setCurrentPage(1); }}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Date To */}
+            <div className="w-[160px]">
+              <Label className="text-sm font-medium mb-1.5 block">A</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !dateTo && "text-muted-foreground"
+                    )}
+                    data-testid="button-date-to"
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dateTo ? format(dateTo, "dd/MM/yyyy") : "Seleziona"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={dateTo}
+                    onSelect={(date) => { setDateTo(date); setCurrentPage(1); }}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Account Filter */}
+            <div className="w-[180px]">
+              <Label className="text-sm font-medium mb-1.5 block">Conto</Label>
+              <Select value={filterAccountId} onValueChange={(v) => { setFilterAccountId(v); setCurrentPage(1); }}>
+                <SelectTrigger data-testid="select-filter-account">
+                  <SelectValue placeholder="Tutti i conti" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tutti i conti</SelectItem>
+                  {accounts.map(acc => (
+                    <SelectItem key={acc.id} value={acc.id.toString()}>{acc.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Category Filter */}
+            <div className="w-[180px]">
+              <Label className="text-sm font-medium mb-1.5 block">Categoria</Label>
+              <Select value={filterCategoryId} onValueChange={(v) => { setFilterCategoryId(v); setCurrentPage(1); }}>
+                <SelectTrigger data-testid="select-filter-category">
+                  <SelectValue placeholder="Tutte le categorie" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tutte le categorie</SelectItem>
+                  {categories.map(cat => (
+                    <SelectItem key={cat.id} value={cat.id.toString()}>{cat.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Clear Filters */}
+            {hasActiveFilters && (
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1" data-testid="button-clear-filters">
+                <X size={14} />
+                Pulisci filtri
+              </Button>
+            )}
+          </div>
+          
+          {hasActiveFilters && (
+            <div className="mt-3 text-sm text-muted-foreground">
+              {filteredTransactions.length} transazioni trovate su {transactions.length} totali
+            </div>
+          )}
+        </Card>
 
         <Card>
           <Table>
