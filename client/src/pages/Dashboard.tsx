@@ -219,98 +219,6 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* Charts Area */}
-        <div className="grid gap-6 md:grid-cols-7">
-          <Card className="md:col-span-4">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Cash Flow</CardTitle>
-                  <CardDescription>Income vs Expenses over time</CardDescription>
-                </div>
-                <Tabs value={timeRange} onValueChange={setTimeRange} className="w-auto">
-                  <TabsList className="grid w-full grid-cols-3 h-8">
-                    <TabsTrigger value="3" className="text-xs">3M</TabsTrigger>
-                    <TabsTrigger value="6" className="text-xs">6M</TabsTrigger>
-                    <TabsTrigger value="12" className="text-xs">1Y</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              </div>
-            </CardHeader>
-            <CardContent className="pl-0">
-              <div className="h-[300px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
-                        <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                      </linearGradient>
-                      <linearGradient id="colorExpense" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#ef4444" stopOpacity={0.2}/>
-                        <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                    <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `€${value}`} />
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: 'var(--color-card)', borderRadius: '8px', border: '1px solid var(--color-border)' }}
-                      itemStyle={{ color: 'var(--color-foreground)' }}
-                    />
-                    <Area type="monotone" dataKey="income" stroke="#10b981" fillOpacity={1} fill="url(#colorIncome)" strokeWidth={2} />
-                    <Area type="monotone" dataKey="expense" stroke="#ef4444" fillOpacity={1} fill="url(#colorExpense)" strokeWidth={2} />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="md:col-span-3">
-            <CardHeader>
-              <CardTitle>Spending by Category</CardTitle>
-              <CardDescription>Where your money goes</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px] w-full flex flex-col items-center justify-center">
-                {categoryData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={categoryData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={80}
-                        paddingAngle={5}
-                        dataKey="value"
-                      >
-                        {categoryData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip 
-                         formatter={(value: number) => formatCurrency(value)}
-                         contentStyle={{ backgroundColor: 'var(--color-card)', borderRadius: '8px', border: '1px solid var(--color-border)' }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="text-muted-foreground text-sm">No expense data available</div>
-                )}
-                <div className="grid grid-cols-2 gap-2 mt-4 w-full">
-                   {categoryData.slice(0, 4).map((entry, index) => (
-                     <div key={index} className="flex items-center gap-2 text-xs">
-                       <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
-                       <span className="truncate flex-1">{entry.name}</span>
-                       <span className="font-medium">{formatCurrency(entry.value as number)}</span>
-                     </div>
-                   ))}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
         {/* Net Worth Evolution Chart */}
         <Card>
           <CardHeader>
@@ -364,6 +272,103 @@ export default function Dashboard() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Charts Area */}
+        <div className="grid gap-6 md:grid-cols-7">
+          <Card className="md:col-span-4">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Cash Flow</CardTitle>
+                  <CardDescription>Income vs Expenses over time</CardDescription>
+                </div>
+                <Tabs value={timeRange} onValueChange={setTimeRange} className="w-auto">
+                  <TabsList className="grid w-full grid-cols-3 h-8">
+                    <TabsTrigger value="3" className="text-xs">3M</TabsTrigger>
+                    <TabsTrigger value="6" className="text-xs">6M</TabsTrigger>
+                    <TabsTrigger value="12" className="text-xs">1Y</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              </div>
+            </CardHeader>
+            <CardContent className="pl-0">
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
+                        <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                      </linearGradient>
+                      <linearGradient id="colorExpense" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#ef4444" stopOpacity={0.2}/>
+                        <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `€${value.toFixed(2)}`} />
+                    <Tooltip 
+                      formatter={(value: number, name: string) => {
+                        const formattedValue = `€${value.toFixed(2)}`;
+                        const label = name === 'income' ? 'Entrate' : 'Uscite';
+                        return [formattedValue, label];
+                      }}
+                      contentStyle={{ backgroundColor: 'var(--color-card)', borderRadius: '8px', border: '1px solid var(--color-border)' }}
+                      itemStyle={{ color: 'var(--color-foreground)' }}
+                    />
+                    <Area type="monotone" dataKey="income" stroke="#10b981" fillOpacity={1} fill="url(#colorIncome)" strokeWidth={2} name="income" />
+                    <Area type="monotone" dataKey="expense" stroke="#ef4444" fillOpacity={1} fill="url(#colorExpense)" strokeWidth={2} name="expense" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="md:col-span-3">
+            <CardHeader>
+              <CardTitle>Spending by Category</CardTitle>
+              <CardDescription>Where your money goes</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[300px] w-full flex flex-col items-center justify-center">
+                {categoryData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={categoryData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={80}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        {categoryData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                         formatter={(value: number) => `€${value.toFixed(2)}`}
+                         contentStyle={{ backgroundColor: 'var(--color-card)', borderRadius: '8px', border: '1px solid var(--color-border)' }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="text-muted-foreground text-sm">No expense data available</div>
+                )}
+                <div className="grid grid-cols-2 gap-2 mt-4 w-full">
+                   {categoryData.slice(0, 4).map((entry, index) => (
+                     <div key={index} className="flex items-center gap-2 text-xs">
+                       <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
+                       <span className="truncate flex-1">{entry.name}</span>
+                       <span className="font-medium">{formatCurrency(entry.value as number)}</span>
+                     </div>
+                   ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
       </div>
     </Layout>
