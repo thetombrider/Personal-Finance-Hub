@@ -66,6 +66,9 @@ export default function Accounts() {
     );
   }
 
+  const totalStartingBalance = accounts.reduce((sum, acc) => sum + parseFloat(acc.startingBalance), 0);
+  const totalCurrentBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
+
   return (
     <Layout>
       <div className="space-y-6">
@@ -73,6 +76,59 @@ export default function Accounts() {
           <h1 className="text-3xl font-heading font-bold text-foreground">Accounts</h1>
           <p className="text-muted-foreground">Analisi del flusso per conto</p>
         </div>
+
+        {/* Account Balances Summary Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Riepilogo Saldi</CardTitle>
+            <CardDescription>Saldo iniziale e corrente per ogni conto</CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            <ScrollArea className="w-full">
+              <div className="min-w-[600px]">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="sticky left-0 bg-card z-10 min-w-[120px]"></TableHead>
+                      {accounts.map(acc => (
+                        <TableHead key={acc.id} className="text-center min-w-[100px]">{acc.name}</TableHead>
+                      ))}
+                      <TableHead className="text-center min-w-[100px] font-semibold">Totale</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell className="sticky left-0 bg-card z-10 font-medium">Saldo Iniziale</TableCell>
+                      {accounts.map(acc => (
+                        <TableCell key={acc.id} className="text-center">
+                          {formatCurrency(parseFloat(acc.startingBalance))}
+                        </TableCell>
+                      ))}
+                      <TableCell className="text-center font-semibold">
+                        {formatCurrency(totalStartingBalance)}
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell className="sticky left-0 bg-card z-10 font-medium">Saldo Corrente</TableCell>
+                      {accounts.map(acc => {
+                        const isNegative = acc.balance < 0;
+                        return (
+                          <TableCell key={acc.id} className={`text-center font-semibold ${isNegative ? 'text-rose-600' : 'text-emerald-600'}`}>
+                            {formatCurrency(acc.balance)}
+                          </TableCell>
+                        );
+                      })}
+                      <TableCell className={`text-center font-bold ${totalCurrentBalance < 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
+                        {formatCurrency(totalCurrentBalance)}
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
+              <ScrollBar orientation="horizontal" />
+            </ScrollArea>
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>

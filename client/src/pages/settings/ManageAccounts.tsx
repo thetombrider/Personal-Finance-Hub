@@ -207,7 +207,6 @@ export default function ManageAccounts() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {accounts.map((account) => {
             const Icon = getIcon(account.type);
-            const isNegative = account.balance < 0;
             return (
               <Card key={account.id} className="group relative overflow-hidden transition-all hover:shadow-md" data-testid={`card-account-${account.id}`}>
                 <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
@@ -219,8 +218,8 @@ export default function ManageAccounts() {
                   </Button>
                 </div>
                 
-                <CardHeader className="pb-2">
-                  <div className="flex items-start gap-4">
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-4">
                     <div 
                       className={cn("p-3 rounded-xl", "text-white shadow-md")}
                       style={{ backgroundColor: account.color }}
@@ -228,21 +227,8 @@ export default function ManageAccounts() {
                       <Icon size={24} />
                     </div>
                     <div>
-                      <CardTitle className="text-lg" data-testid={`text-account-name-${account.id}`}>{account.name}</CardTitle>
-                      <CardDescription className="capitalize">{account.type}</CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-col gap-1 mt-2">
-                    <div className={cn(
-                      "text-2xl font-bold font-heading",
-                      isNegative ? "text-destructive" : "text-foreground"
-                    )} data-testid={`text-balance-${account.id}`}>
-                      {formatCurrency(account.balance)}
-                    </div>
-                    <div className="text-xs text-muted-foreground" data-testid={`text-starting-balance-${account.id}`}>
-                      Saldo iniziale: {formatCurrency(parseFloat(account.startingBalance))}
+                      <div className="text-lg font-semibold" data-testid={`text-account-name-${account.id}`}>{account.name}</div>
+                      <div className="text-sm text-muted-foreground capitalize">{account.type}</div>
                     </div>
                   </div>
                 </CardContent>
