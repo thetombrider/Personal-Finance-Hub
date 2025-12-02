@@ -260,7 +260,7 @@ export default function Dashboard() {
         </div>
 
         {/* Monthly Recap Tables */}
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="space-y-6">
           {/* Table 1: Monthly by Account */}
           <Card>
             <CardHeader>
