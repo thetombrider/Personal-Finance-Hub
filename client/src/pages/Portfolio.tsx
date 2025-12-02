@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, TrendingUp, TrendingDown, Wallet, PiggyBank, RefreshCw, Search, Trash2, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { Plus, TrendingUp, TrendingDown, Wallet, PiggyBank, RefreshCw, Search, Trash2, ArrowUpRight, ArrowDownRight, Pencil } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { it } from "date-fns/locale";
 import * as api from "@/lib/api";
@@ -50,6 +50,14 @@ export default function Portfolio() {
   });
   const [quotes, setQuotes] = useState<Record<string, { price: number; change: number; changePercent: string }>>({});
   const [isRefreshingQuotes, setIsRefreshingQuotes] = useState(false);
+  const [editingTrade, setEditingTrade] = useState<(Trade & { holding?: Holding }) | null>(null);
+  const [editForm, setEditForm] = useState({
+    quantity: "",
+    pricePerUnit: "",
+    fees: "0",
+    date: "",
+    type: "buy" as "buy" | "sell"
+  });
 
   const { data: holdings = [], isLoading: holdingsLoading } = useQuery({
     queryKey: ["holdings"],
@@ -87,6 +95,19 @@ export default function Portfolio() {
     },
   });
 
+  const updateTradeMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Parameters<typeof api.updateTrade>[1] }) => 
+      api.updateTrade(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["trades"] });
+      toast({ title: "Operazione modificata", description: "Le modifiche sono state salvate." });
+      setEditingTrade(null);
+    },
+    onError: () => {
+      toast({ title: "Errore", description: "Impossibile modificare l'operazione.", variant: "destructive" });
+    },
+  });
+
   const deleteHoldingMutation = useMutation({
     mutationFn: api.deleteHolding,
     onSuccess: () => {
@@ -109,6 +130,58 @@ export default function Portfolio() {
       fees: "0",
       date: format(new Date(), "yyyy-MM-dd"),
       type: "buy"
+    });
+  };
+
+  const openEditDialog = (trade: Trade & { holding?: Holding }) => {
+    setEditingTrade(trade);
+    const dateStr = trade.date.includes("T") 
+      ? trade.date.split("T")[0] 
+      : trade.date.split(" ")[0];
+    setEditForm({
+      quantity: trade.quantity,
+      pricePerUnit: trade.pricePerUnit,
+      fees: trade.fees,
+      date: dateStr,
+      type: trade.type as "buy" | "sell"
+    });
+  };
+
+  const handleUpdateTrade = () => {
+    if (!editingTrade) return;
+    
+    const quantity = parseFloat(editForm.quantity);
+    const pricePerUnit = parseFloat(editForm.pricePerUnit);
+    const fees = parseFloat(editForm.fees) || 0;
+
+    if (isNaN(quantity) || quantity <= 0) {
+      toast({ title: "Errore", description: "Inserisci una quantità valida.", variant: "destructive" });
+      return;
+    }
+    if (isNaN(pricePerUnit) || pricePerUnit <= 0) {
+      toast({ title: "Errore", description: "Inserisci un prezzo valido.", variant: "destructive" });
+      return;
+    }
+    if (isNaN(fees) || fees < 0) {
+      toast({ title: "Errore", description: "Inserisci commissioni valide.", variant: "destructive" });
+      return;
+    }
+
+    const grossAmount = quantity * pricePerUnit;
+    const totalAmount = editForm.type === "buy" 
+      ? grossAmount + fees 
+      : grossAmount - fees;
+
+    updateTradeMutation.mutate({
+      id: editingTrade.id,
+      data: {
+        date: editForm.date,
+        quantity: quantity.toString(),
+        pricePerUnit: pricePerUnit.toString(),
+        totalAmount: totalAmount.toFixed(2),
+        fees: fees.toFixed(2),
+        type: editForm.type,
+      }
     });
   };
 
@@ -749,14 +822,24 @@ export default function Portfolio() {
                             {formatCurrency(parseFloat(trade.totalAmount))}
                           </TableCell>
                           <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => deleteTradeMutation.mutate(trade.id)}
-                              data-testid={`button-delete-trade-${trade.id}`}
-                            >
-                              <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
-                            </Button>
+                            <div className="flex gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => openEditDialog(trade)}
+                                data-testid={`button-edit-trade-${trade.id}`}
+                              >
+                                <Pencil className="h-4 w-4 text-muted-foreground hover:text-primary" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => deleteTradeMutation.mutate(trade.id)}
+                                data-testid={`button-delete-trade-${trade.id}`}
+                              >
+                                <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -768,6 +851,112 @@ export default function Portfolio() {
           </TabsContent>
         </Tabs>
       </div>
+
+      <Dialog open={!!editingTrade} onOpenChange={(open) => !open && setEditingTrade(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Modifica Operazione</DialogTitle>
+          </DialogHeader>
+          {editingTrade && (
+            <div className="space-y-4">
+              <div className="p-3 bg-muted rounded-lg">
+                <p className="font-medium">{editingTrade.holding?.ticker}</p>
+                <p className="text-sm text-muted-foreground">{editingTrade.holding?.name}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Tipo Operazione</Label>
+                  <Select 
+                    value={editForm.type} 
+                    onValueChange={(value: "buy" | "sell") => setEditForm(prev => ({ ...prev, type: value }))}
+                  >
+                    <SelectTrigger data-testid="select-edit-type">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="buy">Acquisto</SelectItem>
+                      <SelectItem value="sell">Vendita</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Data</Label>
+                  <Input
+                    type="date"
+                    value={editForm.date}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, date: e.target.value }))}
+                    data-testid="input-edit-date"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Quantità</Label>
+                  <Input
+                    type="number"
+                    step="0.00000001"
+                    value={editForm.quantity}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, quantity: e.target.value }))}
+                    data-testid="input-edit-quantity"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Prezzo per Unità (EUR)</Label>
+                  <Input
+                    type="number"
+                    step="0.0001"
+                    value={editForm.pricePerUnit}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, pricePerUnit: e.target.value }))}
+                    data-testid="input-edit-price"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Commissioni (EUR)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={editForm.fees}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, fees: e.target.value }))}
+                  data-testid="input-edit-fees"
+                />
+              </div>
+
+              {editForm.quantity && editForm.pricePerUnit && (
+                <div className="p-3 bg-muted rounded-lg">
+                  <div className="flex justify-between">
+                    <span>Totale Operazione:</span>
+                    <span className="font-bold">
+                      {formatCurrency(
+                        editForm.type === "buy"
+                          ? parseFloat(editForm.quantity) * parseFloat(editForm.pricePerUnit) + (parseFloat(editForm.fees) || 0)
+                          : parseFloat(editForm.quantity) * parseFloat(editForm.pricePerUnit) - (parseFloat(editForm.fees) || 0)
+                      )}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Annulla</Button>
+            </DialogClose>
+            <Button 
+              onClick={handleUpdateTrade}
+              disabled={!editForm.quantity || !editForm.pricePerUnit || updateTradeMutation.isPending}
+              data-testid="button-save-edit"
+            >
+              {updateTradeMutation.isPending ? "Salvataggio..." : "Salva Modifiche"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }
