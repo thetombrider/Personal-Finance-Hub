@@ -12,6 +12,7 @@ export default function Dashboard() {
   const { accounts, transactions, categories, formatCurrency } = useFinance();
   const [timeRange, setTimeRange] = useState("12"); // months
   const [selectedAccount, setSelectedAccount] = useState<string>("all");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
   const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
   
@@ -24,7 +25,10 @@ export default function Dashboard() {
     const stats = transactions.filter(t => {
       const date = parseISO(t.date);
       const isTransfer = t.categoryId === transferCategoryId;
-      return !isTransfer && isSameMonth(date, currentMonth) && (selectedAccount === "all" || t.accountId === parseInt(selectedAccount));
+      const matchesCategory = selectedCategory === "all" || t.categoryId === parseInt(selectedCategory);
+      return !isTransfer && isSameMonth(date, currentMonth) && 
+             (selectedAccount === "all" || t.accountId === parseInt(selectedAccount)) &&
+             matchesCategory;
     }).reduce((acc, t) => {
       const amount = parseFloat(t.amount) || 0;
       if (t.type === 'income') acc.income += amount;
@@ -32,7 +36,7 @@ export default function Dashboard() {
       return acc;
     }, { income: 0, expense: 0 });
     return stats;
-  }, [transactions, selectedAccount, transferCategoryId]);
+  }, [transactions, selectedAccount, selectedCategory, transferCategoryId]);
 
   // Prepare chart data (excluding transfers)
   const chartData = useMemo(() => {
@@ -46,7 +50,10 @@ export default function Dashboard() {
       const monthTx = transactions.filter(t => {
         const tDate = parseISO(t.date);
         const isTransfer = t.categoryId === transferCategoryId;
-        return !isTransfer && tDate >= monthStart && tDate <= monthEnd && (selectedAccount === "all" || t.accountId === parseInt(selectedAccount));
+        const matchesCategory = selectedCategory === "all" || t.categoryId === parseInt(selectedCategory);
+        return !isTransfer && tDate >= monthStart && tDate <= monthEnd && 
+               (selectedAccount === "all" || t.accountId === parseInt(selectedAccount)) &&
+               matchesCategory;
       });
 
       const income = monthTx.filter(t => t.type === 'income').reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
@@ -60,7 +67,7 @@ export default function Dashboard() {
       });
     }
     return data;
-  }, [transactions, timeRange, selectedAccount, transferCategoryId]);
+  }, [transactions, timeRange, selectedAccount, selectedCategory, transferCategoryId]);
 
   // Category data (excluding transfers)
   const categoryData = useMemo(() => {
@@ -94,18 +101,33 @@ export default function Dashboard() {
             <p className="text-muted-foreground">Overview of your financial health</p>
           </div>
           
-          <div className="flex items-center gap-3 bg-card border border-border p-1 rounded-lg shadow-sm">
-            <Select value={selectedAccount} onValueChange={setSelectedAccount}>
-              <SelectTrigger className="w-[180px] border-none bg-transparent shadow-none focus:ring-0">
-                <SelectValue placeholder="All Accounts" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Accounts</SelectItem>
-                {accounts.map(acc => (
-                  <SelectItem key={acc.id} value={acc.id.toString()}>{acc.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="bg-card border border-border p-1 rounded-lg shadow-sm">
+              <Select value={selectedAccount} onValueChange={setSelectedAccount}>
+                <SelectTrigger className="w-[160px] border-none bg-transparent shadow-none focus:ring-0" data-testid="select-account-filter">
+                  <SelectValue placeholder="All Accounts" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Accounts</SelectItem>
+                  {accounts.map(acc => (
+                    <SelectItem key={acc.id} value={acc.id.toString()}>{acc.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="bg-card border border-border p-1 rounded-lg shadow-sm">
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger className="w-[160px] border-none bg-transparent shadow-none focus:ring-0" data-testid="select-category-filter">
+                  <SelectValue placeholder="All Categories" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {categories.filter(c => c.name.toLowerCase() !== 'trasferimenti').map(cat => (
+                    <SelectItem key={cat.id} value={cat.id.toString()}>{cat.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
 
