@@ -403,7 +403,7 @@ export default function ImportTransactions() {
                           <SelectValue placeholder="Select column" />
                         </SelectTrigger>
                         <SelectContent>
-                          {headers.map(h => (
+                          {headers.filter(h => h && h.trim()).map(h => (
                             <SelectItem key={h} value={h}>{h}</SelectItem>
                           ))}
                         </SelectContent>
@@ -417,7 +417,7 @@ export default function ImportTransactions() {
                           <SelectValue placeholder="Select column" />
                         </SelectTrigger>
                         <SelectContent>
-                          {headers.map(h => (
+                          {headers.filter(h => h && h.trim()).map(h => (
                             <SelectItem key={h} value={h}>{h}</SelectItem>
                           ))}
                         </SelectContent>
@@ -432,7 +432,7 @@ export default function ImportTransactions() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="none">-- None --</SelectItem>
-                          {headers.map(h => (
+                          {headers.filter(h => h && h.trim()).map(h => (
                             <SelectItem key={h} value={h}>{h}</SelectItem>
                           ))}
                         </SelectContent>
@@ -450,7 +450,7 @@ export default function ImportTransactions() {
                               <SelectValue placeholder="Select income column" />
                             </SelectTrigger>
                             <SelectContent>
-                              {headers.map(h => (
+                              {headers.filter(h => h && h.trim()).map(h => (
                                 <SelectItem key={h} value={h}>{h}</SelectItem>
                               ))}
                             </SelectContent>
@@ -463,7 +463,7 @@ export default function ImportTransactions() {
                               <SelectValue placeholder="Select expense column" />
                             </SelectTrigger>
                             <SelectContent>
-                              {headers.map(h => (
+                              {headers.filter(h => h && h.trim()).map(h => (
                                 <SelectItem key={h} value={h}>{h}</SelectItem>
                               ))}
                             </SelectContent>
@@ -478,7 +478,7 @@ export default function ImportTransactions() {
                             <SelectValue placeholder="Select column" />
                           </SelectTrigger>
                           <SelectContent>
-                            {headers.map(h => (
+                            {headers.filter(h => h && h.trim()).map(h => (
                               <SelectItem key={h} value={h}>{h}</SelectItem>
                             ))}
                           </SelectContent>
@@ -495,7 +495,7 @@ export default function ImportTransactions() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="none">-- None (Infer from amount) --</SelectItem>
-                            {headers.map(h => (
+                            {headers.filter(h => h && h.trim()).map(h => (
                               <SelectItem key={h} value={h}>{h}</SelectItem>
                             ))}
                           </SelectContent>
@@ -511,7 +511,7 @@ export default function ImportTransactions() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="none">-- None --</SelectItem>
-                          {headers.map(h => (
+                          {headers.filter(h => h && h.trim()).map(h => (
                             <SelectItem key={h} value={h}>{h}</SelectItem>
                           ))}
                         </SelectContent>
