@@ -8,6 +8,7 @@ import Dashboard from "@/pages/Dashboard";
 import Accounts from "@/pages/Accounts";
 import Categories from "@/pages/Categories";
 import Transactions from "@/pages/Transactions";
+import ImportTransactions from "@/pages/ImportTransactions";
 import { FinanceProvider } from "@/context/FinanceContext";
 
 function Router() {
@@ -17,6 +18,7 @@ function Router() {
       <Route path="/accounts" component={Accounts} />
       <Route path="/categories" component={Categories} />
       <Route path="/transactions" component={Transactions} />
+      <Route path="/import" component={ImportTransactions} />
       <Route component={NotFound} />
     </Switch>
   );

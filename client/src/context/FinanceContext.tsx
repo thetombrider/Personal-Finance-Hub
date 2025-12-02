@@ -71,6 +71,7 @@ interface FinanceContextType {
   updateCategory: (id: string, category: Partial<Category>) => void;
   deleteCategory: (id: string) => void;
   addTransaction: (transaction: Omit<Transaction, "id">) => void;
+  addTransactions: (transactions: Omit<Transaction, "id">[]) => void;
   updateTransaction: (id: string, transaction: Partial<Transaction>) => void;
   deleteTransaction: (id: string) => void;
   getAccountBalance: (id: string) => number;
@@ -155,6 +156,14 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     setTransactions([newTransaction, ...transactions]);
   };
 
+  const addTransactions = (newTransactions: Omit<Transaction, "id">[]) => {
+    const transactionsWithIds = newTransactions.map(t => ({
+      ...t,
+      id: Math.random().toString(36).substr(2, 9)
+    }));
+    setTransactions(prev => [...transactionsWithIds, ...prev]);
+  };
+
   const updateTransaction = (id: string, updated: Partial<Transaction>) => {
     setTransactions(transactions.map(tx => tx.id === id ? { ...tx, ...updated } : tx));
   };
@@ -176,7 +185,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       accounts, categories, transactions,
       addAccount, updateAccount, deleteAccount,
       addCategory, updateCategory, deleteCategory,
-      addTransaction, updateTransaction, deleteTransaction,
+      addTransaction, addTransactions, updateTransaction, deleteTransaction,
       getAccountBalance, formatCurrency
     }}>
       {children}

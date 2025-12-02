@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, CreditCard, PieChart, Receipt, Menu, X, Plus } from "lucide-react";
+import { LayoutDashboard, CreditCard, PieChart, Receipt, Menu, X, Plus, FileSpreadsheet } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -15,6 +15,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     { href: "/transactions", label: "Transactions", icon: Receipt },
     { href: "/accounts", label: "Accounts", icon: CreditCard },
     { href: "/categories", label: "Categories", icon: PieChart },
+    { href: "/import", label: "Import CSV", icon: FileSpreadsheet },
   ];
 
   const NavContent = () => (
