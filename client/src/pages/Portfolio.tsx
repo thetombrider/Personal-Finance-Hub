@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -58,6 +59,7 @@ export default function Portfolio() {
     date: "",
     type: "buy" as "buy" | "sell"
   });
+  const [tradeToDelete, setTradeToDelete] = useState<(Trade & { holding?: Holding }) | null>(null);
 
   const { data: holdings = [], isLoading: holdingsLoading } = useQuery({
     queryKey: ["holdings"],
@@ -92,6 +94,7 @@ export default function Portfolio() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["trades"] });
       toast({ title: "Operazione eliminata" });
+      setTradeToDelete(null);
     },
   });
 
@@ -695,7 +698,6 @@ export default function Portfolio() {
                         <TableHead className="text-right">Investito</TableHead>
                         <TableHead className="text-right">Valore Attuale</TableHead>
                         <TableHead className="text-right">Gain/Loss</TableHead>
-                        <TableHead></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -745,16 +747,6 @@ export default function Portfolio() {
                             ) : (
                               <span className="text-muted-foreground">—</span>
                             )}
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => deleteHoldingMutation.mutate(holding.id)}
-                              data-testid={`button-delete-holding-${holding.id}`}
-                            >
-                              <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
-                            </Button>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -834,7 +826,7 @@ export default function Portfolio() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => deleteTradeMutation.mutate(trade.id)}
+                                onClick={() => setTradeToDelete(trade)}
                                 data-testid={`button-delete-trade-${trade.id}`}
                               >
                                 <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
@@ -957,6 +949,39 @@ export default function Portfolio() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!tradeToDelete} onOpenChange={(open) => !open && setTradeToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Conferma Eliminazione</AlertDialogTitle>
+            <AlertDialogDescription>
+              Sei sicuro di voler eliminare questa operazione?
+              {tradeToDelete && (
+                <div className="mt-3 p-3 bg-muted rounded-lg text-foreground">
+                  <p className="font-medium">{tradeToDelete.holding?.ticker}</p>
+                  <p className="text-sm">
+                    {tradeToDelete.type === "buy" ? "Acquisto" : "Vendita"} di {parseFloat(tradeToDelete.quantity).toFixed(4)} unità 
+                    a {new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(parseFloat(tradeToDelete.pricePerUnit))}
+                  </p>
+                  <p className="text-sm font-medium mt-1">
+                    Totale: {new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(parseFloat(tradeToDelete.totalAmount))}
+                  </p>
+                </div>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annulla</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => tradeToDelete && deleteTradeMutation.mutate(tradeToDelete.id)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              data-testid="button-confirm-delete"
+            >
+              Elimina
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Layout>
   );
 }
