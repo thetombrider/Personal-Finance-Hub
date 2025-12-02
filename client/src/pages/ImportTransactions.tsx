@@ -223,13 +223,22 @@ export default function ImportTransactions() {
       }
 
       // Account Resolution
-      let accountId = selectedAccount || (accounts[0]?.id ?? 0);
-      if (mapping.account && mapping.account !== 'none' && row[mapping.account]) {
-        const accountName = row[mapping.account].toLowerCase();
-        const matchedAccount = accounts.find(a => a.name.toLowerCase() === accountName);
-        if (matchedAccount) {
-          accountId = matchedAccount.id;
+      let accountId: number | null = selectedAccount || null;
+      if (mapping.account && mapping.account !== 'none') {
+        const rawAccountName = row[mapping.account];
+        if (rawAccountName && rawAccountName.trim()) {
+          const accountName = rawAccountName.toLowerCase().trim();
+          const matchedAccount = accounts.find(a => a.name.toLowerCase() === accountName);
+          if (matchedAccount) {
+            accountId = matchedAccount.id;
+          }
+          // If account column has a value but no match found, keep accountId as null
+          // This will cause the transaction to be filtered out
         }
+        // If account column is mapped but value is empty, accountId stays null (skip transaction)
+      } else if (!accountId && accounts.length > 0) {
+        // No account column mapped and no selectedAccount - use first account as fallback
+        accountId = accounts[0].id;
       }
 
       // Category Resolution
@@ -260,9 +269,10 @@ export default function ImportTransactions() {
         date: parseDate(row[mapping.date]),
         amount: Math.abs(amount).toString(),
         description: row[mapping.description] || "Imported Transaction",
-        accountId,
+        accountId: accountId || 0,
         categoryId,
-        type
+        type,
+        _hasValidAccount: accountId !== null
       };
   };
 
@@ -283,7 +293,7 @@ export default function ImportTransactions() {
   const getValidTransactionCount = () => {
     return csvData
       .map(row => getTransactionFromRow(row))
-      .filter(t => t.accountId && parseFloat(t.amount) > 0).length;
+      .filter(t => t._hasValidAccount && parseFloat(t.amount) > 0).length;
   };
 
   const handleImport = async () => {
@@ -292,10 +302,12 @@ export default function ImportTransactions() {
 
     const transactions = csvData.map(row => getTransactionFromRow(row));
     
-    // Filter out invalid transactions (e.g. no account found)
-    const validTransactions = transactions.filter(t => t.accountId && parseFloat(t.amount) > 0);
+    // Filter out invalid transactions (e.g. no account found or empty account column)
+    const validTransactions = transactions.filter(t => t._hasValidAccount && parseFloat(t.amount) > 0);
 
-    await addTransactions(validTransactions);
+    // Remove internal flag before sending to API
+    const transactionsToSave = validTransactions.map(({ _hasValidAccount, ...tx }) => tx);
+    await addTransactions(transactionsToSave);
     setLocation('/transactions');
   };
 
