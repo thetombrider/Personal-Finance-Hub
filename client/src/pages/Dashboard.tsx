@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowUpRight, ArrowDownRight, Wallet, TrendingUp, Activity } from "lucide-react";
-import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis, PieChart, Pie, Cell, BarChart, Bar } from "recharts";
+import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis, PieChart, Pie, Cell, BarChart, Bar, LineChart, Line } from "recharts";
 import { useState, useMemo } from "react";
 import { format, subMonths, isSameMonth, parseISO, startOfMonth, endOfMonth } from "date-fns";
 
@@ -88,6 +88,47 @@ export default function Dashboard() {
 
     return Array.from(catMap.entries()).map(([name, value]) => ({ name, value }));
   }, [transactions, selectedAccount, categories, transferCategoryId]);
+
+  // Net Worth evolution over time
+  const netWorthData = useMemo(() => {
+    const months = parseInt(timeRange);
+    const data = [];
+    
+    // Calculate starting balance (sum of all account starting balances)
+    const totalStartingBalance = accounts.reduce((sum, acc) => sum + parseFloat(acc.startingBalance), 0);
+    
+    // Get all transactions sorted by date
+    const sortedTransactions = [...transactions].sort((a, b) => 
+      new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+    
+    for (let i = months - 1; i >= 0; i--) {
+      const date = subMonths(new Date(), i);
+      const monthEnd = endOfMonth(date);
+      
+      // Calculate net worth at end of this month
+      // = starting balance + all income - all expenses up to this month
+      let netWorth = totalStartingBalance;
+      
+      sortedTransactions.forEach(t => {
+        const tDate = parseISO(t.date);
+        if (tDate <= monthEnd) {
+          const amount = parseFloat(t.amount) || 0;
+          if (t.type === 'income') {
+            netWorth += amount;
+          } else {
+            netWorth -= amount;
+          }
+        }
+      });
+      
+      data.push({
+        name: format(date, 'MMM yy'),
+        netWorth
+      });
+    }
+    return data;
+  }, [transactions, accounts, timeRange]);
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
@@ -269,6 +310,60 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Net Worth Evolution Chart */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Net Worth Evolution</CardTitle>
+                <CardDescription>Your total wealth over time</CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-primary" />
+                <span className="text-lg font-bold font-heading">{formatCurrency(totalBalance)}</span>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="pl-0">
+            <div className="h-[250px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={netWorthData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorNetWorth" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis 
+                    stroke="#888888" 
+                    fontSize={12} 
+                    tickLine={false} 
+                    axisLine={false} 
+                    tickFormatter={(value) => `€${(value / 1000).toFixed(0)}k`}
+                    domain={['auto', 'auto']}
+                  />
+                  <Tooltip 
+                    formatter={(value: number) => [formatCurrency(value), 'Net Worth']}
+                    contentStyle={{ backgroundColor: 'var(--color-card)', borderRadius: '8px', border: '1px solid var(--color-border)' }}
+                    itemStyle={{ color: 'var(--color-foreground)' }}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="netWorth" 
+                    stroke="#6366f1" 
+                    fillOpacity={1} 
+                    fill="url(#colorNetWorth)" 
+                    strokeWidth={2}
+                    dot={{ fill: '#6366f1', strokeWidth: 2, r: 3 }}
+                    activeDot={{ r: 5, fill: '#6366f1' }}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
 
       </div>
     </Layout>
