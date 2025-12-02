@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { type Server } from "http";
 import { storage } from "./storage";
-import { insertAccountSchema, insertCategorySchema, insertTransactionSchema } from "@shared/schema";
+import { insertAccountSchema, insertCategorySchema, insertTransactionSchema, insertHoldingSchema, insertTradeSchema } from "@shared/schema";
 import { z } from "zod";
 import crypto from "crypto";
 
@@ -449,6 +449,281 @@ export async function registerRoutes(
         availableCategories: categories.map(c => ({ name: c.name, type: c.type }))
       }
     });
+  });
+
+  // ============ HOLDINGS ============
+
+  app.get("/api/holdings", async (req, res) => {
+    try {
+      const holdings = await storage.getHoldings();
+      res.json(holdings);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch holdings" });
+    }
+  });
+
+  app.get("/api/holdings/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const holding = await storage.getHolding(id);
+      if (!holding) {
+        return res.status(404).json({ error: "Holding not found" });
+      }
+      res.json(holding);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch holding" });
+    }
+  });
+
+  app.post("/api/holdings", async (req, res) => {
+    try {
+      const validated = insertHoldingSchema.parse(req.body);
+      const existing = await storage.getHoldingByTicker(validated.ticker);
+      if (existing) {
+        return res.status(409).json({ error: "Holding with this ticker already exists", holding: existing });
+      }
+      const holding = await storage.createHolding(validated);
+      res.status(201).json(holding);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create holding" });
+    }
+  });
+
+  app.patch("/api/holdings/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const validated = insertHoldingSchema.partial().parse(req.body);
+      const holding = await storage.updateHolding(id, validated);
+      if (!holding) {
+        return res.status(404).json({ error: "Holding not found" });
+      }
+      res.json(holding);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to update holding" });
+    }
+  });
+
+  app.delete("/api/holdings/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteHolding(id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete holding" });
+    }
+  });
+
+  // ============ TRADES ============
+
+  app.get("/api/trades", async (req, res) => {
+    try {
+      const trades = await storage.getTrades();
+      res.json(trades);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch trades" });
+    }
+  });
+
+  app.get("/api/trades/holding/:holdingId", async (req, res) => {
+    try {
+      const holdingId = parseInt(req.params.holdingId);
+      const trades = await storage.getTradesByHolding(holdingId);
+      res.json(trades);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch trades for holding" });
+    }
+  });
+
+  app.get("/api/trades/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const trade = await storage.getTrade(id);
+      if (!trade) {
+        return res.status(404).json({ error: "Trade not found" });
+      }
+      res.json(trade);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch trade" });
+    }
+  });
+
+  app.post("/api/trades", async (req, res) => {
+    try {
+      const validated = insertTradeSchema.parse(req.body);
+      const holding = await storage.getHolding(validated.holdingId);
+      if (!holding) {
+        return res.status(400).json({ error: "Holding not found" });
+      }
+      const trade = await storage.createTrade(validated);
+      res.status(201).json(trade);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create trade" });
+    }
+  });
+
+  app.patch("/api/trades/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const validated = insertTradeSchema.partial().parse(req.body);
+      const trade = await storage.updateTrade(id, validated);
+      if (!trade) {
+        return res.status(404).json({ error: "Trade not found" });
+      }
+      res.json(trade);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to update trade" });
+    }
+  });
+
+  app.delete("/api/trades/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteTrade(id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete trade" });
+    }
+  });
+
+  // ============ ALPHA VANTAGE STOCK API ============
+
+  const ALPHA_VANTAGE_API_KEY = process.env.ALPHA_VANTAGE_API_KEY;
+
+  app.get("/api/stock/quote/:symbol", async (req, res) => {
+    try {
+      const symbol = req.params.symbol.toUpperCase();
+      
+      if (!ALPHA_VANTAGE_API_KEY) {
+        return res.status(500).json({ error: "Alpha Vantage API key not configured" });
+      }
+
+      const response = await fetch(
+        `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${ALPHA_VANTAGE_API_KEY}`
+      );
+      
+      const data = await response.json();
+      
+      if (data["Error Message"]) {
+        return res.status(404).json({ error: "Symbol not found" });
+      }
+      
+      if (data["Note"]) {
+        return res.status(429).json({ error: "API rate limit reached. Please try again later." });
+      }
+
+      const quote = data["Global Quote"];
+      if (!quote || Object.keys(quote).length === 0) {
+        return res.status(404).json({ error: "No data found for this symbol" });
+      }
+
+      res.json({
+        symbol: quote["01. symbol"],
+        price: parseFloat(quote["05. price"]),
+        change: parseFloat(quote["09. change"]),
+        changePercent: quote["10. change percent"],
+        high: parseFloat(quote["03. high"]),
+        low: parseFloat(quote["04. low"]),
+        open: parseFloat(quote["02. open"]),
+        previousClose: parseFloat(quote["08. previous close"]),
+        volume: parseInt(quote["06. volume"]),
+        latestTradingDay: quote["07. latest trading day"]
+      });
+    } catch (error) {
+      console.error("Alpha Vantage API error:", error);
+      res.status(500).json({ error: "Failed to fetch stock quote" });
+    }
+  });
+
+  app.get("/api/stock/search/:keywords", async (req, res) => {
+    try {
+      const keywords = req.params.keywords;
+      
+      if (!ALPHA_VANTAGE_API_KEY) {
+        return res.status(500).json({ error: "Alpha Vantage API key not configured" });
+      }
+
+      const response = await fetch(
+        `https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=${encodeURIComponent(keywords)}&apikey=${ALPHA_VANTAGE_API_KEY}`
+      );
+      
+      const data = await response.json();
+      
+      if (data["Note"]) {
+        return res.status(429).json({ error: "API rate limit reached. Please try again later." });
+      }
+
+      const matches = data.bestMatches || [];
+      
+      res.json(matches.map((match: any) => ({
+        symbol: match["1. symbol"],
+        name: match["2. name"],
+        type: match["3. type"],
+        region: match["4. region"],
+        currency: match["8. currency"]
+      })));
+    } catch (error) {
+      console.error("Alpha Vantage search error:", error);
+      res.status(500).json({ error: "Failed to search symbols" });
+    }
+  });
+
+  app.get("/api/stock/batch-quotes", async (req, res) => {
+    try {
+      const symbols = (req.query.symbols as string)?.split(",").map(s => s.trim().toUpperCase()) || [];
+      
+      if (symbols.length === 0) {
+        return res.status(400).json({ error: "No symbols provided" });
+      }
+
+      if (!ALPHA_VANTAGE_API_KEY) {
+        return res.status(500).json({ error: "Alpha Vantage API key not configured" });
+      }
+
+      const quotes: Record<string, any> = {};
+      
+      for (const symbol of symbols) {
+        try {
+          const response = await fetch(
+            `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${ALPHA_VANTAGE_API_KEY}`
+          );
+          
+          const data = await response.json();
+          
+          if (data["Note"]) {
+            return res.status(429).json({ error: "API rate limit reached. Please try again later." });
+          }
+
+          const quote = data["Global Quote"];
+          if (quote && Object.keys(quote).length > 0) {
+            quotes[symbol] = {
+              symbol: quote["01. symbol"],
+              price: parseFloat(quote["05. price"]),
+              change: parseFloat(quote["09. change"]),
+              changePercent: quote["10. change percent"]
+            };
+          }
+        } catch (err) {
+          console.error(`Error fetching quote for ${symbol}:`, err);
+        }
+      }
+
+      res.json(quotes);
+    } catch (error) {
+      console.error("Batch quotes error:", error);
+      res.status(500).json({ error: "Failed to fetch batch quotes" });
+    }
   });
 
   return httpServer;

@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, decimal, timestamp, serial } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, decimal, timestamp, serial, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -41,3 +41,30 @@ export const transactions = pgTable("transactions", {
 export const insertTransactionSchema = createInsertSchema(transactions).omit({ id: true });
 export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
 export type Transaction = typeof transactions.$inferSelect;
+
+export const holdings = pgTable("holdings", {
+  id: serial("id").primaryKey(),
+  ticker: varchar("ticker", { length: 20 }).notNull(),
+  name: text("name").notNull(),
+  assetType: varchar("asset_type", { length: 20 }).notNull(),
+  currency: varchar("currency", { length: 3 }).notNull().default("EUR"),
+});
+
+export const insertHoldingSchema = createInsertSchema(holdings).omit({ id: true });
+export type InsertHolding = z.infer<typeof insertHoldingSchema>;
+export type Holding = typeof holdings.$inferSelect;
+
+export const trades = pgTable("trades", {
+  id: serial("id").primaryKey(),
+  holdingId: integer("holding_id").notNull().references(() => holdings.id, { onDelete: "cascade" }),
+  date: timestamp("date", { mode: "string" }).notNull(),
+  quantity: decimal("quantity", { precision: 18, scale: 8 }).notNull(),
+  pricePerUnit: decimal("price_per_unit", { precision: 12, scale: 4 }).notNull(),
+  totalAmount: decimal("total_amount", { precision: 12, scale: 2 }).notNull(),
+  fees: decimal("fees", { precision: 12, scale: 2 }).notNull().default("0"),
+  type: varchar("type", { length: 10 }).notNull(),
+});
+
+export const insertTradeSchema = createInsertSchema(trades).omit({ id: true });
+export type InsertTrade = z.infer<typeof insertTradeSchema>;
+export type Trade = typeof trades.$inferSelect;

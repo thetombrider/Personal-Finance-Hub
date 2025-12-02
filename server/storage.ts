@@ -5,9 +5,15 @@ import {
   type InsertCategory,
   type Transaction,
   type InsertTransaction,
+  type Holding,
+  type InsertHolding,
+  type Trade,
+  type InsertTrade,
   accounts,
   categories,
-  transactions
+  transactions,
+  holdings,
+  trades
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, sql, inArray } from "drizzle-orm";
@@ -36,6 +42,22 @@ export interface IStorage {
   deleteTransaction(id: number): Promise<void>;
   deleteTransactions(ids: number[]): Promise<void>;
   clearTransactions(): Promise<void>;
+
+  // Holdings
+  getHoldings(): Promise<Holding[]>;
+  getHolding(id: number): Promise<Holding | undefined>;
+  getHoldingByTicker(ticker: string): Promise<Holding | undefined>;
+  createHolding(holding: InsertHolding): Promise<Holding>;
+  updateHolding(id: number, holding: Partial<InsertHolding>): Promise<Holding | undefined>;
+  deleteHolding(id: number): Promise<void>;
+
+  // Trades
+  getTrades(): Promise<Trade[]>;
+  getTradesByHolding(holdingId: number): Promise<Trade[]>;
+  getTrade(id: number): Promise<Trade | undefined>;
+  createTrade(trade: InsertTrade): Promise<Trade>;
+  updateTrade(id: number, trade: Partial<InsertTrade>): Promise<Trade | undefined>;
+  deleteTrade(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -124,6 +146,69 @@ export class DatabaseStorage implements IStorage {
 
   async clearTransactions(): Promise<void> {
     await db.delete(transactions);
+  }
+
+  // Holdings
+  async getHoldings(): Promise<Holding[]> {
+    return await db.select().from(holdings);
+  }
+
+  async getHolding(id: number): Promise<Holding | undefined> {
+    const result = await db.select().from(holdings).where(eq(holdings.id, id));
+    return result[0];
+  }
+
+  async getHoldingByTicker(ticker: string): Promise<Holding | undefined> {
+    const result = await db.select().from(holdings).where(eq(holdings.ticker, ticker.toUpperCase()));
+    return result[0];
+  }
+
+  async createHolding(holding: InsertHolding): Promise<Holding> {
+    const result = await db.insert(holdings).values({
+      ...holding,
+      ticker: holding.ticker.toUpperCase()
+    }).returning();
+    return result[0];
+  }
+
+  async updateHolding(id: number, holding: Partial<InsertHolding>): Promise<Holding | undefined> {
+    const updateData = holding.ticker 
+      ? { ...holding, ticker: holding.ticker.toUpperCase() }
+      : holding;
+    const result = await db.update(holdings).set(updateData).where(eq(holdings.id, id)).returning();
+    return result[0];
+  }
+
+  async deleteHolding(id: number): Promise<void> {
+    await db.delete(holdings).where(eq(holdings.id, id));
+  }
+
+  // Trades
+  async getTrades(): Promise<Trade[]> {
+    return await db.select().from(trades);
+  }
+
+  async getTradesByHolding(holdingId: number): Promise<Trade[]> {
+    return await db.select().from(trades).where(eq(trades.holdingId, holdingId));
+  }
+
+  async getTrade(id: number): Promise<Trade | undefined> {
+    const result = await db.select().from(trades).where(eq(trades.id, id));
+    return result[0];
+  }
+
+  async createTrade(trade: InsertTrade): Promise<Trade> {
+    const result = await db.insert(trades).values(trade).returning();
+    return result[0];
+  }
+
+  async updateTrade(id: number, trade: Partial<InsertTrade>): Promise<Trade | undefined> {
+    const result = await db.update(trades).set(trade).where(eq(trades.id, id)).returning();
+    return result[0];
+  }
+
+  async deleteTrade(id: number): Promise<void> {
+    await db.delete(trades).where(eq(trades.id, id));
   }
 }
 
