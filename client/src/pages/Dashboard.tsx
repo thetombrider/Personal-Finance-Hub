@@ -15,12 +15,16 @@ export default function Dashboard() {
 
   const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
   
-  // Calculate monthly income/expense
+  // Find transfer category to exclude from income/expense calculations
+  const transferCategoryId = categories.find(c => c.name.toLowerCase() === 'trasferimenti')?.id;
+  
+  // Calculate monthly income/expense (excluding transfers)
   const currentMonth = new Date();
   const monthlyStats = useMemo(() => {
     const stats = transactions.filter(t => {
       const date = parseISO(t.date);
-      return isSameMonth(date, currentMonth) && (selectedAccount === "all" || t.accountId === parseInt(selectedAccount));
+      const isTransfer = t.categoryId === transferCategoryId;
+      return !isTransfer && isSameMonth(date, currentMonth) && (selectedAccount === "all" || t.accountId === parseInt(selectedAccount));
     }).reduce((acc, t) => {
       const amount = parseFloat(t.amount) || 0;
       if (t.type === 'income') acc.income += amount;
@@ -28,9 +32,9 @@ export default function Dashboard() {
       return acc;
     }, { income: 0, expense: 0 });
     return stats;
-  }, [transactions, selectedAccount]);
+  }, [transactions, selectedAccount, transferCategoryId]);
 
-  // Prepare chart data
+  // Prepare chart data (excluding transfers)
   const chartData = useMemo(() => {
     const months = parseInt(timeRange);
     const data = [];
@@ -41,7 +45,8 @@ export default function Dashboard() {
       
       const monthTx = transactions.filter(t => {
         const tDate = parseISO(t.date);
-        return tDate >= monthStart && tDate <= monthEnd && (selectedAccount === "all" || t.accountId === parseInt(selectedAccount));
+        const isTransfer = t.categoryId === transferCategoryId;
+        return !isTransfer && tDate >= monthStart && tDate <= monthEnd && (selectedAccount === "all" || t.accountId === parseInt(selectedAccount));
       });
 
       const income = monthTx.filter(t => t.type === 'income').reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
@@ -55,11 +60,15 @@ export default function Dashboard() {
       });
     }
     return data;
-  }, [transactions, timeRange, selectedAccount]);
+  }, [transactions, timeRange, selectedAccount, transferCategoryId]);
 
-  // Category data
+  // Category data (excluding transfers)
   const categoryData = useMemo(() => {
-    const expenseTx = transactions.filter(t => t.type === 'expense' && (selectedAccount === "all" || t.accountId === parseInt(selectedAccount)));
+    const expenseTx = transactions.filter(t => 
+      t.type === 'expense' && 
+      t.categoryId !== transferCategoryId &&
+      (selectedAccount === "all" || t.accountId === parseInt(selectedAccount))
+    );
     const catMap = new Map<string, number>();
     
     expenseTx.forEach(t => {
@@ -71,7 +80,7 @@ export default function Dashboard() {
     });
 
     return Array.from(catMap.entries()).map(([name, value]) => ({ name, value }));
-  }, [transactions, selectedAccount, categories]);
+  }, [transactions, selectedAccount, categories, transferCategoryId]);
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
