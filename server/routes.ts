@@ -601,6 +601,15 @@ export async function registerRoutes(
 
   const ALPHA_VANTAGE_API_KEY = process.env.ALPHA_VANTAGE_API_KEY;
 
+  const isLondonExchange = (symbol: string): boolean => {
+    const upper = symbol.toUpperCase();
+    return upper.endsWith('.LON') || upper.endsWith('.L');
+  };
+
+  const convertPenceToPounds = (value: number, symbol: string): number => {
+    return isLondonExchange(symbol) ? value / 100 : value;
+  };
+
   app.get("/api/stock/quote/:symbol", async (req, res) => {
     try {
       const symbol = req.params.symbol.toUpperCase();
@@ -630,13 +639,13 @@ export async function registerRoutes(
 
       res.json({
         symbol: quote["01. symbol"],
-        price: parseFloat(quote["05. price"]),
-        change: parseFloat(quote["09. change"]),
+        price: convertPenceToPounds(parseFloat(quote["05. price"]), symbol),
+        change: convertPenceToPounds(parseFloat(quote["09. change"]), symbol),
         changePercent: quote["10. change percent"],
-        high: parseFloat(quote["03. high"]),
-        low: parseFloat(quote["04. low"]),
-        open: parseFloat(quote["02. open"]),
-        previousClose: parseFloat(quote["08. previous close"]),
+        high: convertPenceToPounds(parseFloat(quote["03. high"]), symbol),
+        low: convertPenceToPounds(parseFloat(quote["04. low"]), symbol),
+        open: convertPenceToPounds(parseFloat(quote["02. open"]), symbol),
+        previousClose: convertPenceToPounds(parseFloat(quote["08. previous close"]), symbol),
         volume: parseInt(quote["06. volume"]),
         latestTradingDay: quote["07. latest trading day"]
       });
@@ -709,8 +718,8 @@ export async function registerRoutes(
           if (quote && Object.keys(quote).length > 0) {
             quotes[symbol] = {
               symbol: quote["01. symbol"],
-              price: parseFloat(quote["05. price"]),
-              change: parseFloat(quote["09. change"]),
+              price: convertPenceToPounds(parseFloat(quote["05. price"]), symbol),
+              change: convertPenceToPounds(parseFloat(quote["09. change"]), symbol),
               changePercent: quote["10. change percent"]
             };
           }
