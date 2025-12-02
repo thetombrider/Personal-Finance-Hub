@@ -32,12 +32,15 @@ export default function Portfolio() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isAddTradeOpen, setIsAddTradeOpen] = useState(false);
+  const [entryMode, setEntryMode] = useState<"search" | "manual">("manual");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<api.StockSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedStock, setSelectedStock] = useState<api.StockSearchResult | null>(null);
   const [currentQuote, setCurrentQuote] = useState<api.StockQuote | null>(null);
   const [isLoadingQuote, setIsLoadingQuote] = useState(false);
+  const [manualTicker, setManualTicker] = useState("");
+  const [manualName, setManualName] = useState("");
   const [tradeForm, setTradeForm] = useState({
     quantity: "",
     pricePerUnit: "",
@@ -98,6 +101,8 @@ export default function Portfolio() {
     setSearchResults([]);
     setSelectedStock(null);
     setCurrentQuote(null);
+    setManualTicker("");
+    setManualName("");
     setTradeForm({
       quantity: "",
       pricePerUnit: "",
@@ -137,7 +142,11 @@ export default function Portfolio() {
   };
 
   const handleSubmitTrade = async () => {
-    if (!selectedStock || !tradeForm.quantity || !tradeForm.pricePerUnit) {
+    const isManual = entryMode === "manual";
+    const ticker = isManual ? manualTicker.trim().toUpperCase() : selectedStock?.symbol;
+    const name = isManual ? (manualName.trim() || manualTicker.trim().toUpperCase()) : selectedStock?.name;
+
+    if (!ticker || !tradeForm.quantity || !tradeForm.pricePerUnit) {
       toast({ title: "Dati mancanti", description: "Compila tutti i campi obbligatori.", variant: "destructive" });
       return;
     }
@@ -152,10 +161,10 @@ export default function Portfolio() {
 
     try {
       const holding = await createHoldingMutation.mutateAsync({
-        ticker: selectedStock.symbol,
-        name: selectedStock.name,
-        assetType: selectedStock.type || "ETF",
-        currency: selectedStock.currency || "EUR",
+        ticker,
+        name: name || ticker,
+        assetType: isManual ? "ETF" : (selectedStock?.type || "ETF"),
+        currency: "EUR",
       });
 
       await createTradeMutation.mutateAsync({
@@ -307,61 +316,95 @@ export default function Portfolio() {
                   <DialogTitle>Registra Operazione</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label>Cerca Titolo</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="Es. VWCE, IWDA, AAPL..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                        data-testid="input-search-stock"
-                      />
-                      <Button onClick={handleSearch} disabled={isSearching} data-testid="button-search-stock">
-                        <Search className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    {searchResults.length > 0 && (
-                      <div className="border rounded-md max-h-40 overflow-y-auto">
-                        {searchResults.map((result) => (
-                          <button
-                            key={result.symbol}
-                            className="w-full px-3 py-2 text-left hover:bg-accent flex justify-between items-center"
-                            onClick={() => handleSelectStock(result)}
-                            data-testid={`button-select-stock-${result.symbol}`}
-                          >
-                            <div>
-                              <span className="font-medium">{result.symbol}</span>
-                              <span className="text-sm text-muted-foreground ml-2">{result.name}</span>
-                            </div>
-                            <Badge variant="outline">{result.type}</Badge>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  <Tabs value={entryMode} onValueChange={(v) => setEntryMode(v as "search" | "manual")}>
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="manual" data-testid="tab-manual-entry">Inserimento Manuale</TabsTrigger>
+                      <TabsTrigger value="search" data-testid="tab-search-entry">Cerca Online</TabsTrigger>
+                    </TabsList>
 
-                  {selectedStock && (
-                    <>
-                      <div className="p-3 bg-accent rounded-lg">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <p className="font-medium">{selectedStock.symbol}</p>
-                            <p className="text-sm text-muted-foreground">{selectedStock.name}</p>
-                          </div>
-                          {isLoadingQuote ? (
-                            <Skeleton className="h-6 w-20" />
-                          ) : currentQuote && (
-                            <div className="text-right">
-                              <p className="font-bold">{formatCurrency(currentQuote.price)}</p>
-                              <p className={`text-sm ${currentQuote.change >= 0 ? "text-green-600" : "text-red-600"}`}>
-                                {currentQuote.change >= 0 ? "+" : ""}{currentQuote.changePercent}
-                              </p>
-                            </div>
-                          )}
+                    <TabsContent value="manual" className="space-y-4 mt-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Ticker / Simbolo *</Label>
+                          <Input
+                            placeholder="Es. SWDA.LON, VWCE.DEX"
+                            value={manualTicker}
+                            onChange={(e) => setManualTicker(e.target.value)}
+                            data-testid="input-manual-ticker"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Nome (opzionale)</Label>
+                          <Input
+                            placeholder="Es. iShares MSCI World"
+                            value={manualName}
+                            onChange={(e) => setManualName(e.target.value)}
+                            data-testid="input-manual-name"
+                          />
                         </div>
                       </div>
+                    </TabsContent>
 
+                    <TabsContent value="search" className="space-y-4 mt-4">
+                      <div className="space-y-2">
+                        <Label>Cerca Titolo</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="Es. VWCE, IWDA, AAPL..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                            data-testid="input-search-stock"
+                          />
+                          <Button onClick={handleSearch} disabled={isSearching} data-testid="button-search-stock">
+                            <Search className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        {searchResults.length > 0 && (
+                          <div className="border rounded-md max-h-40 overflow-y-auto">
+                            {searchResults.map((result) => (
+                              <button
+                                key={result.symbol}
+                                className="w-full px-3 py-2 text-left hover:bg-accent flex justify-between items-center"
+                                onClick={() => handleSelectStock(result)}
+                                data-testid={`button-select-stock-${result.symbol}`}
+                              >
+                                <div>
+                                  <span className="font-medium">{result.symbol}</span>
+                                  <span className="text-sm text-muted-foreground ml-2">{result.name}</span>
+                                </div>
+                                <Badge variant="outline">{result.type}</Badge>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {selectedStock && (
+                        <div className="p-3 bg-accent rounded-lg">
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <p className="font-medium">{selectedStock.symbol}</p>
+                              <p className="text-sm text-muted-foreground">{selectedStock.name}</p>
+                            </div>
+                            {isLoadingQuote ? (
+                              <Skeleton className="h-6 w-20" />
+                            ) : currentQuote && (
+                              <div className="text-right">
+                                <p className="font-bold">{formatCurrency(currentQuote.price)}</p>
+                                <p className={`text-sm ${currentQuote.change >= 0 ? "text-green-600" : "text-red-600"}`}>
+                                  {currentQuote.change >= 0 ? "+" : ""}{currentQuote.changePercent}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </TabsContent>
+                  </Tabs>
+
+                  {(entryMode === "manual" || selectedStock) && (
+                    <>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label>Tipo Operazione</Label>
@@ -399,10 +442,11 @@ export default function Portfolio() {
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label>Prezzo per Unità</Label>
+                          <Label>Prezzo per Unità (EUR)</Label>
                           <Input
                             type="number"
                             step="0.0001"
+                            placeholder="Es. 97.54"
                             value={tradeForm.pricePerUnit}
                             onChange={(e) => setTradeForm(prev => ({ ...prev, pricePerUnit: e.target.value }))}
                             data-testid="input-trade-price"
@@ -444,7 +488,12 @@ export default function Portfolio() {
                   </DialogClose>
                   <Button 
                     onClick={handleSubmitTrade} 
-                    disabled={!selectedStock || !tradeForm.quantity || !tradeForm.pricePerUnit || createTradeMutation.isPending}
+                    disabled={
+                      (entryMode === "manual" ? !manualTicker.trim() : !selectedStock) || 
+                      !tradeForm.quantity || 
+                      !tradeForm.pricePerUnit || 
+                      createTradeMutation.isPending
+                    }
                     data-testid="button-submit-trade"
                   >
                     {createTradeMutation.isPending ? "Salvataggio..." : "Salva Operazione"}

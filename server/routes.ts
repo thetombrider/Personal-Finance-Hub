@@ -606,11 +606,12 @@ export async function registerRoutes(
     return upper.endsWith('.LON') || upper.endsWith('.L');
   };
 
+  const CACHE_DURATION_24H = 24 * 60 * 60 * 1000;
+
   let cachedGbpEurRate: { rate: number; timestamp: number } | null = null;
-  const RATE_CACHE_DURATION = 4 * 60 * 60 * 1000;
 
   const getGbpToEurRate = async (): Promise<number> => {
-    if (cachedGbpEurRate && Date.now() - cachedGbpEurRate.timestamp < RATE_CACHE_DURATION) {
+    if (cachedGbpEurRate && Date.now() - cachedGbpEurRate.timestamp < CACHE_DURATION_24H) {
       return cachedGbpEurRate.rate;
     }
 
@@ -641,12 +642,35 @@ export async function registerRoutes(
     return valueInPounds * gbpEurRate;
   };
 
+  interface CachedQuote {
+    data: {
+      symbol: string;
+      price: number;
+      change: number;
+      changePercent: string;
+      high?: number;
+      low?: number;
+      open?: number;
+      previousClose?: number;
+      volume?: number;
+      latestTradingDay?: string;
+    };
+    timestamp: number;
+  }
+  const quotesCache: Record<string, CachedQuote> = {};
+
   app.get("/api/stock/quote/:symbol", async (req, res) => {
     try {
       const symbol = req.params.symbol.toUpperCase();
       
       if (!ALPHA_VANTAGE_API_KEY) {
         return res.status(500).json({ error: "Alpha Vantage API key not configured" });
+      }
+
+      const cached = quotesCache[symbol];
+      if (cached && Date.now() - cached.timestamp < CACHE_DURATION_24H) {
+        console.log(`[cache] Returning cached quote for ${symbol}`);
+        return res.json({ ...cached.data, cached: true });
       }
 
       const response = await fetch(
@@ -660,11 +684,19 @@ export async function registerRoutes(
       }
       
       if (data["Note"]) {
+        if (cached) {
+          console.log(`[cache] Rate limited, returning stale cache for ${symbol}`);
+          return res.json({ ...cached.data, cached: true, stale: true });
+        }
         return res.status(429).json({ error: "API rate limit reached. Please try again later." });
       }
 
       const quote = data["Global Quote"];
       if (!quote || Object.keys(quote).length === 0) {
+        if (cached) {
+          console.log(`[cache] No data, returning stale cache for ${symbol}`);
+          return res.json({ ...cached.data, cached: true, stale: true });
+        }
         return res.status(404).json({ error: "No data found for this symbol" });
       }
 
@@ -677,7 +709,7 @@ export async function registerRoutes(
         convertToEur(parseFloat(quote["08. previous close"]), symbol),
       ]);
 
-      res.json({
+      const quoteData = {
         symbol: quote["01. symbol"],
         price,
         change,
@@ -689,9 +721,18 @@ export async function registerRoutes(
         volume: parseInt(quote["06. volume"]),
         latestTradingDay: quote["07. latest trading day"],
         currency: isLondonExchange(symbol) ? "EUR" : undefined
-      });
+      };
+
+      quotesCache[symbol] = { data: quoteData, timestamp: Date.now() };
+      console.log(`[cache] Stored fresh quote for ${symbol}`);
+
+      res.json(quoteData);
     } catch (error) {
       console.error("Alpha Vantage API error:", error);
+      const cached = quotesCache[req.params.symbol.toUpperCase()];
+      if (cached) {
+        return res.json({ ...cached.data, cached: true, stale: true });
+      }
       res.status(500).json({ error: "Failed to fetch stock quote" });
     }
   });
@@ -742,8 +783,19 @@ export async function registerRoutes(
       }
 
       const quotes: Record<string, any> = {};
+      const symbolsToFetch: string[] = [];
       
       for (const symbol of symbols) {
+        const cached = quotesCache[symbol];
+        if (cached && Date.now() - cached.timestamp < CACHE_DURATION_24H) {
+          quotes[symbol] = { ...cached.data, cached: true };
+          console.log(`[cache] Batch: returning cached quote for ${symbol}`);
+        } else {
+          symbolsToFetch.push(symbol);
+        }
+      }
+
+      for (const symbol of symbolsToFetch) {
         try {
           const response = await fetch(
             `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${ALPHA_VANTAGE_API_KEY}`
@@ -752,7 +804,12 @@ export async function registerRoutes(
           const data = await response.json();
           
           if (data["Note"]) {
-            return res.status(429).json({ error: "API rate limit reached. Please try again later." });
+            const cached = quotesCache[symbol];
+            if (cached) {
+              quotes[symbol] = { ...cached.data, cached: true, stale: true };
+              console.log(`[cache] Batch: rate limited, returning stale for ${symbol}`);
+            }
+            continue;
           }
 
           const quote = data["Global Quote"];
@@ -761,15 +818,30 @@ export async function registerRoutes(
               convertToEur(parseFloat(quote["05. price"]), symbol),
               convertToEur(parseFloat(quote["09. change"]), symbol),
             ]);
-            quotes[symbol] = {
+            const quoteData = {
               symbol: quote["01. symbol"],
               price,
               change,
               changePercent: quote["10. change percent"]
             };
+            quotes[symbol] = quoteData;
+            quotesCache[symbol] = { 
+              data: { ...quoteData, high: 0, low: 0, open: 0, previousClose: 0, volume: 0 }, 
+              timestamp: Date.now() 
+            };
+            console.log(`[cache] Batch: stored fresh quote for ${symbol}`);
+          } else {
+            const cached = quotesCache[symbol];
+            if (cached) {
+              quotes[symbol] = { ...cached.data, cached: true, stale: true };
+            }
           }
         } catch (err) {
           console.error(`Error fetching quote for ${symbol}:`, err);
+          const cached = quotesCache[symbol];
+          if (cached) {
+            quotes[symbol] = { ...cached.data, cached: true, stale: true };
+          }
         }
       }
 
