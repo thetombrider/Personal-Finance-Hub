@@ -36,7 +36,7 @@ export default function ImportTransactions() {
     date: "",
     amount: "",
     description: "",
-    type: ""
+    type: "none"
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -100,7 +100,7 @@ export default function ImportTransactions() {
       date: row[mapping.date],
       amount: row[mapping.amount],
       description: row[mapping.description],
-      type: mapping.type ? row[mapping.type] : 'Auto-detected'
+      type: mapping.type && mapping.type !== 'none' ? row[mapping.type] : 'Auto-detected'
     }));
   };
 
@@ -112,7 +112,7 @@ export default function ImportTransactions() {
       let type: "income" | "expense" = "expense";
 
       // Try to infer type if mapped
-      if (mapping.type && row[mapping.type]) {
+      if (mapping.type && mapping.type !== 'none' && row[mapping.type]) {
         const typeVal = row[mapping.type].toLowerCase();
         if (typeVal.includes('income') || typeVal.includes('credit') || typeVal.includes('entrata')) {
           type = "income";
@@ -276,7 +276,7 @@ export default function ImportTransactions() {
                           <SelectValue placeholder="Select column (if exists)" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">-- None (Infer from amount) --</SelectItem>
+                          <SelectItem value="none">-- None (Infer from amount) --</SelectItem>
                           {headers.map(h => (
                             <SelectItem key={h} value={h}>{h}</SelectItem>
                           ))}
