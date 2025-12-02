@@ -107,7 +107,7 @@ export default function Dashboard() {
     return list;
   }, [timeRange]);
 
-  // Monthly data by Account (rows: accounts, columns: months)
+  // Monthly data by Account (rows: accounts, columns: months) - shows net (income - expense)
   const accountMonthlyData = useMemo(() => {
     const data: Record<string, Record<string, number>> = {};
     
@@ -127,8 +127,10 @@ export default function Dashboard() {
       
       if (data[account.name] && data[account.name][monthKey] !== undefined) {
         const amount = parseFloat(t.amount) || 0;
-        if (t.type === 'expense') {
+        if (t.type === 'income') {
           data[account.name][monthKey] += amount;
+        } else {
+          data[account.name][monthKey] -= amount;
         }
       }
     });
@@ -136,15 +138,16 @@ export default function Dashboard() {
     return data;
   }, [transactions, accounts, monthsList]);
 
-  // Monthly data by Category (rows: categories, columns: months)
+  // Monthly data by Category (rows: categories, columns: months) - shows net (income - expense)
   const categoryMonthlyData = useMemo(() => {
     const data: Record<string, Record<string, number>> = {};
     
-    const expenseCategories = categories.filter(c => 
-      c.type === 'expense' && c.name.toLowerCase() !== 'trasferimenti'
+    // Include all categories except transfers
+    const relevantCategories = categories.filter(c => 
+      c.name.toLowerCase() !== 'trasferimenti'
     );
     
-    expenseCategories.forEach(cat => {
+    relevantCategories.forEach(cat => {
       data[cat.name] = {};
       monthsList.forEach(m => {
         data[cat.name][m.key] = 0;
@@ -152,8 +155,6 @@ export default function Dashboard() {
     });
 
     transactions.forEach(t => {
-      if (t.type !== 'expense') return;
-      
       const category = categories.find(c => c.id === t.categoryId);
       if (!category || category.name.toLowerCase() === 'trasferimenti') return;
       if (!data[category.name]) return;
@@ -163,7 +164,11 @@ export default function Dashboard() {
       
       if (data[category.name][monthKey] !== undefined) {
         const amount = parseFloat(t.amount) || 0;
-        data[category.name][monthKey] += amount;
+        if (t.type === 'income') {
+          data[category.name][monthKey] += amount;
+        } else {
+          data[category.name][monthKey] -= amount;
+        }
       }
     });
 
@@ -356,8 +361,8 @@ export default function Dashboard() {
           {/* Table 1: Monthly by Account */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Spese per Conto</CardTitle>
-              <CardDescription>Riepilogo mensile delle spese per ogni conto</CardDescription>
+              <CardTitle className="text-lg">Flusso per Conto</CardTitle>
+              <CardDescription>Riepilogo mensile entrate/uscite nette per ogni conto</CardDescription>
             </CardHeader>
             <CardContent className="p-0">
               <ScrollArea className="w-full">
@@ -378,13 +383,16 @@ export default function Dashboard() {
                         return (
                           <TableRow key={accountName}>
                             <TableCell className="sticky left-0 bg-card z-10 font-medium">{accountName}</TableCell>
-                            {monthsList.map(m => (
-                              <TableCell key={m.key} className="text-center text-sm">
-                                {months[m.key] > 0 ? formatCurrency(months[m.key]) : '-'}
-                              </TableCell>
-                            ))}
-                            <TableCell className="text-center font-semibold">
-                              {total > 0 ? formatCurrency(total) : '-'}
+                            {monthsList.map(m => {
+                              const val = months[m.key];
+                              return (
+                                <TableCell key={m.key} className={`text-center text-sm ${val > 0 ? 'text-emerald-600' : val < 0 ? 'text-rose-600' : ''}`}>
+                                  {val !== 0 ? formatCurrency(val) : '-'}
+                                </TableCell>
+                              );
+                            })}
+                            <TableCell className={`text-center font-semibold ${total > 0 ? 'text-emerald-600' : total < 0 ? 'text-rose-600' : ''}`}>
+                              {total !== 0 ? formatCurrency(total) : '-'}
                             </TableCell>
                           </TableRow>
                         );
@@ -394,8 +402,8 @@ export default function Dashboard() {
                         {monthsList.map(m => {
                           const monthTotal = Object.values(accountMonthlyData).reduce((sum, acc) => sum + (acc[m.key] || 0), 0);
                           return (
-                            <TableCell key={m.key} className="text-center">
-                              {monthTotal > 0 ? formatCurrency(monthTotal) : '-'}
+                            <TableCell key={m.key} className={`text-center ${monthTotal > 0 ? 'text-emerald-600' : monthTotal < 0 ? 'text-rose-600' : ''}`}>
+                              {monthTotal !== 0 ? formatCurrency(monthTotal) : '-'}
                             </TableCell>
                           );
                         })}
@@ -416,8 +424,8 @@ export default function Dashboard() {
           {/* Table 2: Monthly by Category */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Spese per Categoria</CardTitle>
-              <CardDescription>Riepilogo mensile delle spese per ogni categoria</CardDescription>
+              <CardTitle className="text-lg">Flusso per Categoria</CardTitle>
+              <CardDescription>Riepilogo mensile entrate/uscite nette per ogni categoria</CardDescription>
             </CardHeader>
             <CardContent className="p-0">
               <ScrollArea className="w-full">
@@ -439,13 +447,16 @@ export default function Dashboard() {
                         return (
                           <TableRow key={catName}>
                             <TableCell className="sticky left-0 bg-card z-10 font-medium">{catName}</TableCell>
-                            {monthsList.map(m => (
-                              <TableCell key={m.key} className="text-center text-sm">
-                                {months[m.key] > 0 ? formatCurrency(months[m.key]) : '-'}
-                              </TableCell>
-                            ))}
-                            <TableCell className="text-center font-semibold">
-                              {total > 0 ? formatCurrency(total) : '-'}
+                            {monthsList.map(m => {
+                              const val = months[m.key];
+                              return (
+                                <TableCell key={m.key} className={`text-center text-sm ${val > 0 ? 'text-emerald-600' : val < 0 ? 'text-rose-600' : ''}`}>
+                                  {val !== 0 ? formatCurrency(val) : '-'}
+                                </TableCell>
+                              );
+                            })}
+                            <TableCell className={`text-center font-semibold ${total > 0 ? 'text-emerald-600' : total < 0 ? 'text-rose-600' : ''}`}>
+                              {total !== 0 ? formatCurrency(total) : '-'}
                             </TableCell>
                           </TableRow>
                         );
@@ -455,8 +466,8 @@ export default function Dashboard() {
                         {monthsList.map(m => {
                           const monthTotal = Object.values(categoryMonthlyData).reduce((sum, cat) => sum + (cat[m.key] || 0), 0);
                           return (
-                            <TableCell key={m.key} className="text-center">
-                              {monthTotal > 0 ? formatCurrency(monthTotal) : '-'}
+                            <TableCell key={m.key} className={`text-center ${monthTotal > 0 ? 'text-emerald-600' : monthTotal < 0 ? 'text-rose-600' : ''}`}>
+                              {monthTotal !== 0 ? formatCurrency(monthTotal) : '-'}
                             </TableCell>
                           );
                         })}
