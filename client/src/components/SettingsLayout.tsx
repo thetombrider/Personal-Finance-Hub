@@ -1,28 +1,35 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, CreditCard, PieChart, Receipt, Menu, Settings, FileSpreadsheet } from "lucide-react";
+import { CreditCard, PieChart, ArrowLeft, Settings } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import logo from "@assets/generated_images/abstract_geometric_finance_logo.png";
+import { Menu } from "lucide-react";
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+export default function SettingsLayout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const navItems = [
-    { href: "/", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/transactions", label: "Transactions", icon: Receipt },
-    { href: "/accounts", label: "Accounts", icon: CreditCard },
-    { href: "/categories", label: "Categories", icon: PieChart },
-    { href: "/import", label: "Import CSV", icon: FileSpreadsheet },
+    { href: "/settings/accounts", label: "Gestione Conti", icon: CreditCard },
+    { href: "/settings/categories", label: "Gestione Categorie", icon: PieChart },
   ];
 
   const NavContent = () => (
     <div className="flex flex-col h-full">
-      <div className="p-6 flex items-center gap-3">
-        <img src={logo} alt="FinTrack" className="w-8 h-8 rounded-lg" />
-        <span className="font-heading font-bold text-xl tracking-tight text-foreground">FinTrack</span>
+      <div className="p-6">
+        <Link href="/">
+          <a className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-4">
+            <ArrowLeft size={18} />
+            <span className="text-sm font-medium">Torna all'app</span>
+          </a>
+        </Link>
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-primary/10">
+            <Settings size={20} className="text-primary" />
+          </div>
+          <span className="font-heading font-bold text-xl tracking-tight text-foreground">Settings</span>
+        </div>
       </div>
       
       <nav className="flex-1 px-4 py-4 space-y-1">
@@ -44,15 +51,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           );
         })}
       </nav>
-
-      <div className="p-4 border-t border-border">
-        <Link href="/settings/accounts">
-          <a className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group text-muted-foreground hover:bg-accent hover:text-foreground">
-            <Settings size={18} className="text-muted-foreground group-hover:text-foreground" />
-            Settings
-          </a>
-        </Link>
-      </div>
     </div>
   );
 
@@ -66,8 +64,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* Mobile Header */}
       <div className="md:hidden fixed top-0 left-0 right-0 h-16 border-b border-border bg-background/80 backdrop-blur-md z-50 flex items-center justify-between px-4">
         <div className="flex items-center gap-2">
-          <img src={logo} alt="FinTrack" className="w-8 h-8 rounded-md" />
-          <span className="font-heading font-bold text-lg text-foreground">FinTrack</span>
+          <Settings size={20} className="text-primary" />
+          <span className="font-heading font-bold text-lg text-foreground">Settings</span>
         </div>
         <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
           <SheetTrigger asChild>

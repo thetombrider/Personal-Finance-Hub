@@ -9,6 +9,8 @@ import Accounts from "@/pages/Accounts";
 import Categories from "@/pages/Categories";
 import Transactions from "@/pages/Transactions";
 import ImportTransactions from "@/pages/ImportTransactions";
+import ManageAccounts from "@/pages/settings/ManageAccounts";
+import ManageCategories from "@/pages/settings/ManageCategories";
 import { FinanceProvider } from "@/context/FinanceContext";
 
 function Router() {
@@ -19,6 +21,8 @@ function Router() {
       <Route path="/categories" component={Categories} />
       <Route path="/transactions" component={Transactions} />
       <Route path="/import" component={ImportTransactions} />
+      <Route path="/settings/accounts" component={ManageAccounts} />
+      <Route path="/settings/categories" component={ManageCategories} />
       <Route component={NotFound} />
     </Switch>
   );
