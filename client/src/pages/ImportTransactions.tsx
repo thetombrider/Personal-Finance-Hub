@@ -36,7 +36,7 @@ export default function ImportTransactions() {
   const [csvData, setCsvData] = useState<any[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
   
-  const [selectedAccount, setSelectedAccount] = useState<string>("");
+  const [selectedAccount, setSelectedAccount] = useState<number | null>(null);
   const [useDualAmountColumns, setUseDualAmountColumns] = useState(false);
 
   const [mapping, setMapping] = useState<Mapping>({
@@ -166,7 +166,7 @@ export default function ImportTransactions() {
       }
 
       // Account Resolution
-      let accountId = selectedAccount;
+      let accountId = selectedAccount || (accounts[0]?.id ?? 0);
       if (mapping.account && mapping.account !== 'none' && row[mapping.account]) {
         const accountName = row[mapping.account].toLowerCase();
         const matchedAccount = accounts.find(a => a.name.toLowerCase() === accountName);
@@ -176,7 +176,7 @@ export default function ImportTransactions() {
       }
 
       // Category Resolution
-      let categoryId = categories[0].id; // Fallback
+      let categoryId = categories[0]?.id ?? 0; // Fallback
       if (mapping.category && mapping.category !== 'none' && row[mapping.category]) {
         const catName = row[mapping.category].toLowerCase();
         // Find category with matching name AND correct type
@@ -201,7 +201,7 @@ export default function ImportTransactions() {
 
       return {
         date: parseDate(row[mapping.date]),
-        amount: Math.abs(amount),
+        amount: Math.abs(amount).toString(),
         description: row[mapping.description] || "Imported Transaction",
         accountId,
         categoryId,
@@ -223,16 +223,16 @@ export default function ImportTransactions() {
     });
   };
 
-  const handleImport = () => {
+  const handleImport = async () => {
     // If no specific account column is mapped, require a selected account
     if ((!mapping.account || mapping.account === 'none') && !selectedAccount) return;
 
     const transactions = csvData.map(row => getTransactionFromRow(row));
     
     // Filter out invalid transactions (e.g. no account found)
-    const validTransactions = transactions.filter(t => t.accountId && t.amount > 0);
+    const validTransactions = transactions.filter(t => t.accountId && parseFloat(t.amount) > 0);
 
-    addTransactions(validTransactions);
+    await addTransactions(validTransactions);
     setLocation('/transactions');
   };
 
@@ -308,13 +308,13 @@ export default function ImportTransactions() {
                   <div className="space-y-4">
                      <div className="space-y-2">
                       <Label>Default Account (Fallback)</Label>
-                      <Select value={selectedAccount} onValueChange={setSelectedAccount}>
+                      <Select value={selectedAccount?.toString()} onValueChange={(v) => setSelectedAccount(parseInt(v))}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select account" />
                         </SelectTrigger>
                         <SelectContent>
                           {accounts.map(acc => (
-                            <SelectItem key={acc.id} value={acc.id}>{acc.name}</SelectItem>
+                            <SelectItem key={acc.id} value={acc.id.toString()}>{acc.name}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -480,7 +480,7 @@ export default function ImportTransactions() {
                         <TableRow key={i}>
                           <TableCell className="whitespace-nowrap">{format(new Date(row.date), "MMM d, yyyy")}</TableCell>
                           <TableCell className="max-w-[200px] truncate">{row.description}</TableCell>
-                          <TableCell>{formatCurrency(row.amount)}</TableCell>
+                          <TableCell>{formatCurrency(parseFloat(row.amount))}</TableCell>
                           <TableCell>
                              <span className={cn("px-2 py-1 rounded-full text-xs font-medium", row.type === 'income' ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700")}>
                                {row.type}

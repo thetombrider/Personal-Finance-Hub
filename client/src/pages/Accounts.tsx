@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, Edit2, Wallet, CreditCard, PiggyBank, Banknote, Building2 } from "lucide-react";
 import { useState } from "react";
@@ -25,9 +24,9 @@ const accountSchema = z.object({
 type AccountFormValues = z.infer<typeof accountSchema>;
 
 export default function Accounts() {
-  const { accounts, addAccount, updateAccount, deleteAccount, formatCurrency } = useFinance();
+  const { accounts, addAccount, updateAccount, deleteAccount, formatCurrency, isLoading } = useFinance();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
 
   const form = useForm<AccountFormValues>({
     resolver: zodResolver(accountSchema),
@@ -40,11 +39,16 @@ export default function Accounts() {
     },
   });
 
-  const onSubmit = (data: AccountFormValues) => {
+  const onSubmit = async (data: AccountFormValues) => {
+    const formattedData = {
+      ...data,
+      startingBalance: data.startingBalance.toString(),
+    };
+    
     if (editingId) {
-      updateAccount(editingId, data);
+      await updateAccount(editingId, formattedData);
     } else {
-      addAccount(data);
+      await addAccount(formattedData);
     }
     setIsDialogOpen(false);
     setEditingId(null);
@@ -56,16 +60,16 @@ export default function Accounts() {
     form.reset({
       name: account.name,
       type: account.type,
-      startingBalance: account.startingBalance,
+      startingBalance: parseFloat(account.startingBalance),
       currency: account.currency,
       color: account.color,
     });
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: number) => {
     if (confirm("Are you sure you want to delete this account?")) {
-      deleteAccount(id);
+      await deleteAccount(id);
     }
   };
 
@@ -79,6 +83,16 @@ export default function Accounts() {
       default: return Wallet;
     }
   };
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center h-96">
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -103,7 +117,7 @@ export default function Accounts() {
             }
           }}>
             <DialogTrigger asChild>
-              <Button className="gap-2">
+              <Button className="gap-2" data-testid="button-add-account">
                 <Plus size={16} /> Add Account
               </Button>
             </DialogTrigger>
@@ -120,7 +134,7 @@ export default function Accounts() {
                       <FormItem>
                         <FormLabel>Account Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g. Main Checking" {...field} />
+                          <Input placeholder="e.g. Main Checking" {...field} data-testid="input-name" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -133,9 +147,9 @@ export default function Accounts() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Type</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
-                              <SelectTrigger>
+                              <SelectTrigger data-testid="select-type">
                                 <SelectValue placeholder="Select type" />
                               </SelectTrigger>
                             </FormControl>
@@ -158,7 +172,7 @@ export default function Accounts() {
                         <FormItem>
                           <FormLabel>Starting Balance</FormLabel>
                           <FormControl>
-                            <Input type="number" step="0.01" {...field} />
+                            <Input type="number" step="0.01" {...field} data-testid="input-starting-balance" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -166,7 +180,7 @@ export default function Accounts() {
                     />
                   </div>
                   <DialogFooter>
-                    <Button type="submit">{editingId ? "Save Changes" : "Create Account"}</Button>
+                    <Button type="submit" data-testid="button-submit-account">{editingId ? "Save Changes" : "Create Account"}</Button>
                   </DialogFooter>
                 </form>
               </Form>
@@ -179,12 +193,12 @@ export default function Accounts() {
             const Icon = getIcon(account.type);
             const isNegative = account.balance < 0;
             return (
-              <Card key={account.id} className="group relative overflow-hidden transition-all hover:shadow-md">
+              <Card key={account.id} className="group relative overflow-hidden transition-all hover:shadow-md" data-testid={`card-account-${account.id}`}>
                 <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(account)}>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(account)} data-testid={`button-edit-${account.id}`}>
                     <Edit2 size={14} />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(account.id)}>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(account.id)} data-testid={`button-delete-${account.id}`}>
                     <Trash2 size={14} />
                   </Button>
                 </div>
@@ -198,7 +212,7 @@ export default function Accounts() {
                       <Icon size={24} />
                     </div>
                     <div>
-                      <CardTitle className="text-lg">{account.name}</CardTitle>
+                      <CardTitle className="text-lg" data-testid={`text-account-name-${account.id}`}>{account.name}</CardTitle>
                       <CardDescription className="capitalize">{account.type}</CardDescription>
                     </div>
                   </div>
@@ -208,11 +222,11 @@ export default function Accounts() {
                     <div className={cn(
                       "text-2xl font-bold font-heading",
                       isNegative ? "text-destructive" : "text-foreground"
-                    )}>
+                    )} data-testid={`text-balance-${account.id}`}>
                       {formatCurrency(account.balance)}
                     </div>
-                    <div className="text-xs text-muted-foreground">
-                      Starting: {formatCurrency(account.startingBalance)}
+                    <div className="text-xs text-muted-foreground" data-testid={`text-starting-balance-${account.id}`}>
+                      Starting: {formatCurrency(parseFloat(account.startingBalance))}
                     </div>
                   </div>
                 </CardContent>

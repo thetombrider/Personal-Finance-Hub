@@ -1,189 +1,240 @@
-import { createContext, useContext, useState, useEffect, ReactNode, useMemo } from "react";
-import { startOfMonth, endOfMonth, isWithinInterval, subMonths, parseISO } from "date-fns";
+import { createContext, useContext, ReactNode, useMemo } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import * as api from "@/lib/api";
+import type { InsertAccount, InsertCategory, InsertTransaction } from "@shared/schema";
 
 // Types
 export type AccountType = "checking" | "savings" | "credit" | "investment" | "cash";
 
 export interface Account {
-  id: string;
+  id: number;
   name: string;
   type: AccountType;
-  startingBalance: number;
-  balance: number; // Computed: startingBalance + transactions
+  startingBalance: string;
+  balance: number;
   currency: string;
   color: string;
 }
 
 export interface Category {
-  id: string;
+  id: number;
   name: string;
   type: "income" | "expense";
   color: string;
-  icon?: string;
+  icon?: string | null;
 }
 
 export interface Transaction {
-  id: string;
-  date: string; // ISO string
-  amount: number;
+  id: number;
+  date: string;
+  amount: string;
   description: string;
-  accountId: string;
-  categoryId: string;
+  accountId: number;
+  categoryId: number;
   type: "income" | "expense";
 }
-
-// Mock Data
-const INITIAL_ACCOUNTS: Omit<Account, "balance">[] = [
-  { id: "1", name: "Main Checking", type: "checking", startingBalance: 200.50, currency: "EUR", color: "#3b82f6" },
-  { id: "2", name: "High Yield Savings", type: "savings", startingBalance: 12000.00, currency: "EUR", color: "#10b981" },
-  { id: "3", name: "Amex Gold", type: "credit", startingBalance: -330.20, currency: "EUR", color: "#f59e0b" },
-  { id: "4", name: "Wallet Cash", type: "cash", startingBalance: 85.00, currency: "EUR", color: "#6366f1" },
-];
-
-const INITIAL_CATEGORIES: Category[] = [
-  { id: "1", name: "Salary", type: "income", color: "#10b981" },
-  { id: "2", name: "Freelance", type: "income", color: "#34d399" },
-  { id: "3", name: "Groceries", type: "expense", color: "#f472b6" },
-  { id: "4", name: "Rent", type: "expense", color: "#fb7185" },
-  { id: "5", name: "Utilities", type: "expense", color: "#fbbf24" },
-  { id: "6", name: "Dining Out", type: "expense", color: "#f87171" },
-  { id: "7", name: "Transport", type: "expense", color: "#60a5fa" },
-  { id: "8", name: "Entertainment", type: "expense", color: "#818cf8" },
-];
-
-const INITIAL_TRANSACTIONS: Transaction[] = [
-  { id: "1", date: new Date().toISOString(), amount: 50.00, description: "Grocery Shopping", accountId: "1", categoryId: "3", type: "expense" },
-  { id: "2", date: new Date(Date.now() - 86400000 * 2).toISOString(), amount: 1200.00, description: "Monthly Rent", accountId: "1", categoryId: "4", type: "expense" },
-  { id: "3", date: new Date(Date.now() - 86400000 * 5).toISOString(), amount: 3500.00, description: "Salary Deposit", accountId: "1", categoryId: "1", type: "income" },
-  { id: "4", date: new Date(Date.now() - 86400000 * 1).toISOString(), amount: 35.00, description: "Uber Ride", accountId: "3", categoryId: "7", type: "expense" },
-  { id: "5", date: new Date(Date.now() - 86400000 * 3).toISOString(), amount: 85.00, description: "Dinner with friends", accountId: "3", categoryId: "6", type: "expense" },
-];
 
 // Context
 interface FinanceContextType {
   accounts: Account[];
   categories: Category[];
   transactions: Transaction[];
-  addAccount: (account: Omit<Account, "id" | "balance">) => void;
-  updateAccount: (id: string, account: Partial<Omit<Account, "balance">>) => void;
-  deleteAccount: (id: string) => void;
-  addCategory: (category: Omit<Category, "id">) => void;
-  updateCategory: (id: string, category: Partial<Category>) => void;
-  deleteCategory: (id: string) => void;
-  addTransaction: (transaction: Omit<Transaction, "id">) => void;
-  addTransactions: (transactions: Omit<Transaction, "id">[]) => void;
-  updateTransaction: (id: string, transaction: Partial<Transaction>) => void;
-  deleteTransaction: (id: string) => void;
-  deleteTransactions: (ids: string[]) => void;
-  clearTransactions: () => void;
-  getAccountBalance: (id: string) => number;
+  isLoading: boolean;
+  addAccount: (account: Omit<InsertAccount, "id">) => Promise<void>;
+  updateAccount: (id: number, account: Partial<Omit<InsertAccount, "id">>) => Promise<void>;
+  deleteAccount: (id: number) => Promise<void>;
+  addCategory: (category: Omit<InsertCategory, "id">) => Promise<void>;
+  updateCategory: (id: number, category: Partial<InsertCategory>) => Promise<void>;
+  deleteCategory: (id: number) => Promise<void>;
+  addTransaction: (transaction: Omit<InsertTransaction, "id">) => Promise<void>;
+  addTransactions: (transactions: Omit<InsertTransaction, "id">[]) => Promise<void>;
+  updateTransaction: (id: number, transaction: Partial<InsertTransaction>) => Promise<void>;
+  deleteTransaction: (id: number) => Promise<void>;
+  deleteTransactions: (ids: number[]) => Promise<void>;
+  clearTransactions: () => Promise<void>;
+  getAccountBalance: (id: number) => number;
   formatCurrency: (amount: number) => string;
 }
 
 const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
 
 export function FinanceProvider({ children }: { children: ReactNode }) {
-  // Load from local storage or use initial data
-  // We store "raw" accounts without the computed balance
-  const [rawAccounts, setRawAccounts] = useState<Omit<Account, "balance">[]>(() => {
-    const saved = localStorage.getItem("accounts");
-    // Migration: If saved data doesn't have startingBalance (old version), use balance as startingBalance
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (parsed.length > 0 && parsed[0].startingBalance === undefined) {
-        return parsed.map((acc: any) => ({ ...acc, startingBalance: acc.balance || 0 }));
-      }
-      return parsed;
-    }
-    return INITIAL_ACCOUNTS;
+  const queryClient = useQueryClient();
+
+  // Fetch data
+  const { data: rawAccounts = [], isLoading: accountsLoading } = useQuery({
+    queryKey: ["accounts"],
+    queryFn: api.fetchAccounts,
   });
 
-  const [categories, setCategories] = useState<Category[]>(() => {
-    const saved = localStorage.getItem("categories");
-    return saved ? JSON.parse(saved) : INITIAL_CATEGORIES;
+  const { data: categories = [], isLoading: categoriesLoading } = useQuery({
+    queryKey: ["categories"],
+    queryFn: api.fetchCategories,
   });
 
-  const [transactions, setTransactions] = useState<Transaction[]>(() => {
-    const saved = localStorage.getItem("transactions");
-    return saved ? JSON.parse(saved) : INITIAL_TRANSACTIONS;
+  const { data: transactions = [], isLoading: transactionsLoading } = useQuery({
+    queryKey: ["transactions"],
+    queryFn: api.fetchTransactions,
   });
 
-  // Save to local storage on change
-  useEffect(() => { localStorage.setItem("accounts", JSON.stringify(rawAccounts)); }, [rawAccounts]);
-  useEffect(() => { localStorage.setItem("categories", JSON.stringify(categories)); }, [categories]);
-  useEffect(() => { localStorage.setItem("transactions", JSON.stringify(transactions)); }, [transactions]);
+  const isLoading = accountsLoading || categoriesLoading || transactionsLoading;
 
   // Compute balances
   const accounts = useMemo(() => {
-    return rawAccounts.map(account => {
-      const accountTransactions = transactions.filter(t => t.accountId === account.id);
-      const total = accountTransactions.reduce((sum, t) => {
-        return sum + (t.type === 'income' ? t.amount : -t.amount);
+    return rawAccounts.map((account: any) => {
+      const accountTransactions = transactions.filter((t: Transaction) => t.accountId === account.id);
+      const total = accountTransactions.reduce((sum: number, t: Transaction) => {
+        return sum + (t.type === 'income' ? parseFloat(t.amount) : -parseFloat(t.amount));
       }, 0);
       return {
         ...account,
-        balance: (account.startingBalance || 0) + total
+        balance: parseFloat(account.startingBalance || "0") + total
       } as Account;
     });
   }, [rawAccounts, transactions]);
 
-  const addAccount = (account: Omit<Account, "id" | "balance">) => {
-    const newAccount = { ...account, id: Math.random().toString(36).substr(2, 9) };
-    setRawAccounts([...rawAccounts, newAccount]);
+  // Mutations - Accounts
+  const createAccountMutation = useMutation({
+    mutationFn: api.createAccount,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["accounts"] });
+    },
+  });
+
+  const updateAccountMutation = useMutation({
+    mutationFn: ({ id, account }: { id: number; account: Partial<InsertAccount> }) =>
+      api.updateAccount(id, account),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["accounts"] });
+    },
+  });
+
+  const deleteAccountMutation = useMutation({
+    mutationFn: api.deleteAccount,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    },
+  });
+
+  // Mutations - Categories
+  const createCategoryMutation = useMutation({
+    mutationFn: api.createCategory,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+    },
+  });
+
+  const updateCategoryMutation = useMutation({
+    mutationFn: ({ id, category }: { id: number; category: Partial<InsertCategory> }) =>
+      api.updateCategory(id, category),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+    },
+  });
+
+  const deleteCategoryMutation = useMutation({
+    mutationFn: api.deleteCategory,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+    },
+  });
+
+  // Mutations - Transactions
+  const createTransactionMutation = useMutation({
+    mutationFn: api.createTransaction,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    },
+  });
+
+  const createTransactionsBulkMutation = useMutation({
+    mutationFn: api.createTransactionsBulk,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    },
+  });
+
+  const updateTransactionMutation = useMutation({
+    mutationFn: ({ id, transaction }: { id: number; transaction: Partial<InsertTransaction> }) =>
+      api.updateTransaction(id, transaction),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    },
+  });
+
+  const deleteTransactionMutation = useMutation({
+    mutationFn: api.deleteTransaction,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    },
+  });
+
+  const deleteTransactionsBulkMutation = useMutation({
+    mutationFn: api.deleteTransactionsBulk,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    },
+  });
+
+  const clearTransactionsMutation = useMutation({
+    mutationFn: api.clearTransactions,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    },
+  });
+
+  // Helper functions
+  const addAccount = async (account: Omit<InsertAccount, "id">) => {
+    await createAccountMutation.mutateAsync(account);
   };
 
-  const updateAccount = (id: string, updated: Partial<Omit<Account, "balance">>) => {
-    setRawAccounts(rawAccounts.map(acc => acc.id === id ? { ...acc, ...updated } : acc));
+  const updateAccount = async (id: number, account: Partial<Omit<InsertAccount, "id">>) => {
+    await updateAccountMutation.mutateAsync({ id, account });
   };
 
-  const deleteAccount = (id: string) => {
-    setRawAccounts(rawAccounts.filter(acc => acc.id !== id));
+  const deleteAccount = async (id: number) => {
+    await deleteAccountMutation.mutateAsync(id);
   };
 
-  const addCategory = (category: Omit<Category, "id">) => {
-    const newCategory = { ...category, id: Math.random().toString(36).substr(2, 9) };
-    setCategories([...categories, newCategory]);
+  const addCategory = async (category: Omit<InsertCategory, "id">) => {
+    await createCategoryMutation.mutateAsync(category);
   };
 
-  const updateCategory = (id: string, updated: Partial<Category>) => {
-    setCategories(categories.map(cat => cat.id === id ? { ...cat, ...updated } : cat));
+  const updateCategory = async (id: number, category: Partial<InsertCategory>) => {
+    await updateCategoryMutation.mutateAsync({ id, category });
   };
 
-  const deleteCategory = (id: string) => {
-    setCategories(categories.filter(cat => cat.id !== id));
+  const deleteCategory = async (id: number) => {
+    await deleteCategoryMutation.mutateAsync(id);
   };
 
-  const addTransaction = (transaction: Omit<Transaction, "id">) => {
-    const newTransaction = { ...transaction, id: Math.random().toString(36).substr(2, 9) };
-    setTransactions([newTransaction, ...transactions]);
+  const addTransaction = async (transaction: Omit<InsertTransaction, "id">) => {
+    await createTransactionMutation.mutateAsync(transaction);
   };
 
-  const addTransactions = (newTransactions: Omit<Transaction, "id">[]) => {
-    const transactionsWithIds = newTransactions.map(t => ({
-      ...t,
-      id: Math.random().toString(36).substr(2, 9)
-    }));
-    setTransactions(prev => [...transactionsWithIds, ...prev]);
+  const addTransactions = async (transactions: Omit<InsertTransaction, "id">[]) => {
+    await createTransactionsBulkMutation.mutateAsync(transactions);
   };
 
-  const updateTransaction = (id: string, updated: Partial<Transaction>) => {
-    setTransactions(transactions.map(tx => tx.id === id ? { ...tx, ...updated } : tx));
+  const updateTransaction = async (id: number, transaction: Partial<InsertTransaction>) => {
+    await updateTransactionMutation.mutateAsync({ id, transaction });
   };
 
-  const deleteTransaction = (id: string) => {
-    setTransactions(transactions.filter(tx => tx.id !== id));
+  const deleteTransaction = async (id: number) => {
+    await deleteTransactionMutation.mutateAsync(id);
   };
 
-  const deleteTransactions = (ids: string[]) => {
-    setTransactions(transactions.filter(tx => !ids.includes(tx.id)));
+  const deleteTransactions = async (ids: number[]) => {
+    await deleteTransactionsBulkMutation.mutateAsync(ids);
   };
 
-  const clearTransactions = () => {
-    setTransactions([]);
+  const clearTransactions = async () => {
+    await clearTransactionsMutation.mutateAsync();
   };
 
-  const getAccountBalance = (id: string) => {
-    return accounts.find(a => a.id === id)?.balance || 0;
+  const getAccountBalance = (id: number) => {
+    return accounts.find((a: Account) => a.id === id)?.balance || 0;
   };
 
   const formatCurrency = (amount: number) => {
@@ -192,7 +243,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
 
   return (
     <FinanceContext.Provider value={{
-      accounts, categories, transactions,
+      accounts, categories, transactions, isLoading,
       addAccount, updateAccount, deleteAccount,
       addCategory, updateCategory, deleteCategory,
       addTransaction, addTransactions, updateTransaction, deleteTransaction, deleteTransactions, clearTransactions,

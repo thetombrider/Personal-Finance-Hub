@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, Edit2, Calendar as CalendarIcon, CheckSquare, Square } from "lucide-react";
+import { Plus, Trash2, Edit2, Calendar as CalendarIcon } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,8 +21,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 const transactionSchema = z.object({
   amount: z.coerce.number().min(0.01, "Amount must be positive"),
   description: z.string().min(2, "Description is required"),
-  accountId: z.string().min(1, "Account is required"),
-  categoryId: z.string().min(1, "Category is required"),
+  accountId: z.coerce.number().min(1, "Account is required"),
+  categoryId: z.coerce.number().min(1, "Category is required"),
   date: z.date(),
   type: z.enum(["income", "expense"]),
 });
@@ -30,33 +30,34 @@ const transactionSchema = z.object({
 type TransactionFormValues = z.infer<typeof transactionSchema>;
 
 export default function Transactions() {
-  const { transactions, accounts, categories, addTransaction, updateTransaction, deleteTransaction, deleteTransactions, formatCurrency } = useFinance();
+  const { transactions, accounts, categories, addTransaction, updateTransaction, deleteTransaction, deleteTransactions, formatCurrency, isLoading } = useFinance();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
       amount: 0,
       description: "",
-      accountId: "",
-      categoryId: "",
+      accountId: 0,
+      categoryId: 0,
       date: new Date(),
       type: "expense",
     },
   });
 
-  const onSubmit = (data: TransactionFormValues) => {
+  const onSubmit = async (data: TransactionFormValues) => {
     const formattedData = {
       ...data,
+      amount: data.amount.toString(),
       date: data.date.toISOString(),
     };
 
     if (editingId) {
-      updateTransaction(editingId, formattedData);
+      await updateTransaction(editingId, formattedData);
     } else {
-      addTransaction(formattedData);
+      await addTransaction(formattedData);
     }
     setIsDialogOpen(false);
     setEditingId(null);
@@ -66,7 +67,7 @@ export default function Transactions() {
   const handleEdit = (transaction: Transaction) => {
     setEditingId(transaction.id);
     form.reset({
-      amount: transaction.amount,
+      amount: parseFloat(transaction.amount),
       description: transaction.description,
       accountId: transaction.accountId,
       categoryId: transaction.categoryId,
@@ -76,13 +77,13 @@ export default function Transactions() {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: number) => {
     if (confirm("Are you sure you want to delete this transaction?")) {
-      deleteTransaction(id);
+      await deleteTransaction(id);
     }
   };
 
-  const toggleSelection = (id: string) => {
+  const toggleSelection = (id: number) => {
     const newSelected = new Set(selectedIds);
     if (newSelected.has(id)) {
       newSelected.delete(id);
@@ -100,15 +101,25 @@ export default function Transactions() {
     }
   };
 
-  const handleBulkDelete = () => {
+  const handleBulkDelete = async () => {
     if (confirm(`Are you sure you want to delete ${selectedIds.size} transactions?`)) {
-      deleteTransactions(Array.from(selectedIds));
+      await deleteTransactions(Array.from(selectedIds));
       setSelectedIds(new Set());
     }
   };
 
-  const getAccountName = (id: string) => accounts.find(a => a.id === id)?.name || "Unknown";
-  const getCategory = (id: string) => categories.find(c => c.id === id);
+  const getAccountName = (id: number) => accounts.find(a => a.id === id)?.name || "Unknown";
+  const getCategory = (id: number) => categories.find(c => c.id === id);
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center h-96">
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -121,7 +132,7 @@ export default function Transactions() {
 
           <div className="flex items-center gap-2">
             {selectedIds.size > 0 && (
-               <Button variant="destructive" className="gap-2" onClick={handleBulkDelete}>
+               <Button variant="destructive" className="gap-2" onClick={handleBulkDelete} data-testid="button-bulk-delete">
                  <Trash2 size={16} /> Delete ({selectedIds.size})
                </Button>
             )}
@@ -133,15 +144,15 @@ export default function Transactions() {
                 form.reset({
                   amount: 0,
                   description: "",
-                  accountId: "",
-                  categoryId: "",
+                  accountId: 0,
+                  categoryId: 0,
                   date: new Date(),
                   type: "expense",
                 });
               }
             }}>
               <DialogTrigger asChild>
-                <Button className="gap-2">
+                <Button className="gap-2" data-testid="button-add-transaction">
                   <Plus size={16} /> Add Transaction
                 </Button>
               </DialogTrigger>
@@ -158,9 +169,9 @@ export default function Transactions() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Type</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
-                                <SelectTrigger>
+                                <SelectTrigger data-testid="select-type">
                                   <SelectValue />
                                 </SelectTrigger>
                               </FormControl>
@@ -180,7 +191,7 @@ export default function Transactions() {
                           <FormItem>
                             <FormLabel>Amount</FormLabel>
                             <FormControl>
-                              <Input type="number" step="0.01" {...field} />
+                              <Input type="number" step="0.01" {...field} data-testid="input-amount" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -195,7 +206,7 @@ export default function Transactions() {
                         <FormItem>
                           <FormLabel>Description</FormLabel>
                           <FormControl>
-                            <Input placeholder="e.g. Weekly Groceries" {...field} />
+                            <Input placeholder="e.g. Weekly Groceries" {...field} data-testid="input-description" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -209,15 +220,15 @@ export default function Transactions() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Account</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={(v) => field.onChange(parseInt(v))} value={field.value?.toString()}>
                               <FormControl>
-                                <SelectTrigger>
+                                <SelectTrigger data-testid="select-account">
                                   <SelectValue placeholder="Select account" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
                                 {accounts.map(acc => (
-                                  <SelectItem key={acc.id} value={acc.id}>{acc.name}</SelectItem>
+                                  <SelectItem key={acc.id} value={acc.id.toString()}>{acc.name}</SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
@@ -231,15 +242,15 @@ export default function Transactions() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Category</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={(v) => field.onChange(parseInt(v))} value={field.value?.toString()}>
                               <FormControl>
-                                <SelectTrigger>
+                                <SelectTrigger data-testid="select-category">
                                   <SelectValue placeholder="Select category" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
                                 {categories.filter(c => c.type === form.watch("type")).map(cat => (
-                                  <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                                  <SelectItem key={cat.id} value={cat.id.toString()}>{cat.name}</SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
@@ -264,6 +275,7 @@ export default function Transactions() {
                                     "w-full pl-3 text-left font-normal",
                                     !field.value && "text-muted-foreground"
                                   )}
+                                  data-testid="button-date-picker"
                                 >
                                   {field.value ? (
                                     format(field.value, "PPP")
@@ -292,7 +304,7 @@ export default function Transactions() {
                     />
 
                     <DialogFooter>
-                      <Button type="submit">{editingId ? "Save Changes" : "Add Transaction"}</Button>
+                      <Button type="submit" data-testid="button-submit-transaction">{editingId ? "Save Changes" : "Add Transaction"}</Button>
                     </DialogFooter>
                   </form>
                 </Form>
@@ -310,6 +322,7 @@ export default function Transactions() {
                     checked={transactions.length > 0 && selectedIds.size === transactions.length}
                     onCheckedChange={toggleAll}
                     aria-label="Select all"
+                    data-testid="checkbox-select-all"
                   />
                 </TableHead>
                 <TableHead>Date</TableHead>
@@ -332,32 +345,33 @@ export default function Transactions() {
                   const category = getCategory(transaction.categoryId);
                   const isSelected = selectedIds.has(transaction.id);
                   return (
-                    <TableRow key={transaction.id} className={cn("group", isSelected && "bg-muted/50")}>
+                    <TableRow key={transaction.id} className={cn("group", isSelected && "bg-muted/50")} data-testid={`row-transaction-${transaction.id}`}>
                       <TableCell>
                         <Checkbox 
                           checked={isSelected}
                           onCheckedChange={() => toggleSelection(transaction.id)}
                           aria-label="Select row"
+                          data-testid={`checkbox-transaction-${transaction.id}`}
                         />
                       </TableCell>
-                      <TableCell>{format(new Date(transaction.date), "MMM d, yyyy")}</TableCell>
-                      <TableCell className="font-medium">{transaction.description}</TableCell>
+                      <TableCell data-testid={`text-date-${transaction.id}`}>{format(new Date(transaction.date), "MMM d, yyyy")}</TableCell>
+                      <TableCell className="font-medium" data-testid={`text-description-${transaction.id}`}>{transaction.description}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <div className="w-2 h-2 rounded-full" style={{ backgroundColor: category?.color || '#ccc' }} />
                           {category?.name || 'Unknown'}
                         </div>
                       </TableCell>
-                      <TableCell>{getAccountName(transaction.accountId)}</TableCell>
-                      <TableCell className={cn("text-right font-medium", transaction.type === 'income' ? 'text-emerald-600' : 'text-foreground')}>
-                        {transaction.type === 'income' ? '+' : ''}{formatCurrency(transaction.amount)}
+                      <TableCell data-testid={`text-account-${transaction.id}`}>{getAccountName(transaction.accountId)}</TableCell>
+                      <TableCell className={cn("text-right font-medium", transaction.type === 'income' ? 'text-emerald-600' : 'text-foreground')} data-testid={`text-amount-${transaction.id}`}>
+                        {transaction.type === 'income' ? '+' : ''}{formatCurrency(parseFloat(transaction.amount))}
                       </TableCell>
                       <TableCell>
                         <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(transaction)}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(transaction)} data-testid={`button-edit-${transaction.id}`}>
                             <Edit2 size={14} />
                           </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(transaction.id)}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(transaction.id)} data-testid={`button-delete-${transaction.id}`}>
                             <Trash2 size={14} />
                           </Button>
                         </div>

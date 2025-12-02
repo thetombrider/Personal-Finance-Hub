@@ -5,13 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, Edit2, Circle } from "lucide-react";
+import { Plus, Trash2, Edit2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 const categorySchema = z.object({
   name: z.string().min(2, "Name is required"),
@@ -22,9 +21,9 @@ const categorySchema = z.object({
 type CategoryFormValues = z.infer<typeof categorySchema>;
 
 export default function Categories() {
-  const { categories, addCategory, updateCategory, deleteCategory } = useFinance();
+  const { categories, addCategory, updateCategory, deleteCategory, isLoading } = useFinance();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
 
   const form = useForm<CategoryFormValues>({
     resolver: zodResolver(categorySchema),
@@ -35,11 +34,11 @@ export default function Categories() {
     },
   });
 
-  const onSubmit = (data: CategoryFormValues) => {
+  const onSubmit = async (data: CategoryFormValues) => {
     if (editingId) {
-      updateCategory(editingId, data);
+      await updateCategory(editingId, data);
     } else {
-      addCategory(data);
+      await addCategory(data);
     }
     setIsDialogOpen(false);
     setEditingId(null);
@@ -56,9 +55,9 @@ export default function Categories() {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: number) => {
     if (confirm("Are you sure you want to delete this category?")) {
-      deleteCategory(id);
+      await deleteCategory(id);
     }
   };
 
@@ -70,20 +69,20 @@ export default function Categories() {
       <h3 className="font-heading font-semibold text-lg text-muted-foreground">{title}</h3>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {items.map((category) => (
-          <Card key={category.id} className="group hover:shadow-sm transition-all">
+          <Card key={category.id} className="group hover:shadow-sm transition-all" data-testid={`card-category-${category.id}`}>
             <CardContent className="p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div 
                   className="w-4 h-4 rounded-full" 
                   style={{ backgroundColor: category.color }}
                 />
-                <span className="font-medium">{category.name}</span>
+                <span className="font-medium" data-testid={`text-category-name-${category.id}`}>{category.name}</span>
               </div>
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(category)}>
+                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(category)} data-testid={`button-edit-${category.id}`}>
                     <Edit2 size={14} />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(category.id)}>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(category.id)} data-testid={`button-delete-${category.id}`}>
                     <Trash2 size={14} />
                   </Button>
               </div>
@@ -93,6 +92,16 @@ export default function Categories() {
       </div>
     </div>
   );
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center h-96">
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -111,7 +120,7 @@ export default function Categories() {
             }
           }}>
             <DialogTrigger asChild>
-              <Button className="gap-2">
+              <Button className="gap-2" data-testid="button-add-category">
                 <Plus size={16} /> Add Category
               </Button>
             </DialogTrigger>
@@ -128,7 +137,7 @@ export default function Categories() {
                       <FormItem>
                         <FormLabel>Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g. Groceries" {...field} />
+                          <Input placeholder="e.g. Groceries" {...field} data-testid="input-name" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -141,9 +150,9 @@ export default function Categories() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Type</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
-                              <SelectTrigger>
+                              <SelectTrigger data-testid="select-type">
                                 <SelectValue />
                               </SelectTrigger>
                             </FormControl>
@@ -164,7 +173,7 @@ export default function Categories() {
                           <FormLabel>Color</FormLabel>
                           <div className="flex items-center gap-2">
                             <FormControl>
-                              <Input type="color" className="w-12 h-9 p-1" {...field} />
+                              <Input type="color" className="w-12 h-9 p-1" {...field} data-testid="input-color" />
                             </FormControl>
                             <div className="text-sm text-muted-foreground">{field.value}</div>
                           </div>
@@ -174,7 +183,7 @@ export default function Categories() {
                     />
                   </div>
                   <DialogFooter>
-                    <Button type="submit">{editingId ? "Save Changes" : "Create Category"}</Button>
+                    <Button type="submit" data-testid="button-submit-category">{editingId ? "Save Changes" : "Create Category"}</Button>
                   </DialogFooter>
                 </form>
               </Form>
@@ -182,8 +191,8 @@ export default function Categories() {
           </Dialog>
         </div>
 
-        <CategoryList title="Income" items={incomeCategories} />
-        <CategoryList title="Expenses" items={expenseCategories} />
+        <CategoryList items={incomeCategories} title="Income" />
+        <CategoryList items={expenseCategories} title="Expenses" />
       </div>
     </Layout>
   );
