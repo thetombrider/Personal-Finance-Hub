@@ -169,6 +169,13 @@ export default function Dashboard() {
                 </SelectContent>
               </Select>
             </div>
+            <Tabs value={timeRange} onValueChange={setTimeRange} className="w-auto">
+              <TabsList className="h-9">
+                <TabsTrigger value="3" className="text-xs px-3">3M</TabsTrigger>
+                <TabsTrigger value="6" className="text-xs px-3">6M</TabsTrigger>
+                <TabsTrigger value="12" className="text-xs px-3">1Y</TabsTrigger>
+              </TabsList>
+            </Tabs>
           </div>
         </div>
 
@@ -277,19 +284,8 @@ export default function Dashboard() {
         <div className="grid gap-6 md:grid-cols-7">
           <Card className="md:col-span-4">
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Cash Flow</CardTitle>
-                  <CardDescription>Income vs Expenses over time</CardDescription>
-                </div>
-                <Tabs value={timeRange} onValueChange={setTimeRange} className="w-auto">
-                  <TabsList className="grid w-full grid-cols-3 h-8">
-                    <TabsTrigger value="3" className="text-xs">3M</TabsTrigger>
-                    <TabsTrigger value="6" className="text-xs">6M</TabsTrigger>
-                    <TabsTrigger value="12" className="text-xs">1Y</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              </div>
+              <CardTitle>Cash Flow</CardTitle>
+              <CardDescription>Income vs Expenses over time</CardDescription>
             </CardHeader>
             <CardContent className="pl-0">
               <div className="h-[300px] w-full">
