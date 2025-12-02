@@ -606,8 +606,39 @@ export async function registerRoutes(
     return upper.endsWith('.LON') || upper.endsWith('.L');
   };
 
-  const convertPenceToPounds = (value: number, symbol: string): number => {
-    return isLondonExchange(symbol) ? value / 100 : value;
+  let cachedGbpEurRate: { rate: number; timestamp: number } | null = null;
+  const RATE_CACHE_DURATION = 4 * 60 * 60 * 1000;
+
+  const getGbpToEurRate = async (): Promise<number> => {
+    if (cachedGbpEurRate && Date.now() - cachedGbpEurRate.timestamp < RATE_CACHE_DURATION) {
+      return cachedGbpEurRate.rate;
+    }
+
+    try {
+      const response = await fetch(
+        `https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency=GBP&to_currency=EUR&apikey=${ALPHA_VANTAGE_API_KEY}`
+      );
+      const data = await response.json();
+      
+      if (data["Realtime Currency Exchange Rate"]) {
+        const rate = parseFloat(data["Realtime Currency Exchange Rate"]["5. Exchange Rate"]);
+        cachedGbpEurRate = { rate, timestamp: Date.now() };
+        return rate;
+      }
+    } catch (error) {
+      console.error("Error fetching GBP/EUR rate:", error);
+    }
+
+    return cachedGbpEurRate?.rate || 1.17;
+  };
+
+  const convertToEur = async (value: number, symbol: string): Promise<number> => {
+    if (!isLondonExchange(symbol)) {
+      return value;
+    }
+    const valueInPounds = value / 100;
+    const gbpEurRate = await getGbpToEurRate();
+    return valueInPounds * gbpEurRate;
   };
 
   app.get("/api/stock/quote/:symbol", async (req, res) => {
@@ -637,17 +668,27 @@ export async function registerRoutes(
         return res.status(404).json({ error: "No data found for this symbol" });
       }
 
+      const [price, change, high, low, open, previousClose] = await Promise.all([
+        convertToEur(parseFloat(quote["05. price"]), symbol),
+        convertToEur(parseFloat(quote["09. change"]), symbol),
+        convertToEur(parseFloat(quote["03. high"]), symbol),
+        convertToEur(parseFloat(quote["04. low"]), symbol),
+        convertToEur(parseFloat(quote["02. open"]), symbol),
+        convertToEur(parseFloat(quote["08. previous close"]), symbol),
+      ]);
+
       res.json({
         symbol: quote["01. symbol"],
-        price: convertPenceToPounds(parseFloat(quote["05. price"]), symbol),
-        change: convertPenceToPounds(parseFloat(quote["09. change"]), symbol),
+        price,
+        change,
         changePercent: quote["10. change percent"],
-        high: convertPenceToPounds(parseFloat(quote["03. high"]), symbol),
-        low: convertPenceToPounds(parseFloat(quote["04. low"]), symbol),
-        open: convertPenceToPounds(parseFloat(quote["02. open"]), symbol),
-        previousClose: convertPenceToPounds(parseFloat(quote["08. previous close"]), symbol),
+        high,
+        low,
+        open,
+        previousClose,
         volume: parseInt(quote["06. volume"]),
-        latestTradingDay: quote["07. latest trading day"]
+        latestTradingDay: quote["07. latest trading day"],
+        currency: isLondonExchange(symbol) ? "EUR" : undefined
       });
     } catch (error) {
       console.error("Alpha Vantage API error:", error);
@@ -716,10 +757,14 @@ export async function registerRoutes(
 
           const quote = data["Global Quote"];
           if (quote && Object.keys(quote).length > 0) {
+            const [price, change] = await Promise.all([
+              convertToEur(parseFloat(quote["05. price"]), symbol),
+              convertToEur(parseFloat(quote["09. change"]), symbol),
+            ]);
             quotes[symbol] = {
               symbol: quote["01. symbol"],
-              price: convertPenceToPounds(parseFloat(quote["05. price"]), symbol),
-              change: convertPenceToPounds(parseFloat(quote["09. change"]), symbol),
+              price,
+              change,
               changePercent: quote["10. change percent"]
             };
           }
