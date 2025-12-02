@@ -107,28 +107,28 @@ export default function ImportTransactions() {
 
   const parseAmount = (value: string) => {
     if (!value) return 0;
-    let str = value.toString().trim();
+    let str = value.toString();
     
-    // Remove currency symbols and spaces
-    str = str.replace(/[€$£\s]/g, '');
+    // First: extract only digits, comma, period, and minus sign
+    // This removes ALL special characters including non-breaking spaces, currency symbols, etc.
+    str = str.replace(/[^0-9,.-]/g, '');
+    
+    if (!str) return 0;
     
     // European format: 1.234,56 (period=thousand, comma=decimal)
     // US format: 1,234.56 (comma=thousand, period=decimal)
     
-    // Check if this looks like European format (has comma followed by exactly 2 digits at end)
-    if (/,\d{2}$/.test(str) || (str.includes(',') && !str.includes('.'))) {
+    // Check if this looks like European format (has comma followed by 1-2 digits at end)
+    if (/,\d{1,2}$/.test(str)) {
       // European format: remove thousand separator (.) then convert decimal comma to period
       str = str.replace(/\./g, '').replace(',', '.');
-    } else if (/\.\d{2}$/.test(str) && str.includes(',')) {
+    } else if (/\.\d{1,2}$/.test(str) && str.includes(',')) {
       // US format: remove thousand separator (,)
       str = str.replace(/,/g, '');
-    } else {
-      // Simple format or already clean - just handle comma as decimal
-      str = str.replace(/,/g, '.');
+    } else if (str.includes(',') && !str.includes('.')) {
+      // Only comma, treat as decimal separator
+      str = str.replace(',', '.');
     }
-    
-    // Remove any remaining non-numeric chars except period and minus
-    str = str.replace(/[^0-9.-]/g, '');
     
     return parseFloat(str) || 0;
   };
