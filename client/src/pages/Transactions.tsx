@@ -215,11 +215,32 @@ export default function Transactions() {
     setSelectedIds(newSelected);
   };
 
+  const allPageSelected = paginatedTransactions.length > 0 && paginatedTransactions.every(t => selectedIds.has(t.id));
+  const somePageSelected = paginatedTransactions.some(t => selectedIds.has(t.id)) && !allPageSelected;
+
   const toggleAll = () => {
-    if (selectedIds.size === paginatedTransactions.length) {
-      setSelectedIds(new Set());
+    if (allPageSelected) {
+      const newSelected = new Set(selectedIds);
+      paginatedTransactions.forEach(t => newSelected.delete(t.id));
+      setSelectedIds(newSelected);
     } else {
-      setSelectedIds(new Set(paginatedTransactions.map(t => t.id)));
+      const newSelected = new Set(selectedIds);
+      paginatedTransactions.forEach(t => newSelected.add(t.id));
+      setSelectedIds(newSelected);
+    }
+  };
+
+  const allFilteredSelected = sortedTransactions.length > 0 && sortedTransactions.every(t => selectedIds.has(t.id));
+
+  const toggleAllFiltered = () => {
+    if (allFilteredSelected) {
+      const newSelected = new Set(selectedIds);
+      sortedTransactions.forEach(t => newSelected.delete(t.id));
+      setSelectedIds(newSelected);
+    } else {
+      const newSelected = new Set(selectedIds);
+      sortedTransactions.forEach(t => newSelected.add(t.id));
+      setSelectedIds(newSelected);
     }
   };
 
@@ -559,13 +580,26 @@ export default function Transactions() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[50px]">
-                  <Checkbox 
-                    checked={paginatedTransactions.length > 0 && selectedIds.size === paginatedTransactions.length}
-                    onCheckedChange={toggleAll}
-                    aria-label="Select all"
-                    data-testid="checkbox-select-all"
-                  />
+                <TableHead className="w-[120px]">
+                  <div className="flex items-center gap-2">
+                    <Checkbox 
+                      checked={allPageSelected ? true : somePageSelected ? "indeterminate" : false}
+                      onCheckedChange={toggleAll}
+                      aria-label="Select all on page"
+                      data-testid="checkbox-select-all"
+                    />
+                    {sortedTransactions.length > paginatedTransactions.length && (
+                      <Button
+                        variant={allFilteredSelected ? "secondary" : "ghost"}
+                        size="sm"
+                        className="h-6 px-2 text-xs"
+                        onClick={toggleAllFiltered}
+                        data-testid="button-select-all-filtered"
+                      >
+                        Tutte ({sortedTransactions.length})
+                      </Button>
+                    )}
+                  </div>
                 </TableHead>
                 <TableHead 
                   className="cursor-pointer hover:bg-muted/50 transition-colors select-none"
