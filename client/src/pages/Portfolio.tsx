@@ -60,6 +60,7 @@ export default function Portfolio() {
     type: "buy" as "buy" | "sell"
   });
   const [tradeToDelete, setTradeToDelete] = useState<(Trade & { holding?: Holding }) | null>(null);
+  const [showHoldingsDropdown, setShowHoldingsDropdown] = useState(false);
 
   const { data: holdings = [], isLoading: holdingsLoading } = useQuery({
     queryKey: ["holdings"],
@@ -127,6 +128,7 @@ export default function Portfolio() {
     setCurrentQuote(null);
     setManualTicker("");
     setManualName("");
+    setShowHoldingsDropdown(false);
     setTradeForm({
       quantity: "",
       pricePerUnit: "",
@@ -134,6 +136,23 @@ export default function Portfolio() {
       date: format(new Date(), "yyyy-MM-dd"),
       type: "buy"
     });
+  };
+
+  const selectExistingHolding = async (holding: Holding) => {
+    setShowHoldingsDropdown(false);
+    if (entryMode === "manual") {
+      setManualTicker(holding.ticker);
+      setManualName(holding.name);
+    } else {
+      const stockData: api.StockSearchResult = {
+        symbol: holding.ticker,
+        name: holding.name,
+        type: holding.assetType,
+        region: "",
+        currency: holding.currency
+      };
+      await handleSelectStock(stockData);
+    }
   };
 
   const openEditDialog = (trade: Trade & { holding?: Holding }) => {
@@ -400,14 +419,35 @@ export default function Portfolio() {
 
                     <TabsContent value="manual" className="space-y-4 mt-4">
                       <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
+                        <div className="space-y-2 relative">
                           <Label>Ticker / Simbolo *</Label>
                           <Input
                             placeholder="Es. SWDA.LON, VWCE.DEX"
                             value={manualTicker}
-                            onChange={(e) => setManualTicker(e.target.value)}
+                            onChange={(e) => { setManualTicker(e.target.value); setShowHoldingsDropdown(false); }}
+                            onFocus={() => holdings.length > 0 && setShowHoldingsDropdown(true)}
+                            onBlur={() => setTimeout(() => setShowHoldingsDropdown(false), 200)}
                             data-testid="input-manual-ticker"
                           />
+                          {showHoldingsDropdown && holdings.length > 0 && (
+                            <div className="absolute z-50 top-full left-0 right-0 mt-1 border rounded-md bg-popover shadow-md max-h-40 overflow-y-auto">
+                              <div className="p-2 text-xs text-muted-foreground border-b">Titoli in portafoglio:</div>
+                              {holdings.map((h) => (
+                                <button
+                                  key={h.id}
+                                  type="button"
+                                  className="w-full px-3 py-2 text-left hover:bg-accent flex justify-between items-center text-sm"
+                                  onClick={() => selectExistingHolding(h)}
+                                  data-testid={`button-select-holding-${h.id}`}
+                                >
+                                  <div>
+                                    <span className="font-medium">{h.ticker}</span>
+                                    <span className="text-muted-foreground ml-2 text-xs">{h.name}</span>
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          )}
                         </div>
                         <div className="space-y-2">
                           <Label>Nome (opzionale)</Label>
@@ -415,6 +455,7 @@ export default function Portfolio() {
                             placeholder="Es. iShares MSCI World"
                             value={manualName}
                             onChange={(e) => setManualName(e.target.value)}
+                            onFocus={() => setShowHoldingsDropdown(false)}
                             data-testid="input-manual-name"
                           />
                         </div>
@@ -422,13 +463,15 @@ export default function Portfolio() {
                     </TabsContent>
 
                     <TabsContent value="search" className="space-y-4 mt-4">
-                      <div className="space-y-2">
+                      <div className="space-y-2 relative">
                         <Label>Cerca Titolo</Label>
                         <div className="flex gap-2">
                           <Input
                             placeholder="Es. VWCE, IWDA, AAPL..."
                             value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onChange={(e) => { setSearchQuery(e.target.value); setShowHoldingsDropdown(false); }}
+                            onFocus={() => holdings.length > 0 && !selectedStock && setShowHoldingsDropdown(true)}
+                            onBlur={() => setTimeout(() => setShowHoldingsDropdown(false), 200)}
                             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                             data-testid="input-search-stock"
                           />
@@ -436,6 +479,25 @@ export default function Portfolio() {
                             <Search className="h-4 w-4" />
                           </Button>
                         </div>
+                        {showHoldingsDropdown && holdings.length > 0 && !selectedStock && searchResults.length === 0 && (
+                          <div className="absolute z-50 top-full left-0 right-0 mt-1 border rounded-md bg-popover shadow-md max-h-40 overflow-y-auto">
+                            <div className="p-2 text-xs text-muted-foreground border-b">Titoli in portafoglio:</div>
+                            {holdings.map((h) => (
+                              <button
+                                key={h.id}
+                                type="button"
+                                className="w-full px-3 py-2 text-left hover:bg-accent flex justify-between items-center text-sm"
+                                onClick={() => selectExistingHolding(h)}
+                                data-testid={`button-select-holding-search-${h.id}`}
+                              >
+                                <div>
+                                  <span className="font-medium">{h.ticker}</span>
+                                  <span className="text-muted-foreground ml-2 text-xs">{h.name}</span>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
                         {searchResults.length > 0 && (
                           <div className="border rounded-md max-h-40 overflow-y-auto">
                             {searchResults.map((result) => (
