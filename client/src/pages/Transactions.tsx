@@ -588,7 +588,7 @@ export default function Transactions() {
                       aria-label="Select all on page"
                       data-testid="checkbox-select-all"
                     />
-                    {sortedTransactions.length > paginatedTransactions.length && (
+                    {sortedTransactions.length > 0 && (hasActiveFilters || sortedTransactions.length > paginatedTransactions.length) && (
                       <Button
                         variant={allFilteredSelected ? "secondary" : "ghost"}
                         size="sm"
