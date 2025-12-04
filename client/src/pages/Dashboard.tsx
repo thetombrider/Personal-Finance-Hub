@@ -13,6 +13,7 @@ export default function Dashboard() {
   const [timeRange, setTimeRange] = useState("12"); // months
   const [selectedAccount, setSelectedAccount] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [categoryTrendId, setCategoryTrendId] = useState<string>("");
 
   const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
   
@@ -135,6 +136,41 @@ export default function Dashboard() {
     }
     return data;
   }, [transactions, accounts, timeRange]);
+
+  // Category trend data (monthly totals for selected category)
+  const categoryTrendData = useMemo(() => {
+    if (!categoryTrendId) return [];
+    
+    const months = parseInt(timeRange);
+    const data = [];
+    const catId = parseInt(categoryTrendId);
+    const category = categories.find(c => c.id === catId);
+    
+    for (let i = months - 1; i >= 0; i--) {
+      const date = subMonths(new Date(), i);
+      const monthStart = startOfMonth(date);
+      const monthEnd = endOfMonth(date);
+      
+      const monthTotal = transactions
+        .filter(t => {
+          const tDate = parseISO(t.date);
+          return t.categoryId === catId && 
+                 t.type === 'expense' &&
+                 tDate >= monthStart && 
+                 tDate <= monthEnd &&
+                 (selectedAccount === "all" || t.accountId === parseInt(selectedAccount));
+        })
+        .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+      
+      data.push({
+        name: format(date, 'MMM yy'),
+        total: monthTotal
+      });
+    }
+    return data;
+  }, [transactions, categoryTrendId, timeRange, selectedAccount, categories]);
+
+  const selectedCategoryForTrend = categories.find(c => c.id === parseInt(categoryTrendId));
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
@@ -371,6 +407,60 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Category Trend Chart */}
+        <Card>
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <CardTitle>Andamento Categoria</CardTitle>
+                <CardDescription>Totale mensile per categoria selezionata</CardDescription>
+              </div>
+              <Select value={categoryTrendId} onValueChange={setCategoryTrendId}>
+                <SelectTrigger className="w-[200px]" data-testid="select-category-trend">
+                  <SelectValue placeholder="Seleziona categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.filter(c => c.name.toLowerCase() !== 'trasferimenti').map(cat => (
+                    <SelectItem key={cat.id} value={cat.id.toString()}>{cat.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardHeader>
+          <CardContent className="pl-0">
+            <div className="h-[300px] w-full">
+              {categoryTrendId && categoryTrendData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={categoryTrendData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                    <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis 
+                      stroke="#888888" 
+                      fontSize={12} 
+                      tickLine={false} 
+                      axisLine={false} 
+                      tickFormatter={(value) => `€${value.toFixed(0)}`}
+                    />
+                    <Tooltip 
+                      formatter={(value: number) => [formatCurrency(value), selectedCategoryForTrend?.name || 'Totale']}
+                      contentStyle={{ backgroundColor: 'var(--color-card)', borderRadius: '8px', border: '1px solid var(--color-border)' }}
+                      itemStyle={{ color: 'var(--color-foreground)' }}
+                    />
+                    <Bar 
+                      dataKey="total" 
+                      fill="#8b5cf6" 
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center text-muted-foreground">
+                  {categoryTrendId ? 'Nessun dato disponibile' : 'Seleziona una categoria per vedere l\'andamento'}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
       </div>
     </Layout>
