@@ -264,7 +264,7 @@ export default function Dashboard() {
         </div>
 
         {/* Stats Grid - Asset Breakdown */}
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-5">
           <Card className="relative overflow-hidden">
             <div className="absolute right-0 top-0 h-full w-1/2 bg-gradient-to-l from-primary/5 to-transparent" />
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -321,6 +321,33 @@ export default function Dashboard() {
                 {formatCurrency(totalInvestments)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">Investment accounts</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Monthly Flow</CardTitle>
+              <Activity className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <ArrowUpRight className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                  <span className="text-xs text-muted-foreground">Income</span>
+                </div>
+                <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                  +{formatCurrency(monthlyStats.income)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <ArrowDownRight className="h-4 w-4 text-rose-600 dark:text-rose-400" />
+                  <span className="text-xs text-muted-foreground">Expenses</span>
+                </div>
+                <span className="text-sm font-bold text-rose-600 dark:text-rose-400">
+                  -{formatCurrency(monthlyStats.expense)}
+                </span>
+              </div>
             </CardContent>
           </Card>
         </div>
