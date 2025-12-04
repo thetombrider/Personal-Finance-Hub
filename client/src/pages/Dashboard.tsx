@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowUpRight, ArrowDownRight, Wallet, TrendingUp, Activity, PiggyBank, CreditCard } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis, PieChart, Pie, Cell, BarChart, Bar, LineChart, Line } from "recharts";
+import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis, PieChart, Pie, Cell, BarChart, Bar, LineChart, Line, ReferenceLine, Legend } from "recharts";
 import { useState, useMemo } from "react";
 import { format, subMonths, isSameMonth, parseISO, startOfMonth, endOfMonth } from "date-fns";
 
@@ -149,6 +149,14 @@ export default function Dashboard() {
     const catId = parseInt(categoryTrendId);
     const categoryType = selectedCategoryForTrend.type;
     
+    let budget: number | null = null;
+    if (selectedCategoryForTrend.budget !== null && selectedCategoryForTrend.budget !== undefined && selectedCategoryForTrend.type === 'expense') {
+      const parsedBudget = parseFloat(selectedCategoryForTrend.budget);
+      if (!isNaN(parsedBudget)) {
+        budget = parsedBudget;
+      }
+    }
+    
     for (let i = months - 1; i >= 0; i--) {
       const date = subMonths(new Date(), i);
       const monthStart = startOfMonth(date);
@@ -167,7 +175,8 @@ export default function Dashboard() {
       
       data.push({
         name: format(date, 'MMM yy'),
-        total: monthTotal
+        total: monthTotal,
+        overBudget: budget !== null && monthTotal > budget
       });
     }
     return data;
@@ -628,6 +637,15 @@ export default function Dashboard() {
                   {selectedCategoryForTrend 
                     ? `Totale mensile ${selectedCategoryForTrend.type === 'income' ? 'entrate' : 'spese'}: ${selectedCategoryForTrend.name}`
                     : 'Seleziona una categoria per vedere il trend'}
+                  {selectedCategoryForTrend?.budget !== null && 
+                   selectedCategoryForTrend?.budget !== undefined && 
+                   selectedCategoryForTrend?.budget !== "" &&
+                   selectedCategoryForTrend.type === 'expense' && 
+                   !isNaN(parseFloat(selectedCategoryForTrend.budget)) && (
+                    <span className="ml-2 text-primary font-medium">
+                      (Budget: {formatCurrency(parseFloat(selectedCategoryForTrend.budget))})
+                    </span>
+                  )}
                 </CardDescription>
               </div>
               <Select value={categoryTrendId} onValueChange={setCategoryTrendId}>
@@ -656,15 +674,43 @@ export default function Dashboard() {
                       tickFormatter={(value) => `€${value.toFixed(0)}`}
                     />
                     <Tooltip 
-                      formatter={(value: number) => [formatCurrency(value), selectedCategoryForTrend?.name || 'Totale']}
+                      formatter={(value: number, name: string) => {
+                        const label = name === 'total' ? (selectedCategoryForTrend?.name || 'Totale') : 'Budget';
+                        return [formatCurrency(value), label];
+                      }}
                       contentStyle={{ backgroundColor: 'var(--color-card)', borderRadius: '8px', border: '1px solid var(--color-border)' }}
                       itemStyle={{ color: 'var(--color-foreground)' }}
                     />
                     <Bar 
                       dataKey="total" 
-                      fill="#8b5cf6" 
                       radius={[4, 4, 0, 0]}
-                    />
+                      name="Speso"
+                    >
+                      {categoryTrendData.map((entry, index) => (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={entry.overBudget ? '#ef4444' : '#8b5cf6'} 
+                        />
+                      ))}
+                    </Bar>
+                    {selectedCategoryForTrend?.budget !== null && 
+                     selectedCategoryForTrend?.budget !== undefined && 
+                     selectedCategoryForTrend?.budget !== "" &&
+                     selectedCategoryForTrend.type === 'expense' && 
+                     !isNaN(parseFloat(selectedCategoryForTrend.budget)) && (
+                      <ReferenceLine 
+                        y={parseFloat(selectedCategoryForTrend.budget)} 
+                        stroke="#ef4444" 
+                        strokeDasharray="5 5"
+                        strokeWidth={2}
+                        label={{ 
+                          value: 'Budget', 
+                          position: 'right',
+                          fill: '#ef4444',
+                          fontSize: 12
+                        }}
+                      />
+                    )}
                   </BarChart>
                 </ResponsiveContainer>
               ) : (

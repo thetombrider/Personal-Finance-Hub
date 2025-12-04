@@ -16,6 +16,7 @@ const categorySchema = z.object({
   name: z.string().min(2, "Name is required"),
   type: z.enum(["income", "expense"]),
   color: z.string().default("#3b82f6"),
+  budget: z.string().optional(),
 });
 
 type CategoryFormValues = z.infer<typeof categorySchema>;
@@ -31,14 +32,22 @@ export default function ManageCategories() {
       name: "",
       type: "expense",
       color: "#3b82f6",
+      budget: "",
     },
   });
 
   const onSubmit = async (data: CategoryFormValues) => {
+    const submitData = {
+      ...data,
+      budget: data.budget && data.budget.trim() !== "" ? data.budget : null,
+    };
+    if (data.type === "income") {
+      submitData.budget = null;
+    }
     if (editingId) {
-      await updateCategory(editingId, data);
+      await updateCategory(editingId, submitData);
     } else {
-      await addCategory(data);
+      await addCategory(submitData);
     }
     setIsDialogOpen(false);
     setEditingId(null);
@@ -51,6 +60,7 @@ export default function ManageCategories() {
       name: category.name,
       type: category.type,
       color: category.color,
+      budget: category.budget || "",
     });
     setIsDialogOpen(true);
   };
@@ -64,28 +74,39 @@ export default function ManageCategories() {
   const incomeCategories = categories.filter(c => c.type === 'income');
   const expenseCategories = categories.filter(c => c.type === 'expense');
 
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(amount);
+  };
+
   const CategoryList = ({ items, title }: { items: Category[], title: string }) => (
     <div className="space-y-4">
       <h3 className="font-heading font-semibold text-lg text-muted-foreground">{title}</h3>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {items.map((category) => (
           <Card key={category.id} className="group hover:shadow-sm transition-all" data-testid={`card-category-${category.id}`}>
-            <CardContent className="p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div 
-                  className="w-4 h-4 rounded-full" 
-                  style={{ backgroundColor: category.color }}
-                />
-                <span className="font-medium" data-testid={`text-category-name-${category.id}`}>{category.name}</span>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div 
+                    className="w-4 h-4 rounded-full" 
+                    style={{ backgroundColor: category.color }}
+                  />
+                  <span className="font-medium" data-testid={`text-category-name-${category.id}`}>{category.name}</span>
+                </div>
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                   <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(category)} data-testid={`button-edit-${category.id}`}>
+                      <Edit2 size={14} />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(category.id)} data-testid={`button-delete-${category.id}`}>
+                      <Trash2 size={14} />
+                    </Button>
+                </div>
               </div>
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(category)} data-testid={`button-edit-${category.id}`}>
-                    <Edit2 size={14} />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(category.id)} data-testid={`button-delete-${category.id}`}>
-                    <Trash2 size={14} />
-                  </Button>
-              </div>
+              {category.budget !== null && category.budget !== undefined && category.budget !== "" && (
+                <div className="mt-2 text-sm text-muted-foreground">
+                  Budget: {formatCurrency(parseFloat(category.budget))}
+                </div>
+              )}
             </CardContent>
           </Card>
         ))}
@@ -116,7 +137,7 @@ export default function ManageCategories() {
             setIsDialogOpen(open);
             if(!open) {
               setEditingId(null);
-              form.reset({ name: "", type: "expense", color: "#3b82f6" });
+              form.reset({ name: "", type: "expense", color: "#3b82f6", budget: "" });
             }
           }}>
             <DialogTrigger asChild>
@@ -182,6 +203,27 @@ export default function ManageCategories() {
                       )}
                     />
                   </div>
+                  {form.watch("type") === "expense" && (
+                    <FormField
+                      control={form.control}
+                      name="budget"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Budget Mensile (opzionale)</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              step="0.01" 
+                              placeholder="es. 500.00" 
+                              {...field} 
+                              data-testid="input-budget" 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
                   <DialogFooter>
                     <Button type="submit" data-testid="button-submit-category">{editingId ? "Salva Modifiche" : "Crea Categoria"}</Button>
                   </DialogFooter>

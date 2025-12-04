@@ -24,6 +24,7 @@ export interface Category {
   type: "income" | "expense";
   color: string;
   icon?: string | null;
+  budget?: string | null;
 }
 
 export interface Transaction {
