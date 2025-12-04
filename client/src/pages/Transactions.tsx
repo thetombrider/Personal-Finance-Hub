@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, Edit2, Calendar as CalendarIcon, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Search, X } from "lucide-react";
+import { Plus, Trash2, Edit2, Calendar as CalendarIcon, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Search, X, Download } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -251,6 +251,50 @@ export default function Transactions() {
     }
   };
 
+  const handleDownload = () => {
+    const transactionsToExport = selectedIds.size > 0 
+      ? transactions.filter(t => selectedIds.has(t.id))
+      : sortedTransactions;
+    
+    if (transactionsToExport.length === 0) {
+      return;
+    }
+
+    const escapeCSV = (value: string) => {
+      if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+        return `"${value.replace(/"/g, '""')}"`;
+      }
+      return value;
+    };
+
+    const headers = ['Date', 'Description', 'Account', 'Category', 'Type', 'Amount'];
+    const rows = transactionsToExport.map(t => {
+      const account = accounts.find(a => a.id === t.accountId);
+      const category = categories.find(c => c.id === t.categoryId);
+      const signedAmount = t.type === 'income' ? parseFloat(t.amount) : -parseFloat(t.amount);
+      
+      return [
+        new Date(t.date).toISOString().split('T')[0],
+        escapeCSV(t.description),
+        escapeCSV(account?.name || 'Unknown'),
+        escapeCSV(category?.name || 'Unknown'),
+        t.type,
+        signedAmount.toFixed(2)
+      ].join(',');
+    });
+
+    const csv = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `transactions_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   if (isLoading) {
     return (
       <Layout>
@@ -276,6 +320,16 @@ export default function Transactions() {
                  <Trash2 size={16} /> Delete ({selectedIds.size})
                </Button>
             )}
+
+            <Button 
+              variant="outline" 
+              className="gap-2" 
+              onClick={handleDownload} 
+              disabled={selectedIds.size === 0 && sortedTransactions.length === 0} 
+              data-testid="button-download-transactions"
+            >
+              <Download size={16} /> Download ({selectedIds.size > 0 ? selectedIds.size : sortedTransactions.length})
+            </Button>
 
             <Dialog open={isDialogOpen} onOpenChange={(open) => {
               setIsDialogOpen(open);
