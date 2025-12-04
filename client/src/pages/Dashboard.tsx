@@ -172,6 +172,29 @@ export default function Dashboard() {
     return data;
   }, [transactions, categoryTrendId, timeRange, selectedAccount, selectedCategoryForTrend]);
 
+  // Net Worth by account type
+  const netWorthByTypeData = useMemo(() => {
+    const typeMap = new Map<string, number>();
+    const typeLabels: Record<string, string> = {
+      'checking': 'Conto Corrente',
+      'savings': 'Risparmi',
+      'credit': 'Credito',
+      'investment': 'Investimenti',
+      'cash': 'Contanti'
+    };
+    
+    accounts.forEach(acc => {
+      const label = typeLabels[acc.type] || acc.type;
+      const current = typeMap.get(label) || 0;
+      typeMap.set(label, current + acc.balance);
+    });
+    
+    return Array.from(typeMap.entries())
+      .map(([name, value]) => ({ name, value }))
+      .filter(item => item.value !== 0)
+      .sort((a, b) => Math.abs(b.value) - Math.abs(a.value));
+  }, [accounts]);
+
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
   return (
@@ -407,6 +430,61 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Net Worth by Account Type */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Patrimonio per Tipo di Conto</CardTitle>
+            <CardDescription>Distribuzione del tuo patrimonio</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px] w-full">
+              {netWorthByTypeData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={netWorthByTypeData} layout="vertical" margin={{ top: 10, right: 30, left: 80, bottom: 0 }}>
+                    <XAxis 
+                      type="number" 
+                      stroke="#888888" 
+                      fontSize={12} 
+                      tickLine={false} 
+                      axisLine={false} 
+                      tickFormatter={(value) => formatCurrency(value)}
+                    />
+                    <YAxis 
+                      type="category" 
+                      dataKey="name" 
+                      stroke="#888888" 
+                      fontSize={12} 
+                      tickLine={false} 
+                      axisLine={false}
+                      width={75}
+                    />
+                    <Tooltip 
+                      formatter={(value: number) => [formatCurrency(value), 'Saldo']}
+                      contentStyle={{ backgroundColor: 'var(--color-card)', borderRadius: '8px', border: '1px solid var(--color-border)' }}
+                      itemStyle={{ color: 'var(--color-foreground)' }}
+                    />
+                    <Bar 
+                      dataKey="value" 
+                      radius={[0, 4, 4, 0]}
+                    >
+                      {netWorthByTypeData.map((entry, index) => (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={entry.value >= 0 ? COLORS[index % COLORS.length] : '#ef4444'} 
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center text-muted-foreground">
+                  Nessun conto disponibile
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Category Trend Chart */}
         <Card>
