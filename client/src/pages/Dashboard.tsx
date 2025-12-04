@@ -172,6 +172,14 @@ export default function Dashboard() {
     return data;
   }, [transactions, categoryTrendId, timeRange, selectedAccount, selectedCategoryForTrend]);
 
+  // Cash and cash equivalents (checking, savings, cash accounts)
+  const cashAndEquivalents = useMemo(() => {
+    const cashTypes = ['checking', 'savings', 'cash'];
+    return accounts
+      .filter(acc => cashTypes.includes(acc.type))
+      .reduce((sum, acc) => sum + acc.balance, 0);
+  }, [accounts]);
+
   // Net Worth by account type
   const netWorthByTypeData = useMemo(() => {
     const typeMap = new Map<string, number>();
@@ -255,7 +263,7 @@ export default function Dashboard() {
             <CardContent>
               <div className="text-2xl font-bold font-heading">{formatCurrency(totalBalance)}</div>
               <p className="text-xs text-muted-foreground mt-1">
-                Across {accounts.length} accounts
+                Across {accounts.length} accounts, of which {formatCurrency(cashAndEquivalents)} in cash
               </p>
             </CardContent>
           </Card>
