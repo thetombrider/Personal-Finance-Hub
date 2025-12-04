@@ -48,6 +48,7 @@ export const categories = pgTable("categories", {
   type: varchar("type", { length: 10 }).notNull(),
   color: varchar("color", { length: 7 }).notNull(),
   icon: text("icon"),
+  budget: decimal("budget", { precision: 12, scale: 2 }),
 });
 
 export const insertCategorySchema = createInsertSchema(categories).omit({ id: true });
