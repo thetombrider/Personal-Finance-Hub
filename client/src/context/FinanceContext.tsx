@@ -1,6 +1,7 @@
 import { createContext, useContext, ReactNode, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as api from "@/lib/api";
+import type { TransferData } from "@/lib/api";
 import type { InsertAccount, InsertCategory, InsertTransaction } from "@shared/schema";
 
 // Types
@@ -14,6 +15,7 @@ export interface Account {
   balance: number;
   currency: string;
   color: string;
+  creditLimit?: string | null;
 }
 
 export interface Category {
@@ -32,6 +34,7 @@ export interface Transaction {
   accountId: number;
   categoryId: number;
   type: "income" | "expense";
+  linkedTransactionId?: number | null;
 }
 
 // Context
@@ -48,6 +51,7 @@ interface FinanceContextType {
   deleteCategory: (id: number) => Promise<void>;
   addTransaction: (transaction: Omit<InsertTransaction, "id">) => Promise<void>;
   addTransactions: (transactions: Omit<InsertTransaction, "id">[]) => Promise<void>;
+  addTransfer: (transfer: TransferData) => Promise<void>;
   updateTransaction: (id: number, transaction: Partial<InsertTransaction>) => Promise<void>;
   deleteTransaction: (id: number) => Promise<void>;
   deleteTransactions: (ids: number[]) => Promise<void>;
@@ -155,6 +159,13 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     },
   });
 
+  const createTransferMutation = useMutation({
+    mutationFn: api.createTransfer,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    },
+  });
+
   const updateTransactionMutation = useMutation({
     mutationFn: ({ id, transaction }: { id: number; transaction: Partial<InsertTransaction> }) =>
       api.updateTransaction(id, transaction),
@@ -217,6 +228,10 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     await createTransactionsBulkMutation.mutateAsync(transactions);
   };
 
+  const addTransfer = async (transfer: TransferData) => {
+    await createTransferMutation.mutateAsync(transfer);
+  };
+
   const updateTransaction = async (id: number, transaction: Partial<InsertTransaction>) => {
     await updateTransactionMutation.mutateAsync({ id, transaction });
   };
@@ -246,7 +261,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       accounts, categories, transactions, isLoading,
       addAccount, updateAccount, deleteAccount,
       addCategory, updateCategory, deleteCategory,
-      addTransaction, addTransactions, updateTransaction, deleteTransaction, deleteTransactions, clearTransactions,
+      addTransaction, addTransactions, addTransfer, updateTransaction, deleteTransaction, deleteTransactions, clearTransactions,
       getAccountBalance, formatCurrency
     }}>
       {children}

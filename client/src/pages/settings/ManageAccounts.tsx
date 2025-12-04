@@ -19,6 +19,7 @@ const accountSchema = z.object({
   startingBalance: z.coerce.number(),
   currency: z.string().default("EUR"),
   color: z.string().default("#3b82f6"),
+  creditLimit: z.coerce.number().optional(),
 });
 
 type AccountFormValues = z.infer<typeof accountSchema>;
@@ -36,13 +37,17 @@ export default function ManageAccounts() {
       startingBalance: 0,
       currency: "EUR",
       color: "#3b82f6",
+      creditLimit: undefined,
     },
   });
+
+  const watchedType = form.watch("type");
 
   const onSubmit = async (data: AccountFormValues) => {
     const formattedData = {
       ...data,
       startingBalance: data.startingBalance.toString(),
+      creditLimit: data.type === "credit" && data.creditLimit ? data.creditLimit.toString() : null,
     };
     
     if (editingId) {
@@ -63,6 +68,7 @@ export default function ManageAccounts() {
       startingBalance: parseFloat(account.startingBalance),
       currency: account.currency,
       color: account.color,
+      creditLimit: (account as any).creditLimit ? parseFloat((account as any).creditLimit) : undefined,
     });
     setIsDialogOpen(true);
   };
@@ -113,6 +119,7 @@ export default function ManageAccounts() {
                 startingBalance: 0,
                 currency: "EUR",
                 color: "#3b82f6",
+                creditLimit: undefined,
               });
             }
           }}>
@@ -170,15 +177,34 @@ export default function ManageAccounts() {
                       name="startingBalance"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Saldo Iniziale</FormLabel>
+                          <FormLabel>{watchedType === "credit" ? "Debito Iniziale" : "Saldo Iniziale"}</FormLabel>
                           <FormControl>
                             <Input type="number" step="0.01" {...field} data-testid="input-starting-balance" />
                           </FormControl>
+                          {watchedType === "credit" && (
+                            <p className="text-xs text-muted-foreground">Usa valori negativi per indicare il debito</p>
+                          )}
                           <FormMessage />
                         </FormItem>
                       )}
                     />
                   </div>
+                  {watchedType === "credit" && (
+                    <FormField
+                      control={form.control}
+                      name="creditLimit"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Limite Credito (Plafond)</FormLabel>
+                          <FormControl>
+                            <Input type="number" step="0.01" placeholder="es. 1500" {...field} data-testid="input-credit-limit" />
+                          </FormControl>
+                          <p className="text-xs text-muted-foreground">Il massimo che puoi spendere al mese con questa carta</p>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
                   <FormField
                     control={form.control}
                     name="color"

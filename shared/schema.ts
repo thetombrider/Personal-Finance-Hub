@@ -35,6 +35,7 @@ export const accounts = pgTable("accounts", {
   startingBalance: decimal("starting_balance", { precision: 12, scale: 2 }).notNull().default("0"),
   currency: varchar("currency", { length: 3 }).notNull().default("EUR"),
   color: varchar("color", { length: 7 }).notNull(),
+  creditLimit: decimal("credit_limit", { precision: 12, scale: 2 }),
 });
 
 export const insertAccountSchema = createInsertSchema(accounts).omit({ id: true });
@@ -61,6 +62,7 @@ export const transactions = pgTable("transactions", {
   accountId: serial("account_id").notNull().references(() => accounts.id, { onDelete: "cascade" }),
   categoryId: serial("category_id").notNull().references(() => categories.id, { onDelete: "restrict" }),
   type: varchar("type", { length: 10 }).notNull(),
+  linkedTransactionId: integer("linked_transaction_id"),
 });
 
 export const insertTransactionSchema = createInsertSchema(transactions).omit({ id: true });

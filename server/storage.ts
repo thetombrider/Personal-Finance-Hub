@@ -44,6 +44,14 @@ export interface IStorage {
   getTransaction(id: number): Promise<Transaction | undefined>;
   createTransaction(transaction: InsertTransaction): Promise<Transaction>;
   createTransactions(transactions: InsertTransaction[]): Promise<Transaction[]>;
+  createTransfer(data: {
+    date: string;
+    amount: string;
+    description: string;
+    fromAccountId: number;
+    toAccountId: number;
+    categoryId: number;
+  }): Promise<{ fromTransaction: Transaction; toTransaction: Transaction }>;
   updateTransaction(id: number, transaction: Partial<InsertTransaction>): Promise<Transaction | undefined>;
   deleteTransaction(id: number): Promise<void>;
   deleteTransactions(ids: number[]): Promise<void>;
@@ -155,6 +163,42 @@ export class DatabaseStorage implements IStorage {
     if (txs.length === 0) return [];
     const result = await db.insert(transactions).values(txs).returning();
     return result;
+  }
+
+  async createTransfer(data: {
+    date: string;
+    amount: string;
+    description: string;
+    fromAccountId: number;
+    toAccountId: number;
+    categoryId: number;
+  }): Promise<{ fromTransaction: Transaction; toTransaction: Transaction }> {
+    const [fromTransaction] = await db.insert(transactions).values({
+      date: data.date,
+      amount: data.amount,
+      description: data.description,
+      accountId: data.fromAccountId,
+      categoryId: data.categoryId,
+      type: "expense",
+    }).returning();
+
+    const [toTransaction] = await db.insert(transactions).values({
+      date: data.date,
+      amount: data.amount,
+      description: data.description,
+      accountId: data.toAccountId,
+      categoryId: data.categoryId,
+      type: "income",
+      linkedTransactionId: fromTransaction.id,
+    }).returning();
+
+    await db.update(transactions)
+      .set({ linkedTransactionId: toTransaction.id })
+      .where(eq(transactions.id, fromTransaction.id));
+
+    fromTransaction.linkedTransactionId = toTransaction.id;
+
+    return { fromTransaction, toTransaction };
   }
 
   async updateTransaction(id: number, transaction: Partial<InsertTransaction>): Promise<Transaction | undefined> {

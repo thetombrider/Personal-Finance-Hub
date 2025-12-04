@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, Edit2, Calendar as CalendarIcon, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Search, X, Download } from "lucide-react";
+import { Plus, Trash2, Edit2, Calendar as CalendarIcon, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Search, X, Download, ArrowLeftRight } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -28,7 +28,19 @@ const transactionSchema = z.object({
   type: z.enum(["income", "expense"]),
 });
 
+const transferSchema = z.object({
+  amount: z.coerce.number().min(0.01, "Amount must be positive"),
+  description: z.string().min(2, "Description is required"),
+  fromAccountId: z.coerce.number().min(1, "Source account is required"),
+  toAccountId: z.coerce.number().min(1, "Destination account is required"),
+  date: z.date(),
+}).refine((data) => data.fromAccountId !== data.toAccountId, {
+  message: "Source and destination must be different",
+  path: ["toAccountId"],
+});
+
 type TransactionFormValues = z.infer<typeof transactionSchema>;
+type TransferFormValues = z.infer<typeof transferSchema>;
 
 type SortField = 'date' | 'description' | 'category' | 'account' | 'amount';
 type SortDirection = 'asc' | 'desc';
@@ -36,8 +48,9 @@ type SortDirection = 'asc' | 'desc';
 const ITEMS_PER_PAGE = 50;
 
 export default function Transactions() {
-  const { transactions, accounts, categories, addTransaction, updateTransaction, deleteTransaction, deleteTransactions, formatCurrency, isLoading } = useFinance();
+  const { transactions, accounts, categories, addTransaction, addTransfer, updateTransaction, deleteTransaction, deleteTransactions, formatCurrency, isLoading } = useFinance();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isTransferDialogOpen, setIsTransferDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [sortField, setSortField] = useState<SortField>('date');
@@ -62,6 +75,19 @@ export default function Transactions() {
       type: "expense",
     },
   });
+
+  const transferForm = useForm<TransferFormValues>({
+    resolver: zodResolver(transferSchema),
+    defaultValues: {
+      amount: 0,
+      description: "",
+      fromAccountId: 0,
+      toAccountId: 0,
+      date: new Date(),
+    },
+  });
+
+  const transferCategory = categories.find(c => c.name.toLowerCase() === "trasferimenti" || c.name.toLowerCase() === "transfer");
 
   const getAccountName = (id: number) => accounts.find(a => a.id === id)?.name || "Unknown";
   const getCategory = (id: number) => categories.find(c => c.id === id);
@@ -184,6 +210,25 @@ export default function Transactions() {
     setIsDialogOpen(false);
     setEditingId(null);
     form.reset();
+  };
+
+  const onTransferSubmit = async (data: TransferFormValues) => {
+    if (!transferCategory) {
+      alert("Categoria 'Trasferimenti' non trovata. Creala prima nelle impostazioni.");
+      return;
+    }
+
+    await addTransfer({
+      amount: data.amount.toString(),
+      description: data.description,
+      fromAccountId: data.fromAccountId,
+      toAccountId: data.toAccountId,
+      categoryId: transferCategory.id,
+      date: data.date.toISOString(),
+    });
+    
+    setIsTransferDialogOpen(false);
+    transferForm.reset();
   };
 
   const handleEdit = (transaction: Transaction) => {
@@ -499,6 +544,149 @@ export default function Transactions() {
 
                     <DialogFooter>
                       <Button type="submit" data-testid="button-submit-transaction">{editingId ? "Save Changes" : "Add Transaction"}</Button>
+                    </DialogFooter>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
+
+            <Dialog open={isTransferDialogOpen} onOpenChange={(open) => {
+              setIsTransferDialogOpen(open);
+              if(!open) {
+                transferForm.reset();
+              }
+            }}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="gap-2" data-testid="button-add-transfer">
+                  <ArrowLeftRight size={16} /> Trasferimento
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader>
+                  <DialogTitle>Nuovo Trasferimento</DialogTitle>
+                </DialogHeader>
+                <Form {...transferForm}>
+                  <form onSubmit={transferForm.handleSubmit(onTransferSubmit)} className="space-y-4">
+                    <FormField
+                      control={transferForm.control}
+                      name="amount"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Importo</FormLabel>
+                          <FormControl>
+                            <Input type="number" step="0.01" {...field} data-testid="input-transfer-amount" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={transferForm.control}
+                      name="description"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Descrizione</FormLabel>
+                          <FormControl>
+                            <Input placeholder="es. Pagamento carta di credito" {...field} data-testid="input-transfer-description" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={transferForm.control}
+                        name="fromAccountId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Da conto</FormLabel>
+                            <Select onValueChange={(v) => field.onChange(parseInt(v))} value={field.value?.toString()}>
+                              <FormControl>
+                                <SelectTrigger data-testid="select-from-account">
+                                  <SelectValue placeholder="Seleziona conto" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {accounts.map(acc => (
+                                  <SelectItem key={acc.id} value={acc.id.toString()}>{acc.name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={transferForm.control}
+                        name="toAccountId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>A conto</FormLabel>
+                            <Select onValueChange={(v) => field.onChange(parseInt(v))} value={field.value?.toString()}>
+                              <FormControl>
+                                <SelectTrigger data-testid="select-to-account">
+                                  <SelectValue placeholder="Seleziona conto" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {accounts.map(acc => (
+                                  <SelectItem key={acc.id} value={acc.id.toString()}>{acc.name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <FormField
+                      control={transferForm.control}
+                      name="date"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>Data</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant={"outline"}
+                                  className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                  data-testid="button-transfer-date-picker"
+                                >
+                                  {field.value ? (
+                                    format(field.value, "PPP")
+                                  ) : (
+                                    <span>Seleziona data</span>
+                                  )}
+                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                disabled={(date) =>
+                                  date > new Date() || date < new Date("1900-01-01")
+                                }
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <DialogFooter>
+                      <Button type="submit" data-testid="button-submit-transfer">Crea Trasferimento</Button>
                     </DialogFooter>
                   </form>
                 </Form>

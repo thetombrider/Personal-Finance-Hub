@@ -3,7 +3,8 @@ import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowUpRight, ArrowDownRight, Wallet, TrendingUp, Activity, PiggyBank } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Wallet, TrendingUp, Activity, PiggyBank, CreditCard } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis, PieChart, Pie, Cell, BarChart, Bar, LineChart, Line } from "recharts";
 import { useState, useMemo } from "react";
 import { format, subMonths, isSameMonth, parseISO, startOfMonth, endOfMonth } from "date-fns";
@@ -191,6 +192,47 @@ export default function Dashboard() {
       .reduce((sum, acc) => sum + acc.balance, 0);
   }, [accounts]);
 
+  const totalCredit = useMemo(() => {
+    return accounts
+      .filter(acc => acc.type === 'credit')
+      .reduce((sum, acc) => sum + acc.balance, 0);
+  }, [accounts]);
+
+  // Credit card usage this month
+  const creditUsageThisMonth = useMemo(() => {
+    const creditAccounts = accounts.filter(acc => acc.type === 'credit');
+    if (creditAccounts.length === 0) return null;
+    
+    const currentMonthStart = startOfMonth(new Date());
+    const currentMonthEnd = endOfMonth(new Date());
+    
+    let totalSpent = 0;
+    let totalLimit = 0;
+    
+    creditAccounts.forEach(acc => {
+      const spent = transactions
+        .filter(t => {
+          const tDate = parseISO(t.date);
+          return t.accountId === acc.id && 
+                 t.type === 'expense' && 
+                 tDate >= currentMonthStart && 
+                 tDate <= currentMonthEnd;
+        })
+        .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+      
+      totalSpent += spent;
+      if (acc.creditLimit) {
+        totalLimit += parseFloat(acc.creditLimit);
+      }
+    });
+    
+    return {
+      spent: totalSpent,
+      limit: totalLimit,
+      percentage: totalLimit > 0 ? (totalSpent / totalLimit) * 100 : 0
+    };
+  }, [accounts, transactions]);
+
   // Net Worth by account type
   const netWorthByTypeData = useMemo(() => {
     const typeMap = new Map<string, number>();
@@ -264,7 +306,7 @@ export default function Dashboard() {
         </div>
 
         {/* Stats Grid - Asset Breakdown */}
-        <div className="grid gap-4 md:grid-cols-5">
+        <div className="grid gap-4 md:grid-cols-6">
           <Card className="relative overflow-hidden">
             <div className="absolute right-0 top-0 h-full w-1/2 bg-gradient-to-l from-primary/5 to-transparent" />
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -348,6 +390,34 @@ export default function Dashboard() {
                   -{formatCurrency(monthlyStats.expense)}
                 </span>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Carte di Credito</CardTitle>
+              <div className="h-8 w-8 rounded-full bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center">
+                <CreditCard className="h-4 w-4 text-rose-600 dark:text-rose-400" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold font-heading text-rose-600 dark:text-rose-400">
+                {formatCurrency(Math.abs(totalCredit))}
+              </div>
+              {creditUsageThisMonth && creditUsageThisMonth.limit > 0 ? (
+                <div className="mt-2 space-y-1">
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>Speso questo mese</span>
+                    <span>{formatCurrency(creditUsageThisMonth.spent)} / {formatCurrency(creditUsageThisMonth.limit)}</span>
+                  </div>
+                  <Progress 
+                    value={Math.min(creditUsageThisMonth.percentage, 100)} 
+                    className={creditUsageThisMonth.percentage > 80 ? "bg-rose-200" : ""}
+                  />
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground mt-1">Debito totale</p>
+              )}
             </CardContent>
           </Card>
         </div>

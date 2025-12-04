@@ -133,6 +133,27 @@ export async function clearTransactions() {
   if (!res.ok) throw new Error("Failed to clear transactions");
 }
 
+// ============ TRANSFERS ============
+
+export interface TransferData {
+  date: string;
+  amount: string;
+  description: string;
+  fromAccountId: number;
+  toAccountId: number;
+  categoryId: number;
+}
+
+export async function createTransfer(transfer: TransferData) {
+  const res = await fetch(`${API_BASE}/transfers`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(transfer),
+  });
+  if (!res.ok) throw new Error("Failed to create transfer");
+  return res.json();
+}
+
 // ============ HOLDINGS ============
 
 export async function fetchHoldings(): Promise<Holding[]> {
