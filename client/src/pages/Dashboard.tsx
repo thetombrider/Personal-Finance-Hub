@@ -3,7 +3,7 @@ import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowUpRight, ArrowDownRight, Wallet, TrendingUp, Activity } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Wallet, TrendingUp, Activity, PiggyBank } from "lucide-react";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis, PieChart, Pie, Cell, BarChart, Bar, LineChart, Line } from "recharts";
 import { useState, useMemo } from "react";
 import { format, subMonths, isSameMonth, parseISO, startOfMonth, endOfMonth } from "date-fns";
@@ -172,11 +172,22 @@ export default function Dashboard() {
     return data;
   }, [transactions, categoryTrendId, timeRange, selectedAccount, selectedCategoryForTrend]);
 
-  // Cash and cash equivalents (checking, savings, cash accounts)
-  const cashAndEquivalents = useMemo(() => {
-    const cashTypes = ['checking', 'savings', 'cash'];
+  // Totals by account type
+  const totalCash = useMemo(() => {
     return accounts
-      .filter(acc => cashTypes.includes(acc.type))
+      .filter(acc => acc.type === 'checking' || acc.type === 'cash')
+      .reduce((sum, acc) => sum + acc.balance, 0);
+  }, [accounts]);
+
+  const totalSavings = useMemo(() => {
+    return accounts
+      .filter(acc => acc.type === 'savings')
+      .reduce((sum, acc) => sum + acc.balance, 0);
+  }, [accounts]);
+
+  const totalInvestments = useMemo(() => {
+    return accounts
+      .filter(acc => acc.type === 'investment')
       .reduce((sum, acc) => sum + acc.balance, 0);
   }, [accounts]);
 
@@ -252,8 +263,8 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid gap-4 md:grid-cols-3">
+        {/* Stats Grid - Asset Breakdown */}
+        <div className="grid gap-4 md:grid-cols-4">
           <Card className="relative overflow-hidden">
             <div className="absolute right-0 top-0 h-full w-1/2 bg-gradient-to-l from-primary/5 to-transparent" />
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -263,38 +274,53 @@ export default function Dashboard() {
             <CardContent>
               <div className="text-2xl font-bold font-heading">{formatCurrency(totalBalance)}</div>
               <p className="text-xs text-muted-foreground mt-1">
-                Across {accounts.length} accounts, of which {formatCurrency(cashAndEquivalents)} in cash
+                Across {accounts.length} accounts
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Monthly Income</CardTitle>
-              <div className="h-8 w-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-                <ArrowUpRight className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+              <CardTitle className="text-sm font-medium">Total Cash</CardTitle>
+              <div className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                <Wallet className="h-4 w-4 text-blue-600 dark:text-blue-400" />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold font-heading text-emerald-600 dark:text-emerald-400">
-                +{formatCurrency(monthlyStats.income)}
+              <div className="text-2xl font-bold font-heading text-blue-600 dark:text-blue-400">
+                {formatCurrency(totalCash)}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">This month</p>
+              <p className="text-xs text-muted-foreground mt-1">Cash & Checking</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Monthly Expenses</CardTitle>
-              <div className="h-8 w-8 rounded-full bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center">
-                <ArrowDownRight className="h-4 w-4 text-rose-600 dark:text-rose-400" />
+              <CardTitle className="text-sm font-medium">Total Savings</CardTitle>
+              <div className="h-8 w-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                <PiggyBank className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold font-heading text-rose-600 dark:text-rose-400">
-                -{formatCurrency(monthlyStats.expense)}
+              <div className="text-2xl font-bold font-heading text-emerald-600 dark:text-emerald-400">
+                {formatCurrency(totalSavings)}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">This month</p>
+              <p className="text-xs text-muted-foreground mt-1">Savings accounts</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Investments</CardTitle>
+              <div className="h-8 w-8 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
+                <TrendingUp className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold font-heading text-violet-600 dark:text-violet-400">
+                {formatCurrency(totalInvestments)}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Investment accounts</p>
             </CardContent>
           </Card>
         </div>
