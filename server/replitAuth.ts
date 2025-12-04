@@ -8,6 +8,10 @@ import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
 
+const ALLOWED_EMAILS = [
+  "tommasominuto@gmail.com"
+];
+
 const getOidcConfig = memoize(
   async () => {
     return await client.discovery(
@@ -72,9 +76,21 @@ export async function setupAuth(app: Express) {
     tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
     verified: passport.AuthenticateCallback
   ) => {
+    const claims = tokens.claims?.();
+    if (!claims) {
+      return verified(null, false, { message: "Invalid authentication response." });
+    }
+    
+    const email = claims["email"] as string | undefined;
+    
+    if (!email || !ALLOWED_EMAILS.includes(email.toLowerCase())) {
+      console.log(`Access denied for email: ${email}`);
+      return verified(null, false, { message: "Access denied. Your email is not authorized." });
+    }
+    
     const user = {};
     updateUserSession(user, tokens);
-    await upsertUser(tokens.claims());
+    await upsertUser(claims);
     verified(null, user);
   };
 
@@ -133,6 +149,12 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
 
   if (!req.isAuthenticated() || !user.expires_at) {
     return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  const userEmail = user.claims?.email as string | undefined;
+  if (!userEmail || !ALLOWED_EMAILS.includes(userEmail.toLowerCase())) {
+    req.logout(() => {});
+    return res.status(403).json({ message: "Access denied. Your email is not authorized." });
   }
 
   const now = Math.floor(Date.now() / 1000);
