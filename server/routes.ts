@@ -4,12 +4,27 @@ import { storage } from "./storage";
 import { insertAccountSchema, insertCategorySchema, insertTransactionSchema, insertHoldingSchema, insertTradeSchema } from "@shared/schema";
 import { z } from "zod";
 import crypto from "crypto";
+import { setupAuth, isAuthenticated } from "./replitAuth";
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
   
+  // ============ AUTH ============
+  await setupAuth(app);
+
+  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
   // ============ ACCOUNTS ============
   
   app.get("/api/accounts", async (req, res) => {
