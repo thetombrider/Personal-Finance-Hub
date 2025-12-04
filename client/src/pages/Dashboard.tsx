@@ -138,13 +138,15 @@ export default function Dashboard() {
   }, [transactions, accounts, timeRange]);
 
   // Category trend data (monthly totals for selected category)
+  const selectedCategoryForTrend = categories.find(c => c.id === parseInt(categoryTrendId));
+  
   const categoryTrendData = useMemo(() => {
-    if (!categoryTrendId) return [];
+    if (!categoryTrendId || !selectedCategoryForTrend) return [];
     
     const months = parseInt(timeRange);
     const data = [];
     const catId = parseInt(categoryTrendId);
-    const category = categories.find(c => c.id === catId);
+    const categoryType = selectedCategoryForTrend.type;
     
     for (let i = months - 1; i >= 0; i--) {
       const date = subMonths(new Date(), i);
@@ -155,7 +157,7 @@ export default function Dashboard() {
         .filter(t => {
           const tDate = parseISO(t.date);
           return t.categoryId === catId && 
-                 t.type === 'expense' &&
+                 t.type === categoryType &&
                  tDate >= monthStart && 
                  tDate <= monthEnd &&
                  (selectedAccount === "all" || t.accountId === parseInt(selectedAccount));
@@ -168,9 +170,7 @@ export default function Dashboard() {
       });
     }
     return data;
-  }, [transactions, categoryTrendId, timeRange, selectedAccount, categories]);
-
-  const selectedCategoryForTrend = categories.find(c => c.id === parseInt(categoryTrendId));
+  }, [transactions, categoryTrendId, timeRange, selectedAccount, selectedCategoryForTrend]);
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
@@ -414,7 +414,11 @@ export default function Dashboard() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <CardTitle>Andamento Categoria</CardTitle>
-                <CardDescription>Totale mensile per categoria selezionata</CardDescription>
+                <CardDescription>
+                  {selectedCategoryForTrend 
+                    ? `Totale mensile ${selectedCategoryForTrend.type === 'income' ? 'entrate' : 'spese'}: ${selectedCategoryForTrend.name}`
+                    : 'Seleziona una categoria per vedere il trend'}
+                </CardDescription>
               </div>
               <Select value={categoryTrendId} onValueChange={setCategoryTrendId}>
                 <SelectTrigger className="w-[200px]" data-testid="select-category-trend">
