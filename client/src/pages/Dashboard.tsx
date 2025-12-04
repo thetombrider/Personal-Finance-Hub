@@ -291,59 +291,115 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* Net Worth Evolution Chart */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Net Worth Evolution</CardTitle>
-                <CardDescription>Your total wealth over time</CardDescription>
+        {/* Net Worth Evolution + Patrimonio per Tipo di Conto */}
+        <div className="grid gap-6 md:grid-cols-3">
+          <Card className="md:col-span-2">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Net Worth Evolution</CardTitle>
+                  <CardDescription>Your total wealth over time</CardDescription>
+                </div>
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-primary" />
+                  <span className="text-lg font-bold font-heading">{formatCurrency(totalBalance)}</span>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-primary" />
-                <span className="text-lg font-bold font-heading">{formatCurrency(totalBalance)}</span>
+            </CardHeader>
+            <CardContent className="pl-0">
+              <div className="h-[250px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={netWorthData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorNetWorth" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis 
+                      stroke="#888888" 
+                      fontSize={12} 
+                      tickLine={false} 
+                      axisLine={false} 
+                      tickFormatter={(value) => `€${(value / 1000).toFixed(0)}k`}
+                      domain={['auto', 'auto']}
+                    />
+                    <Tooltip 
+                      formatter={(value: number) => [formatCurrency(value), 'Net Worth']}
+                      contentStyle={{ backgroundColor: 'var(--color-card)', borderRadius: '8px', border: '1px solid var(--color-border)' }}
+                      itemStyle={{ color: 'var(--color-foreground)' }}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="netWorth" 
+                      stroke="#6366f1" 
+                      fillOpacity={1} 
+                      fill="url(#colorNetWorth)" 
+                      strokeWidth={2}
+                      dot={{ fill: '#6366f1', strokeWidth: 2, r: 3 }}
+                      activeDot={{ r: 5, fill: '#6366f1' }}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
               </div>
-            </div>
-          </CardHeader>
-          <CardContent className="pl-0">
-            <div className="h-[250px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={netWorthData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="colorNetWorth" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis 
-                    stroke="#888888" 
-                    fontSize={12} 
-                    tickLine={false} 
-                    axisLine={false} 
-                    tickFormatter={(value) => `€${(value / 1000).toFixed(0)}k`}
-                    domain={['auto', 'auto']}
-                  />
-                  <Tooltip 
-                    formatter={(value: number) => [formatCurrency(value), 'Net Worth']}
-                    contentStyle={{ backgroundColor: 'var(--color-card)', borderRadius: '8px', border: '1px solid var(--color-border)' }}
-                    itemStyle={{ color: 'var(--color-foreground)' }}
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="netWorth" 
-                    stroke="#6366f1" 
-                    fillOpacity={1} 
-                    fill="url(#colorNetWorth)" 
-                    strokeWidth={2}
-                    dot={{ fill: '#6366f1', strokeWidth: 2, r: 3 }}
-                    activeDot={{ r: 5, fill: '#6366f1' }}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+
+          <Card className="md:col-span-1">
+            <CardHeader>
+              <CardTitle>Patrimonio per Tipo</CardTitle>
+              <CardDescription>Distribuzione del patrimonio</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[250px] w-full">
+                {netWorthByTypeData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={netWorthByTypeData} layout="vertical" margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                      <XAxis 
+                        type="number" 
+                        stroke="#888888" 
+                        fontSize={10} 
+                        tickLine={false} 
+                        axisLine={false} 
+                        tickFormatter={(value) => `€${(value / 1000).toFixed(0)}k`}
+                      />
+                      <YAxis 
+                        type="category" 
+                        dataKey="name" 
+                        stroke="#888888" 
+                        fontSize={10} 
+                        tickLine={false} 
+                        axisLine={false}
+                        width={70}
+                      />
+                      <Tooltip 
+                        formatter={(value: number) => [formatCurrency(value), 'Saldo']}
+                        contentStyle={{ backgroundColor: 'var(--color-card)', borderRadius: '8px', border: '1px solid var(--color-border)' }}
+                        itemStyle={{ color: 'var(--color-foreground)' }}
+                      />
+                      <Bar 
+                        dataKey="value" 
+                        radius={[0, 4, 4, 0]}
+                      >
+                        {netWorthByTypeData.map((entry, index) => (
+                          <Cell 
+                            key={`cell-${index}`} 
+                            fill={entry.value >= 0 ? COLORS[index % COLORS.length] : '#ef4444'} 
+                          />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-full flex items-center justify-center text-muted-foreground">
+                    Nessun conto disponibile
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Charts Area */}
         <div className="grid gap-6 md:grid-cols-7">
@@ -430,61 +486,6 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
-
-        {/* Net Worth by Account Type */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Patrimonio per Tipo di Conto</CardTitle>
-            <CardDescription>Distribuzione del tuo patrimonio</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px] w-full">
-              {netWorthByTypeData.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={netWorthByTypeData} layout="vertical" margin={{ top: 10, right: 30, left: 80, bottom: 0 }}>
-                    <XAxis 
-                      type="number" 
-                      stroke="#888888" 
-                      fontSize={12} 
-                      tickLine={false} 
-                      axisLine={false} 
-                      tickFormatter={(value) => formatCurrency(value)}
-                    />
-                    <YAxis 
-                      type="category" 
-                      dataKey="name" 
-                      stroke="#888888" 
-                      fontSize={12} 
-                      tickLine={false} 
-                      axisLine={false}
-                      width={75}
-                    />
-                    <Tooltip 
-                      formatter={(value: number) => [formatCurrency(value), 'Saldo']}
-                      contentStyle={{ backgroundColor: 'var(--color-card)', borderRadius: '8px', border: '1px solid var(--color-border)' }}
-                      itemStyle={{ color: 'var(--color-foreground)' }}
-                    />
-                    <Bar 
-                      dataKey="value" 
-                      radius={[0, 4, 4, 0]}
-                    >
-                      {netWorthByTypeData.map((entry, index) => (
-                        <Cell 
-                          key={`cell-${index}`} 
-                          fill={entry.value >= 0 ? COLORS[index % COLORS.length] : '#ef4444'} 
-                        />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-full flex items-center justify-center text-muted-foreground">
-                  Nessun conto disponibile
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Category Trend Chart */}
         <Card>
