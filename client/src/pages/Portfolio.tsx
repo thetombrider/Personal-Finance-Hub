@@ -61,6 +61,7 @@ export default function Portfolio() {
   });
   const [tradeToDelete, setTradeToDelete] = useState<(Trade & { holding?: Holding }) | null>(null);
   const [showHoldingsDropdown, setShowHoldingsDropdown] = useState(false);
+  const [tradesHoldingFilter, setTradesHoldingFilter] = useState<string>("all");
 
   const { data: holdings = [], isLoading: holdingsLoading } = useQuery({
     queryKey: ["holdings"],
@@ -365,6 +366,11 @@ export default function Portfolio() {
       return { ...trade, holding };
     }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [trades, holdings]);
+
+  const filteredTrades = useMemo(() => {
+    if (tradesHoldingFilter === "all") return tradesWithHoldings;
+    return tradesWithHoldings.filter(trade => trade.holdingId === parseInt(tradesHoldingFilter));
+  }, [tradesWithHoldings, tradesHoldingFilter]);
 
   if (holdingsLoading || tradesLoading) {
     return (
@@ -822,11 +828,26 @@ export default function Portfolio() {
           <TabsContent value="trades">
             <Card>
               <CardHeader>
-                <CardTitle>Storico Operazioni</CardTitle>
-                <CardDescription>Tutte le operazioni di acquisto e vendita registrate</CardDescription>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <CardTitle>Storico Operazioni</CardTitle>
+                    <CardDescription>Tutte le operazioni di acquisto e vendita registrate</CardDescription>
+                  </div>
+                  <Select value={tradesHoldingFilter} onValueChange={setTradesHoldingFilter}>
+                    <SelectTrigger className="w-[200px]" data-testid="select-trades-holding-filter">
+                      <SelectValue placeholder="Tutti i titoli" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tutti i titoli</SelectItem>
+                      {holdings.map(h => (
+                        <SelectItem key={h.id} value={h.id.toString()}>{h.ticker} - {h.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </CardHeader>
               <CardContent>
-                {tradesWithHoldings.length === 0 ? (
+                {filteredTrades.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <p>Nessuna operazione registrata</p>
                   </div>
@@ -845,7 +866,7 @@ export default function Portfolio() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {tradesWithHoldings.map((trade) => (
+                      {filteredTrades.map((trade) => (
                         <TableRow key={trade.id} data-testid={`row-trade-${trade.id}`}>
                           <TableCell>
                             {format(parseISO(trade.date), "dd MMM yyyy", { locale: it })}
