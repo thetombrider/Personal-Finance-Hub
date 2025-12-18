@@ -3,7 +3,8 @@ import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowUpRight, ArrowDownRight, Wallet, TrendingUp, Activity, PiggyBank, CreditCard } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Wallet, TrendingUp, Activity, PiggyBank, CreditCard, Eye, EyeOff } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis, PieChart, Pie, Cell, BarChart, Bar, LineChart, Line, ReferenceLine, Legend } from "recharts";
 import { useState, useMemo } from "react";
@@ -15,6 +16,12 @@ export default function Dashboard() {
   const [selectedAccount, setSelectedAccount] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [categoryTrendId, setCategoryTrendId] = useState<string>("");
+  const [privacyMode, setPrivacyMode] = useState(false);
+
+  const displayCurrency = (amount: number) => {
+    if (privacyMode) return "•••••";
+    return formatCurrency(amount);
+  };
 
   const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
   
@@ -311,6 +318,15 @@ export default function Dashboard() {
                 <TabsTrigger value="12" className="text-xs px-3">1Y</TabsTrigger>
               </TabsList>
             </Tabs>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setPrivacyMode(!privacyMode)}
+              data-testid="button-privacy-toggle"
+              title={privacyMode ? "Mostra importi" : "Nascondi importi"}
+            >
+              {privacyMode ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </Button>
           </div>
         </div>
 
@@ -323,7 +339,7 @@ export default function Dashboard() {
               <Wallet className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold font-heading">{formatCurrency(totalBalance)}</div>
+              <div className="text-2xl font-bold font-heading">{displayCurrency(totalBalance)}</div>
               <p className="text-xs text-muted-foreground mt-1">
                 Across {accounts.length} accounts
               </p>
@@ -339,7 +355,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold font-heading text-blue-600 dark:text-blue-400">
-                {formatCurrency(totalCash)}
+                {displayCurrency(totalCash)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">Cash & Checking</p>
             </CardContent>
@@ -354,7 +370,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold font-heading text-emerald-600 dark:text-emerald-400">
-                {formatCurrency(totalSavings)}
+                {displayCurrency(totalSavings)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">Savings accounts</p>
             </CardContent>
@@ -369,7 +385,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold font-heading text-violet-600 dark:text-violet-400">
-                {formatCurrency(totalInvestments)}
+                {displayCurrency(totalInvestments)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">Investment accounts</p>
             </CardContent>
@@ -387,7 +403,7 @@ export default function Dashboard() {
                   <span className="text-xs text-muted-foreground">Income</span>
                 </div>
                 <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
-                  +{formatCurrency(monthlyStats.income)}
+                  +{displayCurrency(monthlyStats.income)}
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -396,7 +412,7 @@ export default function Dashboard() {
                   <span className="text-xs text-muted-foreground">Expenses</span>
                 </div>
                 <span className="text-sm font-bold text-rose-600 dark:text-rose-400">
-                  -{formatCurrency(monthlyStats.expense)}
+                  -{displayCurrency(monthlyStats.expense)}
                 </span>
               </div>
             </CardContent>
@@ -411,13 +427,13 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold font-heading text-rose-600 dark:text-rose-400">
-                {formatCurrency(Math.abs(totalCredit))}
+                {displayCurrency(Math.abs(totalCredit))}
               </div>
               {creditUsageThisMonth && creditUsageThisMonth.limit > 0 ? (
                 <div className="mt-2 space-y-1">
                   <div className="flex justify-between text-xs text-muted-foreground">
                     <span>Speso questo mese</span>
-                    <span>{formatCurrency(creditUsageThisMonth.spent)} / {formatCurrency(creditUsageThisMonth.limit)}</span>
+                    <span>{displayCurrency(creditUsageThisMonth.spent)} / {displayCurrency(creditUsageThisMonth.limit)}</span>
                   </div>
                   <Progress 
                     value={Math.min(creditUsageThisMonth.percentage, 100)} 
@@ -442,7 +458,7 @@ export default function Dashboard() {
                 </div>
                 <div className="flex items-center gap-2">
                   <TrendingUp className="h-5 w-5 text-primary" />
-                  <span className="text-lg font-bold font-heading">{formatCurrency(totalBalance)}</span>
+                  <span className="text-lg font-bold font-heading">{displayCurrency(totalBalance)}</span>
                 </div>
               </div>
             </CardHeader>
@@ -462,11 +478,11 @@ export default function Dashboard() {
                       fontSize={12} 
                       tickLine={false} 
                       axisLine={false} 
-                      tickFormatter={(value) => `€${(value / 1000).toFixed(0)}k`}
+                      tickFormatter={(value) => privacyMode ? "•••" : `€${(value / 1000).toFixed(0)}k`}
                       domain={['auto', 'auto']}
                     />
                     <Tooltip 
-                      formatter={(value: number) => [formatCurrency(value), 'Net Worth']}
+                      formatter={(value: number) => [displayCurrency(value), 'Net Worth']}
                       contentStyle={{ backgroundColor: 'var(--color-card)', borderRadius: '8px', border: '1px solid var(--color-border)' }}
                       itemStyle={{ color: 'var(--color-foreground)' }}
                     />
@@ -502,7 +518,7 @@ export default function Dashboard() {
                         fontSize={10} 
                         tickLine={false} 
                         axisLine={false} 
-                        tickFormatter={(value) => `€${(value / 1000).toFixed(0)}k`}
+                        tickFormatter={(value) => privacyMode ? "•••" : `€${(value / 1000).toFixed(0)}k`}
                       />
                       <YAxis 
                         type="category" 
@@ -514,7 +530,7 @@ export default function Dashboard() {
                         width={70}
                       />
                       <Tooltip 
-                        formatter={(value: number) => [formatCurrency(value), 'Saldo']}
+                        formatter={(value: number) => [displayCurrency(value), 'Saldo']}
                         contentStyle={{ backgroundColor: 'var(--color-card)', borderRadius: '8px', border: '1px solid var(--color-border)' }}
                         itemStyle={{ color: 'var(--color-foreground)' }}
                       />
