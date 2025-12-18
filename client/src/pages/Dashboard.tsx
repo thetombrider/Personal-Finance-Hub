@@ -579,10 +579,10 @@ export default function Dashboard() {
                       </linearGradient>
                     </defs>
                     <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                    <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `€${value.toFixed(2)}`} />
+                    <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => privacyMode ? "•••" : `€${value.toFixed(2)}`} />
                     <Tooltip 
                       formatter={(value: number, name: string) => {
-                        const formattedValue = `€${value.toFixed(2)}`;
+                        const formattedValue = privacyMode ? "•••••" : `€${value.toFixed(2)}`;
                         const label = name === 'income' ? 'Entrate' : 'Uscite';
                         return [formattedValue, label];
                       }}
@@ -621,7 +621,7 @@ export default function Dashboard() {
                         ))}
                       </Pie>
                       <Tooltip 
-                         formatter={(value: number) => `€${value.toFixed(2)}`}
+                         formatter={(value: number) => privacyMode ? "•••••" : `€${value.toFixed(2)}`}
                          contentStyle={{ backgroundColor: 'var(--color-card)', borderRadius: '8px', border: '1px solid var(--color-border)' }}
                       />
                     </PieChart>
@@ -634,7 +634,7 @@ export default function Dashboard() {
                      <div key={index} className="flex items-center gap-2 text-xs">
                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
                        <span className="truncate flex-1">{entry.name}</span>
-                       <span className="font-medium">{formatCurrency(entry.value as number)}</span>
+                       <span className="font-medium">{displayCurrency(entry.value as number)}</span>
                      </div>
                    ))}
                 </div>
@@ -659,7 +659,7 @@ export default function Dashboard() {
                    selectedCategoryForTrend.type === 'expense' && 
                    !isNaN(parseFloat(selectedCategoryForTrend.budget)) && (
                     <span className="ml-2 text-primary font-medium">
-                      (Budget: {formatCurrency(parseFloat(selectedCategoryForTrend.budget))})
+                      (Budget: {displayCurrency(parseFloat(selectedCategoryForTrend.budget))})
                     </span>
                   )}
                 </CardDescription>
@@ -687,12 +687,12 @@ export default function Dashboard() {
                       fontSize={12} 
                       tickLine={false} 
                       axisLine={false} 
-                      tickFormatter={(value) => `€${value.toFixed(0)}`}
+                      tickFormatter={(value) => privacyMode ? "•••" : `€${value.toFixed(0)}`}
                     />
                     <Tooltip 
                       formatter={(value: number, name: string) => {
                         const label = name === 'total' ? (selectedCategoryForTrend?.name || 'Totale') : 'Budget';
-                        return [formatCurrency(value), label];
+                        return [displayCurrency(value), label];
                       }}
                       contentStyle={{ backgroundColor: 'var(--color-card)', borderRadius: '8px', border: '1px solid var(--color-border)' }}
                       itemStyle={{ color: 'var(--color-foreground)' }}
