@@ -762,7 +762,7 @@ export default function Dashboard() {
 
       {/* Account Detail Modal */}
       <Dialog open={detailModal !== null} onOpenChange={(open) => !open && setDetailModal(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className={detailModal === 'total' ? "max-w-3xl max-h-[85vh] overflow-hidden" : "max-w-md"}>
           <DialogHeader>
             <DialogTitle>
               {detailModal === 'total' && 'Tutti i Conti'}
@@ -771,7 +771,7 @@ export default function Dashboard() {
               {detailModal === 'investments' && 'Conti Investimento'}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-3 mt-4">
+          <div className="mt-4">
             {(() => {
               let filteredAccounts = accounts;
               if (detailModal === 'cash') {
@@ -790,27 +790,50 @@ export default function Dashboard() {
               
               return (
                 <>
-                  {filteredAccounts.map(account => (
-                    <div 
-                      key={account.id} 
-                      className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
-                      data-testid={`modal-account-${account.id}`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div 
-                          className="w-3 h-3 rounded-full" 
-                          style={{ backgroundColor: account.color || '#6366f1' }}
-                        />
-                        <div>
-                          <p className="font-medium">{account.name}</p>
-                          <p className="text-xs text-muted-foreground capitalize">{account.type}</p>
-                        </div>
+                  <div className={detailModal === 'total' ? "grid grid-cols-2 md:grid-cols-3 gap-3 max-h-[60vh] overflow-y-auto pr-2" : "space-y-3"}>
+                    {filteredAccounts.map(account => (
+                      <div 
+                        key={account.id} 
+                        className={detailModal === 'total' 
+                          ? "flex flex-col p-3 bg-muted/50 rounded-lg"
+                          : "flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                        }
+                        data-testid={`modal-account-${account.id}`}
+                      >
+                        {detailModal === 'total' ? (
+                          <>
+                            <div className="flex items-center gap-2 mb-2">
+                              <div 
+                                className="w-3 h-3 rounded-full flex-shrink-0" 
+                                style={{ backgroundColor: account.color || '#6366f1' }}
+                              />
+                              <p className="font-medium text-sm truncate">{account.name}</p>
+                            </div>
+                            <span className={`font-bold text-lg ${account.balance >= 0 ? 'text-foreground' : 'text-rose-600'}`}>
+                              {displayCurrency(account.balance)}
+                            </span>
+                            <p className="text-xs text-muted-foreground capitalize mt-1">{account.type}</p>
+                          </>
+                        ) : (
+                          <>
+                            <div className="flex items-center gap-3">
+                              <div 
+                                className="w-3 h-3 rounded-full" 
+                                style={{ backgroundColor: account.color || '#6366f1' }}
+                              />
+                              <div>
+                                <p className="font-medium">{account.name}</p>
+                                <p className="text-xs text-muted-foreground capitalize">{account.type}</p>
+                              </div>
+                            </div>
+                            <span className={`font-bold ${account.balance >= 0 ? 'text-foreground' : 'text-rose-600'}`}>
+                              {displayCurrency(account.balance)}
+                            </span>
+                          </>
+                        )}
                       </div>
-                      <span className={`font-bold ${account.balance >= 0 ? 'text-foreground' : 'text-rose-600'}`}>
-                        {displayCurrency(account.balance)}
-                      </span>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                   <div className="border-t pt-3 mt-3 flex justify-between items-center">
                     <span className="font-medium">Totale</span>
                     <span className="text-xl font-bold">{displayCurrency(total)}</span>
