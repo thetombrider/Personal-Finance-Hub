@@ -1,6 +1,7 @@
 import { useFinance } from "@/context/FinanceContext";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowUpRight, ArrowDownRight, Wallet, TrendingUp, Activity, PiggyBank, CreditCard, Eye, EyeOff } from "lucide-react";
@@ -17,6 +18,7 @@ export default function Dashboard() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [categoryTrendId, setCategoryTrendId] = useState<string>("");
   const [privacyMode, setPrivacyMode] = useState(false);
+  const [detailModal, setDetailModal] = useState<'total' | 'cash' | 'savings' | 'investments' | null>(null);
 
   const displayCurrency = (amount: number) => {
     if (privacyMode) return "•••••";
@@ -332,7 +334,11 @@ export default function Dashboard() {
 
         {/* Stats Grid - Asset Breakdown */}
         <div className="grid gap-4 md:grid-cols-6">
-          <Card className="relative overflow-hidden">
+          <Card 
+            className="relative overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => setDetailModal('total')}
+            data-testid="card-total-balance"
+          >
             <div className="absolute right-0 top-0 h-full w-1/2 bg-gradient-to-l from-primary/5 to-transparent" />
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Balance</CardTitle>
@@ -346,7 +352,11 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card 
+            className="cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => setDetailModal('cash')}
+            data-testid="card-total-cash"
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Cash</CardTitle>
               <div className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
@@ -361,7 +371,11 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card 
+            className="cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => setDetailModal('savings')}
+            data-testid="card-total-savings"
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Savings</CardTitle>
               <div className="h-8 w-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
@@ -376,7 +390,11 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card 
+            className="cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => setDetailModal('investments')}
+            data-testid="card-total-investments"
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Investments</CardTitle>
               <div className="h-8 w-8 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
@@ -739,6 +757,68 @@ export default function Dashboard() {
         </Card>
 
       </div>
+
+      {/* Account Detail Modal */}
+      <Dialog open={detailModal !== null} onOpenChange={(open) => !open && setDetailModal(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {detailModal === 'total' && 'Tutti i Conti'}
+              {detailModal === 'cash' && 'Conti Cash & Checking'}
+              {detailModal === 'savings' && 'Conti Risparmio'}
+              {detailModal === 'investments' && 'Conti Investimento'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 mt-4">
+            {(() => {
+              let filteredAccounts = accounts;
+              if (detailModal === 'cash') {
+                filteredAccounts = accounts.filter(a => a.type === 'cash' || a.type === 'checking');
+              } else if (detailModal === 'savings') {
+                filteredAccounts = accounts.filter(a => a.type === 'savings');
+              } else if (detailModal === 'investments') {
+                filteredAccounts = accounts.filter(a => a.type === 'investment');
+              }
+              
+              if (filteredAccounts.length === 0) {
+                return <p className="text-muted-foreground text-center py-4">Nessun conto disponibile</p>;
+              }
+              
+              const total = filteredAccounts.reduce((sum, acc) => sum + acc.balance, 0);
+              
+              return (
+                <>
+                  {filteredAccounts.map(account => (
+                    <div 
+                      key={account.id} 
+                      className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                      data-testid={`modal-account-${account.id}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div 
+                          className="w-3 h-3 rounded-full" 
+                          style={{ backgroundColor: account.color || '#6366f1' }}
+                        />
+                        <div>
+                          <p className="font-medium">{account.name}</p>
+                          <p className="text-xs text-muted-foreground capitalize">{account.type}</p>
+                        </div>
+                      </div>
+                      <span className={`font-bold ${account.balance >= 0 ? 'text-foreground' : 'text-rose-600'}`}>
+                        {displayCurrency(account.balance)}
+                      </span>
+                    </div>
+                  ))}
+                  <div className="border-t pt-3 mt-3 flex justify-between items-center">
+                    <span className="font-medium">Totale</span>
+                    <span className="text-xl font-bold">{displayCurrency(total)}</span>
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }
