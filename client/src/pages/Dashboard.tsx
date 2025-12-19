@@ -1,4 +1,5 @@
 import { useFinance } from "@/context/FinanceContext";
+import { useLocation } from "wouter";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -13,6 +14,7 @@ import { format, subMonths, isSameMonth, parseISO, startOfMonth, endOfMonth } fr
 
 export default function Dashboard() {
   const { accounts, transactions, categories, formatCurrency } = useFinance();
+  const [, setLocation] = useLocation();
   const [timeRange, setTimeRange] = useState("12"); // months
   const [selectedAccount, setSelectedAccount] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -813,6 +815,18 @@ export default function Dashboard() {
                     <span className="font-medium">Totale</span>
                     <span className="text-xl font-bold">{displayCurrency(total)}</span>
                   </div>
+                  {detailModal === 'investments' && (
+                    <Button 
+                      className="w-full mt-4" 
+                      onClick={() => {
+                        setDetailModal(null);
+                        setLocation('/portfolio');
+                      }}
+                      data-testid="button-go-to-portfolio"
+                    >
+                      Dettagli Portfolio
+                    </Button>
+                  )}
                 </>
               );
             })()}
