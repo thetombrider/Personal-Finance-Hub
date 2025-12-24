@@ -1,6 +1,5 @@
 import { useState } from "react";
 import Layout from "@/components/Layout";
-import SettingsLayout from "@/components/SettingsLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,8 +60,7 @@ export default function EmailReports() {
 
   return (
     <Layout>
-      <SettingsLayout>
-        <div className="space-y-6">
+      <div className="space-y-6">
           <div>
             <h1 className="text-2xl font-heading font-bold text-foreground">Report Email</h1>
             <p className="text-muted-foreground">Gestisci i report automatici via email</p>
@@ -133,7 +131,6 @@ export default function EmailReports() {
             </Card>
           )}
         </div>
-      </SettingsLayout>
     </Layout>
   );
 }

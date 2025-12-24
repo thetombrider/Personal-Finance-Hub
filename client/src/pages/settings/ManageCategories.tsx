@@ -1,5 +1,5 @@
 import { useFinance, Category } from "@/context/FinanceContext";
-import SettingsLayout from "@/components/SettingsLayout";
+import Layout from "@/components/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
@@ -116,16 +116,16 @@ export default function ManageCategories() {
 
   if (isLoading) {
     return (
-      <SettingsLayout>
+      <Layout>
         <div className="flex items-center justify-center h-96">
           <p className="text-muted-foreground">Loading...</p>
         </div>
-      </SettingsLayout>
+      </Layout>
     );
   }
 
   return (
-    <SettingsLayout>
+    <Layout>
        <div className="space-y-8">
         <div className="flex items-center justify-between">
           <div>
@@ -236,6 +236,6 @@ export default function ManageCategories() {
         <CategoryList items={incomeCategories} title="Entrate" />
         <CategoryList items={expenseCategories} title="Uscite" />
       </div>
-    </SettingsLayout>
+    </Layout>
   );
 }

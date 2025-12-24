@@ -1,5 +1,5 @@
 import { useFinance, Account, AccountType } from "@/context/FinanceContext";
-import SettingsLayout from "@/components/SettingsLayout";
+import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
@@ -92,16 +92,16 @@ export default function ManageAccounts() {
 
   if (isLoading) {
     return (
-      <SettingsLayout>
+      <Layout>
         <div className="flex items-center justify-center h-96">
           <p className="text-muted-foreground">Loading...</p>
         </div>
-      </SettingsLayout>
+      </Layout>
     );
   }
 
   return (
-    <SettingsLayout>
+    <Layout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -263,6 +263,6 @@ export default function ManageAccounts() {
           })}
         </div>
       </div>
-    </SettingsLayout>
+    </Layout>
   );
 }
