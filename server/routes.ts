@@ -948,7 +948,16 @@ export async function registerRoutes(
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5);
     
-    const totalBalance = accounts.reduce((sum, a) => sum + parseFloat(a.startingBalance), 0);
+    // Calculate actual balance: startingBalance + all transactions for each account
+    const totalBalance = accounts.reduce((sum, account) => {
+      const accountTransactions = transactions.filter(t => t.accountId === account.id);
+      const transactionSum = accountTransactions.reduce((txSum, t) => {
+        const amount = parseFloat(t.amount);
+        // Income adds, expense subtracts
+        return txSum + (t.type === 'income' ? amount : -amount);
+      }, 0);
+      return sum + parseFloat(account.startingBalance) + transactionSum;
+    }, 0);
     
     const formatEur = (n: number) => new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(n);
     const startDate = oneWeekAgo.toLocaleDateString('it-IT', { day: 'numeric', month: 'long' });
