@@ -52,4 +52,4 @@ waitForPort = 5000
 
 [agent]
 mockupState = "FULLSTACK"
-integrations = ["javascript_log_in_with_replit:1.0.0"]
+integrations = ["javascript_log_in_with_replit:1.0.0", "resend:1.0.0"]

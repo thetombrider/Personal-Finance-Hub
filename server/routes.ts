@@ -5,6 +5,7 @@ import { insertAccountSchema, insertCategorySchema, insertTransactionSchema, ins
 import { z } from "zod";
 import crypto from "crypto";
 import { setupAuth, isAuthenticated } from "./replitAuth";
+import { sendEmail } from "./resend";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -912,6 +913,178 @@ export async function registerRoutes(
       res.status(500).json({ error: "Failed to fetch batch quotes" });
     }
   });
+
+  // ============ WEEKLY REPORT EMAIL ============
+
+  async function generateWeeklyReport(): Promise<string> {
+    const transactions = await storage.getTransactions();
+    const accounts = await storage.getAccounts();
+    const categories = await storage.getCategories();
+    
+    const now = new Date();
+    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    
+    const weekTransactions = transactions.filter(t => {
+      const txDate = new Date(t.date);
+      return txDate >= oneWeekAgo && txDate <= now;
+    });
+    
+    const totalIncome = weekTransactions
+      .filter(t => t.type === 'income')
+      .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+    
+    const totalExpense = weekTransactions
+      .filter(t => t.type === 'expense')
+      .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+    
+    const expensesByCategory: Record<string, number> = {};
+    weekTransactions.filter(t => t.type === 'expense').forEach(t => {
+      const cat = categories.find(c => c.id === t.categoryId);
+      const catName = cat?.name || 'Altro';
+      expensesByCategory[catName] = (expensesByCategory[catName] || 0) + parseFloat(t.amount);
+    });
+    
+    const sortedCategories = Object.entries(expensesByCategory)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5);
+    
+    const totalBalance = accounts.reduce((sum, a) => sum + parseFloat(a.startingBalance), 0);
+    
+    const formatEur = (n: number) => new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(n);
+    const startDate = oneWeekAgo.toLocaleDateString('it-IT', { day: 'numeric', month: 'long' });
+    const endDate = now.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; padding: 20px; }
+    .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    h1 { color: #1a1a1a; margin-bottom: 5px; }
+    .subtitle { color: #666; margin-bottom: 30px; }
+    .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px; }
+    .summary-card { background: #f8f9fa; padding: 20px; border-radius: 8px; text-align: center; }
+    .summary-card.income { background: #ecfdf5; }
+    .summary-card.expense { background: #fef2f2; }
+    .summary-label { font-size: 12px; color: #666; text-transform: uppercase; }
+    .summary-value { font-size: 24px; font-weight: 700; margin-top: 5px; }
+    .summary-value.income { color: #059669; }
+    .summary-value.expense { color: #dc2626; }
+    .category-list { margin: 20px 0; }
+    .category-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #eee; }
+    .category-name { color: #333; }
+    .category-amount { font-weight: 600; color: #dc2626; }
+    .footer { text-align: center; margin-top: 30px; color: #999; font-size: 12px; }
+    .balance-card { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 25px; border-radius: 12px; text-align: center; margin-bottom: 25px; }
+    .balance-label { font-size: 14px; opacity: 0.9; }
+    .balance-value { font-size: 32px; font-weight: 700; margin-top: 5px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📊 Report Settimanale</h1>
+    <p class="subtitle">${startDate} - ${endDate}</p>
+    
+    <div class="balance-card">
+      <div class="balance-label">Saldo Totale Conti</div>
+      <div class="balance-value">${formatEur(totalBalance)}</div>
+    </div>
+    
+    <div class="summary-grid">
+      <div class="summary-card income">
+        <div class="summary-label">Entrate</div>
+        <div class="summary-value income">+${formatEur(totalIncome)}</div>
+      </div>
+      <div class="summary-card expense">
+        <div class="summary-label">Uscite</div>
+        <div class="summary-value expense">-${formatEur(totalExpense)}</div>
+      </div>
+    </div>
+    
+    <h3>🏷️ Top 5 Categorie Spese</h3>
+    <div class="category-list">
+      ${sortedCategories.length > 0 
+        ? sortedCategories.map(([name, amount]) => `
+          <div class="category-item">
+            <span class="category-name">${name}</span>
+            <span class="category-amount">${formatEur(amount)}</span>
+          </div>
+        `).join('')
+        : '<p style="color: #999; text-align: center;">Nessuna spesa questa settimana</p>'
+      }
+    </div>
+    
+    <p style="text-align: center; margin-top: 25px;">
+      <strong>Bilancio Settimanale:</strong> 
+      <span style="color: ${totalIncome - totalExpense >= 0 ? '#059669' : '#dc2626'}; font-weight: 700;">
+        ${totalIncome - totalExpense >= 0 ? '+' : ''}${formatEur(totalIncome - totalExpense)}
+      </span>
+    </p>
+    
+    <div class="footer">
+      <p>Questo report è stato generato automaticamente da FinTrack</p>
+    </div>
+  </div>
+</body>
+</html>
+    `;
+  }
+
+  app.post("/api/reports/weekly/send", async (req, res) => {
+    try {
+      const email = req.body.email || "tommasominuto@gmail.com";
+      const html = await generateWeeklyReport();
+      
+      const now = new Date();
+      const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const subject = `📊 Report Settimanale FinTrack - ${weekStart.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })} / ${now.toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+      
+      const result = await sendEmail(email, subject, html);
+      
+      console.log(`[email] Weekly report sent to ${email}`);
+      res.json({ success: true, result });
+    } catch (error: any) {
+      console.error("Error sending weekly report:", error);
+      res.status(500).json({ error: error.message || "Failed to send report" });
+    }
+  });
+
+  app.get("/api/reports/weekly/preview", async (req, res) => {
+    try {
+      const html = await generateWeeklyReport();
+      res.send(html);
+    } catch (error) {
+      console.error("Error generating report preview:", error);
+      res.status(500).json({ error: "Failed to generate report" });
+    }
+  });
+
+  // Weekly report scheduler - checks every hour if it's Sunday 9 AM
+  let lastSentWeek = -1;
+  setInterval(async () => {
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const hour = now.getHours();
+    const currentWeek = Math.floor(now.getTime() / (7 * 24 * 60 * 60 * 1000));
+    
+    if (dayOfWeek === 0 && hour === 9 && currentWeek !== lastSentWeek) {
+      console.log("[scheduler] Sending weekly report...");
+      try {
+        const html = await generateWeeklyReport();
+        await sendEmail(
+          "tommasominuto@gmail.com",
+          `📊 Report Settimanale FinTrack - ${now.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })}`,
+          html
+        );
+        lastSentWeek = currentWeek;
+        console.log("[scheduler] Weekly report sent successfully");
+      } catch (error) {
+        console.error("[scheduler] Failed to send weekly report:", error);
+      }
+    }
+  }, 60 * 60 * 1000);
 
   return httpServer;
 }
