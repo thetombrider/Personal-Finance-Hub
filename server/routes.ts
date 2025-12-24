@@ -948,7 +948,7 @@ export async function registerRoutes(
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5);
     
-    // Calculate actual balance: startingBalance + all transactions for each account
+    // Calculate actual balance: startingBalance + all transactions for each account (including credit cards)
     const totalBalance = accounts.reduce((sum, account) => {
       const accountTransactions = transactions.filter(t => t.accountId === account.id);
       const transactionSum = accountTransactions.reduce((txSum, t) => {
@@ -958,6 +958,32 @@ export async function registerRoutes(
       }, 0);
       return sum + parseFloat(account.startingBalance) + transactionSum;
     }, 0);
+    
+    // Get credit card accounts and their weekly transactions
+    const creditCardAccounts = accounts.filter(a => a.type === 'credit');
+    const creditCardIds = creditCardAccounts.map(a => a.id);
+    const weekCreditCardTransactions = weekTransactions
+      .filter(t => creditCardIds.includes(t.accountId) && t.type === 'expense')
+      .sort((a, b) => parseFloat(b.amount) - parseFloat(a.amount));
+    
+    const totalCreditCardExpenses = weekCreditCardTransactions.reduce((sum, t) => sum + parseFloat(t.amount), 0);
+    
+    // Top 5 highest expenses of the week
+    const top5Expenses = weekTransactions
+      .filter(t => t.type === 'expense')
+      .sort((a, b) => parseFloat(b.amount) - parseFloat(a.amount))
+      .slice(0, 5)
+      .map(t => {
+        const account = accounts.find(a => a.id === t.accountId);
+        const category = categories.find(c => c.id === t.categoryId);
+        return {
+          description: t.description,
+          amount: parseFloat(t.amount),
+          accountName: account?.name || 'N/A',
+          categoryName: category?.name || 'N/A',
+          date: new Date(t.date).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })
+        };
+      });
     
     const formatEur = (n: number) => new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(n);
     const startDate = oneWeekAgo.toLocaleDateString('it-IT', { day: 'numeric', month: 'long' });
@@ -989,6 +1015,16 @@ export async function registerRoutes(
     .balance-card { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 25px; border-radius: 12px; text-align: center; margin-bottom: 25px; }
     .balance-label { font-size: 14px; opacity: 0.9; }
     .balance-value { font-size: 32px; font-weight: 700; margin-top: 5px; }
+    .expense-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+    .expense-table th { text-align: left; padding: 10px 8px; border-bottom: 2px solid #eee; font-size: 11px; color: #666; text-transform: uppercase; }
+    .expense-table td { padding: 12px 8px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
+    .expense-table .amount { font-weight: 600; color: #dc2626; text-align: right; }
+    .expense-table .desc { color: #333; }
+    .expense-table .meta { color: #888; font-size: 11px; }
+    .credit-card-section { background: #fef3c7; border-radius: 8px; padding: 20px; margin-top: 25px; }
+    .credit-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .credit-card-title { font-weight: 600; color: #92400e; }
+    .credit-card-total { font-weight: 700; color: #dc2626; }
   </style>
 </head>
 <body>
@@ -1000,6 +1036,30 @@ export async function registerRoutes(
       <div class="balance-label">Saldo Totale Conti</div>
       <div class="balance-value">${formatEur(totalBalance)}</div>
     </div>
+    
+    ${top5Expenses.length > 0 ? `
+    <h3>💸 Top 5 Spese Più Alte</h3>
+    <table class="expense-table">
+      <thead>
+        <tr>
+          <th>Descrizione</th>
+          <th>Conto</th>
+          <th>Categoria</th>
+          <th style="text-align: right;">Importo</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${top5Expenses.map(e => `
+          <tr>
+            <td class="desc">${e.description}</td>
+            <td class="meta">${e.accountName}</td>
+            <td class="meta">${e.categoryName}</td>
+            <td class="amount">${formatEur(e.amount)}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+    ` : ''}
     
     <div class="summary-grid">
       <div class="summary-card income">
@@ -1031,6 +1091,39 @@ export async function registerRoutes(
         ${totalIncome - totalExpense >= 0 ? '+' : ''}${formatEur(totalIncome - totalExpense)}
       </span>
     </p>
+    
+    ${weekCreditCardTransactions.length > 0 ? `
+    <div class="credit-card-section">
+      <div class="credit-card-header">
+        <span class="credit-card-title">💳 Spese Carta di Credito</span>
+        <span class="credit-card-total">Totale: ${formatEur(totalCreditCardExpenses)}</span>
+      </div>
+      <table class="expense-table" style="margin: 0;">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Descrizione</th>
+            <th>Categoria</th>
+            <th style="text-align: right;">Importo</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${weekCreditCardTransactions.map(t => {
+            const category = categories.find(c => c.id === t.categoryId);
+            const account = accounts.find(a => a.id === t.accountId);
+            return `
+              <tr>
+                <td class="meta">${new Date(t.date).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })}</td>
+                <td class="desc">${t.description}${creditCardAccounts.length > 1 ? ` <span class="meta">(${account?.name})</span>` : ''}</td>
+                <td class="meta">${category?.name || 'N/A'}</td>
+                <td class="amount">${formatEur(parseFloat(t.amount))}</td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+    ` : ''}
     
     <div class="footer">
       <p>Questo report è stato generato automaticamente da FinTrack</p>
