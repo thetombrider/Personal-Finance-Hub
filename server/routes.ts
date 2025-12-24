@@ -920,6 +920,8 @@ export async function registerRoutes(
     const transactions = await storage.getTransactions();
     const accounts = await storage.getAccounts();
     const categories = await storage.getCategories();
+    const holdingsList = await storage.getHoldings();
+    const allTrades = await storage.getTrades();
     
     const now = new Date();
     const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -985,7 +987,97 @@ export async function registerRoutes(
         };
       });
     
+    // Calculate portfolio data
+    const portfolioData: Array<{
+      ticker: string;
+      name: string;
+      quantity: number;
+      avgCost: number;
+      totalInvested: number;
+      currentPrice: number;
+      currentValue: number;
+      gainLoss: number;
+      gainLossPercent: number;
+    }> = [];
+    
+    // Fetch current prices for all holdings
+    const tickers = holdingsList.map(h => h.ticker);
+    const currentPrices: Record<string, number> = {};
+    
+    for (const ticker of tickers) {
+      // Try cache first
+      if (quotesCache[ticker] && (Date.now() - quotesCache[ticker].timestamp < 24 * 60 * 60 * 1000)) {
+        currentPrices[ticker] = quotesCache[ticker].data.price;
+      } else {
+        // Fetch from API
+        try {
+          const apiKey = process.env.ALPHA_VANTAGE_API_KEY;
+          if (apiKey) {
+            const response = await fetch(
+              `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${ticker}&apikey=${apiKey}`
+            );
+            const data = await response.json();
+            const quote = data["Global Quote"];
+            if (quote && quote["05. price"]) {
+              currentPrices[ticker] = parseFloat(quote["05. price"]);
+            }
+          }
+        } catch (err) {
+          console.error(`Failed to fetch price for ${ticker}:`, err);
+        }
+      }
+    }
+    
+    // Calculate portfolio metrics for each holding
+    for (const holding of holdingsList) {
+      const holdingTrades = allTrades.filter(t => t.holdingId === holding.id);
+      
+      let totalQuantity = 0;
+      let totalCost = 0;
+      
+      for (const trade of holdingTrades) {
+        const qty = parseFloat(trade.quantity);
+        const amount = parseFloat(trade.totalAmount);
+        const fees = parseFloat(trade.fees || "0");
+        
+        if (trade.type === 'buy') {
+          totalQuantity += qty;
+          totalCost += amount + fees;
+        } else {
+          totalQuantity -= qty;
+          totalCost -= amount - fees;
+        }
+      }
+      
+      if (totalQuantity > 0.0001) {
+        const avgCost = totalCost / totalQuantity;
+        const currentPrice = currentPrices[holding.ticker] || avgCost;
+        const currentValue = totalQuantity * currentPrice;
+        const gainLoss = currentValue - totalCost;
+        const gainLossPercent = totalCost > 0 ? (gainLoss / totalCost) * 100 : 0;
+        
+        portfolioData.push({
+          ticker: holding.ticker,
+          name: holding.name,
+          quantity: totalQuantity,
+          avgCost,
+          totalInvested: totalCost,
+          currentPrice,
+          currentValue,
+          gainLoss,
+          gainLossPercent
+        });
+      }
+    }
+    
+    // Portfolio totals
+    const portfolioTotalInvested = portfolioData.reduce((sum, p) => sum + p.totalInvested, 0);
+    const portfolioTotalValue = portfolioData.reduce((sum, p) => sum + p.currentValue, 0);
+    const portfolioTotalGainLoss = portfolioTotalValue - portfolioTotalInvested;
+    const portfolioTotalGainLossPercent = portfolioTotalInvested > 0 ? (portfolioTotalGainLoss / portfolioTotalInvested) * 100 : 0;
+    
     const formatEur = (n: number) => new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(n);
+    const formatPercent = (n: number) => (n >= 0 ? '+' : '') + n.toFixed(2) + '%';
     const startDate = oneWeekAgo.toLocaleDateString('it-IT', { day: 'numeric', month: 'long' });
     const endDate = now.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' });
 
@@ -1025,6 +1117,17 @@ export async function registerRoutes(
     .credit-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
     .credit-card-title { font-weight: 600; color: #92400e; }
     .credit-card-total { font-weight: 700; color: #dc2626; }
+    .portfolio-section { background: #f0fdf4; border-radius: 8px; padding: 20px; margin-top: 25px; }
+    .portfolio-header { margin-bottom: 15px; }
+    .portfolio-title { font-weight: 600; color: #166534; font-size: 16px; }
+    .portfolio-table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+    .portfolio-table th { text-align: left; padding: 8px 6px; border-bottom: 2px solid #86efac; font-size: 10px; color: #166534; text-transform: uppercase; }
+    .portfolio-table td { padding: 10px 6px; border-bottom: 1px solid #dcfce7; font-size: 12px; }
+    .portfolio-table .ticker { font-weight: 600; color: #166534; }
+    .portfolio-table .number { text-align: right; }
+    .portfolio-table .gain { color: #059669; font-weight: 600; }
+    .portfolio-table .loss { color: #dc2626; font-weight: 600; }
+    .portfolio-table tfoot td { border-top: 2px solid #86efac; font-weight: 700; background: #dcfce7; }
   </style>
 </head>
 <body>
@@ -1084,6 +1187,42 @@ export async function registerRoutes(
         : '<p style="color: #999; text-align: center;">Nessuna spesa questa settimana</p>'
       }
     </div>
+    
+    ${portfolioData.length > 0 ? `
+    <div class="portfolio-section">
+      <div class="portfolio-header">
+        <span class="portfolio-title">📈 Portafoglio Titoli</span>
+      </div>
+      <table class="portfolio-table">
+        <thead>
+          <tr>
+            <th>Titolo</th>
+            <th class="number">Investito</th>
+            <th class="number">Valore Attuale</th>
+            <th class="number">Gain/Loss</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${portfolioData.map(p => `
+            <tr>
+              <td class="ticker">${p.ticker}</td>
+              <td class="number">${formatEur(p.totalInvested)}</td>
+              <td class="number">${formatEur(p.currentValue)}</td>
+              <td class="number ${p.gainLoss >= 0 ? 'gain' : 'loss'}">${p.gainLoss >= 0 ? '+' : ''}${formatEur(p.gainLoss)} (${formatPercent(p.gainLossPercent)})</td>
+            </tr>
+          `).join('')}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td><strong>TOTALE</strong></td>
+            <td class="number">${formatEur(portfolioTotalInvested)}</td>
+            <td class="number">${formatEur(portfolioTotalValue)}</td>
+            <td class="number ${portfolioTotalGainLoss >= 0 ? 'gain' : 'loss'}">${portfolioTotalGainLoss >= 0 ? '+' : ''}${formatEur(portfolioTotalGainLoss)} (${formatPercent(portfolioTotalGainLossPercent)})</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    ` : ''}
     
     <p style="text-align: center; margin-top: 25px;">
       <strong>Bilancio Settimanale:</strong> 
