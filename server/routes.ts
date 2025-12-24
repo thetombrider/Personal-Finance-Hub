@@ -1175,6 +1175,13 @@ export async function registerRoutes(
       </div>
     </div>
     
+    <p style="text-align: center; margin-bottom: 25px;">
+      <strong>Bilancio Settimanale:</strong> 
+      <span style="color: ${totalIncome - totalExpense >= 0 ? '#059669' : '#dc2626'}; font-weight: 700;">
+        ${totalIncome - totalExpense >= 0 ? '+' : ''}${formatEur(totalIncome - totalExpense)}
+      </span>
+    </p>
+    
     <h3>🏷️ Top 5 Categorie Spese</h3>
     <div class="category-list">
       ${sortedCategories.length > 0 
@@ -1223,13 +1230,6 @@ export async function registerRoutes(
       </table>
     </div>
     ` : ''}
-    
-    <p style="text-align: center; margin-top: 25px;">
-      <strong>Bilancio Settimanale:</strong> 
-      <span style="color: ${totalIncome - totalExpense >= 0 ? '#059669' : '#dc2626'}; font-weight: 700;">
-        ${totalIncome - totalExpense >= 0 ? '+' : ''}${formatEur(totalIncome - totalExpense)}
-      </span>
-    </p>
     
     ${weekCreditCardTransactions.length > 0 ? `
     <div class="credit-card-section">
