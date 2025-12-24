@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, TrendingUp, TrendingDown, Wallet, PiggyBank, RefreshCw, Search, Trash2, ArrowUpRight, ArrowDownRight, Pencil } from "lucide-react";
+import { Plus, TrendingUp, TrendingDown, Wallet, PiggyBank, RefreshCw, Search, Trash2, ArrowUpRight, ArrowDownRight, Pencil, Download } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { it } from "date-fns/locale";
 import * as api from "@/lib/api";
@@ -289,6 +289,41 @@ export default function Portfolio() {
     } finally {
       setIsRefreshingQuotes(false);
     }
+  };
+
+  const exportTradesToCSV = () => {
+    if (trades.length === 0) {
+      toast({ title: "Nessun trade da esportare", variant: "destructive" });
+      return;
+    }
+
+    const csvHeader = "Data,Tipo,Ticker,Nome,Quantità,Prezzo Unitario,Commissioni,Totale\n";
+    const csvRows = trades.map(trade => {
+      const holding = holdings.find(h => h.id === trade.holdingId);
+      const date = format(parseISO(trade.date), "yyyy-MM-dd");
+      const type = trade.type === "buy" ? "Acquisto" : "Vendita";
+      const ticker = holding?.ticker || "";
+      const name = (holding?.name || "").replace(/,/g, " ");
+      const quantity = parseFloat(trade.quantity).toFixed(4);
+      const pricePerUnit = parseFloat(trade.pricePerUnit).toFixed(2);
+      const fees = parseFloat(trade.fees).toFixed(2);
+      const totalAmount = parseFloat(trade.totalAmount).toFixed(2);
+      
+      return `${date},${type},${ticker},"${name}",${quantity},${pricePerUnit},${fees},${totalAmount}`;
+    }).join("\n");
+
+    const csvContent = csvHeader + csvRows;
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `portfolio_trades_${format(new Date(), "yyyy-MM-dd")}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast({ title: "Export completato", description: `${trades.length} operazioni esportate` });
   };
 
   useEffect(() => {
@@ -833,17 +868,29 @@ export default function Portfolio() {
                     <CardTitle>Storico Operazioni</CardTitle>
                     <CardDescription>Tutte le operazioni di acquisto e vendita registrate</CardDescription>
                   </div>
-                  <Select value={tradesHoldingFilter} onValueChange={setTradesHoldingFilter}>
-                    <SelectTrigger className="w-[200px]" data-testid="select-trades-holding-filter">
-                      <SelectValue placeholder="Tutti i titoli" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Tutti i titoli</SelectItem>
-                      {holdings.map(h => (
-                        <SelectItem key={h.id} value={h.id.toString()}>{h.ticker} - {h.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex items-center gap-2">
+                    <Select value={tradesHoldingFilter} onValueChange={setTradesHoldingFilter}>
+                      <SelectTrigger className="w-[200px]" data-testid="select-trades-holding-filter">
+                        <SelectValue placeholder="Tutti i titoli" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Tutti i titoli</SelectItem>
+                        {holdings.map(h => (
+                          <SelectItem key={h.id} value={h.id.toString()}>{h.ticker} - {h.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={exportTradesToCSV}
+                      disabled={trades.length === 0}
+                      data-testid="button-export-trades"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Esporta CSV
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
