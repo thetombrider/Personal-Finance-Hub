@@ -825,12 +825,12 @@ export default function ImportTransactions() {
 
                     <div className="space-y-2">
                       <Label>Name Column (Optional)</Label>
-                      <Select value={tradeMapping.name || ""} onValueChange={(v) => setTradeMapping({...tradeMapping, name: v})}>
+                      <Select value={tradeMapping.name || "__none__"} onValueChange={(v) => setTradeMapping({...tradeMapping, name: v === "__none__" ? "" : v})}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select column" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">-- Use Ticker --</SelectItem>
+                          <SelectItem value="__none__">-- Use Ticker --</SelectItem>
                           {headers.filter(h => h && h.trim()).map(h => (
                             <SelectItem key={h} value={h}>{h}</SelectItem>
                           ))}
@@ -884,12 +884,12 @@ export default function ImportTransactions() {
 
                     <div className="space-y-2">
                       <Label>Total Amount Column (Optional)</Label>
-                      <Select value={tradeMapping.totalAmount || ""} onValueChange={(v) => setTradeMapping({...tradeMapping, totalAmount: v})}>
+                      <Select value={tradeMapping.totalAmount || "__none__"} onValueChange={(v) => setTradeMapping({...tradeMapping, totalAmount: v === "__none__" ? "" : v})}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select column" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">-- Calculate from Qty × Price --</SelectItem>
+                          <SelectItem value="__none__">-- Calculate from Qty × Price --</SelectItem>
                           {headers.filter(h => h && h.trim()).map(h => (
                             <SelectItem key={h} value={h}>{h}</SelectItem>
                           ))}
@@ -899,12 +899,12 @@ export default function ImportTransactions() {
 
                     <div className="space-y-2">
                       <Label>Fees Column (Optional)</Label>
-                      <Select value={tradeMapping.fees || ""} onValueChange={(v) => setTradeMapping({...tradeMapping, fees: v})}>
+                      <Select value={tradeMapping.fees || "__none__"} onValueChange={(v) => setTradeMapping({...tradeMapping, fees: v === "__none__" ? "" : v})}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select column" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">-- No fees --</SelectItem>
+                          <SelectItem value="__none__">-- No fees --</SelectItem>
                           {headers.filter(h => h && h.trim()).map(h => (
                             <SelectItem key={h} value={h}>{h}</SelectItem>
                           ))}
