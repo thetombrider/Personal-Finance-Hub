@@ -219,6 +219,16 @@ export async function createTrade(trade: InsertTrade): Promise<Trade> {
   return res.json();
 }
 
+export async function createTradesBulk(trades: InsertTrade[]): Promise<Trade[]> {
+  const res = await fetch(`${API_BASE}/trades/bulk`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(trades),
+  });
+  if (!res.ok) throw new Error("Failed to create trades");
+  return res.json();
+}
+
 export async function updateTrade(id: number, trade: Partial<InsertTrade>): Promise<Trade> {
   const res = await fetch(`${API_BASE}/trades/${id}`, {
     method: "PATCH",

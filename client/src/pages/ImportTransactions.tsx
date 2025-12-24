@@ -6,15 +6,19 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Upload, ArrowRight, Check, AlertCircle, FileSpreadsheet, Settings2 } from "lucide-react";
+import { Upload, ArrowRight, Check, AlertCircle, FileSpreadsheet, Settings2, TrendingUp, CreditCard } from "lucide-react";
 import { useState, useRef } from "react";
 import Papa from "papaparse";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { parse, isValid, format } from "date-fns";
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import * as api from "@/lib/api";
+import type { InsertTrade, InsertHolding, Holding } from "@shared/schema";
 
 type Step = 'upload' | 'map' | 'preview';
+type ImportMode = 'transactions' | 'trades';
 
 interface Mapping {
   date: string;
@@ -27,11 +31,23 @@ interface Mapping {
   category?: string; // Column for category name
 }
 
+interface TradeMapping {
+  date: string;
+  ticker: string;
+  name?: string;
+  type: string; // buy/sell column
+  quantity: string;
+  pricePerUnit: string;
+  totalAmount?: string;
+  fees?: string;
+}
+
 export default function ImportTransactions() {
   const { accounts, categories, addTransactions, formatCurrency } = useFinance();
   const [, setLocation] = useLocation();
   
   const [step, setStep] = useState<Step>('upload');
+  const [importMode, setImportMode] = useState<ImportMode>('transactions');
   const [file, setFile] = useState<File | null>(null);
   const [csvData, setCsvData] = useState<any[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
@@ -50,12 +66,74 @@ export default function ImportTransactions() {
     expenseAmount: ""
   });
 
+  const [tradeMapping, setTradeMapping] = useState<TradeMapping>({
+    date: "",
+    ticker: "",
+    name: "",
+    type: "",
+    quantity: "",
+    pricePerUnit: "",
+    totalAmount: "",
+    fees: ""
+  });
+
+  const [holdings, setHoldings] = useState<Holding[]>([]);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Parse numeric values preserving sign (for quantities, prices)
+  const parseNumeric = (value: string): number => {
+    if (!value) return 0;
+    let str = value.toString().trim();
+    
+    // Preserve leading minus sign
+    const isNegative = str.startsWith('-');
+    str = str.replace(/[^0-9,.-]/g, '');
+    if (!str) return 0;
+    
+    // Handle European vs US format
+    if (/,\d{1,2}$/.test(str)) {
+      str = str.replace(/\./g, '').replace(',', '.');
+    } else if (/\.\d{1,2}$/.test(str) && str.includes(',')) {
+      str = str.replace(/,/g, '');
+    } else if (str.includes(',') && !str.includes('.')) {
+      str = str.replace(',', '.');
+    }
+    
+    const result = parseFloat(str) || 0;
+    return isNegative && result > 0 ? -result : result;
+  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setFile(file);
+      
+      // Reset all mappings to clean defaults on new file upload
+      const cleanMapping: Mapping = {
+        date: "",
+        amount: "",
+        description: "",
+        type: "none",
+        account: "none",
+        category: "none",
+        incomeAmount: "",
+        expenseAmount: ""
+      };
+      
+      const cleanTradeMapping: TradeMapping = {
+        date: "",
+        ticker: "",
+        name: "",
+        type: "",
+        quantity: "",
+        pricePerUnit: "",
+        totalAmount: "",
+        fees: ""
+      };
+      
+      setUseDualAmountColumns(false);
+      
       Papa.parse(file, {
         header: true,
         skipEmptyLines: true,
@@ -64,9 +142,9 @@ export default function ImportTransactions() {
           setHeaders(results.meta.fields || []);
           setStep('map');
           
-          // Auto-guess mapping
+          // Auto-guess transaction mapping from clean state
           const fields = results.meta.fields || [];
-          const guessMapping = { ...mapping };
+          const guessMapping = { ...cleanMapping };
           let foundIncome = false;
           let foundExpense = false;
           
@@ -100,6 +178,24 @@ export default function ImportTransactions() {
           }
           
           setMapping(guessMapping);
+          
+          // Auto-guess trade mapping from clean state
+          const guessTradeMapping = { ...cleanTradeMapping };
+          fields.forEach(field => {
+            const lower = field.toLowerCase();
+            if (lower.includes('date') || lower.includes('data')) guessTradeMapping.date = field;
+            if (lower.includes('ticker') || lower.includes('symbol') || lower.includes('isin') || lower.includes('codice')) guessTradeMapping.ticker = field;
+            if (lower.includes('name') || lower.includes('nome') || lower.includes('titolo') || lower.includes('descrizione')) guessTradeMapping.name = field;
+            if (lower.includes('type') || lower.includes('tipo') || lower.includes('operazione') || lower.includes('side')) guessTradeMapping.type = field;
+            if (lower.includes('quantity') || lower.includes('quantità') || lower.includes('qty') || lower.includes('shares') || lower.includes('azioni')) guessTradeMapping.quantity = field;
+            if (lower.includes('price') || lower.includes('prezzo') || lower.includes('unit')) guessTradeMapping.pricePerUnit = field;
+            if (lower.includes('total') || lower.includes('amount') || lower.includes('importo') || lower.includes('controvalore')) guessTradeMapping.totalAmount = field;
+            if (lower.includes('fee') || lower.includes('commissione') || lower.includes('commission') || lower.includes('costo')) guessTradeMapping.fees = field;
+          });
+          setTradeMapping(guessTradeMapping);
+          
+          // Fetch existing holdings for reference
+          api.fetchHoldings().then(setHoldings);
         }
       });
     }
@@ -319,13 +415,171 @@ export default function ImportTransactions() {
     return basicFields && amountFields && accountField;
   };
 
+  // Trade import functions
+  const getTradeFromRow = (row: any) => {
+    const ticker = (row[tradeMapping.ticker] || "").toString().toUpperCase().trim();
+    const name = tradeMapping.name ? row[tradeMapping.name] || ticker : ticker;
+    
+    const rawType = (row[tradeMapping.type] || "").toString().toLowerCase().trim();
+    let type: "buy" | "sell" = "buy";
+    // Extended buy/sell detection
+    if (rawType.includes('sell') || rawType.includes('vendita') || rawType.includes('vend') || 
+        rawType === 's' || rawType === 'v') {
+      type = "sell";
+    } else if (rawType.includes('buy') || rawType.includes('acquisto') || rawType.includes('acq') ||
+               rawType === 'b' || rawType === 'a') {
+      type = "buy";
+    }
+    
+    // Use parseNumeric for quantities and prices to preserve sign
+    const quantity = Math.abs(parseNumeric(row[tradeMapping.quantity]));
+    const pricePerUnit = Math.abs(parseNumeric(row[tradeMapping.pricePerUnit]));
+    let totalAmount = tradeMapping.totalAmount ? Math.abs(parseNumeric(row[tradeMapping.totalAmount])) : 0;
+    
+    if (!totalAmount && quantity && pricePerUnit) {
+      totalAmount = quantity * pricePerUnit;
+    }
+    
+    const fees = tradeMapping.fees ? Math.abs(parseNumeric(row[tradeMapping.fees])) : 0;
+    
+    return {
+      ticker,
+      name,
+      type,
+      date: parseDate(row[tradeMapping.date]),
+      quantity: quantity.toString(),
+      pricePerUnit: pricePerUnit.toString(),
+      totalAmount: totalAmount.toString(),
+      fees: fees.toString(),
+      _isValid: !!ticker && quantity > 0 && pricePerUnit > 0
+    };
+  };
+
+  const getTradePreviewData = () => {
+    return csvData.slice(0, 5).map(row => getTradeFromRow(row));
+  };
+
+  const getValidTradeCount = () => {
+    return csvData.map(row => getTradeFromRow(row)).filter(t => t._isValid).length;
+  };
+
+  const canPreviewTrades = () => {
+    return tradeMapping.date && tradeMapping.ticker && tradeMapping.type && 
+           tradeMapping.quantity && tradeMapping.pricePerUnit;
+  };
+
+  const [importError, setImportError] = useState<string | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+
+  const handleTradeImport = async () => {
+    setImportError(null);
+    setIsImporting(true);
+    
+    try {
+      const tradeRows = csvData.map(row => getTradeFromRow(row)).filter(t => t._isValid);
+      
+      if (tradeRows.length === 0) {
+        setImportError("Nessun trade valido trovato nel file.");
+        setIsImporting(false);
+        return;
+      }
+      
+      // Group by ticker to create/find holdings
+      const tickerMap = new Map<string, { name: string; trades: typeof tradeRows }>();
+      
+      for (const trade of tradeRows) {
+        if (!tickerMap.has(trade.ticker)) {
+          tickerMap.set(trade.ticker, { name: trade.name, trades: [] });
+        }
+        tickerMap.get(trade.ticker)!.trades.push(trade);
+      }
+      
+      // Fetch fresh holdings list before processing
+      const currentHoldings = await api.fetchHoldings();
+      setHoldings(currentHoldings);
+      
+      // Create or find holdings for each ticker
+      const holdingIdMap = new Map<string, number>();
+      const failedTickers: string[] = [];
+      
+      for (const entry of Array.from(tickerMap.entries())) {
+        const [ticker, data] = entry;
+        let holding = currentHoldings.find(h => h.ticker.toUpperCase() === ticker);
+        
+        if (!holding) {
+          try {
+            holding = await api.createHolding({
+              ticker,
+              name: data.name,
+              assetType: "stock",
+              currency: "EUR"
+            });
+            currentHoldings.push(holding);
+          } catch (err) {
+            console.error(`Failed to create holding for ${ticker}:`, err);
+            failedTickers.push(ticker);
+            continue;
+          }
+        }
+        
+        holdingIdMap.set(ticker, holding.id);
+      }
+      
+      if (failedTickers.length > 0) {
+        setImportError(`Impossibile creare i titoli: ${failedTickers.join(', ')}. I trades associati verranno saltati.`);
+      }
+      
+      // Filter out trades for failed holdings
+      const validTradeRows = tradeRows.filter(t => holdingIdMap.has(t.ticker));
+      
+      if (validTradeRows.length === 0) {
+        setImportError("Nessun trade può essere importato - verifica i titoli.");
+        setIsImporting(false);
+        return;
+      }
+      
+      // Prepare trades for bulk insert
+      const tradesToInsert: InsertTrade[] = validTradeRows.map(t => ({
+        holdingId: holdingIdMap.get(t.ticker)!,
+        date: t.date,
+        quantity: t.quantity,
+        pricePerUnit: t.pricePerUnit,
+        totalAmount: t.totalAmount,
+        fees: t.fees,
+        type: t.type
+      }));
+      
+      await api.createTradesBulk(tradesToInsert);
+      setLocation('/portfolio');
+    } catch (err) {
+      console.error('Trade import error:', err);
+      setImportError("Errore durante l'import. Riprova più tardi.");
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
   return (
     <Layout>
       <div className="max-w-4xl mx-auto space-y-8">
         <div className="space-y-2">
-          <h1 className="text-3xl font-heading font-bold text-foreground">Import Transactions</h1>
-          <p className="text-muted-foreground">Upload your bank statement CSV to import transactions</p>
+          <h1 className="text-3xl font-heading font-bold text-foreground">Import Data</h1>
+          <p className="text-muted-foreground">Upload CSV to import transactions or portfolio trades</p>
         </div>
+
+        {/* Import Mode Selector */}
+        <Tabs value={importMode} onValueChange={(v) => setImportMode(v as ImportMode)} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="transactions" className="gap-2" data-testid="tab-import-transactions">
+              <CreditCard className="h-4 w-4" />
+              Transazioni
+            </TabsTrigger>
+            <TabsTrigger value="trades" className="gap-2" data-testid="tab-import-trades">
+              <TrendingUp className="h-4 w-4" />
+              Portfolio Trades
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
 
         {/* Progress Steps */}
         <div className="flex items-center gap-4 text-sm font-medium">
@@ -366,12 +620,12 @@ export default function ImportTransactions() {
               </div>
             )}
 
-            {step === 'map' && (
+            {step === 'map' && importMode === 'transactions' && (
               <div className="space-y-6">
                 <div className="flex items-center justify-between bg-muted/30 p-4 rounded-lg border border-border">
                    <div className="flex items-center gap-2">
                       <Settings2 size={18} className="text-primary" />
-                      <span className="font-medium">CSV Configuration</span>
+                      <span className="font-medium">CSV Configuration - Transazioni</span>
                    </div>
                    <div className="flex items-center gap-2">
                       <Switch checked={useDualAmountColumns} onCheckedChange={setUseDualAmountColumns} id="dual-mode" />
@@ -532,7 +786,147 @@ export default function ImportTransactions() {
               </div>
             )}
 
-            {step === 'preview' && (
+            {step === 'map' && importMode === 'trades' && (
+              <div className="space-y-6">
+                <div className="flex items-center gap-2 bg-muted/30 p-4 rounded-lg border border-border">
+                  <TrendingUp size={18} className="text-primary" />
+                  <span className="font-medium">CSV Configuration - Portfolio Trades</span>
+                </div>
+
+                <div className="grid gap-6 md:grid-cols-2">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Date Column *</Label>
+                      <Select value={tradeMapping.date} onValueChange={(v) => setTradeMapping({...tradeMapping, date: v})}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select column" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {headers.filter(h => h && h.trim()).map(h => (
+                            <SelectItem key={h} value={h}>{h}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Ticker/Symbol Column *</Label>
+                      <Select value={tradeMapping.ticker} onValueChange={(v) => setTradeMapping({...tradeMapping, ticker: v})}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select column" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {headers.filter(h => h && h.trim()).map(h => (
+                            <SelectItem key={h} value={h}>{h}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Name Column (Optional)</Label>
+                      <Select value={tradeMapping.name || ""} onValueChange={(v) => setTradeMapping({...tradeMapping, name: v})}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select column" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">-- Use Ticker --</SelectItem>
+                          {headers.filter(h => h && h.trim()).map(h => (
+                            <SelectItem key={h} value={h}>{h}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Type Column (Buy/Sell) *</Label>
+                      <Select value={tradeMapping.type} onValueChange={(v) => setTradeMapping({...tradeMapping, type: v})}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select column" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {headers.filter(h => h && h.trim()).map(h => (
+                            <SelectItem key={h} value={h}>{h}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Quantity Column *</Label>
+                      <Select value={tradeMapping.quantity} onValueChange={(v) => setTradeMapping({...tradeMapping, quantity: v})}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select column" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {headers.filter(h => h && h.trim()).map(h => (
+                            <SelectItem key={h} value={h}>{h}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Price per Unit Column *</Label>
+                      <Select value={tradeMapping.pricePerUnit} onValueChange={(v) => setTradeMapping({...tradeMapping, pricePerUnit: v})}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select column" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {headers.filter(h => h && h.trim()).map(h => (
+                            <SelectItem key={h} value={h}>{h}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Total Amount Column (Optional)</Label>
+                      <Select value={tradeMapping.totalAmount || ""} onValueChange={(v) => setTradeMapping({...tradeMapping, totalAmount: v})}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select column" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">-- Calculate from Qty × Price --</SelectItem>
+                          {headers.filter(h => h && h.trim()).map(h => (
+                            <SelectItem key={h} value={h}>{h}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Fees Column (Optional)</Label>
+                      <Select value={tradeMapping.fees || ""} onValueChange={(v) => setTradeMapping({...tradeMapping, fees: v})}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select column" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">-- No fees --</SelectItem>
+                          {headers.filter(h => h && h.trim()).map(h => (
+                            <SelectItem key={h} value={h}>{h}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-4 border-t">
+                  <Button variant="outline" onClick={() => { setStep('upload'); setFile(null); }}>Cancel</Button>
+                  <Button 
+                    onClick={() => setStep('preview')} 
+                    disabled={!canPreviewTrades()}
+                  >
+                    Preview Import <ArrowRight size={16} className="ml-2" />
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {step === 'preview' && importMode === 'transactions' && (
               <div className="space-y-6">
                 <div className="bg-muted/30 rounded-lg p-4 border border-border overflow-x-auto">
                   <h3 className="font-medium mb-4 flex items-center gap-2">
@@ -586,6 +980,82 @@ export default function ImportTransactions() {
                    <Button variant="outline" onClick={() => setStep('map')}>Back</Button>
                    <Button onClick={handleImport} className="gap-2">
                      <Check size={16} /> Confirm Import
+                   </Button>
+                </div>
+              </div>
+            )}
+
+            {step === 'preview' && importMode === 'trades' && (
+              <div className="space-y-6">
+                <div className="bg-muted/30 rounded-lg p-4 border border-border overflow-x-auto">
+                  <h3 className="font-medium mb-4 flex items-center gap-2">
+                    <TrendingUp size={18} />
+                    Anteprima prime 5 righe - Trades
+                  </h3>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Data</TableHead>
+                        <TableHead>Ticker</TableHead>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>Tipo</TableHead>
+                        <TableHead>Quantità</TableHead>
+                        <TableHead>Prezzo</TableHead>
+                        <TableHead>Totale</TableHead>
+                        <TableHead>Fees</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {getTradePreviewData().map((row, i) => (
+                        <TableRow key={i}>
+                          <TableCell className="whitespace-nowrap">{format(new Date(row.date), "MMM d, yyyy")}</TableCell>
+                          <TableCell className="font-mono font-bold">{row.ticker}</TableCell>
+                          <TableCell className="max-w-[150px] truncate">{row.name}</TableCell>
+                          <TableCell>
+                             <span className={cn("px-2 py-1 rounded-full text-xs font-medium", row.type === 'buy' ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700")}>
+                               {row.type === 'buy' ? 'Acquisto' : 'Vendita'}
+                             </span>
+                          </TableCell>
+                          <TableCell>{parseFloat(row.quantity).toLocaleString('it-IT')}</TableCell>
+                          <TableCell>{formatCurrency(parseFloat(row.pricePerUnit))}</TableCell>
+                          <TableCell>{formatCurrency(parseFloat(row.totalAmount))}</TableCell>
+                          <TableCell>{parseFloat(row.fees) > 0 ? formatCurrency(parseFloat(row.fees)) : '-'}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                <div className="bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 p-4 rounded-lg text-sm flex gap-2 items-start">
+                  <AlertCircle size={18} className="mt-0.5 shrink-0" />
+                  <div>
+                    Verifica che i dati siano corretti. 
+                    Saranno importati {getValidTradeCount()} trades.
+                    {csvData.length !== getValidTradeCount() && (
+                      <span className="text-muted-foreground ml-1">
+                        ({csvData.length - getValidTradeCount()} righe vuote/invalide saranno ignorate)
+                      </span>
+                    )}
+                    <br />
+                    <span className="text-xs">I titoli non esistenti verranno creati automaticamente.</span>
+                  </div>
+                </div>
+
+                {importError && (
+                  <div className="bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 p-4 rounded-lg text-sm flex gap-2 items-start">
+                    <AlertCircle size={18} className="mt-0.5 shrink-0" />
+                    <div>{importError}</div>
+                  </div>
+                )}
+
+                <div className="flex justify-end gap-2 pt-4 border-t">
+                   <Button variant="outline" onClick={() => setStep('map')} disabled={isImporting}>Indietro</Button>
+                   <Button onClick={handleTradeImport} className="gap-2" disabled={isImporting || getValidTradeCount() === 0}>
+                     {isImporting ? (
+                       <>Importing...</>
+                     ) : (
+                       <><Check size={16} /> Conferma Import</>
+                     )}
                    </Button>
                 </div>
               </div>

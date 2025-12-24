@@ -612,6 +612,25 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/trades/bulk", async (req, res) => {
+    try {
+      const tradesData = req.body;
+      if (!Array.isArray(tradesData)) {
+        return res.status(400).json({ error: "Expected an array of trades" });
+      }
+      
+      const validatedTrades = tradesData.map(t => insertTradeSchema.parse(t));
+      const trades = await storage.createTrades(validatedTrades);
+      res.status(201).json(trades);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      console.error("Failed to create trades:", error);
+      res.status(500).json({ error: "Failed to create trades" });
+    }
+  });
+
   app.patch("/api/trades/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
