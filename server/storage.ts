@@ -1,5 +1,5 @@
-import { 
-  type Account, 
+import {
+  type Account,
   type InsertAccount,
   type Category,
   type InsertCategory,
@@ -22,9 +22,10 @@ import { db } from "./db";
 import { eq, sql, inArray } from "drizzle-orm";
 
 export interface IStorage {
-  // User operations (required for Replit Auth)
+  // User operations
   getUser(id: string): Promise<User | undefined>;
-  upsertUser(user: UpsertUser): Promise<User>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+  createUser(user: UpsertUser): Promise<User>;
   // Accounts
   getAccounts(): Promise<Account[]>;
   getAccount(id: number): Promise<Account | undefined>;
@@ -76,24 +77,19 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
-  // User operations (required for Replit Auth)
+  // User operations
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
   }
 
-  async upsertUser(userData: UpsertUser): Promise<User> {
-    const [user] = await db
-      .insert(users)
-      .values(userData)
-      .onConflictDoUpdate({
-        target: users.id,
-        set: {
-          ...userData,
-          updatedAt: new Date(),
-        },
-      })
-      .returning();
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+
+  async createUser(userData: UpsertUser): Promise<User> {
+    const [user] = await db.insert(users).values(userData).returning();
     return user;
   }
 
@@ -244,7 +240,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateHolding(id: number, holding: Partial<InsertHolding>): Promise<Holding | undefined> {
-    const updateData = holding.ticker 
+    const updateData = holding.ticker
       ? { ...holding, ticker: holding.ticker.toUpperCase() }
       : holding;
     const result = await db.update(holdings).set(updateData).where(eq(holdings.id, id)).returning();

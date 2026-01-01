@@ -4,30 +4,24 @@ import { storage } from "./storage";
 import { insertAccountSchema, insertCategorySchema, insertTransactionSchema, insertHoldingSchema, insertTradeSchema } from "@shared/schema";
 import { z } from "zod";
 import crypto from "crypto";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth, isAuthenticated } from "./auth";
 import { sendEmail } from "./resend";
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  
-  // ============ AUTH ============
-  await setupAuth(app);
 
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      res.json(user);
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(500).json({ message: "Failed to fetch user" });
-    }
+  // ============ AUTH ============
+  setupAuth(app);
+
+  // endpoint for backward compatibility or if frontend expects this path
+  app.get('/api/auth/user', isAuthenticated, (req, res) => {
+    res.json(req.user);
   });
 
   // ============ ACCOUNTS ============
-  
+
   app.get("/api/accounts", async (req, res) => {
     try {
       const accounts = await storage.getAccounts();
@@ -281,7 +275,7 @@ export async function registerRoutes(
   });
 
   // ============ TALLY WEBHOOK ============
-  
+
   // Helper to parse European number format (1.234,56 -> 1234.56)
   function parseEuropeanNumber(value: string): number {
     if (!value) return 0;
@@ -292,33 +286,33 @@ export async function registerRoutes(
   // Helper to parse date in various formats
   function parseDate(dateStr: string): string {
     if (!dateStr) return new Date().toISOString().split('T')[0];
-    
+
     // Try DD/MM/YYYY format
     const ddmmyyyy = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
     if (ddmmyyyy) {
       const [, day, month, year] = ddmmyyyy;
       return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
     }
-    
+
     // Try YYYY-MM-DD format
     const yyyymmdd = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
     if (yyyymmdd) {
       return dateStr;
     }
-    
+
     // Fallback: try to parse as date
     const parsed = new Date(dateStr);
     if (!isNaN(parsed.getTime())) {
       return parsed.toISOString().split('T')[0];
     }
-    
+
     return new Date().toISOString().split('T')[0];
   }
 
   app.post("/api/webhooks/tally", async (req, res) => {
     try {
       console.log("Tally webhook received:", JSON.stringify(req.body, null, 2));
-      
+
       // Optional signature verification (if TALLY_WEBHOOK_SECRET is set)
       const tallySecret = process.env.TALLY_WEBHOOK_SECRET;
       if (tallySecret) {
@@ -327,23 +321,23 @@ export async function registerRoutes(
           console.warn("Tally webhook: Missing signature");
           return res.status(401).json({ error: "Missing signature" });
         }
-        
+
         const expectedSignature = crypto
           .createHmac('sha256', tallySecret)
           .update(JSON.stringify(req.body))
           .digest('base64');
-        
+
         if (signature !== expectedSignature) {
           console.warn("Tally webhook: Invalid signature");
           return res.status(401).json({ error: "Invalid signature" });
         }
       }
-      
+
       const payload = req.body;
-      
+
       // Tally sends data directly or wrapped in eventType for webhooks
       const fields = payload.data?.fields || [];
-      
+
       if (fields.length === 0) {
         return res.status(400).json({ error: "No fields found in payload" });
       }
@@ -389,7 +383,7 @@ export async function registerRoutes(
       const categoryName = getDropdownText(categoryField);
       const accountName = getDropdownText(accountField);
       const direction = getDropdownText(directionField);
-      
+
       // Get amounts (Tally sends numbers directly for INPUT_NUMBER)
       const incomeAmount = incomeAmountField?.value ? parseFloat(incomeAmountField.value) || 0 : 0;
       const expenseAmount = expenseAmountField?.value ? parseFloat(expenseAmountField.value) || 0 : 0;
@@ -397,7 +391,7 @@ export async function registerRoutes(
       // Determine amount and type based on direction or which amount field is filled
       let amount = 0;
       let type: 'income' | 'expense' = 'expense';
-      
+
       if (direction.toLowerCase() === 'entrata' || incomeAmount > 0) {
         amount = incomeAmount > 0 ? incomeAmount : expenseAmount;
         type = 'income';
@@ -409,8 +403,8 @@ export async function registerRoutes(
       console.log("Parsed Tally data:", { dateValue, description, categoryName, accountName, direction, amount, type });
 
       if (!description || amount <= 0) {
-        return res.status(400).json({ 
-          error: "Invalid transaction data", 
+        return res.status(400).json({
+          error: "Invalid transaction data",
           details: { description, amount, direction, incomeAmount, expenseAmount },
           fields: fields.map((f: any) => ({ label: f.label, value: f.value }))
         });
@@ -418,13 +412,13 @@ export async function registerRoutes(
 
       // Look up account by name
       const accounts = await storage.getAccounts();
-      const account = accounts.find(a => 
+      const account = accounts.find(a =>
         a.name.toLowerCase() === accountName.toLowerCase()
       );
-      
+
       if (!account) {
-        return res.status(400).json({ 
-          error: "Account not found", 
+        return res.status(400).json({
+          error: "Account not found",
           accountName,
           availableAccounts: accounts.map(a => a.name)
         });
@@ -432,13 +426,13 @@ export async function registerRoutes(
 
       // Look up category by name
       const categories = await storage.getCategories();
-      const category = categories.find(c => 
+      const category = categories.find(c =>
         c.name.toLowerCase() === categoryName.toLowerCase()
       );
-      
+
       if (!category) {
-        return res.status(400).json({ 
-          error: "Category not found", 
+        return res.status(400).json({
+          error: "Category not found",
           categoryName,
           availableCategories: categories.map(c => c.name)
         });
@@ -455,15 +449,15 @@ export async function registerRoutes(
       };
 
       console.log("Creating transaction from Tally:", transactionData);
-      
+
       const transaction = await storage.createTransaction(transactionData);
-      
-      res.status(201).json({ 
-        status: "ok", 
+
+      res.status(201).json({
+        status: "ok",
         message: "Transaction created successfully",
-        transaction 
+        transaction
       });
-      
+
     } catch (error) {
       console.error("Tally webhook error:", error);
       res.status(500).json({ error: "Failed to process Tally webhook" });
@@ -474,7 +468,7 @@ export async function registerRoutes(
   app.get("/api/webhooks/tally", async (req, res) => {
     const accounts = await storage.getAccounts();
     const categories = await storage.getCategories();
-    
+
     res.json({
       status: "Tally webhook is ready",
       instructions: {
@@ -484,7 +478,7 @@ export async function registerRoutes(
           "Data (or Date) - DD/MM/YYYY format",
           "Descrizione (or Description) - transaction description",
           "Entrata (or Income) - income amount (European format: 1.234,56)",
-          "Uscita (or Expense) - expense amount (European format: 1.234,56)", 
+          "Uscita (or Expense) - expense amount (European format: 1.234,56)",
           "Conto (or Account) - account name",
           "Categoria (or Category) - category name"
         ],
@@ -619,7 +613,7 @@ export async function registerRoutes(
       if (!Array.isArray(tradesData)) {
         return res.status(400).json({ error: "Expected an array of trades" });
       }
-      
+
       const validatedTrades = tradesData.map(t => insertTradeSchema.parse(t));
       const trades = await storage.createTrades(validatedTrades);
       res.status(201).json(trades);
@@ -682,7 +676,7 @@ export async function registerRoutes(
         `https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency=GBP&to_currency=EUR&apikey=${ALPHA_VANTAGE_API_KEY}`
       );
       const data = await response.json();
-      
+
       if (data["Realtime Currency Exchange Rate"]) {
         const rate = parseFloat(data["Realtime Currency Exchange Rate"]["5. Exchange Rate"]);
         cachedGbpEurRate = { rate, timestamp: Date.now() };
@@ -724,7 +718,7 @@ export async function registerRoutes(
   app.get("/api/stock/quote/:symbol", async (req, res) => {
     try {
       const symbol = req.params.symbol.toUpperCase();
-      
+
       if (!ALPHA_VANTAGE_API_KEY) {
         return res.status(500).json({ error: "Alpha Vantage API key not configured" });
       }
@@ -738,13 +732,13 @@ export async function registerRoutes(
       const response = await fetch(
         `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${ALPHA_VANTAGE_API_KEY}`
       );
-      
+
       const data = await response.json();
-      
+
       if (data["Error Message"]) {
         return res.status(404).json({ error: "Symbol not found" });
       }
-      
+
       if (data["Note"]) {
         if (cached) {
           console.log(`[cache] Rate limited, returning stale cache for ${symbol}`);
@@ -802,7 +796,7 @@ export async function registerRoutes(
   app.get("/api/stock/search/:keywords", async (req, res) => {
     try {
       const keywords = req.params.keywords;
-      
+
       if (!ALPHA_VANTAGE_API_KEY) {
         return res.status(500).json({ error: "Alpha Vantage API key not configured" });
       }
@@ -810,15 +804,15 @@ export async function registerRoutes(
       const response = await fetch(
         `https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=${encodeURIComponent(keywords)}&apikey=${ALPHA_VANTAGE_API_KEY}`
       );
-      
+
       const data = await response.json();
-      
+
       if (data["Note"]) {
         return res.status(429).json({ error: "API rate limit reached. Please try again later." });
       }
 
       const matches = data.bestMatches || [];
-      
+
       res.json(matches.map((match: any) => ({
         symbol: match["1. symbol"],
         name: match["2. name"],
@@ -835,7 +829,7 @@ export async function registerRoutes(
   app.get("/api/stock/batch-quotes", async (req, res) => {
     try {
       const symbols = (req.query.symbols as string)?.split(",").map(s => s.trim().toUpperCase()) || [];
-      
+
       if (symbols.length === 0) {
         return res.status(400).json({ error: "No symbols provided" });
       }
@@ -846,7 +840,7 @@ export async function registerRoutes(
 
       const quotes: Record<string, any> = {};
       const symbolsToFetch: string[] = [];
-      
+
       for (const symbol of symbols) {
         const cached = quotesCache[symbol];
         if (cached && Date.now() - cached.timestamp < CACHE_DURATION_24H) {
@@ -862,9 +856,9 @@ export async function registerRoutes(
           const response = await fetch(
             `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${ALPHA_VANTAGE_API_KEY}`
           );
-          
+
           const data = await response.json();
-          
+
           if (data["Note"]) {
             const cached = quotesCache[symbol];
             if (cached) {
@@ -887,9 +881,9 @@ export async function registerRoutes(
               changePercent: quote["10. change percent"]
             };
             quotes[symbol] = quoteData;
-            quotesCache[symbol] = { 
-              data: { ...quoteData, high: 0, low: 0, open: 0, previousClose: 0, volume: 0 }, 
-              timestamp: Date.now() 
+            quotesCache[symbol] = {
+              data: { ...quoteData, high: 0, low: 0, open: 0, previousClose: 0, volume: 0 },
+              timestamp: Date.now()
             };
             console.log(`[cache] Batch: stored fresh quote for ${symbol}`);
           } else {
@@ -922,34 +916,34 @@ export async function registerRoutes(
     const categories = await storage.getCategories();
     const holdingsList = await storage.getHoldings();
     const allTrades = await storage.getTrades();
-    
+
     const now = new Date();
     const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    
+
     const weekTransactions = transactions.filter(t => {
       const txDate = new Date(t.date);
       return txDate >= oneWeekAgo && txDate <= now;
     });
-    
+
     const totalIncome = weekTransactions
       .filter(t => t.type === 'income')
       .reduce((sum, t) => sum + parseFloat(t.amount), 0);
-    
+
     const totalExpense = weekTransactions
       .filter(t => t.type === 'expense')
       .reduce((sum, t) => sum + parseFloat(t.amount), 0);
-    
+
     const expensesByCategory: Record<string, number> = {};
     weekTransactions.filter(t => t.type === 'expense').forEach(t => {
       const cat = categories.find(c => c.id === t.categoryId);
       const catName = cat?.name || 'Altro';
       expensesByCategory[catName] = (expensesByCategory[catName] || 0) + parseFloat(t.amount);
     });
-    
+
     const sortedCategories = Object.entries(expensesByCategory)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5);
-    
+
     // Calculate actual balance: startingBalance + all transactions for each account (including credit cards)
     const totalBalance = accounts.reduce((sum, account) => {
       const accountTransactions = transactions.filter(t => t.accountId === account.id);
@@ -960,16 +954,16 @@ export async function registerRoutes(
       }, 0);
       return sum + parseFloat(account.startingBalance) + transactionSum;
     }, 0);
-    
+
     // Get credit card accounts and their weekly transactions
     const creditCardAccounts = accounts.filter(a => a.type === 'credit');
     const creditCardIds = creditCardAccounts.map(a => a.id);
     const weekCreditCardTransactions = weekTransactions
       .filter(t => creditCardIds.includes(t.accountId) && t.type === 'expense')
       .sort((a, b) => parseFloat(b.amount) - parseFloat(a.amount));
-    
+
     const totalCreditCardExpenses = weekCreditCardTransactions.reduce((sum, t) => sum + parseFloat(t.amount), 0);
-    
+
     // Top 5 highest expenses of the week
     const top5Expenses = weekTransactions
       .filter(t => t.type === 'expense')
@@ -986,7 +980,7 @@ export async function registerRoutes(
           date: new Date(t.date).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })
         };
       });
-    
+
     // Calculate portfolio data
     const portfolioData: Array<{
       ticker: string;
@@ -999,11 +993,11 @@ export async function registerRoutes(
       gainLoss: number;
       gainLossPercent: number;
     }> = [];
-    
+
     // Fetch current prices for all holdings
     const tickers = holdingsList.map(h => h.ticker);
     const currentPrices: Record<string, number> = {};
-    
+
     for (const ticker of tickers) {
       // Try cache first
       if (quotesCache[ticker] && (Date.now() - quotesCache[ticker].timestamp < 24 * 60 * 60 * 1000)) {
@@ -1027,19 +1021,19 @@ export async function registerRoutes(
         }
       }
     }
-    
+
     // Calculate portfolio metrics for each holding
     for (const holding of holdingsList) {
       const holdingTrades = allTrades.filter(t => t.holdingId === holding.id);
-      
+
       let totalQuantity = 0;
       let totalCost = 0;
-      
+
       for (const trade of holdingTrades) {
         const qty = parseFloat(trade.quantity);
         const amount = parseFloat(trade.totalAmount);
         const fees = parseFloat(trade.fees || "0");
-        
+
         if (trade.type === 'buy') {
           totalQuantity += qty;
           totalCost += amount + fees;
@@ -1048,14 +1042,14 @@ export async function registerRoutes(
           totalCost -= amount - fees;
         }
       }
-      
+
       if (totalQuantity > 0.0001) {
         const avgCost = totalCost / totalQuantity;
         const currentPrice = currentPrices[holding.ticker] || avgCost;
         const currentValue = totalQuantity * currentPrice;
         const gainLoss = currentValue - totalCost;
         const gainLossPercent = totalCost > 0 ? (gainLoss / totalCost) * 100 : 0;
-        
+
         portfolioData.push({
           ticker: holding.ticker,
           name: holding.name,
@@ -1069,13 +1063,13 @@ export async function registerRoutes(
         });
       }
     }
-    
+
     // Portfolio totals
     const portfolioTotalInvested = portfolioData.reduce((sum, p) => sum + p.totalInvested, 0);
     const portfolioTotalValue = portfolioData.reduce((sum, p) => sum + p.currentValue, 0);
     const portfolioTotalGainLoss = portfolioTotalValue - portfolioTotalInvested;
     const portfolioTotalGainLossPercent = portfolioTotalInvested > 0 ? (portfolioTotalGainLoss / portfolioTotalInvested) * 100 : 0;
-    
+
     const formatEur = (n: number) => new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(n);
     const formatPercent = (n: number) => (n >= 0 ? '+' : '') + n.toFixed(2) + '%';
     const startDate = oneWeekAgo.toLocaleDateString('it-IT', { day: 'numeric', month: 'long' });
@@ -1184,7 +1178,7 @@ export async function registerRoutes(
     
     <h3>🏷️ Top 5 Categorie Spese</h3>
     <div class="category-list">
-      ${sortedCategories.length > 0 
+      ${sortedCategories.length > 0
         ? sortedCategories.map(([name, amount]) => `
           <div class="category-item">
             <span class="category-name">${name}</span>
@@ -1248,9 +1242,9 @@ export async function registerRoutes(
         </thead>
         <tbody>
           ${weekCreditCardTransactions.map(t => {
-            const category = categories.find(c => c.id === t.categoryId);
-            const account = accounts.find(a => a.id === t.accountId);
-            return `
+        const category = categories.find(c => c.id === t.categoryId);
+        const account = accounts.find(a => a.id === t.accountId);
+        return `
               <tr>
                 <td class="meta">${new Date(t.date).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })}</td>
                 <td class="desc">${t.description}${creditCardAccounts.length > 1 ? ` <span class="meta">(${account?.name})</span>` : ''}</td>
@@ -1258,7 +1252,7 @@ export async function registerRoutes(
                 <td class="amount">${formatEur(parseFloat(t.amount))}</td>
               </tr>
             `;
-          }).join('')}
+      }).join('')}
         </tbody>
       </table>
     </div>
@@ -1277,13 +1271,13 @@ export async function registerRoutes(
     try {
       const email = req.body.email || "tommasominuto@gmail.com";
       const html = await generateWeeklyReport();
-      
+
       const now = new Date();
       const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       const subject = `📊 Report Settimanale FinTrack - ${weekStart.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })} / ${now.toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' })}`;
-      
+
       const result = await sendEmail(email, subject, html);
-      
+
       console.log(`[email] Weekly report sent to ${email}`);
       res.json({ success: true, result });
     } catch (error: any) {
@@ -1309,7 +1303,7 @@ export async function registerRoutes(
     const dayOfWeek = now.getDay();
     const hour = now.getHours();
     const currentWeek = Math.floor(now.getTime() / (7 * 24 * 60 * 60 * 1000));
-    
+
     if (dayOfWeek === 0 && hour === 9 && currentWeek !== lastSentWeek) {
       console.log("[scheduler] Sending weekly report...");
       try {
