@@ -4,7 +4,7 @@ services:
   app:
     build: .
     ports:
-      - "5000:5000"
+      - "5001:5000"
     environment:
       - DATABASE_URL=postgres://postgres:postgres@db:5432/personal_finance
       - NODE_ENV=production
@@ -22,7 +22,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "5433:5432"
     restart: always
 
 volumes:
