@@ -11,7 +11,7 @@ import { useState, useRef } from "react";
 import Papa from "papaparse";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { parse, isValid } from "date-fns";
+import { parse, isValid, format } from "date-fns";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
@@ -63,7 +63,9 @@ export default function ImportTransactions() {
   const [step, setStep] = useState<Step>('upload');
   const [importMode, setImportMode] = useState<ImportMode>('transactions');
   const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [csvData, setCsvData] = useState<any[]>([]);
+  const [allCsvData, setAllCsvData] = useState<{ name: string; headers: string[]; data: any[] }[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
 
   const [selectedAccount, setSelectedAccount] = useState<number | null>(null);
@@ -125,9 +127,10 @@ export default function ImportTransactions() {
   const cleanHeader = (header: string) => header.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setFile(file);
+    const uploadedFiles = e.target.files ? Array.from(e.target.files) : [];
+    if (uploadedFiles.length > 0) {
+      setFiles(uploadedFiles);
+      setFile(uploadedFiles[0]); // Primary file for mapping UI
 
       const cleanMapping: Mapping = {
         date: "", amount: "", description: "", type: "none", account: "none", category: "none",
@@ -141,81 +144,111 @@ export default function ImportTransactions() {
       };
 
       setUseDualAmountColumns(false);
+      const parsedData: { name: string; headers: string[]; data: any[] }[] = [];
+      let filesProcessed = 0;
 
-      Papa.parse(file, {
-        header: true,
-        skipEmptyLines: true,
-        complete: (results) => {
-          setCsvData(results.data);
-          const fields = results.meta.fields || [];
-          setHeaders(fields);
-          setStep('map');
+      uploadedFiles.forEach(file => {
+        Papa.parse(file, {
+          header: true,
+          skipEmptyLines: true,
+          complete: (results) => {
+            const fileHeaders = results.meta.fields || [];
+            parsedData.push({
+              name: file.name,
+              headers: fileHeaders,
+              data: results.data
+            });
 
-          if (importMode === 'transactions') {
-            const currentMapping = { ...cleanMapping };
-            let foundIncome = false;
-            let foundExpense = false;
+            filesProcessed++;
+            if (filesProcessed === uploadedFiles.length) {
+              setAllCsvData(parsedData);
 
-            fields.forEach(field => {
-              const lower = cleanHeader(field);
-              if (lower.includes('date') || lower.includes('data')) currentMapping.date = field;
-              if (lower.includes('description') || lower.includes('descrizione') || lower.includes('memo')) currentMapping.description = field;
-              if (lower.includes('type') || lower.includes('tipo')) currentMapping.type = field;
-              if (lower.includes('account') || lower.includes('conto')) currentMapping.account = field;
-              if (lower.includes('category') || lower.includes('categoria')) currentMapping.category = field;
-
-              if (lower.includes('entrata') || lower.includes('income') || lower.includes('credit')) {
-                currentMapping.incomeAmount = field;
-                foundIncome = true;
-              }
-              if (lower.includes('uscita') || lower.includes('expense') || lower.includes('debit')) {
-                currentMapping.expenseAmount = field;
-                foundExpense = true;
+              // Find the primary file (e.g., trades.csv for portfolio import)
+              let primaryData = parsedData[0];
+              if (importMode === 'trades') {
+                const tradeFile = parsedData.find(d =>
+                  d.headers.some(h => cleanHeader(h).includes('holdingid')) ||
+                  d.headers.some(h => cleanHeader(h).includes('ticker'))
+                );
+                if (tradeFile) primaryData = tradeFile;
               }
 
-              if (lower.includes('amount') || lower.includes('importo') || lower.includes('value')) {
-                if (!currentMapping.amount) currentMapping.amount = field;
-              }
-            });
+              setCsvData(primaryData.data);
+              setHeaders(primaryData.headers);
+              setStep('map');
 
-            if (foundIncome && foundExpense) setUseDualAmountColumns(true);
-            setMapping(currentMapping);
-          } else if (importMode === 'accounts') {
-            const currentMapping = { ...cleanMapping };
-            fields.forEach(field => {
-              const lower = cleanHeader(field);
-              if (lower.includes('name') || lower.includes('nome')) currentMapping.accountName = field;
-              if (lower.includes('type') || lower.includes('tipo')) currentMapping.accountType = field;
-              if (lower.includes('balance') || lower.includes('saldo') || lower.includes('starting')) currentMapping.accountBalance = field;
-              if (lower.includes('currency') || lower.includes('valuta')) currentMapping.accountCurrency = field;
-            });
-            setMapping(currentMapping);
-          } else if (importMode === 'categories') {
-            const currentMapping = { ...cleanMapping };
-            fields.forEach(field => {
-              const lower = cleanHeader(field);
-              if (lower.includes('name') || lower.includes('nome')) currentMapping.categoryName = field;
-              if (lower.includes('type') || lower.includes('tipo')) currentMapping.categoryType = field;
-              if (lower.includes('budget')) currentMapping.categoryBudget = field;
-            });
-            setMapping(currentMapping);
-          } else if (importMode === 'trades') {
-            const currentTradeMapping = { ...cleanTradeMapping };
-            fields.forEach(field => {
-              const lower = cleanHeader(field);
-              if (lower.includes('date') || lower.includes('data')) currentTradeMapping.date = field;
-              if (lower.includes('ticker') || lower.includes('symbol') || lower.includes('isin')) currentTradeMapping.ticker = field;
-              if (lower.includes('name') || lower.includes('nome')) currentTradeMapping.name = field;
-              if (lower.includes('type') || lower.includes('tipo') || lower.includes('side')) currentTradeMapping.type = field;
-              if (lower.includes('quantity') || lower.includes('quant') || lower.includes('qty')) currentTradeMapping.quantity = field;
-              if (lower.includes('price') || lower.includes('prezzo')) currentTradeMapping.pricePerUnit = field;
-              if (lower.includes('total') || lower.includes('amount') || lower.includes('controvalore')) currentTradeMapping.totalAmount = field;
-              if (lower.includes('fee') || lower.includes('commission')) currentTradeMapping.fees = field;
-            });
-            setTradeMapping(currentTradeMapping);
-            api.fetchHoldings().then(setHoldings);
+              const fields = primaryData.headers;
+              if (importMode === 'transactions') {
+                const currentMapping = { ...cleanMapping };
+                let foundIncome = false;
+                let foundExpense = false;
+
+                fields.forEach(field => {
+                  const lower = cleanHeader(field);
+                  if (lower.includes('date') || lower.includes('data')) currentMapping.date = field;
+                  if (lower.includes('description') || lower.includes('descrizione') || lower.includes('memo')) currentMapping.description = field;
+                  if (lower.includes('type') || lower.includes('tipo')) currentMapping.type = field;
+                  if (lower.includes('account') || lower.includes('conto')) currentMapping.account = field;
+                  if (lower.includes('category') || lower.includes('categoria')) currentMapping.category = field;
+
+                  if (lower.includes('entrata') || lower.includes('income') || lower.includes('credit')) {
+                    currentMapping.incomeAmount = field;
+                    foundIncome = true;
+                  }
+                  if (lower.includes('uscita') || lower.includes('expense') || lower.includes('debit')) {
+                    currentMapping.expenseAmount = field;
+                    foundExpense = true;
+                  }
+
+                  if (lower.includes('amount') || lower.includes('importo') || lower.includes('value')) {
+                    if (!currentMapping.amount) currentMapping.amount = field;
+                  }
+                });
+
+                if (foundIncome && foundExpense) setUseDualAmountColumns(true);
+                setMapping(currentMapping);
+              } else if (importMode === 'accounts') {
+                const currentMapping = { ...cleanMapping };
+                fields.forEach(field => {
+                  const lower = cleanHeader(field);
+                  if (lower.includes('name') || lower.includes('nome')) currentMapping.accountName = field;
+                  if (lower.includes('type') || lower.includes('tipo')) currentMapping.accountType = field;
+                  if (lower.includes('balance') || lower.includes('saldo') || lower.includes('starting')) currentMapping.accountBalance = field;
+                  if (lower.includes('currency') || lower.includes('valuta')) currentMapping.accountCurrency = field;
+                });
+                setMapping(currentMapping);
+              } else if (importMode === 'categories') {
+                const currentMapping = { ...cleanMapping };
+                fields.forEach(field => {
+                  const lower = cleanHeader(field);
+                  if (lower.includes('name') || lower.includes('nome')) currentMapping.categoryName = field;
+                  if (lower.includes('type') || lower.includes('tipo')) currentMapping.categoryType = field;
+                  if (lower.includes('budget')) currentMapping.categoryBudget = field;
+                });
+                setMapping(currentMapping);
+              } else if (importMode === 'trades') {
+                const currentTradeMapping = { ...cleanTradeMapping };
+                fields.forEach(field => {
+                  const lower = cleanHeader(field);
+                  if (lower.includes('date') || lower.includes('data')) currentTradeMapping.date = field;
+                  if (lower.includes('ticker') || lower.includes('symbol') || lower.includes('isin')) currentTradeMapping.ticker = field;
+                  if (lower.includes('holdingid')) {
+                    // Treat holding_id as ticker if no explicit ticker is found later
+                    if (!currentTradeMapping.ticker) currentTradeMapping.ticker = field;
+                  }
+                  if (lower.includes('name') || lower.includes('nome')) currentTradeMapping.name = field;
+                  if (lower.includes('type') || lower.includes('tipo') || lower.includes('side')) currentTradeMapping.type = field;
+                  if (lower.includes('quantity') || lower.includes('quant') || lower.includes('qty')) currentTradeMapping.quantity = field;
+                  if (lower.includes('price') || lower.includes('prezzo')) currentTradeMapping.pricePerUnit = field;
+                  if (lower.includes('total') || lower.includes('amount') || lower.includes('controvalore')) currentTradeMapping.totalAmount = field;
+                  if (lower.includes('fee') || lower.includes('commission')) currentTradeMapping.fees = field;
+                });
+                setTradeMapping(currentTradeMapping);
+                api.fetchHoldings().then(setHoldings);
+              }
+            }
           }
-        }
+        });
       });
     }
   };
@@ -440,24 +473,84 @@ export default function ImportTransactions() {
   };
 
   const handleTradeImport = async () => {
-    const tradeRows = csvData.map(getTradeFromRow).filter(t => t._isValid);
-    if (tradeRows.length === 0) return;
+    // Find holdings data if provided
+    const holdingsFile = allCsvData.find(d =>
+      d.headers.some(h => cleanHeader(h) === 'ticker') &&
+      d.headers.some(h => cleanHeader(h) === 'id')
+    );
+
+    const holdingInfoMap = new Map<string, { ticker: string; name: string }>();
+    if (holdingsFile) {
+      const tickerField = holdingsFile.headers.find(h => cleanHeader(h) === 'ticker')!;
+      const idField = holdingsFile.headers.find(h => cleanHeader(h) === 'id')!;
+      const nameField = holdingsFile.headers.find(h => cleanHeader(h) === 'name') || tickerField;
+
+      holdingsFile.data.forEach(row => {
+        holdingInfoMap.set(row[idField]?.toString(), {
+          ticker: row[tickerField]?.toString().toUpperCase(),
+          name: row[nameField]?.toString()
+        });
+      });
+    }
+
+    const tradeRows = csvData.map(row => {
+      let ticker = (row[tradeMapping.ticker] || "").toString().toUpperCase().trim();
+      let name = tradeMapping.name ? row[tradeMapping.name] || ticker : ticker;
+
+      // If we have a holding_id and a holdings map, resolve it
+      const holdingIdLower = tradeMapping.ticker && cleanHeader(tradeMapping.ticker).includes('holdingid')
+        ? (row[tradeMapping.ticker] || "").toString()
+        : null;
+
+      if (holdingIdLower && holdingInfoMap.has(holdingIdLower)) {
+        const info = holdingInfoMap.get(holdingIdLower)!;
+        ticker = info.ticker;
+        name = info.name;
+      }
+
+      const rawType = (row[tradeMapping.type] || "").toString().toLowerCase().trim();
+      let type: "buy" | "sell" = "buy";
+      if (rawType.match(/sell|vendita|vend|s|v/)) type = "sell";
+      const quantity = Math.abs(parseNumeric(row[tradeMapping.quantity]));
+      const pricePerUnit = Math.abs(parseNumeric(row[tradeMapping.pricePerUnit]));
+      let totalAmount = tradeMapping.totalAmount ? Math.abs(parseNumeric(row[tradeMapping.totalAmount])) : 0;
+      if (!totalAmount && quantity && pricePerUnit) totalAmount = quantity * pricePerUnit;
+      const fees = tradeMapping.fees ? Math.abs(parseNumeric(row[tradeMapping.fees])) : 0;
+
+      return { ticker, name, type, date: parseDate(row[tradeMapping.date]), quantity: quantity.toString(), pricePerUnit: pricePerUnit.toString(), totalAmount: totalAmount.toString(), fees: fees.toString(), _isValid: !!ticker && quantity > 0 && pricePerUnit > 0 };
+    }).filter(t => t._isValid);
+
+    if (tradeRows.length === 0) {
+      toast({
+        title: "Import Failed",
+        description: "No valid trades found. Make sure ticker, quantity, and price are correctly mapped.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     const tickerMap = new Map<string, { name: string; trades: any[] }>();
     for (const trade of tradeRows) {
       if (!tickerMap.has(trade.ticker)) tickerMap.set(trade.ticker, { name: trade.name, trades: [] });
       tickerMap.get(trade.ticker)!.trades.push(trade);
     }
+
     const currentHoldings = await api.fetchHoldings();
     const holdingIdMap = new Map<string, number>();
-    for (const [ticker, data] of tickerMap.entries()) {
+    for (const [ticker, data] of Array.from(tickerMap.entries())) {
       let holding = currentHoldings.find(h => h.ticker.toUpperCase() === ticker);
       if (!holding) {
         try {
           holding = await api.createHolding({ ticker, name: data.name, assetType: "stock", currency: "EUR" });
-          currentHoldings.push(holding);
-        } catch (e) { console.error(e); continue; }
+          if (holding) currentHoldings.push(holding);
+        } catch (e) {
+          console.error(e);
+          continue;
+        }
       }
-      holdingIdMap.set(ticker, holding.id);
+      if (holding) {
+        holdingIdMap.set(ticker, holding.id);
+      }
     }
     const validTrades = tradeRows.filter(t => holdingIdMap.has(t.ticker)).map(t => ({
       holdingId: holdingIdMap.get(t.ticker)!,
@@ -468,7 +561,12 @@ export default function ImportTransactions() {
       fees: t.fees,
       type: t.type
     }));
+
     await api.createTradesBulk(validTrades);
+    toast({
+      title: "Import Successful",
+      description: `Imported ${validTrades.length} trades for ${tickerMap.size} holdings.`,
+    });
     setLocation('/portfolio');
   };
 
@@ -516,8 +614,20 @@ export default function ImportTransactions() {
             {step === 'upload' && (
               <div className="flex flex-col items-center justify-center py-12 text-center space-y-4 border-2 border-dashed border-border rounded-xl bg-muted/20 hover:bg-muted/40 transition-colors cursor-pointer" onClick={() => fileInputRef.current?.click()}>
                 <div className="w-16 h-8 rounded-full bg-primary/10 flex items-center justify-center mb-2"><Upload className="w-8 h-8 text-primary" /></div>
-                <div><h3 className="text-lg font-semibold">Click to upload CSV</h3><p className="text-sm text-muted-foreground mt-1">or drag and drop file here</p></div>
-                <input type="file" ref={fileInputRef} accept=".csv" className="hidden" onChange={handleFileUpload} />
+                <div>
+                  <h3 className="text-lg font-semibold">Click to upload CSV</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {importMode === 'trades' ? "You can select both trades.csv and holdings.csv" : "or drag and drop file here"}
+                  </p>
+                </div>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  accept=".csv"
+                  className="hidden"
+                  multiple={importMode === 'trades'}
+                  onChange={handleFileUpload}
+                />
               </div>
             )}
 
@@ -599,6 +709,7 @@ export default function ImportTransactions() {
                         {importMode === 'accounts' && <><TableHead>Name</TableHead><TableHead>Type</TableHead><TableHead>Balance</TableHead></>}
                         {importMode === 'categories' && <><TableHead>Name</TableHead><TableHead>Type</TableHead><TableHead>Budget</TableHead></>}
                         {importMode === 'transactions' && <><TableHead>Date</TableHead><TableHead>Description</TableHead><TableHead>Amount</TableHead><TableHead>Account</TableHead><TableHead>Category</TableHead></>}
+                        {importMode === 'trades' && <><TableHead>Date</TableHead><TableHead>Ticker</TableHead><TableHead>Name</TableHead><TableHead>Type</TableHead><TableHead>Quantity</TableHead><TableHead>Price</TableHead></>}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -629,6 +740,57 @@ export default function ImportTransactions() {
                               <TableCell>
                                 {category ? <span className="text-xs px-2 py-0.5 rounded-full bg-secondary/10 text-secondary-foreground">{category.name}</span> : <span className="text-xs text-destructive font-medium">Not found</span>}
                               </TableCell>
+                            </TableRow>
+                          );
+                        }
+                        if (importMode === 'trades') {
+                          // Find holdings data if provided
+                          const holdingsFile = allCsvData.find(d =>
+                            d.headers.some(h => cleanHeader(h) === 'ticker') &&
+                            d.headers.some(h => cleanHeader(h) === 'id')
+                          );
+
+                          const holdingInfoMap = new Map<string, { ticker: string; name: string }>();
+                          if (holdingsFile) {
+                            const tickerField = holdingsFile.headers.find(h => cleanHeader(h) === 'ticker')!;
+                            const idField = holdingsFile.headers.find(h => cleanHeader(h) === 'id')!;
+                            const nameField = holdingsFile.headers.find(h => cleanHeader(h) === 'name') || tickerField;
+
+                            holdingsFile.data.forEach(row => {
+                              holdingInfoMap.set(row[idField]?.toString(), {
+                                ticker: row[tickerField]?.toString().toUpperCase(),
+                                name: row[nameField]?.toString()
+                              });
+                            });
+                          }
+
+                          let ticker = (row[tradeMapping.ticker] || "").toString().toUpperCase().trim();
+                          let name = tradeMapping.name ? row[tradeMapping.name] || ticker : ticker;
+
+                          const holdingIdLower = tradeMapping.ticker && cleanHeader(tradeMapping.ticker).includes('holdingid')
+                            ? (row[tradeMapping.ticker] || "").toString()
+                            : null;
+
+                          if (holdingIdLower && holdingInfoMap.has(holdingIdLower)) {
+                            const info = holdingInfoMap.get(holdingIdLower)!;
+                            ticker = info.ticker;
+                            name = info.name;
+                          }
+
+                          const rawType = (row[tradeMapping.type] || "").toString().toLowerCase().trim();
+                          let type: "buy" | "sell" = "buy";
+                          if (rawType.match(/sell|vendita|vend|s|v/)) type = "sell";
+                          const quantity = Math.abs(parseNumeric(row[tradeMapping.quantity]));
+                          const pricePerUnit = Math.abs(parseNumeric(row[tradeMapping.pricePerUnit]));
+
+                          return (
+                            <TableRow key={i}>
+                              <TableCell className="text-xs">{parseDate(row[tradeMapping.date]).split('T')[0]}</TableCell>
+                              <TableCell><span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-mono">{ticker}</span></TableCell>
+                              <TableCell className="max-w-[150px] truncate">{name}</TableCell>
+                              <TableCell className="capitalize">{type}</TableCell>
+                              <TableCell>{quantity}</TableCell>
+                              <TableCell>{pricePerUnit}</TableCell>
                             </TableRow>
                           );
                         }

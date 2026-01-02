@@ -13,6 +13,8 @@ services:
     depends_on:
       - db
     restart: always
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
 
   db:
     image: postgres:15-alpine
