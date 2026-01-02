@@ -101,7 +101,7 @@ export default function Portfolio() {
   });
 
   const updateTradeMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: Parameters<typeof api.updateTrade>[1] }) => 
+    mutationFn: ({ id, data }: { id: number; data: Parameters<typeof api.updateTrade>[1] }) =>
       api.updateTrade(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["trades"] });
@@ -158,8 +158,8 @@ export default function Portfolio() {
 
   const openEditDialog = (trade: Trade & { holding?: Holding }) => {
     setEditingTrade(trade);
-    const dateStr = trade.date.includes("T") 
-      ? trade.date.split("T")[0] 
+    const dateStr = trade.date.includes("T")
+      ? trade.date.split("T")[0]
       : trade.date.split(" ")[0];
     setEditForm({
       quantity: trade.quantity,
@@ -172,7 +172,7 @@ export default function Portfolio() {
 
   const handleUpdateTrade = () => {
     if (!editingTrade) return;
-    
+
     const quantity = parseFloat(editForm.quantity);
     const pricePerUnit = parseFloat(editForm.pricePerUnit);
     const fees = parseFloat(editForm.fees) || 0;
@@ -191,14 +191,14 @@ export default function Portfolio() {
     }
 
     const grossAmount = quantity * pricePerUnit;
-    const totalAmount = editForm.type === "buy" 
-      ? grossAmount + fees 
+    const totalAmount = editForm.type === "buy"
+      ? grossAmount + fees
       : grossAmount - fees;
 
     updateTradeMutation.mutate({
       id: editingTrade.id,
       data: {
-        date: editForm.date,
+        date: editForm.date.includes("T") ? editForm.date : `${editForm.date}T12:00:00`,
         quantity: quantity.toString(),
         pricePerUnit: pricePerUnit.toString(),
         totalAmount: totalAmount.toFixed(2),
@@ -251,8 +251,8 @@ export default function Portfolio() {
     const pricePerUnit = parseFloat(tradeForm.pricePerUnit);
     const fees = parseFloat(tradeForm.fees) || 0;
     const grossAmount = quantity * pricePerUnit;
-    const totalAmount = tradeForm.type === "buy" 
-      ? grossAmount + fees 
+    const totalAmount = tradeForm.type === "buy"
+      ? grossAmount + fees
       : grossAmount - fees;
 
     try {
@@ -265,7 +265,7 @@ export default function Portfolio() {
 
       await createTradeMutation.mutateAsync({
         holdingId: holding.id,
-        date: tradeForm.date,
+        date: tradeForm.date.includes("T") ? tradeForm.date : `${tradeForm.date}T12:00:00`,
         quantity: quantity.toString(),
         pricePerUnit: pricePerUnit.toString(),
         totalAmount: totalAmount.toFixed(2),
@@ -308,7 +308,7 @@ export default function Portfolio() {
       const pricePerUnit = parseFloat(trade.pricePerUnit).toFixed(2);
       const fees = parseFloat(trade.fees).toFixed(2);
       const totalAmount = parseFloat(trade.totalAmount).toFixed(2);
-      
+
       return `${date},${type},${ticker},"${name}",${quantity},${pricePerUnit},${fees},${totalAmount}`;
     }).join("\n");
 
@@ -335,7 +335,7 @@ export default function Portfolio() {
   const holdingsWithStats: HoldingWithStats[] = useMemo(() => {
     return holdings.map(holding => {
       const holdingTrades = trades.filter(t => t.holdingId === holding.id);
-      
+
       let totalQuantity = 0;
       let totalInvested = 0;
 
@@ -431,9 +431,9 @@ export default function Portfolio() {
             <p className="text-muted-foreground">Monitora i tuoi investimenti su Scalable Capital</p>
           </div>
           <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              onClick={refreshQuotes} 
+            <Button
+              variant="outline"
+              onClick={refreshQuotes}
               disabled={isRefreshingQuotes}
               data-testid="button-refresh-quotes"
             >
@@ -599,9 +599,9 @@ export default function Portfolio() {
                         </div>
                         <div className="space-y-2">
                           <Label>Data</Label>
-                          <Input 
-                            type="date" 
-                            value={tradeForm.date} 
+                          <Input
+                            type="date"
+                            value={tradeForm.date}
                             onChange={(e) => setTradeForm(prev => ({ ...prev, date: e.target.value }))}
                             data-testid="input-trade-date"
                           />
@@ -665,12 +665,12 @@ export default function Portfolio() {
                   <DialogClose asChild>
                     <Button variant="outline">Annulla</Button>
                   </DialogClose>
-                  <Button 
-                    onClick={handleSubmitTrade} 
+                  <Button
+                    onClick={handleSubmitTrade}
                     disabled={
-                      (entryMode === "manual" ? !manualTicker.trim() : !selectedStock) || 
-                      !tradeForm.quantity || 
-                      !tradeForm.pricePerUnit || 
+                      (entryMode === "manual" ? !manualTicker.trim() : !selectedStock) ||
+                      !tradeForm.quantity ||
+                      !tradeForm.pricePerUnit ||
                       createTradeMutation.isPending
                     }
                     data-testid="button-submit-trade"
@@ -706,7 +706,7 @@ export default function Portfolio() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold" data-testid="text-current-value">
-                {portfolioSummary.holdingsWithValue > 0 
+                {portfolioSummary.holdingsWithValue > 0
                   ? formatCurrency(portfolioSummary.totalCurrentValue)
                   : "—"
                 }
@@ -727,17 +727,17 @@ export default function Portfolio() {
               )}
             </CardHeader>
             <CardContent>
-              <div 
+              <div
                 className={`text-2xl font-bold ${portfolioSummary.totalGainLoss >= 0 ? "text-green-600" : "text-red-600"}`}
                 data-testid="text-gain-loss"
               >
-                {portfolioSummary.holdingsWithValue > 0 
+                {portfolioSummary.holdingsWithValue > 0
                   ? `${portfolioSummary.totalGainLoss >= 0 ? "+" : ""}${formatCurrency(portfolioSummary.totalGainLoss)}`
                   : "—"
                 }
               </div>
               <p className={`text-xs ${portfolioSummary.totalGainLoss >= 0 ? "text-green-600" : "text-red-600"}`}>
-                {portfolioSummary.holdingsWithValue > 0 
+                {portfolioSummary.holdingsWithValue > 0
                   ? `${portfolioSummary.totalGainLossPercent >= 0 ? "+" : ""}${portfolioSummary.totalGainLossPercent.toFixed(2)}%`
                   : "Aggiorna i prezzi"
                 }
@@ -755,11 +755,11 @@ export default function Portfolio() {
               )}
             </CardHeader>
             <CardContent>
-              <div 
+              <div
                 className={`text-2xl font-bold ${portfolioSummary.totalGainLossPercent >= 0 ? "text-green-600" : "text-red-600"}`}
                 data-testid="text-performance"
               >
-                {portfolioSummary.holdingsWithValue > 0 
+                {portfolioSummary.holdingsWithValue > 0
                   ? `${portfolioSummary.totalGainLossPercent >= 0 ? "+" : ""}${portfolioSummary.totalGainLossPercent.toFixed(2)}%`
                   : "—"
                 }
@@ -880,9 +880,9 @@ export default function Portfolio() {
                         ))}
                       </SelectContent>
                     </Select>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={exportTradesToCSV}
                       disabled={trades.length === 0}
                       data-testid="button-export-trades"
@@ -989,8 +989,8 @@ export default function Portfolio() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Tipo Operazione</Label>
-                  <Select 
-                    value={editForm.type} 
+                  <Select
+                    value={editForm.type}
                     onValueChange={(value: "buy" | "sell") => setEditForm(prev => ({ ...prev, type: value }))}
                   >
                     <SelectTrigger data-testid="select-edit-type">
@@ -1069,7 +1069,7 @@ export default function Portfolio() {
             <DialogClose asChild>
               <Button variant="outline">Annulla</Button>
             </DialogClose>
-            <Button 
+            <Button
               onClick={handleUpdateTrade}
               disabled={!editForm.quantity || !editForm.pricePerUnit || updateTradeMutation.isPending}
               data-testid="button-save-edit"
@@ -1090,7 +1090,7 @@ export default function Portfolio() {
                 <div className="mt-3 p-3 bg-muted rounded-lg text-foreground">
                   <p className="font-medium">{tradeToDelete.holding?.ticker}</p>
                   <p className="text-sm">
-                    {tradeToDelete.type === "buy" ? "Acquisto" : "Vendita"} di {parseFloat(tradeToDelete.quantity).toFixed(4)} unità 
+                    {tradeToDelete.type === "buy" ? "Acquisto" : "Vendita"} di {parseFloat(tradeToDelete.quantity).toFixed(4)} unità
                     a {new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(parseFloat(tradeToDelete.pricePerUnit))}
                   </p>
                   <p className="text-sm font-medium mt-1">
@@ -1102,7 +1102,7 @@ export default function Portfolio() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annulla</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={() => tradeToDelete && deleteTradeMutation.mutate(tradeToDelete.id)}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               data-testid="button-confirm-delete"

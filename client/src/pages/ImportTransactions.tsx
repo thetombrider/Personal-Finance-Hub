@@ -221,21 +221,21 @@ export default function ImportTransactions() {
   };
 
   const parseDate = (value: string) => {
-    if (!value) return new Date().toISOString();
+    if (!value) return format(new Date(), "yyyy-MM-dd'T'HH:mm:ss");
     const cleanValue = value.trim();
     const parts = cleanValue.split(/[-/.]/);
     if (parts.length === 3) {
       const [first, second, third] = parts;
       if (third && third.length === 4) { // DD/MM/YYYY
-        return new Date(parseInt(third), parseInt(second) - 1, parseInt(first), 12).toISOString();
+        return format(new Date(parseInt(third), parseInt(second) - 1, parseInt(first), 12), "yyyy-MM-dd'T'HH:mm:ss");
       }
       if (first && first.length === 4) { // YYYY-MM-DD
-        return new Date(parseInt(first), parseInt(second) - 1, parseInt(third), 12).toISOString();
+        return format(new Date(parseInt(first), parseInt(second) - 1, parseInt(third), 12), "yyyy-MM-dd'T'HH:mm:ss");
       }
     }
     const date = new Date(cleanValue);
-    if (isValid(date)) return date.toISOString();
-    return new Date().toISOString();
+    if (isValid(date)) return format(date, "yyyy-MM-dd'T'HH:mm:ss");
+    return format(new Date(), "yyyy-MM-dd'T'HH:mm:ss");
   };
 
   // --- Transactions Logic ---

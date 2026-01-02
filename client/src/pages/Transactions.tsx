@@ -56,7 +56,7 @@ export default function Transactions() {
   const [sortField, setSortField] = useState<SortField>('date');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [currentPage, setCurrentPage] = useState(1);
-  
+
   // Filter states
   const [searchQuery, setSearchQuery] = useState('');
   const [filterAccountId, setFilterAccountId] = useState<string>('all');
@@ -100,17 +100,17 @@ export default function Transactions() {
       if (searchQuery && !t.description.toLowerCase().includes(searchQuery.toLowerCase())) {
         return false;
       }
-      
+
       // Account filter
       if (filterAccountId !== 'all' && t.accountId !== parseInt(filterAccountId)) {
         return false;
       }
-      
+
       // Category filter
       if (filterCategoryId !== 'all' && t.categoryId !== parseInt(filterCategoryId)) {
         return false;
       }
-      
+
       // Date range filter
       const transactionDate = new Date(t.date);
       if (dateFrom && transactionDate < dateFrom) {
@@ -123,7 +123,7 @@ export default function Transactions() {
           return false;
         }
       }
-      
+
       return true;
     });
   }, [transactions, searchQuery, filterAccountId, filterCategoryId, dateFrom, dateTo]);
@@ -131,7 +131,7 @@ export default function Transactions() {
   const sortedTransactions = useMemo(() => {
     const sorted = [...filteredTransactions].sort((a, b) => {
       let comparison = 0;
-      
+
       switch (sortField) {
         case 'date':
           comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
@@ -151,10 +151,10 @@ export default function Transactions() {
           comparison = amountA - amountB;
           break;
       }
-      
+
       return sortDirection === 'asc' ? comparison : -comparison;
     });
-    
+
     return sorted;
   }, [filteredTransactions, sortField, sortDirection, accounts, categories]);
 
@@ -170,7 +170,7 @@ export default function Transactions() {
   const hasActiveFilters = searchQuery || filterAccountId !== 'all' || filterCategoryId !== 'all' || dateFrom || dateTo;
 
   const totalPages = Math.ceil(sortedTransactions.length / ITEMS_PER_PAGE);
-  
+
   const paginatedTransactions = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     return sortedTransactions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
@@ -190,7 +190,7 @@ export default function Transactions() {
     if (sortField !== field) {
       return <ArrowUpDown size={14} className="ml-1 text-muted-foreground" />;
     }
-    return sortDirection === 'asc' 
+    return sortDirection === 'asc'
       ? <ArrowUp size={14} className="ml-1" />
       : <ArrowDown size={14} className="ml-1" />;
   };
@@ -199,7 +199,7 @@ export default function Transactions() {
     const formattedData = {
       ...data,
       amount: data.amount.toString(),
-      date: data.date.toISOString(),
+      date: format(data.date, "yyyy-MM-dd'T'HH:mm:ss"),
     };
 
     if (editingId) {
@@ -224,9 +224,9 @@ export default function Transactions() {
       fromAccountId: data.fromAccountId,
       toAccountId: data.toAccountId,
       categoryId: transferCategory.id,
-      date: data.date.toISOString(),
+      date: format(data.date, "yyyy-MM-dd'T'HH:mm:ss"),
     });
-    
+
     setIsTransferDialogOpen(false);
     transferForm.reset();
   };
@@ -297,10 +297,10 @@ export default function Transactions() {
   };
 
   const handleDownload = () => {
-    const transactionsToExport = selectedIds.size > 0 
+    const transactionsToExport = selectedIds.size > 0
       ? transactions.filter(t => selectedIds.has(t.id))
       : sortedTransactions;
-    
+
     if (transactionsToExport.length === 0) {
       return;
     }
@@ -317,9 +317,9 @@ export default function Transactions() {
       const account = accounts.find(a => a.id === t.accountId);
       const category = categories.find(c => c.id === t.categoryId);
       const signedAmount = t.type === 'income' ? parseFloat(t.amount) : -parseFloat(t.amount);
-      
+
       return [
-        new Date(t.date).toISOString().split('T')[0],
+        format(new Date(t.date), "yyyy-MM-dd"),
         escapeCSV(t.description),
         escapeCSV(account?.name || 'Unknown'),
         escapeCSV(category?.name || 'Unknown'),
@@ -361,16 +361,16 @@ export default function Transactions() {
 
           <div className="flex items-center gap-2">
             {selectedIds.size > 0 && (
-               <Button variant="destructive" className="gap-2" onClick={handleBulkDelete} data-testid="button-bulk-delete">
-                 <Trash2 size={16} /> Delete ({selectedIds.size})
-               </Button>
+              <Button variant="destructive" className="gap-2" onClick={handleBulkDelete} data-testid="button-bulk-delete">
+                <Trash2 size={16} /> Delete ({selectedIds.size})
+              </Button>
             )}
 
-            <Button 
-              variant="outline" 
-              className="gap-2" 
-              onClick={handleDownload} 
-              disabled={selectedIds.size === 0 && sortedTransactions.length === 0} 
+            <Button
+              variant="outline"
+              className="gap-2"
+              onClick={handleDownload}
+              disabled={selectedIds.size === 0 && sortedTransactions.length === 0}
               data-testid="button-download-transactions"
             >
               <Download size={16} /> Download ({selectedIds.size > 0 ? selectedIds.size : sortedTransactions.length})
@@ -378,7 +378,7 @@ export default function Transactions() {
 
             <Dialog open={isDialogOpen} onOpenChange={(open) => {
               setIsDialogOpen(open);
-              if(!open) {
+              if (!open) {
                 setEditingId(null);
                 form.reset({
                   amount: 0,
@@ -402,7 +402,7 @@ export default function Transactions() {
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
-                       <FormField
+                      <FormField
                         control={form.control}
                         name="type"
                         render={({ field }) => (
@@ -552,7 +552,7 @@ export default function Transactions() {
 
             <Dialog open={isTransferDialogOpen} onOpenChange={(open) => {
               setIsTransferDialogOpen(open);
-              if(!open) {
+              if (!open) {
                 transferForm.reset();
               }
             }}>
@@ -810,7 +810,7 @@ export default function Transactions() {
               </Button>
             )}
           </div>
-          
+
           {hasActiveFilters && (
             <div className="mt-3 text-sm text-muted-foreground">
               {filteredTransactions.length} transazioni trovate su {transactions.length} totali
@@ -824,7 +824,7 @@ export default function Transactions() {
               <TableRow>
                 <TableHead className="w-[120px]">
                   <div className="flex items-center gap-2">
-                    <Checkbox 
+                    <Checkbox
                       checked={allPageSelected ? true : somePageSelected ? "indeterminate" : false}
                       onCheckedChange={toggleAll}
                       aria-label="Select all on page"
@@ -843,7 +843,7 @@ export default function Transactions() {
                     )}
                   </div>
                 </TableHead>
-                <TableHead 
+                <TableHead
                   className="cursor-pointer hover:bg-muted/50 transition-colors select-none"
                   onClick={() => handleSort('date')}
                   data-testid="header-date"
@@ -853,7 +853,7 @@ export default function Transactions() {
                     <SortIcon field="date" />
                   </div>
                 </TableHead>
-                <TableHead 
+                <TableHead
                   className="cursor-pointer hover:bg-muted/50 transition-colors select-none"
                   onClick={() => handleSort('description')}
                   data-testid="header-description"
@@ -863,7 +863,7 @@ export default function Transactions() {
                     <SortIcon field="description" />
                   </div>
                 </TableHead>
-                <TableHead 
+                <TableHead
                   className="cursor-pointer hover:bg-muted/50 transition-colors select-none"
                   onClick={() => handleSort('category')}
                   data-testid="header-category"
@@ -873,7 +873,7 @@ export default function Transactions() {
                     <SortIcon field="category" />
                   </div>
                 </TableHead>
-                <TableHead 
+                <TableHead
                   className="cursor-pointer hover:bg-muted/50 transition-colors select-none"
                   onClick={() => handleSort('account')}
                   data-testid="header-account"
@@ -883,7 +883,7 @@ export default function Transactions() {
                     <SortIcon field="account" />
                   </div>
                 </TableHead>
-                <TableHead 
+                <TableHead
                   className="text-right cursor-pointer hover:bg-muted/50 transition-colors select-none"
                   onClick={() => handleSort('amount')}
                   data-testid="header-amount"
@@ -898,11 +898,11 @@ export default function Transactions() {
             </TableHeader>
             <TableBody>
               {paginatedTransactions.length === 0 ? (
-                 <TableRow>
-                   <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                     No transactions yet. Add one to get started.
-                   </TableCell>
-                 </TableRow>
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    No transactions yet. Add one to get started.
+                  </TableCell>
+                </TableRow>
               ) : (
                 paginatedTransactions.map((transaction) => {
                   const category = getCategory(transaction.categoryId);
@@ -910,7 +910,7 @@ export default function Transactions() {
                   return (
                     <TableRow key={transaction.id} className={cn("group", isSelected && "bg-muted/50")} data-testid={`row-transaction-${transaction.id}`}>
                       <TableCell>
-                        <Checkbox 
+                        <Checkbox
                           checked={isSelected}
                           onCheckedChange={() => toggleSelection(transaction.id)}
                           aria-label="Select row"
