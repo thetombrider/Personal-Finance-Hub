@@ -1,0 +1,13 @@
+"id","name","type","starting_balance","currency","color","credit_limit"
+"1","ING - CD","savings","5054.20","EUR","#ffff00",
+"4","Cash","cash","0.00","EUR","#ff8080",
+"5","Allianz","checking","204.80","EUR","#ff0080",
+"7","Buddybank","checking","992.65","EUR","#80ffff",
+"9","ING - CC","checking","0.00","EUR","#ff8000",
+"10","Revolut","checking","735.28","EUR","#0000ff",
+"11","Paypal","checking","7.38","EUR","#3b82f6",
+"12","Satispay","checking","7.72","EUR","#00ff00",
+"13","Buoni Pasto","checking","80.00","EUR","#c0c0c0",
+"14","Investimenti","investment","2007.00","EUR","#800040",
+"15","N26","checking","746.07","EUR","#808080",
+"16","ING - Carta di Credito","credit","0.00","EUR","#ff0000","1500.00"
