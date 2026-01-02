@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   app:
-    image: thetombrider/personal-finance:latest
+    build: .
     ports:
       - "5001:5000"
     environment:
