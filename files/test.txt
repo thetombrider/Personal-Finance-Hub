@@ -2,3 +2,6 @@ this is a test
 docker-compose up --build
 docker-compose up -d --build
 docker buildx build --platform linux/amd64 -t thetombrider/personal-finance:latest --push .
+
+image: thetombrider/personal-finance:latest
+

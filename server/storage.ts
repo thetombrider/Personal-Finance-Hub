@@ -76,6 +76,7 @@ export interface IStorage {
   createTrades(trades: InsertTrade[]): Promise<Trade[]>;
   updateTrade(id: number, trade: Partial<InsertTrade>): Promise<Trade | undefined>;
   deleteTrade(id: number): Promise<void>;
+  deleteTrades(ids: number[]): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -297,6 +298,11 @@ export class DatabaseStorage implements IStorage {
 
   async deleteTrade(id: number): Promise<void> {
     await db.delete(trades).where(eq(trades.id, id));
+  }
+
+  async deleteTrades(ids: number[]): Promise<void> {
+    if (ids.length === 0) return;
+    await db.delete(trades).where(inArray(trades.id, ids));
   }
 }
 

@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, TrendingUp, TrendingDown, Wallet, PiggyBank, RefreshCw, Search, Trash2, ArrowUpRight, ArrowDownRight, Pencil, Download } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { it } from "date-fns/locale";
+import { Checkbox } from "@/components/ui/checkbox";
 import * as api from "@/lib/api";
 import type { Holding, Trade } from "@shared/schema";
 
@@ -62,6 +63,7 @@ export default function Portfolio() {
   const [tradeToDelete, setTradeToDelete] = useState<(Trade & { holding?: Holding }) | null>(null);
   const [showHoldingsDropdown, setShowHoldingsDropdown] = useState(false);
   const [tradesHoldingFilter, setTradesHoldingFilter] = useState<string>("all");
+  const [selectedTradeIds, setSelectedTradeIds] = useState<Set<number>>(new Set());
 
   const { data: holdings = [], isLoading: holdingsLoading } = useQuery({
     queryKey: ["holdings"],
@@ -97,6 +99,15 @@ export default function Portfolio() {
       queryClient.invalidateQueries({ queryKey: ["trades"] });
       toast({ title: "Operazione eliminata" });
       setTradeToDelete(null);
+    },
+  });
+
+  const deleteTradesBulkMutation = useMutation({
+    mutationFn: api.deleteTradesBulk,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["trades"] });
+      toast({ title: "Operazioni eliminate" });
+      setSelectedTradeIds(new Set());
     },
   });
 
@@ -406,6 +417,37 @@ export default function Portfolio() {
     if (tradesHoldingFilter === "all") return tradesWithHoldings;
     return tradesWithHoldings.filter(trade => trade.holdingId === parseInt(tradesHoldingFilter));
   }, [tradesWithHoldings, tradesHoldingFilter]);
+
+  const toggleTradeSelection = (id: number) => {
+    const newSelected = new Set(selectedTradeIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedTradeIds(newSelected);
+  };
+
+  const allFilteredTradesSelected = filteredTrades.length > 0 && filteredTrades.every(t => selectedTradeIds.has(t.id));
+  const someFilteredTradesSelected = filteredTrades.some(t => selectedTradeIds.has(t.id)) && !allFilteredTradesSelected;
+
+  const toggleAllTrades = () => {
+    if (allFilteredTradesSelected) {
+      const newSelected = new Set(selectedTradeIds);
+      filteredTrades.forEach(t => newSelected.delete(t.id));
+      setSelectedTradeIds(newSelected);
+    } else {
+      const newSelected = new Set(selectedTradeIds);
+      filteredTrades.forEach(t => newSelected.add(t.id));
+      setSelectedTradeIds(newSelected);
+    }
+  };
+
+  const handleBulkDeleteTrades = async () => {
+    if (confirm(`Sei sicuro di voler eliminare ${selectedTradeIds.size} operazioni?`)) {
+      await deleteTradesBulkMutation.mutateAsync(Array.from(selectedTradeIds));
+    }
+  };
 
   if (holdingsLoading || tradesLoading) {
     return (
@@ -869,6 +911,11 @@ export default function Portfolio() {
                     <CardDescription>Tutte le operazioni di acquisto e vendita registrate</CardDescription>
                   </div>
                   <div className="flex items-center gap-2">
+                    {selectedTradeIds.size > 0 && (
+                      <Button variant="destructive" size="sm" onClick={handleBulkDeleteTrades}>
+                        <Trash2 className="h-4 w-4 mr-2" /> Elimina ({selectedTradeIds.size})
+                      </Button>
+                    )}
                     <Select value={tradesHoldingFilter} onValueChange={setTradesHoldingFilter}>
                       <SelectTrigger className="w-[200px]" data-testid="select-trades-holding-filter">
                         <SelectValue placeholder="Tutti i titoli" />
@@ -902,6 +949,13 @@ export default function Portfolio() {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead className="w-[50px]">
+                          <Checkbox
+                            checked={allFilteredTradesSelected || someFilteredTradesSelected}
+                            onCheckedChange={toggleAllTrades}
+                            aria-label="Select all"
+                          />
+                        </TableHead>
                         <TableHead>Data</TableHead>
                         <TableHead>Tipo</TableHead>
                         <TableHead>Titolo</TableHead>
@@ -915,6 +969,14 @@ export default function Portfolio() {
                     <TableBody>
                       {filteredTrades.map((trade) => (
                         <TableRow key={trade.id} data-testid={`row-trade-${trade.id}`}>
+                          <TableCell>
+                            <Checkbox
+                              checked={selectedTradeIds.has(trade.id)}
+                              onCheckedChange={() => toggleTradeSelection(trade.id)}
+                              aria-label="Select row"
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          </TableCell>
                           <TableCell>
                             {format(parseISO(trade.date), "dd MMM yyyy", { locale: it })}
                           </TableCell>

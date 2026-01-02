@@ -266,6 +266,15 @@ export async function deleteTrade(id: number) {
   if (!res.ok) throw new Error("Failed to delete trade");
 }
 
+export async function deleteTradesBulk(ids: number[]) {
+  const res = await fetch(`${API_BASE}/trades/bulk-delete`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ids }),
+  });
+  if (!res.ok) throw new Error("Failed to delete trades");
+}
+
 // ============ STOCK API ============
 
 export interface StockQuote {

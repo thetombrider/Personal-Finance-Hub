@@ -679,6 +679,19 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/trades/bulk-delete", async (req, res) => {
+    try {
+      const { ids } = z.object({ ids: z.array(z.number()) }).parse(req.body);
+      await storage.deleteTrades(ids);
+      res.status(204).send();
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to delete trades" });
+    }
+  });
+
   // ============ ALPHA VANTAGE STOCK API ============
 
   const ALPHA_VANTAGE_API_KEY = process.env.ALPHA_VANTAGE_API_KEY;
