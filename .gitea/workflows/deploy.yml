@@ -12,26 +12,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: actions/setup-buildx-action@v2
-
       - name: Login to Docker Hub
-        uses: actions/login-action@v2
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
-      - name: Extract tag name
-        id: vars
-        run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-
-      - name: Build and push
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          push: true
-          tags: |
-            thetombrider/personal-finance:latest
-            thetombrider/personal-finance:${{ steps.vars.outputs.tag }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      - name: Build and Push
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          IMAGE="thetombrider/personal-finance"
+          
+          docker build -t $IMAGE:latest -t $IMAGE:$TAG .
+          docker push $IMAGE:latest
+          docker push $IMAGE:$TAG
