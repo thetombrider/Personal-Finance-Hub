@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { parse, isValid } from "date-fns";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
 import * as api from "@/lib/api";
 import type { InsertTrade, InsertHolding, Holding, InsertAccount, InsertCategory } from "@shared/schema";
 
@@ -57,6 +58,7 @@ interface TradeMapping {
 export default function ImportTransactions() {
   const { accounts, categories, addTransactions, addAccounts, addCategories } = useFinance();
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
 
   const [step, setStep] = useState<Step>('upload');
   const [importMode, setImportMode] = useState<ImportMode>('transactions');
@@ -259,29 +261,51 @@ export default function ImportTransactions() {
 
     let accountId: number | null = selectedAccount || null;
     if (mapping.account && mapping.account !== 'none' && row[mapping.account]) {
-      const accName = row[mapping.account].trim().toLowerCase();
-      const matched = accounts.find(a => a.name.toLowerCase() === accName);
-      if (matched) accountId = matched.id;
-    } else if (!accountId && accounts.length > 0) {
-      accountId = accounts[0].id;
-    }
+      const rawVal = row[mapping.account].toString().trim();
+      const valLower = rawVal.toLowerCase();
 
-    let categoryId = categories[0]?.id ?? 0;
-    if (mapping.category && mapping.category !== 'none' && row[mapping.category]) {
-      const catName = row[mapping.category].trim().toLowerCase();
-      const matched = categories.find(c => c.name.toLowerCase() === catName && c.type === type);
-      if (matched) categoryId = matched.id;
-      else {
-        const nameMatch = categories.find(c => c.name.toLowerCase() === catName);
-        if (nameMatch) categoryId = nameMatch.id;
-        else {
-          const defaultForType = categories.find(c => c.type === type);
-          if (defaultForType) categoryId = defaultForType.id;
+      // Try match by name
+      let matched = accounts.find(a => a.name.toLowerCase() === valLower);
+
+      // Try match by ID if no name match
+      if (!matched) {
+        const numId = parseInt(rawVal);
+        if (!isNaN(numId)) {
+          matched = accounts.find(a => a.id === numId);
         }
       }
-    } else {
-      const defaultForType = categories.find(c => c.type === type);
-      if (defaultForType) categoryId = defaultForType.id;
+
+      if (matched) {
+        accountId = matched.id;
+      } else if (selectedAccount) {
+        accountId = selectedAccount;
+      }
+    } else if (!accountId && accounts.length > 0) {
+      accountId = accounts[0].id; // Final fallback if nothing else
+    }
+
+    let categoryId = categories.find(c => c.type === type)?.id || categories[0]?.id || 0;
+    if (mapping.category && mapping.category !== 'none' && row[mapping.category]) {
+      const rawVal = row[mapping.category].toString().trim();
+      const valLower = rawVal.toLowerCase();
+
+      // Try match by name + type
+      let matched = categories.find(c => c.name.toLowerCase() === valLower && c.type === type);
+
+      // Try match by name only
+      if (!matched) {
+        matched = categories.find(c => c.name.toLowerCase() === valLower);
+      }
+
+      // Try match by ID
+      if (!matched) {
+        const numId = parseInt(rawVal);
+        if (!isNaN(numId)) {
+          matched = categories.find(c => c.id === numId);
+        }
+      }
+
+      if (matched) categoryId = matched.id;
     }
 
     return {
@@ -289,9 +313,10 @@ export default function ImportTransactions() {
       amount: Math.abs(amount).toString(),
       description: row[mapping.description] || "Imported Transaction",
       accountId: accountId || 0,
-      categoryId,
+      categoryId: categoryId || 0,
       type,
-      _hasValidAccount: accountId !== null
+      _hasValidAccount: accountId !== null && accountId !== 0,
+      _hasValidCategory: categoryId !== null && categoryId !== 0
     };
   };
 
@@ -341,22 +366,61 @@ export default function ImportTransactions() {
   };
 
   const handleImport = async () => {
-    if (importMode === 'transactions') {
-      const transactions = csvData.map(getTransactionFromRow).filter(t => t._hasValidAccount && parseFloat(t.amount) > 0);
-      const toSave = transactions.map(({ _hasValidAccount, ...tx }) => tx);
-      await addTransactions(toSave);
-      setLocation('/transactions');
-    } else if (importMode === 'accounts') {
-      const newAccounts = csvData.map(getAccountFromRow).filter(a => a.name);
-      await addAccounts(newAccounts);
-      setLocation('/accounts');
-    } else if (importMode === 'categories') {
-      const newCategories = csvData.map(getCategoryFromRow).filter(c => c.name);
-      await addCategories(newCategories);
-      setLocation('/categories');
-    } else if (importMode === 'trades') {
-      // Trade import logic (simplified reuse of existing)
-      await handleTradeImport();
+    try {
+      if (importMode === 'transactions') {
+        const processed = csvData.map(getTransactionFromRow);
+        const transactions = processed.filter(t => t._hasValidAccount && t._hasValidCategory && parseFloat(t.amount) > 0);
+
+        if (transactions.length === 0) {
+          const missingAccount = processed.some(t => !t._hasValidAccount);
+          const missingCategory = processed.some(t => !t._hasValidCategory);
+          let reason = "No valid transactions found.";
+          if (missingAccount) reason += " Some rows have no valid Account mapping.";
+          if (missingCategory) reason += " Some rows have no valid Category mapping.";
+
+          toast({
+            title: "Import Failed",
+            description: reason,
+            variant: "destructive"
+          });
+          return;
+        }
+
+        const toSave = transactions.map(({ _hasValidAccount, _hasValidCategory, ...tx }) => tx);
+        await addTransactions(toSave);
+
+        toast({
+          title: "Import Successful",
+          description: `Imported ${transactions.length} transactions.`,
+        });
+        setLocation('/transactions');
+      } else if (importMode === 'accounts') {
+        const newAccounts = csvData.map(getAccountFromRow).filter(a => a.name);
+        if (newAccounts.length === 0) {
+          toast({ title: "Import Failed", description: "No valid accounts found.", variant: "destructive" });
+          return;
+        }
+        await addAccounts(newAccounts);
+        toast({ title: "Import Successful", description: `Imported ${newAccounts.length} accounts.` });
+        setLocation('/accounts');
+      } else if (importMode === 'categories') {
+        const newCategories = csvData.map(getCategoryFromRow).filter(c => c.name);
+        if (newCategories.length === 0) {
+          toast({ title: "Import Failed", description: "No valid categories found.", variant: "destructive" });
+          return;
+        }
+        await addCategories(newCategories);
+        toast({ title: "Import Successful", description: `Imported ${newCategories.length} categories.` });
+        setLocation('/categories');
+      } else if (importMode === 'trades') {
+        await handleTradeImport();
+      }
+    } catch (error: any) {
+      toast({
+        title: "Import Error",
+        description: error.message || "An unexpected error occurred during import.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -464,29 +528,45 @@ export default function ImportTransactions() {
                   <span className="font-medium">Map Columns - {importMode.toUpperCase()}</span>
                 </div>
 
+                {importMode === 'transactions' && (
+                  <div className="bg-primary/5 p-4 rounded-lg border border-primary/20 space-y-2 mb-6">
+                    <Label className="text-primary font-semibold">Fallback / Default Account</Label>
+                    <p className="text-xs text-muted-foreground">Used if the Account column is not mapped or a row's account name is not found.</p>
+                    <Select value={selectedAccount?.toString() || "none"} onValueChange={v => setSelectedAccount(v === 'none' ? null : parseInt(v))}>
+                      <SelectTrigger className="w-full md:w-[300px]"><SelectValue placeholder="Select fallback account" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">-- Select Fallback Account --</SelectItem>
+                        {accounts.map(a => <SelectItem key={a.id} value={a.id.toString()}>{a.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
                 <div className="grid gap-6 md:grid-cols-2">
                   {/* Dynamic Mapping Fields based on Mode */}
                   {importMode === 'transactions' && (
                     <>
-                      <div className="space-y-2"><Label>Date</Label><Select value={mapping.date} onValueChange={v => setMapping({ ...mapping, date: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
-                      <div className="space-y-2"><Label>Description</Label><Select value={mapping.description} onValueChange={v => setMapping({ ...mapping, description: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
-                      <div className="space-y-2"><Label>Amount</Label><Select value={mapping.amount} onValueChange={v => setMapping({ ...mapping, amount: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
-                      <div className="space-y-2"><Label>Account (Optional)</Label><Select value={mapping.account} onValueChange={v => setMapping({ ...mapping, account: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">-- None --</SelectItem>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
+                      <div className="space-y-2"><Label>Date *</Label><Select value={mapping.date} onValueChange={v => setMapping({ ...mapping, date: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
+                      <div className="space-y-2"><Label>Description *</Label><Select value={mapping.description} onValueChange={v => setMapping({ ...mapping, description: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
+                      <div className="space-y-2"><Label>Amount *</Label><Select value={mapping.amount} onValueChange={v => setMapping({ ...mapping, amount: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
+                      <div className="space-y-2"><Label>Type Column (Optional)</Label><Select value={mapping.type} onValueChange={v => setMapping({ ...mapping, type: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">-- Detect by Sign --</SelectItem>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
+                      <div className="space-y-2"><Label>Account Column (Optional)</Label><Select value={mapping.account} onValueChange={v => setMapping({ ...mapping, account: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">-- Use Fallback --</SelectItem>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
+                      <div className="space-y-2"><Label>Category Column (Optional)</Label><Select value={mapping.category} onValueChange={v => setMapping({ ...mapping, category: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">-- Default Category --</SelectItem>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
                     </>
                   )}
                   {importMode === 'accounts' && (
                     <>
                       <div className="space-y-2"><Label>Name *</Label><Select value={mapping.accountName} onValueChange={v => setMapping({ ...mapping, accountName: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
                       <div className="space-y-2"><Label>Type *</Label><Select value={mapping.accountType} onValueChange={v => setMapping({ ...mapping, accountType: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
-                      <div className="space-y-2"><Label>Balance</Label><Select value={mapping.accountBalance} onValueChange={v => setMapping({ ...mapping, accountBalance: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">-- None --</SelectItem>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
-                      <div className="space-y-2"><Label>Currency</Label><Select value={mapping.accountCurrency} onValueChange={v => setMapping({ ...mapping, accountCurrency: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">-- None --</SelectItem>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
+                      <div className="space-y-2"><Label>Balance</Label><Select value={mapping.accountBalance} onValueChange={v => setMapping({ ...mapping, accountBalance: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">-- None (0) --</SelectItem>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
+                      <div className="space-y-2"><Label>Currency</Label><Select value={mapping.accountCurrency} onValueChange={v => setMapping({ ...mapping, accountCurrency: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">-- Default (EUR) --</SelectItem>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
                     </>
                   )}
                   {importMode === 'categories' && (
                     <>
                       <div className="space-y-2"><Label>Name *</Label><Select value={mapping.categoryName} onValueChange={v => setMapping({ ...mapping, categoryName: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
                       <div className="space-y-2"><Label>Type *</Label><Select value={mapping.categoryType} onValueChange={v => setMapping({ ...mapping, categoryType: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
-                      <div className="space-y-2"><Label>Budget</Label><Select value={mapping.categoryBudget} onValueChange={v => setMapping({ ...mapping, categoryBudget: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">-- None --</SelectItem>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
+                      <div className="space-y-2"><Label>Budget</Label><Select value={mapping.categoryBudget} onValueChange={v => setMapping({ ...mapping, categoryBudget: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">-- None (0) --</SelectItem>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
                     </>
                   )}
                   {importMode === 'trades' && (
@@ -508,29 +588,49 @@ export default function ImportTransactions() {
 
             {step === 'preview' && (
               <div className="space-y-6">
-                <h3 className="text-lg font-medium">Preview {importMode} import</h3>
-                <div className="rounded-md border">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-medium">Preview {importMode} import</h3>
+                  <p className="text-sm text-muted-foreground">Showing first 5 rows</p>
+                </div>
+                <div className="rounded-md border overflow-hidden">
                   <Table>
-                    <TableHeader>
+                    <TableHeader className="bg-muted/50">
                       <TableRow>
                         {importMode === 'accounts' && <><TableHead>Name</TableHead><TableHead>Type</TableHead><TableHead>Balance</TableHead></>}
                         {importMode === 'categories' && <><TableHead>Name</TableHead><TableHead>Type</TableHead><TableHead>Budget</TableHead></>}
-                        {importMode === 'transactions' && <><TableHead>Date</TableHead><TableHead>Description</TableHead><TableHead>Amount</TableHead></>}
+                        {importMode === 'transactions' && <><TableHead>Date</TableHead><TableHead>Description</TableHead><TableHead>Amount</TableHead><TableHead>Account</TableHead><TableHead>Category</TableHead></>}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {csvData.slice(0, 5).map((row, i) => {
                         if (importMode === 'accounts') {
                           const acc = getAccountFromRow(row);
-                          return <TableRow key={i}><TableCell>{acc.name}</TableCell><TableCell>{acc.type}</TableCell><TableCell>{acc.startingBalance}</TableCell></TableRow>;
+                          return <TableRow key={i}><TableCell>{acc.name}</TableCell><TableCell className="capitalize">{acc.type}</TableCell><TableCell>{acc.startingBalance}</TableCell></TableRow>;
                         }
                         if (importMode === 'categories') {
                           const cat = getCategoryFromRow(row);
-                          return <TableRow key={i}><TableCell>{cat.name}</TableCell><TableCell>{cat.type}</TableCell><TableCell>{cat.budget}</TableCell></TableRow>;
+                          return <TableRow key={i}><TableCell>{cat.name}</TableCell><TableCell className="capitalize">{cat.type}</TableCell><TableCell>{cat.budget || '0'}</TableCell></TableRow>;
                         }
                         if (importMode === 'transactions') {
                           const tx = getTransactionFromRow(row);
-                          return <TableRow key={i}><TableCell>{tx.date}</TableCell><TableCell>{tx.description}</TableCell><TableCell>{tx.amount}</TableCell></TableRow>;
+                          const account = accounts.find(a => a.id === tx.accountId);
+                          const category = categories.find(c => c.id === tx.categoryId);
+
+                          return (
+                            <TableRow key={i} className={(!tx._hasValidAccount || !tx._hasValidCategory) ? "bg-destructive/5" : ""}>
+                              <TableCell className="text-xs">{tx.date.split('T')[0]}</TableCell>
+                              <TableCell className="max-w-[150px] truncate">{tx.description}</TableCell>
+                              <TableCell className={tx.type === 'income' ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
+                                {tx.type === 'income' ? '+' : '-'}{tx.amount}
+                              </TableCell>
+                              <TableCell>
+                                {account ? <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">{account.name}</span> : <span className="text-xs text-destructive font-medium">Not found</span>}
+                              </TableCell>
+                              <TableCell>
+                                {category ? <span className="text-xs px-2 py-0.5 rounded-full bg-secondary/10 text-secondary-foreground">{category.name}</span> : <span className="text-xs text-destructive font-medium">Not found</span>}
+                              </TableCell>
+                            </TableRow>
+                          );
                         }
                         return null;
                       })}
@@ -539,7 +639,7 @@ export default function ImportTransactions() {
                 </div>
                 <div className="flex justify-end gap-2 pt-4 border-t">
                   <Button variant="outline" onClick={() => setStep('map')}>Back</Button>
-                  <Button onClick={handleImport}>Import All</Button>
+                  <Button onClick={handleImport}>Import All Data</Button>
                 </div>
               </div>
             )}
