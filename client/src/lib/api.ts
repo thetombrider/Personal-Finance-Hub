@@ -20,6 +20,16 @@ export async function createAccount(account: InsertAccount) {
   return res.json();
 }
 
+export async function createAccountsBulk(accounts: InsertAccount[]) {
+  const res = await fetch(`${API_BASE}/accounts/bulk`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(accounts),
+  });
+  if (!res.ok) throw new Error("Failed to create accounts");
+  return res.json();
+}
+
 export async function updateAccount(id: number, account: Partial<InsertAccount>) {
   const res = await fetch(`${API_BASE}/accounts/${id}`, {
     method: "PATCH",
@@ -52,6 +62,16 @@ export async function createCategory(category: InsertCategory) {
     body: JSON.stringify(category),
   });
   if (!res.ok) throw new Error("Failed to create category");
+  return res.json();
+}
+
+export async function createCategoriesBulk(categories: InsertCategory[]) {
+  const res = await fetch(`${API_BASE}/categories/bulk`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(categories),
+  });
+  if (!res.ok) throw new Error("Failed to create categories");
   return res.json();
 }
 

@@ -45,9 +45,11 @@ interface FinanceContextType {
   transactions: Transaction[];
   isLoading: boolean;
   addAccount: (account: Omit<InsertAccount, "id">) => Promise<void>;
+  addAccounts: (accounts: Omit<InsertAccount, "id">[]) => Promise<void>;
   updateAccount: (id: number, account: Partial<Omit<InsertAccount, "id">>) => Promise<void>;
   deleteAccount: (id: number) => Promise<void>;
   addCategory: (category: Omit<InsertCategory, "id">) => Promise<void>;
+  addCategories: (categories: Omit<InsertCategory, "id">[]) => Promise<void>;
   updateCategory: (id: number, category: Partial<InsertCategory>) => Promise<void>;
   deleteCategory: (id: number) => Promise<void>;
   addTransaction: (transaction: Omit<InsertTransaction, "id">) => Promise<void>;
@@ -106,6 +108,13 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     },
   });
 
+  const createAccountsBulkMutation = useMutation({
+    mutationFn: api.createAccountsBulk,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["accounts"] });
+    },
+  });
+
   const updateAccountMutation = useMutation({
     mutationFn: ({ id, account }: { id: number; account: Partial<InsertAccount> }) =>
       api.updateAccount(id, account),
@@ -125,6 +134,13 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   // Mutations - Categories
   const createCategoryMutation = useMutation({
     mutationFn: api.createCategory,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+    },
+  });
+
+  const createCategoriesBulkMutation = useMutation({
+    mutationFn: api.createCategoriesBulk,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
     },
@@ -201,6 +217,10 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     await createAccountMutation.mutateAsync(account);
   };
 
+  const addAccounts = async (accounts: Omit<InsertAccount, "id">[]) => {
+    await createAccountsBulkMutation.mutateAsync(accounts);
+  };
+
   const updateAccount = async (id: number, account: Partial<Omit<InsertAccount, "id">>) => {
     await updateAccountMutation.mutateAsync({ id, account });
   };
@@ -211,6 +231,10 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
 
   const addCategory = async (category: Omit<InsertCategory, "id">) => {
     await createCategoryMutation.mutateAsync(category);
+  };
+
+  const addCategories = async (categories: Omit<InsertCategory, "id">[]) => {
+    await createCategoriesBulkMutation.mutateAsync(categories);
   };
 
   const updateCategory = async (id: number, category: Partial<InsertCategory>) => {
@@ -260,8 +284,8 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   return (
     <FinanceContext.Provider value={{
       accounts, categories, transactions, isLoading,
-      addAccount, updateAccount, deleteAccount,
-      addCategory, updateCategory, deleteCategory,
+      addAccount, addAccounts, updateAccount, deleteAccount,
+      addCategory, addCategories, updateCategory, deleteCategory,
       addTransaction, addTransactions, addTransfer, updateTransaction, deleteTransaction, deleteTransactions, clearTransactions,
       getAccountBalance, formatCurrency
     }}>

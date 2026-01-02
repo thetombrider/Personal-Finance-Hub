@@ -57,6 +57,19 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/accounts/bulk", async (req, res) => {
+    try {
+      const validated = z.array(insertAccountSchema).parse(req.body);
+      const accounts = await storage.createAccounts(validated);
+      res.status(201).json(accounts);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create accounts" });
+    }
+  });
+
   app.patch("/api/accounts/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
@@ -118,6 +131,19 @@ export async function registerRoutes(
         return res.status(400).json({ error: error.errors });
       }
       res.status(500).json({ error: "Failed to create category" });
+    }
+  });
+
+  app.post("/api/categories/bulk", async (req, res) => {
+    try {
+      const validated = z.array(insertCategorySchema).parse(req.body);
+      const categories = await storage.createCategories(validated);
+      res.status(201).json(categories);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create categories" });
     }
   });
 

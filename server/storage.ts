@@ -30,6 +30,7 @@ export interface IStorage {
   getAccounts(): Promise<Account[]>;
   getAccount(id: number): Promise<Account | undefined>;
   createAccount(account: InsertAccount): Promise<Account>;
+  createAccounts(accounts: InsertAccount[]): Promise<Account[]>;
   updateAccount(id: number, account: Partial<InsertAccount>): Promise<Account | undefined>;
   deleteAccount(id: number): Promise<void>;
 
@@ -37,6 +38,7 @@ export interface IStorage {
   getCategories(): Promise<Category[]>;
   getCategory(id: number): Promise<Category | undefined>;
   createCategory(category: InsertCategory): Promise<Category>;
+  createCategories(categories: InsertCategory[]): Promise<Category[]>;
   updateCategory(id: number, category: Partial<InsertCategory>): Promise<Category | undefined>;
   deleteCategory(id: number): Promise<void>;
 
@@ -108,6 +110,12 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
+  async createAccounts(accountsData: InsertAccount[]): Promise<Account[]> {
+    if (accountsData.length === 0) return [];
+    const result = await db.insert(accounts).values(accountsData).returning();
+    return result;
+  }
+
   async updateAccount(id: number, account: Partial<InsertAccount>): Promise<Account | undefined> {
     const result = await db.update(accounts).set(account).where(eq(accounts.id, id)).returning();
     return result[0];
@@ -130,6 +138,12 @@ export class DatabaseStorage implements IStorage {
   async createCategory(category: InsertCategory): Promise<Category> {
     const result = await db.insert(categories).values(category).returning();
     return result[0];
+  }
+
+  async createCategories(categoriesData: InsertCategory[]): Promise<Category[]> {
+    if (categoriesData.length === 0) return [];
+    const result = await db.insert(categories).values(categoriesData).returning();
+    return result;
   }
 
   async updateCategory(id: number, category: Partial<InsertCategory>): Promise<Category | undefined> {
