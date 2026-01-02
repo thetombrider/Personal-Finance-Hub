@@ -74,15 +74,15 @@ export default function ImportTransactions() {
     type: "none",
     account: "none",
     category: "none",
-    incomeAmount: "",
-    expenseAmount: "",
+    incomeAmount: "none",
+    expenseAmount: "none",
     accountName: "",
     accountType: "",
-    accountBalance: "",
-    accountCurrency: "",
+    accountBalance: "none",
+    accountCurrency: "none",
     categoryName: "",
     categoryType: "",
-    categoryBudget: ""
+    categoryBudget: "none"
   });
 
   const [tradeMapping, setTradeMapping] = useState<TradeMapping>({
@@ -129,9 +129,9 @@ export default function ImportTransactions() {
 
       const cleanMapping: Mapping = {
         date: "", amount: "", description: "", type: "none", account: "none", category: "none",
-        incomeAmount: "", expenseAmount: "",
-        accountName: "", accountType: "", accountBalance: "", accountCurrency: "",
-        categoryName: "", categoryType: "", categoryBudget: ""
+        incomeAmount: "none", expenseAmount: "none",
+        accountName: "", accountType: "", accountBalance: "none", accountCurrency: "none",
+        categoryName: "", categoryType: "", categoryBudget: "none"
       };
 
       const cleanTradeMapping: TradeMapping = {
@@ -468,33 +468,33 @@ export default function ImportTransactions() {
                   {/* Dynamic Mapping Fields based on Mode */}
                   {importMode === 'transactions' && (
                     <>
-                      <div className="space-y-2"><Label>Date</Label><Select value={mapping.date} onValueChange={v => setMapping({ ...mapping, date: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
-                      <div className="space-y-2"><Label>Description</Label><Select value={mapping.description} onValueChange={v => setMapping({ ...mapping, description: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
-                      <div className="space-y-2"><Label>Amount</Label><Select value={mapping.amount} onValueChange={v => setMapping({ ...mapping, amount: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
-                      <div className="space-y-2"><Label>Account (Optional)</Label><Select value={mapping.account} onValueChange={v => setMapping({ ...mapping, account: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">-- None --</SelectItem>{headers.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
+                      <div className="space-y-2"><Label>Date</Label><Select value={mapping.date} onValueChange={v => setMapping({ ...mapping, date: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
+                      <div className="space-y-2"><Label>Description</Label><Select value={mapping.description} onValueChange={v => setMapping({ ...mapping, description: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
+                      <div className="space-y-2"><Label>Amount</Label><Select value={mapping.amount} onValueChange={v => setMapping({ ...mapping, amount: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
+                      <div className="space-y-2"><Label>Account (Optional)</Label><Select value={mapping.account} onValueChange={v => setMapping({ ...mapping, account: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">-- None --</SelectItem>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
                     </>
                   )}
                   {importMode === 'accounts' && (
                     <>
-                      <div className="space-y-2"><Label>Name *</Label><Select value={mapping.accountName} onValueChange={v => setMapping({ ...mapping, accountName: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
-                      <div className="space-y-2"><Label>Type *</Label><Select value={mapping.accountType} onValueChange={v => setMapping({ ...mapping, accountType: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
-                      <div className="space-y-2"><Label>Balance</Label><Select value={mapping.accountBalance} onValueChange={v => setMapping({ ...mapping, accountBalance: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="">-- None --</SelectItem>{headers.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
-                      <div className="space-y-2"><Label>Currency</Label><Select value={mapping.accountCurrency} onValueChange={v => setMapping({ ...mapping, accountCurrency: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="">-- None --</SelectItem>{headers.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
+                      <div className="space-y-2"><Label>Name *</Label><Select value={mapping.accountName} onValueChange={v => setMapping({ ...mapping, accountName: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
+                      <div className="space-y-2"><Label>Type *</Label><Select value={mapping.accountType} onValueChange={v => setMapping({ ...mapping, accountType: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
+                      <div className="space-y-2"><Label>Balance</Label><Select value={mapping.accountBalance} onValueChange={v => setMapping({ ...mapping, accountBalance: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">-- None --</SelectItem>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
+                      <div className="space-y-2"><Label>Currency</Label><Select value={mapping.accountCurrency} onValueChange={v => setMapping({ ...mapping, accountCurrency: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">-- None --</SelectItem>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
                     </>
                   )}
                   {importMode === 'categories' && (
                     <>
-                      <div className="space-y-2"><Label>Name *</Label><Select value={mapping.categoryName} onValueChange={v => setMapping({ ...mapping, categoryName: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
-                      <div className="space-y-2"><Label>Type *</Label><Select value={mapping.categoryType} onValueChange={v => setMapping({ ...mapping, categoryType: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
-                      <div className="space-y-2"><Label>Budget</Label><Select value={mapping.categoryBudget} onValueChange={v => setMapping({ ...mapping, categoryBudget: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="">-- None --</SelectItem>{headers.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
+                      <div className="space-y-2"><Label>Name *</Label><Select value={mapping.categoryName} onValueChange={v => setMapping({ ...mapping, categoryName: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
+                      <div className="space-y-2"><Label>Type *</Label><Select value={mapping.categoryType} onValueChange={v => setMapping({ ...mapping, categoryType: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
+                      <div className="space-y-2"><Label>Budget</Label><Select value={mapping.categoryBudget} onValueChange={v => setMapping({ ...mapping, categoryBudget: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">-- None --</SelectItem>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
                     </>
                   )}
                   {importMode === 'trades' && (
                     <>
-                      <div className="space-y-2"><Label>Date *</Label><Select value={tradeMapping.date} onValueChange={v => setTradeMapping({ ...tradeMapping, date: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
-                      <div className="space-y-2"><Label>Ticker *</Label><Select value={tradeMapping.ticker} onValueChange={v => setTradeMapping({ ...tradeMapping, ticker: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
-                      <div className="space-y-2"><Label>Quantity *</Label><Select value={tradeMapping.quantity} onValueChange={v => setTradeMapping({ ...tradeMapping, quantity: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
-                      <div className="space-y-2"><Label>Price *</Label><Select value={tradeMapping.pricePerUnit} onValueChange={v => setTradeMapping({ ...tradeMapping, pricePerUnit: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
+                      <div className="space-y-2"><Label>Date *</Label><Select value={tradeMapping.date} onValueChange={v => setTradeMapping({ ...tradeMapping, date: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
+                      <div className="space-y-2"><Label>Ticker *</Label><Select value={tradeMapping.ticker} onValueChange={v => setTradeMapping({ ...tradeMapping, ticker: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
+                      <div className="space-y-2"><Label>Quantity *</Label><Select value={tradeMapping.quantity} onValueChange={v => setTradeMapping({ ...tradeMapping, quantity: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
+                      <div className="space-y-2"><Label>Price *</Label><Select value={tradeMapping.pricePerUnit} onValueChange={v => setTradeMapping({ ...tradeMapping, pricePerUnit: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
                     </>
                   )}
                 </div>
