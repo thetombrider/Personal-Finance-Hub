@@ -2,7 +2,7 @@ import { useFinance } from "@/context/FinanceContext";
 import { useLocation } from "wouter";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowUpRight, ArrowDownRight, Wallet, TrendingUp, Activity, PiggyBank, CreditCard, Eye, EyeOff } from "lucide-react";
@@ -28,10 +28,10 @@ export default function Dashboard() {
   };
 
   const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
-  
+
   // Find transfer category to exclude from income/expense calculations
   const transferCategoryId = categories.find(c => c.name.toLowerCase() === 'trasferimenti')?.id;
-  
+
   // Calculate monthly income/expense (excluding transfers)
   const currentMonth = new Date();
   const monthlyStats = useMemo(() => {
@@ -39,9 +39,9 @@ export default function Dashboard() {
       const date = parseISO(t.date);
       const isTransfer = t.categoryId === transferCategoryId;
       const matchesCategory = selectedCategory === "all" || t.categoryId === parseInt(selectedCategory);
-      return !isTransfer && isSameMonth(date, currentMonth) && 
-             (selectedAccount === "all" || t.accountId === parseInt(selectedAccount)) &&
-             matchesCategory;
+      return !isTransfer && isSameMonth(date, currentMonth) &&
+        (selectedAccount === "all" || t.accountId === parseInt(selectedAccount)) &&
+        matchesCategory;
     }).reduce((acc, t) => {
       const amount = parseFloat(t.amount) || 0;
       if (t.type === 'income') acc.income += amount;
@@ -59,14 +59,14 @@ export default function Dashboard() {
       const date = subMonths(new Date(), i);
       const monthStart = startOfMonth(date);
       const monthEnd = endOfMonth(date);
-      
+
       const monthTx = transactions.filter(t => {
         const tDate = parseISO(t.date);
         const isTransfer = t.categoryId === transferCategoryId;
         const matchesCategory = selectedCategory === "all" || t.categoryId === parseInt(selectedCategory);
-        return !isTransfer && tDate >= monthStart && tDate <= monthEnd && 
-               (selectedAccount === "all" || t.accountId === parseInt(selectedAccount)) &&
-               matchesCategory;
+        return !isTransfer && tDate >= monthStart && tDate <= monthEnd &&
+          (selectedAccount === "all" || t.accountId === parseInt(selectedAccount)) &&
+          matchesCategory;
       });
 
       const income = monthTx.filter(t => t.type === 'income').reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
@@ -87,16 +87,16 @@ export default function Dashboard() {
     const months = parseInt(timeRange);
     const startDate = startOfMonth(subMonths(new Date(), months - 1));
     const endDate = endOfMonth(new Date());
-    
+
     const expenseTx = transactions.filter(t => {
       const tDate = parseISO(t.date);
-      return t.type === 'expense' && 
+      return t.type === 'expense' &&
         t.categoryId !== transferCategoryId &&
         (selectedAccount === "all" || t.accountId === parseInt(selectedAccount)) &&
         tDate >= startDate && tDate <= endDate;
     });
     const catMap = new Map<string, number>();
-    
+
     expenseTx.forEach(t => {
       const cat = categories.find(c => c.id === t.categoryId);
       if (cat) {
@@ -112,23 +112,23 @@ export default function Dashboard() {
   const netWorthData = useMemo(() => {
     const months = parseInt(timeRange);
     const data = [];
-    
+
     // Calculate starting balance (sum of all account starting balances)
     const totalStartingBalance = accounts.reduce((sum, acc) => sum + parseFloat(acc.startingBalance), 0);
-    
+
     // Get all transactions sorted by date
-    const sortedTransactions = [...transactions].sort((a, b) => 
+    const sortedTransactions = [...transactions].sort((a, b) =>
       new Date(a.date).getTime() - new Date(b.date).getTime()
     );
-    
+
     for (let i = months - 1; i >= 0; i--) {
       const date = subMonths(new Date(), i);
       const monthEnd = endOfMonth(date);
-      
+
       // Calculate net worth at end of this month
       // = starting balance + all income - all expenses up to this month
       let netWorth = totalStartingBalance;
-      
+
       sortedTransactions.forEach(t => {
         const tDate = parseISO(t.date);
         if (tDate <= monthEnd) {
@@ -140,7 +140,7 @@ export default function Dashboard() {
           }
         }
       });
-      
+
       data.push({
         name: format(date, 'MMM yy'),
         netWorth
@@ -151,15 +151,15 @@ export default function Dashboard() {
 
   // Category trend data (monthly totals for selected category)
   const selectedCategoryForTrend = categories.find(c => c.id === parseInt(categoryTrendId));
-  
+
   const categoryTrendData = useMemo(() => {
     if (!categoryTrendId || !selectedCategoryForTrend) return [];
-    
+
     const months = parseInt(timeRange);
     const data = [];
     const catId = parseInt(categoryTrendId);
     const categoryType = selectedCategoryForTrend.type;
-    
+
     let budget: number | null = null;
     if (selectedCategoryForTrend.budget !== null && selectedCategoryForTrend.budget !== undefined && selectedCategoryForTrend.type === 'expense') {
       const parsedBudget = parseFloat(selectedCategoryForTrend.budget);
@@ -167,23 +167,23 @@ export default function Dashboard() {
         budget = parsedBudget;
       }
     }
-    
+
     for (let i = months - 1; i >= 0; i--) {
       const date = subMonths(new Date(), i);
       const monthStart = startOfMonth(date);
       const monthEnd = endOfMonth(date);
-      
+
       const monthTotal = transactions
         .filter(t => {
           const tDate = parseISO(t.date);
-          return t.categoryId === catId && 
-                 t.type === categoryType &&
-                 tDate >= monthStart && 
-                 tDate <= monthEnd &&
-                 (selectedAccount === "all" || t.accountId === parseInt(selectedAccount));
+          return t.categoryId === catId &&
+            t.type === categoryType &&
+            tDate >= monthStart &&
+            tDate <= monthEnd &&
+            (selectedAccount === "all" || t.accountId === parseInt(selectedAccount));
         })
         .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
-      
+
       data.push({
         name: format(date, 'MMM yy'),
         total: monthTotal,
@@ -222,30 +222,30 @@ export default function Dashboard() {
   const creditUsageThisMonth = useMemo(() => {
     const creditAccounts = accounts.filter(acc => acc.type === 'credit');
     if (creditAccounts.length === 0) return null;
-    
+
     const currentMonthStart = startOfMonth(new Date());
     const currentMonthEnd = endOfMonth(new Date());
-    
+
     let totalSpent = 0;
     let totalLimit = 0;
-    
+
     creditAccounts.forEach(acc => {
       const spent = transactions
         .filter(t => {
           const tDate = parseISO(t.date);
-          return t.accountId === acc.id && 
-                 t.type === 'expense' && 
-                 tDate >= currentMonthStart && 
-                 tDate <= currentMonthEnd;
+          return t.accountId === acc.id &&
+            t.type === 'expense' &&
+            tDate >= currentMonthStart &&
+            tDate <= currentMonthEnd;
         })
         .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
-      
+
       totalSpent += spent;
       if (acc.creditLimit) {
         totalLimit += parseFloat(acc.creditLimit);
       }
     });
-    
+
     return {
       spent: totalSpent,
       limit: totalLimit,
@@ -263,13 +263,13 @@ export default function Dashboard() {
       'investment': 'Investimenti',
       'cash': 'Contanti'
     };
-    
+
     accounts.forEach(acc => {
       const label = typeLabels[acc.type] || acc.type;
       const current = typeMap.get(label) || 0;
       typeMap.set(label, current + acc.balance);
     });
-    
+
     return Array.from(typeMap.entries())
       .map(([name, value]) => ({ name, value }))
       .filter(item => item.value !== 0)
@@ -287,7 +287,7 @@ export default function Dashboard() {
             <h1 className="text-3xl font-heading font-bold text-foreground">Dashboard</h1>
             <p className="text-muted-foreground">Overview of your financial health</p>
           </div>
-          
+
           <div className="flex items-center gap-2 flex-wrap">
             <div className="bg-card border border-border p-1 rounded-lg shadow-sm">
               <Select value={selectedAccount} onValueChange={setSelectedAccount}>
@@ -336,7 +336,7 @@ export default function Dashboard() {
 
         {/* Stats Grid - Asset Breakdown */}
         <div className="grid gap-4 md:grid-cols-6">
-          <Card 
+          <Card
             className="relative overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
             onClick={() => setDetailModal('total')}
             data-testid="card-total-balance"
@@ -354,7 +354,7 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card 
+          <Card
             className="cursor-pointer hover:shadow-md transition-shadow"
             onClick={() => setDetailModal('cash')}
             data-testid="card-total-cash"
@@ -373,7 +373,7 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card 
+          <Card
             className="cursor-pointer hover:shadow-md transition-shadow"
             onClick={() => setDetailModal('savings')}
             data-testid="card-total-savings"
@@ -392,7 +392,7 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card 
+          <Card
             className="cursor-pointer hover:shadow-md transition-shadow"
             onClick={() => setDetailModal('investments')}
             data-testid="card-total-investments"
@@ -455,8 +455,8 @@ export default function Dashboard() {
                     <span>Speso questo mese</span>
                     <span>{displayCurrency(creditUsageThisMonth.spent)} / {displayCurrency(creditUsageThisMonth.limit)}</span>
                   </div>
-                  <Progress 
-                    value={Math.min(creditUsageThisMonth.percentage, 100)} 
+                  <Progress
+                    value={Math.min(creditUsageThisMonth.percentage, 100)}
                     className={creditUsageThisMonth.percentage > 80 ? "bg-rose-200" : ""}
                   />
                 </div>
@@ -488,30 +488,30 @@ export default function Dashboard() {
                   <AreaChart data={netWorthData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                     <defs>
                       <linearGradient id="colorNetWorth" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                    <YAxis 
-                      stroke="#888888" 
-                      fontSize={12} 
-                      tickLine={false} 
-                      axisLine={false} 
+                    <YAxis
+                      stroke="#888888"
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={false}
                       tickFormatter={(value) => privacyMode ? "•••" : `€${(value / 1000).toFixed(0)}k`}
                       domain={['auto', 'auto']}
                     />
-                    <Tooltip 
+                    <Tooltip
                       formatter={(value: number) => [displayCurrency(value), 'Net Worth']}
                       contentStyle={{ backgroundColor: 'var(--color-card)', borderRadius: '8px', border: '1px solid var(--color-border)' }}
                       itemStyle={{ color: 'var(--color-foreground)' }}
                     />
-                    <Area 
-                      type="monotone" 
-                      dataKey="netWorth" 
-                      stroke="#6366f1" 
-                      fillOpacity={1} 
-                      fill="url(#colorNetWorth)" 
+                    <Area
+                      type="monotone"
+                      dataKey="netWorth"
+                      stroke="#6366f1"
+                      fillOpacity={1}
+                      fill="url(#colorNetWorth)"
                       strokeWidth={2}
                       dot={{ fill: '#6366f1', strokeWidth: 2, r: 3 }}
                       activeDot={{ r: 5, fill: '#6366f1' }}
@@ -532,36 +532,36 @@ export default function Dashboard() {
                 {netWorthByTypeData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={netWorthByTypeData} layout="vertical" margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                      <XAxis 
-                        type="number" 
-                        stroke="#888888" 
-                        fontSize={10} 
-                        tickLine={false} 
-                        axisLine={false} 
+                      <XAxis
+                        type="number"
+                        stroke="#888888"
+                        fontSize={10}
+                        tickLine={false}
+                        axisLine={false}
                         tickFormatter={(value) => privacyMode ? "•••" : `€${(value / 1000).toFixed(0)}k`}
                       />
-                      <YAxis 
-                        type="category" 
-                        dataKey="name" 
-                        stroke="#888888" 
-                        fontSize={10} 
-                        tickLine={false} 
+                      <YAxis
+                        type="category"
+                        dataKey="name"
+                        stroke="#888888"
+                        fontSize={10}
+                        tickLine={false}
                         axisLine={false}
                         width={70}
                       />
-                      <Tooltip 
+                      <Tooltip
                         formatter={(value: number) => [displayCurrency(value), 'Saldo']}
                         contentStyle={{ backgroundColor: 'var(--color-card)', borderRadius: '8px', border: '1px solid var(--color-border)' }}
                         itemStyle={{ color: 'var(--color-foreground)' }}
                       />
-                      <Bar 
-                        dataKey="value" 
+                      <Bar
+                        dataKey="value"
                         radius={[0, 4, 4, 0]}
                       >
                         {netWorthByTypeData.map((entry, index) => (
-                          <Cell 
-                            key={`cell-${index}`} 
-                            fill={entry.value >= 0 ? COLORS[index % COLORS.length] : '#ef4444'} 
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={entry.value >= 0 ? COLORS[index % COLORS.length] : '#ef4444'}
                           />
                         ))}
                       </Bar>
@@ -590,17 +590,17 @@ export default function Dashboard() {
                   <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                     <defs>
                       <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
-                        <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
+                        <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                       </linearGradient>
                       <linearGradient id="colorExpense" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#ef4444" stopOpacity={0.2}/>
-                        <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#ef4444" stopOpacity={0.2} />
+                        <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
                     <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => privacyMode ? "•••" : `€${value.toFixed(2)}`} />
-                    <Tooltip 
+                    <Tooltip
                       formatter={(value: number, name: string) => {
                         const formattedValue = privacyMode ? "•••••" : `€${value.toFixed(2)}`;
                         const label = name === 'income' ? 'Entrate' : 'Uscite';
@@ -640,9 +640,9 @@ export default function Dashboard() {
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip 
-                         formatter={(value: number) => privacyMode ? "•••••" : `€${value.toFixed(2)}`}
-                         contentStyle={{ backgroundColor: 'var(--color-card)', borderRadius: '8px', border: '1px solid var(--color-border)' }}
+                      <Tooltip
+                        formatter={(value: number) => privacyMode ? "•••••" : `€${value.toFixed(2)}`}
+                        contentStyle={{ backgroundColor: 'var(--color-card)', borderRadius: '8px', border: '1px solid var(--color-border)' }}
                       />
                     </PieChart>
                   </ResponsiveContainer>
@@ -650,13 +650,13 @@ export default function Dashboard() {
                   <div className="text-muted-foreground text-sm">No expense data available</div>
                 )}
                 <div className="grid grid-cols-2 gap-2 mt-4 w-full">
-                   {categoryData.slice(0, 4).map((entry, index) => (
-                     <div key={index} className="flex items-center gap-2 text-xs">
-                       <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
-                       <span className="truncate flex-1">{entry.name}</span>
-                       <span className="font-medium">{displayCurrency(entry.value as number)}</span>
-                     </div>
-                   ))}
+                  {categoryData.slice(0, 4).map((entry, index) => (
+                    <div key={index} className="flex items-center gap-2 text-xs">
+                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
+                      <span className="truncate flex-1">{entry.name}</span>
+                      <span className="font-medium">{displayCurrency(entry.value as number)}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </CardContent>
@@ -670,18 +670,18 @@ export default function Dashboard() {
               <div>
                 <CardTitle>Andamento Categoria</CardTitle>
                 <CardDescription>
-                  {selectedCategoryForTrend 
+                  {selectedCategoryForTrend
                     ? `Totale mensile ${selectedCategoryForTrend.type === 'income' ? 'entrate' : 'spese'}: ${selectedCategoryForTrend.name}`
                     : 'Seleziona una categoria per vedere il trend'}
-                  {selectedCategoryForTrend?.budget !== null && 
-                   selectedCategoryForTrend?.budget !== undefined && 
-                   selectedCategoryForTrend?.budget !== "" &&
-                   selectedCategoryForTrend.type === 'expense' && 
-                   !isNaN(parseFloat(selectedCategoryForTrend.budget)) && (
-                    <span className="ml-2 text-primary font-medium">
-                      (Budget: {displayCurrency(parseFloat(selectedCategoryForTrend.budget))})
-                    </span>
-                  )}
+                  {selectedCategoryForTrend?.budget !== null &&
+                    selectedCategoryForTrend?.budget !== undefined &&
+                    selectedCategoryForTrend?.budget !== "" &&
+                    selectedCategoryForTrend.type === 'expense' &&
+                    !isNaN(parseFloat(selectedCategoryForTrend.budget)) && (
+                      <span className="ml-2 text-primary font-medium">
+                        (Budget: {displayCurrency(parseFloat(selectedCategoryForTrend.budget))})
+                      </span>
+                    )}
                 </CardDescription>
               </div>
               <Select value={categoryTrendId} onValueChange={setCategoryTrendId}>
@@ -702,14 +702,14 @@ export default function Dashboard() {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={categoryTrendData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                     <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                    <YAxis 
-                      stroke="#888888" 
-                      fontSize={12} 
-                      tickLine={false} 
-                      axisLine={false} 
+                    <YAxis
+                      stroke="#888888"
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={false}
                       tickFormatter={(value) => privacyMode ? "•••" : `€${value.toFixed(0)}`}
                     />
-                    <Tooltip 
+                    <Tooltip
                       formatter={(value: number, name: string) => {
                         const label = name === 'total' ? (selectedCategoryForTrend?.name || 'Totale') : 'Budget';
                         return [displayCurrency(value), label];
@@ -717,36 +717,36 @@ export default function Dashboard() {
                       contentStyle={{ backgroundColor: 'var(--color-card)', borderRadius: '8px', border: '1px solid var(--color-border)' }}
                       itemStyle={{ color: 'var(--color-foreground)' }}
                     />
-                    <Bar 
-                      dataKey="total" 
+                    <Bar
+                      dataKey="total"
                       radius={[4, 4, 0, 0]}
                       name="Speso"
                     >
                       {categoryTrendData.map((entry, index) => (
-                        <Cell 
-                          key={`cell-${index}`} 
-                          fill={entry.overBudget ? '#ef4444' : '#8b5cf6'} 
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={entry.overBudget ? '#ef4444' : '#8b5cf6'}
                         />
                       ))}
                     </Bar>
-                    {selectedCategoryForTrend?.budget !== null && 
-                     selectedCategoryForTrend?.budget !== undefined && 
-                     selectedCategoryForTrend?.budget !== "" &&
-                     selectedCategoryForTrend.type === 'expense' && 
-                     !isNaN(parseFloat(selectedCategoryForTrend.budget)) && (
-                      <ReferenceLine 
-                        y={parseFloat(selectedCategoryForTrend.budget)} 
-                        stroke="#ef4444" 
-                        strokeDasharray="5 5"
-                        strokeWidth={2}
-                        label={{ 
-                          value: 'Budget', 
-                          position: 'right',
-                          fill: '#ef4444',
-                          fontSize: 12
-                        }}
-                      />
-                    )}
+                    {selectedCategoryForTrend?.budget !== null &&
+                      selectedCategoryForTrend?.budget !== undefined &&
+                      selectedCategoryForTrend?.budget !== "" &&
+                      selectedCategoryForTrend.type === 'expense' &&
+                      !isNaN(parseFloat(selectedCategoryForTrend.budget)) && (
+                        <ReferenceLine
+                          y={parseFloat(selectedCategoryForTrend.budget)}
+                          stroke="#ef4444"
+                          strokeDasharray="5 5"
+                          strokeWidth={2}
+                          label={{
+                            value: 'Budget',
+                            position: 'right',
+                            fill: '#ef4444',
+                            fontSize: 12
+                          }}
+                        />
+                      )}
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
@@ -762,7 +762,7 @@ export default function Dashboard() {
 
       {/* Account Detail Modal */}
       <Dialog open={detailModal !== null} onOpenChange={(open) => !open && setDetailModal(null)}>
-        <DialogContent className={detailModal === 'total' ? "max-w-3xl max-h-[85vh] overflow-hidden" : "max-w-md"}>
+        <DialogContent className={detailModal === 'total' ? "max-w-3xl w-[95%] md:w-full max-h-[85vh] overflow-hidden flex flex-col" : "max-w-md w-[95%] md:w-full"}>
           <DialogHeader>
             <DialogTitle>
               {detailModal === 'total' && 'Tutti i Conti'}
@@ -771,7 +771,7 @@ export default function Dashboard() {
               {detailModal === 'investments' && 'Conti Investimento'}
             </DialogTitle>
           </DialogHeader>
-          <div className="mt-4">
+          <div className="mt-4 flex-1 overflow-y-auto">
             {(() => {
               let filteredAccounts = accounts;
               if (detailModal === 'cash') {
@@ -781,20 +781,20 @@ export default function Dashboard() {
               } else if (detailModal === 'investments') {
                 filteredAccounts = accounts.filter(a => a.type === 'investment');
               }
-              
+
               if (filteredAccounts.length === 0) {
                 return <p className="text-muted-foreground text-center py-4">Nessun conto disponibile</p>;
               }
-              
+
               const total = filteredAccounts.reduce((sum, acc) => sum + acc.balance, 0);
-              
+
               return (
                 <>
-                  <div className={detailModal === 'total' ? "grid grid-cols-2 md:grid-cols-3 gap-3 max-h-[60vh] overflow-y-auto pr-2" : "space-y-3"}>
+                  <div className={detailModal === 'total' ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pr-2" : "space-y-3"}>
                     {filteredAccounts.map(account => (
-                      <div 
-                        key={account.id} 
-                        className={detailModal === 'total' 
+                      <div
+                        key={account.id}
+                        className={detailModal === 'total'
                           ? "flex flex-col p-3 bg-muted/50 rounded-lg"
                           : "flex items-center justify-between p-3 bg-muted/50 rounded-lg"
                         }
@@ -802,23 +802,19 @@ export default function Dashboard() {
                       >
                         {detailModal === 'total' ? (
                           <>
-                            <div className="flex items-center gap-2 mb-2">
-                              <div 
-                                className="w-3 h-3 rounded-full flex-shrink-0" 
-                                style={{ backgroundColor: account.color || '#6366f1' }}
-                              />
-                              <p className="font-medium text-sm truncate">{account.name}</p>
+                            <div className="flex flex-col">
+                              <span className="font-medium text-sm truncate">{account.name}</span>
+                              <span className="text-xs text-muted-foreground capitalize">{account.type}</span>
                             </div>
-                            <span className={`font-bold text-lg ${account.balance >= 0 ? 'text-foreground' : 'text-rose-600'}`}>
+                            <span className="text-lg font-bold font-heading mt-1">
                               {displayCurrency(account.balance)}
                             </span>
-                            <p className="text-xs text-muted-foreground capitalize mt-1">{account.type}</p>
                           </>
                         ) : (
                           <>
                             <div className="flex items-center gap-3">
-                              <div 
-                                className="w-3 h-3 rounded-full" 
+                              <div
+                                className="w-3 h-3 rounded-full"
                                 style={{ backgroundColor: account.color || '#6366f1' }}
                               />
                               <div>
@@ -839,8 +835,8 @@ export default function Dashboard() {
                     <span className="text-xl font-bold">{displayCurrency(total)}</span>
                   </div>
                   {detailModal === 'investments' && (
-                    <Button 
-                      className="w-full mt-4" 
+                    <Button
+                      className="w-full mt-4"
                       onClick={() => {
                         setDetailModal(null);
                         setLocation('/portfolio');
@@ -854,6 +850,11 @@ export default function Dashboard() {
               );
             })()}
           </div>
+          <DialogFooter className="mt-4 sm:justify-end">
+            <Button type="button" variant="secondary" onClick={() => setDetailModal(null)} className="w-full sm:w-auto">
+              Chiudi
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </Layout>
