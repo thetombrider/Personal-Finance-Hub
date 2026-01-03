@@ -78,6 +78,8 @@ export const holdings = pgTable("holdings", {
   name: text("name").notNull(),
   assetType: varchar("asset_type", { length: 20 }).notNull(),
   currency: varchar("currency", { length: 3 }).notNull().default("EUR"),
+  currentPrice: decimal("current_price", { precision: 12, scale: 4 }),
+  lastPriceUpdate: timestamp("last_price_update", { mode: "string" }),
 });
 
 export const insertHoldingSchema = createInsertSchema(holdings).omit({ id: true });

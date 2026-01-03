@@ -893,6 +893,29 @@ export async function registerRoutes(
 
       for (const symbol of symbolsToFetch) {
         try {
+          // Check if we have a fresh enough price in DB (fallback cache)
+          const holding = await storage.getHoldingByTicker(symbol);
+          if (holding && holding.currentPrice && holding.lastPriceUpdate) {
+            const timeDiff = Date.now() - new Date(holding.lastPriceUpdate).getTime();
+            if (timeDiff < CACHE_DURATION_24H) {
+              // If DB has fresh price, use it and don't call API to save limits
+              const price = parseFloat(holding.currentPrice.toString());
+              const quoteData = {
+                symbol: holding.ticker,
+                price: price,
+                change: 0, // We might lose change info if only storing price, but it's acceptable fallback
+                changePercent: "0%"
+              };
+              quotes[symbol] = quoteData;
+              quotesCache[symbol] = {
+                data: { ...quoteData, high: 0, low: 0, open: 0, previousClose: 0, volume: 0 },
+                timestamp: Date.now()
+              };
+              console.log(`[db-cache] Batch: returning DB quoted for ${symbol}`);
+              continue;
+            }
+          }
+
           const response = await fetch(
             `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${ALPHA_VANTAGE_API_KEY}`
           );
@@ -900,10 +923,21 @@ export async function registerRoutes(
           const data = await response.json();
 
           if (data["Note"]) {
+            // Rate limited
             const cached = quotesCache[symbol];
             if (cached) {
               quotes[symbol] = { ...cached.data, cached: true, stale: true };
               console.log(`[cache] Batch: rate limited, returning stale for ${symbol}`);
+            } else if (holding && holding.currentPrice) {
+              // Fallback to DB price even if old
+              const price = parseFloat(holding.currentPrice.toString());
+              quotes[symbol] = {
+                symbol: holding.ticker,
+                price: price,
+                change: 0,
+                changePercent: "0%"
+              };
+              console.log(`[db-fallback] Batch: returning stale DB price for ${symbol}`);
             }
             continue;
           }
@@ -914,6 +948,7 @@ export async function registerRoutes(
               convertToEur(parseFloat(quote["05. price"]), symbol),
               convertToEur(parseFloat(quote["09. change"]), symbol),
             ]);
+
             const quoteData = {
               symbol: quote["01. symbol"],
               price,
@@ -925,6 +960,16 @@ export async function registerRoutes(
               data: { ...quoteData, high: 0, low: 0, open: 0, previousClose: 0, volume: 0 },
               timestamp: Date.now()
             };
+
+            // PERSIST TO DATABASE
+            if (holding) {
+              await storage.updateHolding(holding.id, {
+                currentPrice: price.toFixed(4),
+                lastPriceUpdate: new Date().toISOString()
+              });
+              console.log(`[db-save] Batch: updated price for ${symbol}`);
+            }
+
             console.log(`[cache] Batch: stored fresh quote for ${symbol}`);
           } else {
             const cached = quotesCache[symbol];

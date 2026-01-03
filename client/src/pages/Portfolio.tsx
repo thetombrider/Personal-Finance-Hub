@@ -29,6 +29,7 @@ interface HoldingWithStats extends Holding {
   currentValue: number | null;
   gainLoss: number | null;
   gainLossPercent: number | null;
+  lastPriceUpdate: string | null | undefined;
 }
 
 export default function Portfolio() {
@@ -366,7 +367,9 @@ export default function Portfolio() {
 
       const averagePrice = totalQuantity > 0 ? totalInvested / totalQuantity : 0;
       const quote = quotes[holding.ticker];
-      const currentPrice = quote?.price || null;
+      // Use quote price if available (fresh), otherwise fall back to persisted price
+      const currentPrice = quote?.price || (holding.currentPrice ? parseFloat(holding.currentPrice.toString()) : null);
+
       const currentValue = currentPrice && totalQuantity > 0 ? currentPrice * totalQuantity : null;
       const gainLoss = currentValue !== null ? currentValue - totalInvested : null;
       const gainLossPercent = gainLoss !== null && totalInvested > 0 ? (gainLoss / totalInvested) * 100 : null;
@@ -380,6 +383,7 @@ export default function Portfolio() {
         currentValue,
         gainLoss,
         gainLossPercent,
+        lastPriceUpdate: holding.lastPriceUpdate
       };
     }).filter(h => h.totalQuantity > 0);
   }, [holdings, trades, quotes]);
