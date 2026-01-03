@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, CreditCard, PieChart, Receipt, Menu, Settings, FileSpreadsheet, TrendingUp } from "lucide-react";
+import { LayoutDashboard, CreditCard, PieChart, Receipt, Menu, Settings, FileSpreadsheet, TrendingUp, LogOut } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -23,6 +23,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     { href: "/settings/accounts", label: "Gestione Conti" },
     { href: "/settings/categories", label: "Gestione Categorie" },
     { href: "/settings/email-reports", label: "Report Email" },
+    { href: "/settings", label: "Impostazioni" },
   ];
 
   const NavContent = () => (
@@ -31,19 +32,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <img src={logo} alt="FinTrack" className="w-8 h-8 rounded-lg" />
         <span className="font-heading font-bold text-xl tracking-tight text-foreground">FinTrack</span>
       </div>
-      
+
       <nav className="flex-1 px-4 py-4 space-y-1">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = location === item.href;
           return (
-            <Link 
-              key={item.href} 
+            <Link
+              key={item.href}
               href={item.href}
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group",
-                isActive 
-                  ? "bg-primary text-primary-foreground shadow-md shadow-primary/20" 
+                isActive
+                  ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
                   : "text-muted-foreground hover:bg-accent hover:text-foreground"
               )}
             >
@@ -62,13 +63,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         {settingsItems.map((item) => {
           const isActive = location === item.href;
           return (
-            <Link 
-              key={item.href} 
+            <Link
+              key={item.href}
               href={item.href}
               className={cn(
                 "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200",
-                isActive 
-                  ? "bg-primary/10 text-primary" 
+                isActive
+                  ? "bg-primary/10 text-primary"
                   : "text-muted-foreground hover:bg-accent hover:text-foreground"
               )}
             >
@@ -76,6 +77,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </Link>
           );
         })}
+      </div>
+
+      <div className="mt-auto p-4 border-t border-border">
+        <Button
+          variant="ghost"
+          className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+          onClick={async () => {
+            await fetch("/api/logout", { method: "POST" });
+            window.location.reload();
+          }}
+        >
+          <LogOut size={18} />
+          Logout
+        </Button>
       </div>
     </div>
   );

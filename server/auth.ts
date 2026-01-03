@@ -106,6 +106,43 @@ export function setupAuth(app: Express) {
         if (!req.isAuthenticated()) return res.sendStatus(401);
         res.json(req.user);
     });
+
+    app.put("/api/user", async (req, res, next) => {
+        if (!req.isAuthenticated()) return res.sendStatus(401);
+
+        try {
+            const userId = (req.user as User).id;
+            const updateData: Partial<User> = {};
+
+            // Update username
+            if (req.body.username && req.body.username !== (req.user as User).username) {
+                const existingUser = await storage.getUserByUsername(req.body.username);
+                if (existingUser) {
+                    return res.status(400).send("Username already exists");
+                }
+                updateData.username = req.body.username;
+            }
+
+            // Update password
+            if (req.body.password) {
+                updateData.password = await hashPassword(req.body.password);
+            }
+
+            if (Object.keys(updateData).length === 0) {
+                return res.status(200).json(req.user);
+            }
+
+            const updatedUser = await storage.updateUser(userId, updateData);
+
+            // Re-login with updated user to update session
+            req.login(updatedUser!, (err) => {
+                if (err) return next(err);
+                res.status(200).json(updatedUser);
+            });
+        } catch (err) {
+            next(err);
+        }
+    });
 }
 
 export function isAuthenticated(req: any, res: any, next: any) {

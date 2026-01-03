@@ -15,6 +15,7 @@ import Portfolio from "@/pages/Portfolio";
 import ManageAccounts from "@/pages/settings/ManageAccounts";
 import ManageCategories from "@/pages/settings/ManageCategories";
 import EmailReports from "@/pages/settings/EmailReports";
+import Settings from "@/pages/settings/Settings";
 import { FinanceProvider } from "@/context/FinanceContext";
 
 function Router() {
@@ -44,6 +45,7 @@ function Router() {
         <Route path="/settings/accounts" component={ManageAccounts} />
         <Route path="/settings/categories" component={ManageCategories} />
         <Route path="/settings/email-reports" component={EmailReports} />
+        <Route path="/settings" component={Settings} />
         <Route component={NotFound} />
       </Switch>
     </FinanceProvider>
