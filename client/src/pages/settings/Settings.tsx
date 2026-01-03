@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import SettingsLayout from "@/components/SettingsLayout";
+import Layout from "@/components/Layout";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
@@ -80,7 +80,7 @@ export default function Settings() {
     }
 
     return (
-        <SettingsLayout>
+        <Layout>
             <div className="space-y-6">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Impostazioni Utente</h1>
@@ -151,6 +151,6 @@ export default function Settings() {
                     </CardContent>
                 </Card>
             </div>
-        </SettingsLayout>
+        </Layout>
     );
 }
