@@ -6,6 +6,7 @@ import { z } from "zod";
 import crypto from "crypto";
 import { setupAuth, isAuthenticated } from "./auth";
 import { sendEmail } from "./resend";
+import cron from "node-cron";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -1335,30 +1336,24 @@ export async function registerRoutes(
     }
   });
 
-  // Weekly report scheduler - checks every hour if it's Sunday 9 AM
-  let lastSentWeek = -1;
-  setInterval(async () => {
-    const now = new Date();
-    const dayOfWeek = now.getDay();
-    const hour = now.getHours();
-    const currentWeek = Math.floor(now.getTime() / (7 * 24 * 60 * 60 * 1000));
-
-    if (dayOfWeek === 0 && hour === 9 && currentWeek !== lastSentWeek) {
-      console.log("[scheduler] Sending weekly report...");
-      try {
-        const html = await generateWeeklyReport();
-        await sendEmail(
-          "tommasominuto@gmail.com",
-          `📊 Report Settimanale FinTrack - ${now.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })}`,
-          html
-        );
-        lastSentWeek = currentWeek;
-        console.log("[scheduler] Weekly report sent successfully");
-      } catch (error) {
-        console.error("[scheduler] Failed to send weekly report:", error);
-      }
+  // Weekly report scheduler - Runs every Sunday at 9:00 AM Europe/Rome
+  cron.schedule('0 9 * * 0', async () => {
+    console.log("[scheduler] Sending weekly report...");
+    try {
+      const html = await generateWeeklyReport();
+      const now = new Date();
+      await sendEmail(
+        "tommasominuto@gmail.com",
+        `📊 Report Settimanale FinTrack - ${now.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })}`,
+        html
+      );
+      console.log("[scheduler] Weekly report sent successfully");
+    } catch (error) {
+      console.error("[scheduler] Failed to send weekly report:", error);
     }
-  }, 60 * 60 * 1000);
+  }, {
+    timezone: "Europe/Rome"
+  });
 
   return httpServer;
 }
