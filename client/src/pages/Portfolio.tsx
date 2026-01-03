@@ -19,6 +19,7 @@ import { it } from "date-fns/locale";
 import { Checkbox } from "@/components/ui/checkbox";
 import * as api from "@/lib/api";
 import type { Holding, Trade } from "@shared/schema";
+import { StockDetailModal } from "@/components/portfolio/StockDetailModal";
 
 interface HoldingWithStats extends Holding {
   totalQuantity: number;
@@ -64,6 +65,7 @@ export default function Portfolio() {
   const [showHoldingsDropdown, setShowHoldingsDropdown] = useState(false);
   const [tradesHoldingFilter, setTradesHoldingFilter] = useState<string>("all");
   const [selectedTradeIds, setSelectedTradeIds] = useState<Set<number>>(new Set());
+  const [selectedHoldingForDetail, setSelectedHoldingForDetail] = useState<HoldingWithStats | null>(null);
 
   const { data: holdings = [], isLoading: holdingsLoading } = useQuery({
     queryKey: ["holdings"],
@@ -847,7 +849,12 @@ export default function Portfolio() {
                     </TableHeader>
                     <TableBody>
                       {holdingsWithStats.map((holding) => (
-                        <TableRow key={holding.id} data-testid={`row-holding-${holding.id}`}>
+                        <TableRow
+                          key={holding.id}
+                          data-testid={`row-holding-${holding.id}`}
+                          className="cursor-pointer hover:bg-muted/50"
+                          onClick={() => setSelectedHoldingForDetail(holding)}
+                        >
                           <TableCell>
                             <div>
                               <p className="font-medium">{holding.ticker}</p>
@@ -1174,6 +1181,15 @@ export default function Portfolio() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {selectedHoldingForDetail && (
+        <StockDetailModal
+          isOpen={!!selectedHoldingForDetail}
+          onClose={() => setSelectedHoldingForDetail(null)}
+          holding={selectedHoldingForDetail}
+          trades={trades.filter(t => t.holdingId === selectedHoldingForDetail.id)}
+        />
+      )}
     </Layout>
   );
 }
