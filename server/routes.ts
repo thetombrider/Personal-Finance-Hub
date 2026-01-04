@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { type Server } from "http";
 import { storage } from "./storage";
-import { insertAccountSchema, insertCategorySchema, insertTransactionSchema, insertHoldingSchema, insertTradeSchema } from "@shared/schema";
+import { insertAccountSchema, insertCategorySchema, insertTransactionSchema, insertHoldingSchema, insertTradeSchema, insertMonthlyBudgetSchema, insertRecurringExpenseSchema, insertPlannedExpenseSchema } from "@shared/schema";
 import { z } from "zod";
 import crypto from "crypto";
 import { setupAuth, isAuthenticated } from "./auth";
@@ -690,6 +690,166 @@ export async function registerRoutes(
         return res.status(400).json({ error: error.errors });
       }
       res.status(500).json({ error: "Failed to delete trades" });
+    }
+  });
+
+  // ============ BUDGET ============
+
+  app.get("/api/budget/:year/:month", async (req, res) => {
+    try {
+      const year = parseInt(req.params.year);
+      const month = parseInt(req.params.month); // 1-12
+
+      const [categories, monthlyBudgets, plannedExpenses, recurringExpenses] = await Promise.all([
+        storage.getCategories(),
+        storage.getMonthlyBudgets(year, month),
+        storage.getPlannedExpenses(year, month),
+        storage.getActiveRecurringExpenses()
+      ]);
+
+      // Calculate aggregated budget data
+      const budgetData = categories.map(category => {
+        const monthlyBudget = monthlyBudgets.find(b => b.categoryId === category.id);
+        const baseline = monthlyBudget ? parseFloat(monthlyBudget.amount.toString()) : 0;
+
+        const categoryPlanned = plannedExpenses.filter(p => p.categoryId === category.id);
+        const plannedTotal = categoryPlanned.reduce((sum, p) => sum + parseFloat(p.amount.toString()), 0);
+
+        const categoryRecurring = recurringExpenses.filter(r => r.categoryId === category.id);
+        // Ensure recurring expenses are active for this month (simple check based on start date)
+        // TODO: More complex recurrence logic could be added here
+        const recurringTotal = categoryRecurring.reduce((sum, r) => sum + parseFloat(r.amount.toString()), 0);
+
+        return {
+          category,
+          baseline,
+          planned: plannedTotal,
+          recurring: recurringTotal,
+          total: baseline + plannedTotal + recurringTotal,
+          plannedExpenses: categoryPlanned,
+          recurringExpenses: categoryRecurring
+        };
+      });
+
+      res.json(budgetData);
+    } catch (error) {
+      console.error("Failed to fetch budget data:", error);
+      res.status(500).json({ error: "Failed to fetch budget data" });
+    }
+  });
+
+  app.post("/api/budget", async (req, res) => {
+    try {
+      const validated = insertMonthlyBudgetSchema.parse(req.body);
+      const budget = await storage.upsertMonthlyBudget(validated);
+      res.json(budget);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to save monthly budget" });
+    }
+  });
+
+  // Recurring Expenses
+  app.get("/api/budget/recurring", async (req, res) => {
+    try {
+      const expenses = await storage.getRecurringExpenses();
+      res.json(expenses);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch recurring expenses" });
+    }
+  });
+
+  app.post("/api/budget/recurring", async (req, res) => {
+    try {
+      const validated = insertRecurringExpenseSchema.parse(req.body);
+      const expense = await storage.createRecurringExpense(validated);
+      res.status(201).json(expense);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create recurring expense" });
+    }
+  });
+
+  app.patch("/api/budget/recurring/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const validated = insertRecurringExpenseSchema.partial().parse(req.body);
+      const expense = await storage.updateRecurringExpense(id, validated);
+      if (!expense) {
+        return res.status(404).json({ error: "Recurring expense not found" });
+      }
+      res.json(expense);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to update recurring expense" });
+    }
+  });
+
+  app.delete("/api/budget/recurring/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteRecurringExpense(id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete recurring expense" });
+    }
+  });
+
+  // Planned Expenses
+  app.get("/api/budget/planned/:year/:month", async (req, res) => {
+    try {
+      const year = parseInt(req.params.year);
+      const month = parseInt(req.params.month);
+      const expenses = await storage.getPlannedExpenses(year, month);
+      res.json(expenses);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch planned expenses" });
+    }
+  });
+
+  app.post("/api/budget/planned", async (req, res) => {
+    try {
+      const validated = insertPlannedExpenseSchema.parse(req.body);
+      const expense = await storage.createPlannedExpense(validated);
+      res.status(201).json(expense);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create planned expense" });
+    }
+  });
+
+  app.patch("/api/budget/planned/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const validated = insertPlannedExpenseSchema.partial().parse(req.body);
+      const expense = await storage.updatePlannedExpense(id, validated);
+      if (!expense) {
+        return res.status(404).json({ error: "Planned expense not found" });
+      }
+      res.json(expense);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to update planned expense" });
+    }
+  });
+
+  app.delete("/api/budget/planned/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deletePlannedExpense(id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete planned expense" });
     }
   });
 

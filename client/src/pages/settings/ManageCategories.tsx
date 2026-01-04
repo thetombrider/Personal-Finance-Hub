@@ -16,7 +16,7 @@ const categorySchema = z.object({
   name: z.string().min(2, "Name is required"),
   type: z.enum(["income", "expense"]),
   color: z.string().default("#3b82f6"),
-  budget: z.string().optional(),
+  color: z.string().default("#3b82f6"),
 });
 
 type CategoryFormValues = z.infer<typeof categorySchema>;
@@ -32,18 +32,14 @@ export default function ManageCategories() {
       name: "",
       type: "expense",
       color: "#3b82f6",
-      budget: "",
+      color: "#3b82f6",
     },
   });
 
   const onSubmit = async (data: CategoryFormValues) => {
     const submitData = {
       ...data,
-      budget: data.budget && data.budget.trim() !== "" ? data.budget : null,
     };
-    if (data.type === "income") {
-      submitData.budget = null;
-    }
     if (editingId) {
       await updateCategory(editingId, submitData);
     } else {
@@ -60,7 +56,7 @@ export default function ManageCategories() {
       name: category.name,
       type: category.type,
       color: category.color,
-      budget: category.budget || "",
+      color: category.color,
     });
     setIsDialogOpen(true);
   };
@@ -87,26 +83,22 @@ export default function ManageCategories() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div 
-                    className="w-4 h-4 rounded-full" 
+                  <div
+                    className="w-4 h-4 rounded-full"
                     style={{ backgroundColor: category.color }}
                   />
                   <span className="font-medium" data-testid={`text-category-name-${category.id}`}>{category.name}</span>
                 </div>
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                   <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(category)} data-testid={`button-edit-${category.id}`}>
-                      <Edit2 size={14} />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(category.id)} data-testid={`button-delete-${category.id}`}>
-                      <Trash2 size={14} />
-                    </Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(category)} data-testid={`button-edit-${category.id}`}>
+                    <Edit2 size={14} />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(category.id)} data-testid={`button-delete-${category.id}`}>
+                    <Trash2 size={14} />
+                  </Button>
                 </div>
               </div>
-              {category.budget !== null && category.budget !== undefined && category.budget !== "" && (
-                <div className="mt-2 text-sm text-muted-foreground">
-                  Budget: {formatCurrency(parseFloat(category.budget))}
-                </div>
-              )}
+
             </CardContent>
           </Card>
         ))}
@@ -126,7 +118,7 @@ export default function ManageCategories() {
 
   return (
     <Layout>
-       <div className="space-y-8">
+      <div className="space-y-8">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-heading font-bold text-foreground">Gestione Categorie</h1>
@@ -135,9 +127,9 @@ export default function ManageCategories() {
 
           <Dialog open={isDialogOpen} onOpenChange={(open) => {
             setIsDialogOpen(open);
-            if(!open) {
+            if (!open) {
               setEditingId(null);
-              form.reset({ name: "", type: "expense", color: "#3b82f6", budget: "" });
+              form.reset({ name: "", type: "expense", color: "#3b82f6" });
             }
           }}>
             <DialogTrigger asChild>
@@ -186,7 +178,7 @@ export default function ManageCategories() {
                         </FormItem>
                       )}
                     />
-                     <FormField
+                    <FormField
                       control={form.control}
                       name="color"
                       render={({ field }) => (
@@ -203,27 +195,7 @@ export default function ManageCategories() {
                       )}
                     />
                   </div>
-                  {form.watch("type") === "expense" && (
-                    <FormField
-                      control={form.control}
-                      name="budget"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Budget Mensile (opzionale)</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="number" 
-                              step="0.01" 
-                              placeholder="es. 500.00" 
-                              {...field} 
-                              data-testid="input-budget" 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )}
+
                   <DialogFooter>
                     <Button type="submit" data-testid="button-submit-category">{editingId ? "Salva Modifiche" : "Crea Categoria"}</Button>
                   </DialogFooter>

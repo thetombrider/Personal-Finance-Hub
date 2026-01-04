@@ -12,6 +12,7 @@ import Categories from "@/pages/Categories";
 import Transactions from "@/pages/Transactions";
 import ImportTransactions from "@/pages/ImportTransactions";
 import Portfolio from "@/pages/Portfolio";
+import Budget from "@/pages/Budget";
 import ManageAccounts from "@/pages/settings/ManageAccounts";
 import ManageCategories from "@/pages/settings/ManageCategories";
 import EmailReports from "@/pages/settings/EmailReports";
@@ -41,6 +42,7 @@ function Router() {
         <Route path="/categories" component={Categories} />
         <Route path="/transactions" component={Transactions} />
         <Route path="/import" component={ImportTransactions} />
+        <Route path="/budget" component={Budget} />
         <Route path="/portfolio" component={Portfolio} />
         <Route path="/settings/accounts" component={ManageAccounts} />
         <Route path="/settings/categories" component={ManageCategories} />

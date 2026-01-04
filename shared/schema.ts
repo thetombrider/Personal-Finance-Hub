@@ -50,7 +50,6 @@ export const categories = pgTable("categories", {
   type: varchar("type", { length: 10 }).notNull(),
   color: varchar("color", { length: 7 }).notNull(),
   icon: text("icon"),
-  budget: decimal("budget", { precision: 12, scale: 2 }),
 });
 
 export const insertCategorySchema = createInsertSchema(categories).omit({ id: true });
@@ -100,3 +99,45 @@ export const trades = pgTable("trades", {
 export const insertTradeSchema = createInsertSchema(trades).omit({ id: true });
 export type InsertTrade = z.infer<typeof insertTradeSchema>;
 export type Trade = typeof trades.$inferSelect;
+
+export const monthlyBudgets = pgTable("monthly_budgets", {
+  id: serial("id").primaryKey(),
+  categoryId: integer("category_id").notNull().references(() => categories.id, { onDelete: "cascade" }),
+  year: integer("year").notNull(),
+  month: integer("month").notNull(), // 1-12
+  amount: decimal("amount", { precision: 12, scale: 2 }).notNull().default("0"),
+});
+
+export const insertMonthlyBudgetSchema = createInsertSchema(monthlyBudgets).omit({ id: true });
+export type InsertMonthlyBudget = z.infer<typeof insertMonthlyBudgetSchema>;
+export type MonthlyBudget = typeof monthlyBudgets.$inferSelect;
+
+export const recurringExpenses = pgTable("recurring_expenses", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
+  accountId: integer("account_id").notNull().references(() => accounts.id, { onDelete: "cascade" }),
+  categoryId: integer("category_id").notNull().references(() => categories.id, { onDelete: "cascade" }),
+  interval: varchar("interval", { length: 20 }).notNull().default("monthly"),
+  dayOfMonth: integer("day_of_month").notNull(),
+  startDate: timestamp("start_date", { mode: "string" }).notNull(),
+  lastGenerated: timestamp("last_generated", { mode: "string" }),
+  active: boolean("active").notNull().default(true),
+});
+
+export const insertRecurringExpenseSchema = createInsertSchema(recurringExpenses).omit({ id: true });
+export type InsertRecurringExpense = z.infer<typeof insertRecurringExpenseSchema>;
+export type RecurringExpense = typeof recurringExpenses.$inferSelect;
+
+export const plannedExpenses = pgTable("planned_expenses", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
+  categoryId: integer("category_id").notNull().references(() => categories.id, { onDelete: "cascade" }),
+  date: timestamp("date", { mode: "string" }).notNull(),
+  notes: text("notes"),
+});
+
+export const insertPlannedExpenseSchema = createInsertSchema(plannedExpenses).omit({ id: true });
+export type InsertPlannedExpense = z.infer<typeof insertPlannedExpenseSchema>;
+export type PlannedExpense = typeof plannedExpenses.$inferSelect;

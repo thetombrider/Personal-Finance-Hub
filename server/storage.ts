@@ -16,10 +16,25 @@ import {
   transactions,
   holdings,
   trades,
-  users
+  type UpsertUser,
+  accounts,
+  categories,
+  transactions,
+  holdings,
+  trades,
+  users,
+  monthlyBudgets,
+  type MonthlyBudget,
+  type InsertMonthlyBudget,
+  recurringExpenses,
+  type RecurringExpense,
+  type InsertRecurringExpense,
+  plannedExpenses,
+  type PlannedExpense,
+  type InsertPlannedExpense
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, sql, inArray } from "drizzle-orm";
+import { eq, sql, inArray, and } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -79,6 +94,24 @@ export interface IStorage {
   updateTrade(id: number, trade: Partial<InsertTrade>): Promise<Trade | undefined>;
   deleteTrade(id: number): Promise<void>;
   deleteTrades(ids: number[]): Promise<void>;
+  deleteTrades(ids: number[]): Promise<void>;
+
+  // Monthly Budgets
+  getMonthlyBudgets(year: number, month: number): Promise<MonthlyBudget[]>;
+  upsertMonthlyBudget(budget: InsertMonthlyBudget): Promise<MonthlyBudget>;
+
+  // Recurring Expenses
+  getRecurringExpenses(): Promise<RecurringExpense[]>;
+  getActiveRecurringExpenses(): Promise<RecurringExpense[]>;
+  createRecurringExpense(expense: InsertRecurringExpense): Promise<RecurringExpense>;
+  updateRecurringExpense(id: number, expense: Partial<InsertRecurringExpense>): Promise<RecurringExpense | undefined>;
+  deleteRecurringExpense(id: number): Promise<void>;
+
+  // Planned Expenses
+  getPlannedExpenses(year: number, month: number): Promise<PlannedExpense[]>;
+  createPlannedExpense(expense: InsertPlannedExpense): Promise<PlannedExpense>;
+  updatePlannedExpense(id: number, expense: Partial<InsertPlannedExpense>): Promise<PlannedExpense | undefined>;
+  deletePlannedExpense(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -311,6 +344,97 @@ export class DatabaseStorage implements IStorage {
   async deleteTrades(ids: number[]): Promise<void> {
     if (ids.length === 0) return;
     await db.delete(trades).where(inArray(trades.id, ids));
+  }
+
+  // Monthly Budgets
+  async getMonthlyBudgets(year: number, month: number): Promise<MonthlyBudget[]> {
+    return await db.select()
+      .from(monthlyBudgets)
+      .where(and(
+        eq(monthlyBudgets.year, year),
+        eq(monthlyBudgets.month, month)
+      ));
+  }
+
+  async upsertMonthlyBudget(budget: InsertMonthlyBudget): Promise<MonthlyBudget> {
+    const existing = await db.select()
+      .from(monthlyBudgets)
+      .where(and(
+        eq(monthlyBudgets.categoryId, budget.categoryId),
+        eq(monthlyBudgets.year, budget.year),
+        eq(monthlyBudgets.month, budget.month)
+      ));
+
+    if (existing.length > 0) {
+      const [updated] = await db.update(monthlyBudgets)
+        .set({ amount: budget.amount })
+        .where(eq(monthlyBudgets.id, existing[0].id))
+        .returning();
+      return updated;
+    }
+
+    const [created] = await db.insert(monthlyBudgets).values(budget).returning();
+    return created;
+  }
+
+  // Recurring Expenses
+  async getRecurringExpenses(): Promise<RecurringExpense[]> {
+    return await db.select().from(recurringExpenses);
+  }
+
+  async getActiveRecurringExpenses(): Promise<RecurringExpense[]> {
+    return await db.select().from(recurringExpenses).where(eq(recurringExpenses.active, true));
+  }
+
+  async createRecurringExpense(expense: InsertRecurringExpense): Promise<RecurringExpense> {
+    const [created] = await db.insert(recurringExpenses).values(expense).returning();
+    return created;
+  }
+
+  async updateRecurringExpense(id: number, expense: Partial<InsertRecurringExpense>): Promise<RecurringExpense | undefined> {
+    const [updated] = await db.update(recurringExpenses)
+      .set(expense)
+      .where(eq(recurringExpenses.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteRecurringExpense(id: number): Promise<void> {
+    await db.delete(recurringExpenses).where(eq(recurringExpenses.id, id));
+  }
+
+  // Planned Expenses
+  async getPlannedExpenses(year: number, month: number): Promise<PlannedExpense[]> {
+    // We need to filter by date range for the month
+    const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+    // Calculate end date (start of next month)
+    const nextMonth = month === 12 ? 1 : month + 1;
+    const nextYear = month === 12 ? year + 1 : year;
+    const endDate = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`;
+
+    return await db.select()
+      .from(plannedExpenses)
+      .where(and(
+        sql`${plannedExpenses.date} >= ${startDate}`,
+        sql`${plannedExpenses.date} < ${endDate}`
+      ));
+  }
+
+  async createPlannedExpense(expense: InsertPlannedExpense): Promise<PlannedExpense> {
+    const [created] = await db.insert(plannedExpenses).values(expense).returning();
+    return created;
+  }
+
+  async updatePlannedExpense(id: number, expense: Partial<InsertPlannedExpense>): Promise<PlannedExpense | undefined> {
+    const [updated] = await db.update(plannedExpenses)
+      .set(expense)
+      .where(eq(plannedExpenses.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deletePlannedExpense(id: number): Promise<void> {
+    await db.delete(plannedExpenses).where(eq(plannedExpenses.id, id));
   }
 }
 
