@@ -40,7 +40,11 @@ export function AddPlannedExpenseForm({ onSuccess, categories, year, initialData
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             });
-            if (!res.ok) throw new Error('Failed to save planned expense');
+            if (!res.ok) {
+                const errorData = await res.json();
+                console.error("Server validation error:", errorData);
+                throw new Error(JSON.stringify(errorData.error) || 'Failed to save planned expense');
+            }
             return res.json();
         },
         onSuccess: () => {
@@ -48,8 +52,9 @@ export function AddPlannedExpenseForm({ onSuccess, categories, year, initialData
             toast({ title: isEditing ? "Spesa aggiornata" : "Spesa pianificata aggiunta" });
             onSuccess();
         },
-        onError: () => {
-            toast({ title: "Errore", description: "Impossibile salvare la spesa.", variant: "destructive" });
+        onError: (error) => {
+            console.error("Mutation error:", error);
+            toast({ title: "Errore", description: error.message || "Impossibile salvare la spesa.", variant: "destructive" });
         }
     });
 
@@ -61,7 +66,7 @@ export function AddPlannedExpenseForm({ onSuccess, categories, year, initialData
 
         mutation.mutate({
             name,
-            amount: parseFloat(amount),
+            amount: amount.toString(), // Send as string for decimal type
             categoryId: parseInt(categoryId),
             date: new Date(date).toISOString(),
             notes: "" // Optional

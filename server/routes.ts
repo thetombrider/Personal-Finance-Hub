@@ -844,11 +844,14 @@ export async function registerRoutes(
 
   app.post("/api/budget/recurring", async (req, res) => {
     try {
+      console.log("Receiving recurring expense payload:", req.body);
       const validated = insertRecurringExpenseSchema.parse(req.body);
       const expense = await storage.createRecurringExpense(validated);
       res.status(201).json(expense);
     } catch (error) {
+      console.error("Error creating recurring expense:", error);
       if (error instanceof z.ZodError) {
+        console.error("Validation errors:", JSON.stringify(error.errors, null, 2));
         return res.status(400).json({ error: error.errors });
       }
       res.status(500).json({ error: "Failed to create recurring expense" });

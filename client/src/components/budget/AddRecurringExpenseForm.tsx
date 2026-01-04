@@ -42,7 +42,11 @@ export function AddRecurringExpenseForm({ onSuccess, categories, accounts, initi
                 body: JSON.stringify(data)
             });
 
-            if (!res.ok) throw new Error('Failed to save recurring expense');
+            if (!res.ok) {
+                const errorData = await res.json();
+                console.error("Server validation error:", errorData);
+                throw new Error(JSON.stringify(errorData.error) || 'Failed to save recurring expense');
+            }
             return res.json();
         },
         onSuccess: () => {
@@ -50,8 +54,9 @@ export function AddRecurringExpenseForm({ onSuccess, categories, accounts, initi
             toast({ title: isEditing ? "Spesa aggiornata" : "Spesa ricorrente aggiunta" });
             onSuccess();
         },
-        onError: () => {
-            toast({ title: "Errore", description: "Impossibile salvare la spesa ricorrente.", variant: "destructive" });
+        onError: (error) => {
+            console.error("Mutation error:", error);
+            toast({ title: "Errore", description: error.message || "Impossibile salvare la spesa ricorrente.", variant: "destructive" });
         }
     });
 
@@ -63,7 +68,7 @@ export function AddRecurringExpenseForm({ onSuccess, categories, accounts, initi
 
         mutation.mutate({
             name,
-            amount: parseFloat(amount),
+            amount: amount.toString(), // Send as string for decimal type
             categoryId: parseInt(categoryId),
             accountId: parseInt(accountId),
             startDate: new Date(startDate).toISOString(), // Ensure ISO string

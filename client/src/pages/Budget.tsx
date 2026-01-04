@@ -53,9 +53,17 @@ export default function Budget() {
             const res = await fetch('/api/budget', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ categoryId, year: currentYear, month, amount })
+                body: JSON.stringify({
+                    categoryId,
+                    year: currentYear,
+                    month,
+                    amount: amount.toString()
+                })
             });
-            if (!res.ok) throw new Error('Failed to update baseline');
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.error || 'Failed to update baseline');
+            }
             return res.json();
         },
         onSuccess: () => {
