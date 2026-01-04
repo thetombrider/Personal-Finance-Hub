@@ -69,7 +69,14 @@ export function setupAuth(app: Express) {
         }
     });
 
+    app.get("/api/auth/config", (_req, res) => {
+        res.json({ disableSignup: process.env.DISABLE_SIGNUP === "true" });
+    });
+
     app.post("/api/register", async (req, res, next) => {
+        if (process.env.DISABLE_SIGNUP === "true") {
+            return res.status(403).send("Signups are disabled");
+        }
         try {
             const existingUser = await storage.getUserByUsername(req.body.username);
             if (existingUser) {
