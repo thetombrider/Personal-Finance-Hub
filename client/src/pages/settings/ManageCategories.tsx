@@ -16,7 +16,6 @@ const categorySchema = z.object({
   name: z.string().min(2, "Name is required"),
   type: z.enum(["income", "expense"]),
   color: z.string().default("#3b82f6"),
-  color: z.string().default("#3b82f6"),
 });
 
 type CategoryFormValues = z.infer<typeof categorySchema>;
@@ -31,7 +30,6 @@ export default function ManageCategories() {
     defaultValues: {
       name: "",
       type: "expense",
-      color: "#3b82f6",
       color: "#3b82f6",
     },
   });
@@ -55,7 +53,6 @@ export default function ManageCategories() {
     form.reset({
       name: category.name,
       type: category.type,
-      color: category.color,
       color: category.color,
     });
     setIsDialogOpen(true);
