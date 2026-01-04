@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useFinance } from "@/context/FinanceContext";
 
 interface BudgetData {
@@ -266,7 +266,7 @@ function BudgetCategoryCard({ data, year, month, onUpdateBaseline, onAddPlanned,
                     <div>
                         <div className="flex items-center justify-between mb-2">
                             <span className="text-sm font-medium text-muted-foreground">Baseline Mensile</span>
-                            <Button variant="ghost" size="xs" onClick={() => setIsBaselineEditing(!isBaselineEditing)}>
+                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setIsBaselineEditing(!isBaselineEditing)}>
                                 <Edit2 size={12} />
                             </Button>
                         </div>
@@ -292,7 +292,7 @@ function BudgetCategoryCard({ data, year, month, onUpdateBaseline, onAddPlanned,
                             <span className="text-sm font-medium text-muted-foreground">Spese Pianificate</span>
                             <Dialog>
                                 <DialogTrigger asChild>
-                                    <Button variant="ghost" size="xs"><Plus size={12} /></Button>
+                                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0"><Plus size={12} /></Button>
                                 </DialogTrigger>
                                 <DialogContent>
                                     <DialogHeader>
@@ -320,7 +320,7 @@ function BudgetCategoryCard({ data, year, month, onUpdateBaseline, onAddPlanned,
                             <span className="text-sm font-medium text-muted-foreground">Ricorrenti</span>
                             <Dialog>
                                 <DialogTrigger asChild>
-                                    <Button variant="ghost" size="xs"><Plus size={12} /></Button>
+                                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0"><Plus size={12} /></Button>
                                 </DialogTrigger>
                                 <DialogContent>
                                     <DialogHeader>

@@ -25,7 +25,7 @@ import type { Holding, Trade } from "@shared/schema";
 interface StockDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
-  holding: Holding & {
+  holding: Omit<Holding, 'currentPrice'> & {
     totalQuantity: number;
     totalInvested: number;
     averagePrice: number;
@@ -57,8 +57,8 @@ export function StockDetailModal({
       const qty = parseFloat(trade.quantity);
       const price = parseFloat(trade.pricePerUnit);
       const total = parseFloat(trade.totalAmount); // This might include fees, but for PMC usually we consider purchase price + fees or just purchase price depending on tax logic.
-                                                 // In the main page logic: totalInvested += amount.
-                                                 // Let's stick to the logic used in Portfolio.tsx for consistency.
+      // In the main page logic: totalInvested += amount.
+      // Let's stick to the logic used in Portfolio.tsx for consistency.
 
       if (trade.type === "buy") {
         cumulativeQuantity += qty;
@@ -150,11 +150,10 @@ export function StockDetailModal({
             </CardHeader>
             <CardContent className="p-4 pt-0">
               <div
-                className={`text-2xl font-bold ${
-                  (holding.gainLoss || 0) >= 0
+                className={`text-2xl font-bold ${(holding.gainLoss || 0) >= 0
                     ? "text-green-600"
                     : "text-red-600"
-                }`}
+                  }`}
               >
                 {holding.gainLoss
                   ? ((holding.gainLoss >= 0 ? "+" : "") + formatCurrency(holding.gainLoss))
@@ -162,11 +161,10 @@ export function StockDetailModal({
               </div>
               {holding.gainLossPercent !== null && (
                 <p
-                  className={`text-xs ${
-                    holding.gainLossPercent >= 0
+                  className={`text-xs ${holding.gainLossPercent >= 0
                       ? "text-green-600"
                       : "text-red-600"
-                  }`}
+                    }`}
                 >
                   {holding.gainLossPercent >= 0 ? "+" : ""}
                   {holding.gainLossPercent.toFixed(2)}%
@@ -197,9 +195,9 @@ export function StockDetailModal({
                           {format(parseISO(label), "d MMM yyyy", { locale: it })}
                         </p>
                         {data.type && (
-                            <p className={`text-sm ${data.type === 'buy' ? 'text-green-600' : 'text-red-600'}`}>
-                                {data.type === 'buy' ? 'Acquisto' : 'Vendita'}: {formatCurrency(data.purchasePrice || data.sellPrice)}
-                            </p>
+                          <p className={`text-sm ${data.type === 'buy' ? 'text-green-600' : 'text-red-600'}`}>
+                            {data.type === 'buy' ? 'Acquisto' : 'Vendita'}: {formatCurrency(data.purchasePrice || data.sellPrice)}
+                          </p>
                         )}
                         <p className="text-sm text-blue-500">
                           PMC Storico: {formatCurrency(data.pmc)}
@@ -227,15 +225,15 @@ export function StockDetailModal({
                 shape="circle"
               />
               {/* Sell Points */}
-               <Scatter
+              <Scatter
                 dataKey="sellPrice"
                 fill="#ef4444"
                 name="Vendite"
                 shape="triangle"
               />
-              
+
               {/* Current PMC Reference Line */}
-               <ReferenceLine y={holding.averagePrice} label="PMC Attuale" stroke="#9ca3af" strokeDasharray="3 3" />
+              <ReferenceLine y={holding.averagePrice} label="PMC Attuale" stroke="#9ca3af" strokeDasharray="3 3" />
             </ComposedChart>
           </ResponsiveContainer>
         </div>

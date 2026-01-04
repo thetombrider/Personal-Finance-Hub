@@ -21,7 +21,7 @@ import * as api from "@/lib/api";
 import type { Holding, Trade } from "@shared/schema";
 import { StockDetailModal } from "@/components/portfolio/StockDetailModal";
 
-interface HoldingWithStats extends Holding {
+interface HoldingWithStats extends Omit<Holding, 'currentPrice'> {
   totalQuantity: number;
   totalInvested: number;
   averagePrice: number;
@@ -29,7 +29,6 @@ interface HoldingWithStats extends Holding {
   currentValue: number | null;
   gainLoss: number | null;
   gainLossPercent: number | null;
-  lastPriceUpdate: string | null | undefined;
 }
 
 export default function Portfolio() {

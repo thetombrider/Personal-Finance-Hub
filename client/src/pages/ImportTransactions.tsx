@@ -402,7 +402,7 @@ export default function ImportTransactions() {
       name,
       type,
       color,
-      budget: budget > 0 ? budget.toString() : null,
+
       icon: null
     };
   };
@@ -803,7 +803,7 @@ export default function ImportTransactions() {
                         }
                         if (importMode === 'categories') {
                           const cat = getCategoryFromRow(row);
-                          return <TableRow key={i}><TableCell>{cat.name}</TableCell><TableCell className="capitalize">{cat.type}</TableCell><TableCell>{cat.budget || '0'}</TableCell></TableRow>;
+                          return <TableRow key={i}><TableCell>{cat.name}</TableCell><TableCell className="capitalize">{cat.type}</TableCell></TableRow>;
                         }
                         if (importMode === 'transactions') {
                           const tx = getTransactionFromRow(row);
