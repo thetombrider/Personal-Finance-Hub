@@ -8,9 +8,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowUpRight, ArrowDownRight, Wallet, TrendingUp, Activity, PiggyBank, CreditCard, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis, PieChart, Pie, Cell, BarChart, Bar, LineChart, Line, ReferenceLine, Legend } from "recharts";
+import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis, PieChart, Pie, Cell, BarChart, Bar, ComposedChart, Line, ReferenceLine, Legend, Area as RechartsArea } from "recharts";
 import { useState, useMemo } from "react";
-import { format, subMonths, isSameMonth, parseISO, startOfMonth, endOfMonth } from "date-fns";
+import { format, subMonths, isSameMonth, parseISO, startOfMonth, endOfMonth, getYear } from "date-fns";
+import { useQuery } from "@tanstack/react-query";
 
 export default function Dashboard() {
   const { accounts, transactions, categories, formatCurrency } = useFinance();
@@ -21,6 +22,26 @@ export default function Dashboard() {
   const [categoryTrendId, setCategoryTrendId] = useState<string>("");
   const [privacyMode, setPrivacyMode] = useState(false);
   const [detailModal, setDetailModal] = useState<'total' | 'cash' | 'savings' | 'investments' | null>(null);
+
+  const currentYear = new Date().getFullYear();
+  const { data: currentYearBudget } = useQuery({
+    queryKey: ['budget', currentYear],
+    queryFn: async () => {
+      const res = await fetch(`/api/budget/${currentYear}`);
+      if (!res.ok) throw new Error('Failed to fetch budget');
+      return res.json();
+    }
+  });
+
+  const { data: previousYearBudget } = useQuery({
+    queryKey: ['budget', currentYear - 1],
+    queryFn: async () => {
+      const res = await fetch(`/api/budget/${currentYear - 1}`);
+      if (!res.ok) throw new Error('Failed to fetch budget');
+      return res.json();
+    },
+    enabled: timeRange === "12" // Only fetch previous year if viewing 12 months
+  });
 
   const displayCurrency = (amount: number) => {
     if (privacyMode) return "•••••";
@@ -166,6 +187,16 @@ export default function Dashboard() {
       const date = subMonths(new Date(), i);
       const monthStart = startOfMonth(date);
       const monthEnd = endOfMonth(date);
+      const year = getYear(date);
+      const monthIndex = date.getMonth() + 1; // 1-12
+
+      // Determine which budget data to use
+      let monthlyBudget = 0;
+      const budgetSource = year === currentYear ? currentYearBudget : (year === currentYear - 1 ? previousYearBudget : null);
+
+      if (budgetSource && budgetSource.budgetData && budgetSource.budgetData[catId] && budgetSource.budgetData[catId][monthIndex]) {
+        monthlyBudget = budgetSource.budgetData[catId][monthIndex].total || 0;
+      }
 
       const monthTotal = transactions
         .filter(t => {
@@ -181,11 +212,12 @@ export default function Dashboard() {
       data.push({
         name: format(date, 'MMM yy'),
         total: monthTotal,
-        overBudget: false
+        budget: monthlyBudget,
+        overBudget: monthlyBudget > 0 && monthTotal > monthlyBudget
       });
     }
     return data;
-  }, [transactions, categoryTrendId, timeRange, selectedAccount, selectedCategoryForTrend]);
+  }, [transactions, categoryTrendId, timeRange, selectedAccount, selectedCategoryForTrend, currentYearBudget, previousYearBudget, currentYear]);
 
   // Totals by account type
   const totalCash = useMemo(() => {
@@ -686,7 +718,8 @@ export default function Dashboard() {
             <div className="h-[300px] w-full">
               {categoryTrendId && categoryTrendData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={categoryTrendData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+
+                  <ComposedChart data={categoryTrendData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                     <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
                     <YAxis
                       stroke="#888888"
@@ -697,7 +730,8 @@ export default function Dashboard() {
                     />
                     <Tooltip
                       formatter={(value: number, name: string) => {
-                        const label = name === 'total' ? (selectedCategoryForTrend?.name || 'Totale') : 'Budget';
+                        if (name === 'budget') return [displayCurrency(value), 'Budget'];
+                        const label = selectedCategoryForTrend?.name || 'Totale';
                         return [displayCurrency(value), label];
                       }}
                       contentStyle={{ backgroundColor: 'var(--color-card)', borderRadius: '8px', border: '1px solid var(--color-border)' }}
@@ -706,7 +740,8 @@ export default function Dashboard() {
                     <Bar
                       dataKey="total"
                       radius={[4, 4, 0, 0]}
-                      name="Speso"
+                      name="total"
+                      maxBarSize={50}
                     >
                       {categoryTrendData.map((entry, index) => (
                         <Cell
@@ -715,8 +750,15 @@ export default function Dashboard() {
                         />
                       ))}
                     </Bar>
-
-                  </BarChart>
+                    <Line
+                      type="monotone"
+                      dataKey="budget"
+                      stroke="#3b82f6"
+                      strokeWidth={2}
+                      dot={false}
+                      name="budget"
+                    />
+                  </ComposedChart>
                 </ResponsiveContainer>
               ) : (
                 <div className="h-full flex items-center justify-center text-muted-foreground">
