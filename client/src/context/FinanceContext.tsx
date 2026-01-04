@@ -2,40 +2,22 @@ import { createContext, useContext, ReactNode, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as api from "@/lib/api";
 import type { TransferData } from "@/lib/api";
-import type { InsertAccount, InsertCategory, InsertTransaction } from "@shared/schema";
+import type { InsertAccount, InsertCategory, InsertTransaction, Account as DbAccount, Category as DbCategory, Transaction as DbTransaction } from "@shared/schema";
 
 // Types
 export type AccountType = "checking" | "savings" | "credit" | "investment" | "cash";
 
-export interface Account {
-  id: number;
-  name: string;
+export interface Account extends Omit<DbAccount, "type"> {
   type: AccountType;
-  startingBalance: string;
   balance: number;
-  currency: string;
-  color: string;
-  creditLimit?: string | null;
 }
 
-export interface Category {
-  id: number;
-  name: string;
+export interface Category extends Omit<DbCategory, "type"> {
   type: "income" | "expense";
-  color: string;
-  icon?: string | null;
-  budget?: string | null;
 }
 
-export interface Transaction {
-  id: number;
-  date: string;
-  amount: string;
-  description: string;
-  accountId: number;
-  categoryId: number;
+export interface Transaction extends Omit<DbTransaction, "type"> {
   type: "income" | "expense";
-  linkedTransactionId?: number | null;
 }
 
 // Context

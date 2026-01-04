@@ -92,6 +92,7 @@ export interface IStorage {
 
   // Monthly Budgets
   getMonthlyBudgets(year: number, month: number): Promise<MonthlyBudget[]>;
+  getMonthlyBudgetsByYear(year: number): Promise<MonthlyBudget[]>;
   upsertMonthlyBudget(budget: InsertMonthlyBudget): Promise<MonthlyBudget>;
 
   // Recurring Expenses
@@ -346,8 +347,13 @@ export class DatabaseStorage implements IStorage {
       .from(monthlyBudgets)
       .where(and(
         eq(monthlyBudgets.year, year),
-        eq(monthlyBudgets.month, month)
       ));
+  }
+
+  async getMonthlyBudgetsByYear(year: number): Promise<MonthlyBudget[]> {
+    return await db.select()
+      .from(monthlyBudgets)
+      .where(eq(monthlyBudgets.year, year));
   }
 
   async upsertMonthlyBudget(budget: InsertMonthlyBudget): Promise<MonthlyBudget> {
@@ -398,6 +404,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Planned Expenses
+  async getPlannedExpensesByYear(year: number): Promise<PlannedExpense[]> {
+    const startDate = `${year}-01-01`;
+    const endDate = `${year + 1}-01-01`;
+
+    return await db.select()
+      .from(plannedExpenses)
+      .where(and(
+        sql`${plannedExpenses.date} >= ${startDate}`,
+        sql`${plannedExpenses.date} < ${endDate}`
+      ));
+  }
+
   async getPlannedExpenses(year: number, month: number): Promise<PlannedExpense[]> {
     // We need to filter by date range for the month
     const startDate = `${year}-${String(month).padStart(2, '0')}-01`;

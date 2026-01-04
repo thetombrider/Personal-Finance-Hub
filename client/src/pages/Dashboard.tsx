@@ -160,13 +160,7 @@ export default function Dashboard() {
     const catId = parseInt(categoryTrendId);
     const categoryType = selectedCategoryForTrend.type;
 
-    let budget: number | null = null;
-    if (selectedCategoryForTrend.budget !== null && selectedCategoryForTrend.budget !== undefined && selectedCategoryForTrend.type === 'expense') {
-      const parsedBudget = parseFloat(selectedCategoryForTrend.budget);
-      if (!isNaN(parsedBudget)) {
-        budget = parsedBudget;
-      }
-    }
+
 
     for (let i = months - 1; i >= 0; i--) {
       const date = subMonths(new Date(), i);
@@ -187,7 +181,7 @@ export default function Dashboard() {
       data.push({
         name: format(date, 'MMM yy'),
         total: monthTotal,
-        overBudget: budget !== null && monthTotal > budget
+        overBudget: false
       });
     }
     return data;
@@ -673,15 +667,7 @@ export default function Dashboard() {
                   {selectedCategoryForTrend
                     ? `Totale mensile ${selectedCategoryForTrend.type === 'income' ? 'entrate' : 'spese'}: ${selectedCategoryForTrend.name}`
                     : 'Seleziona una categoria per vedere il trend'}
-                  {selectedCategoryForTrend?.budget !== null &&
-                    selectedCategoryForTrend?.budget !== undefined &&
-                    selectedCategoryForTrend?.budget !== "" &&
-                    selectedCategoryForTrend.type === 'expense' &&
-                    !isNaN(parseFloat(selectedCategoryForTrend.budget)) && (
-                      <span className="ml-2 text-primary font-medium">
-                        (Budget: {displayCurrency(parseFloat(selectedCategoryForTrend.budget))})
-                      </span>
-                    )}
+
                 </CardDescription>
               </div>
               <Select value={categoryTrendId} onValueChange={setCategoryTrendId}>
@@ -729,24 +715,7 @@ export default function Dashboard() {
                         />
                       ))}
                     </Bar>
-                    {selectedCategoryForTrend?.budget !== null &&
-                      selectedCategoryForTrend?.budget !== undefined &&
-                      selectedCategoryForTrend?.budget !== "" &&
-                      selectedCategoryForTrend.type === 'expense' &&
-                      !isNaN(parseFloat(selectedCategoryForTrend.budget)) && (
-                        <ReferenceLine
-                          y={parseFloat(selectedCategoryForTrend.budget)}
-                          stroke="#ef4444"
-                          strokeDasharray="5 5"
-                          strokeWidth={2}
-                          label={{
-                            value: 'Budget',
-                            position: 'right',
-                            fill: '#ef4444',
-                            fontSize: 12
-                          }}
-                        />
-                      )}
+
                   </BarChart>
                 </ResponsiveContainer>
               ) : (

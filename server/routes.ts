@@ -695,6 +695,87 @@ export async function registerRoutes(
 
   // ============ BUDGET ============
 
+  app.get("/api/budget/:year", async (req, res) => {
+    try {
+      const year = parseInt(req.params.year);
+
+      const [categories, monthlyBudgets, plannedExpenses, recurringExpenses] = await Promise.all([
+        storage.getCategories(),
+        storage.getMonthlyBudgetsByYear(year),
+        storage.getPlannedExpensesByYear(year),
+        storage.getActiveRecurringExpenses()
+      ]);
+
+      // Initialize response structure
+      // budgetData: map of categoryId -> map of month (1-12) -> { baseline, planned, recurring, total }
+      const budgetData: Record<number, Record<number, { baseline: number; planned: number; recurring: number; total: number }>> = {};
+
+      // Initialize all categories and months with 0
+      categories.forEach(cat => {
+        budgetData[cat.id] = {};
+        for (let m = 1; m <= 12; m++) {
+          budgetData[cat.id][m] = { baseline: 0, planned: 0, recurring: 0, total: 0 };
+        }
+      });
+
+      // Fill Baselines
+      monthlyBudgets.forEach(mb => {
+        if (budgetData[mb.categoryId] && budgetData[mb.categoryId][mb.month]) {
+          budgetData[mb.categoryId][mb.month].baseline = parseFloat(mb.amount.toString());
+        }
+      });
+
+      // Fill Planned
+      plannedExpenses.forEach(pe => {
+        const date = new Date(pe.date);
+        // Ensure the date is in the requested year (should be filtered by DB but double check)
+        if (date.getFullYear() === year) {
+          const m = date.getMonth() + 1;
+          if (budgetData[pe.categoryId] && budgetData[pe.categoryId][m]) {
+            budgetData[pe.categoryId][m].planned += parseFloat(pe.amount.toString());
+          }
+        }
+      });
+
+      // Fill Recurring
+      // Note: Recurring expenses are tricky because they might start/end mid-year.
+      // Simple logic: If active and start_date <= month_end, add to month.
+      // TODO: Handle end_date if implemented in schema later.
+      recurringExpenses.forEach(re => {
+        const startDate = new Date(re.startDate);
+        const startYear = startDate.getFullYear();
+        const startMonth = startDate.getMonth() + 1;
+
+        for (let m = 1; m <= 12; m++) {
+          // If the recurring expense started before or during this month (considering years)
+          if (startYear < year || (startYear === year && startMonth <= m)) {
+            if (budgetData[re.categoryId]) {
+              budgetData[re.categoryId][m].recurring += parseFloat(re.amount.toString());
+            }
+          }
+        }
+      });
+
+      // Calculate Totals per cell
+      for (const catId in budgetData) {
+        for (let m = 1; m <= 12; m++) {
+          const cell = budgetData[catId][m];
+          cell.total = cell.baseline + cell.planned + cell.recurring;
+        }
+      }
+
+      res.json({
+        categories,
+        budgetData, // Structured as { [categoryId]: { [month]: { baseline, planned, recurring, total } } }
+        plannedExpenses, // Return raw list for the Planned Table
+        recurringExpenses // Return raw list for the Recurring Table
+      });
+    } catch (error) {
+      console.error("Failed to fetch yearly budget data:", error);
+      res.status(500).json({ error: "Failed to fetch yearly budget data" });
+    }
+  });
+
   app.get("/api/budget/:year/:month", async (req, res) => {
     try {
       const year = parseInt(req.params.year);
