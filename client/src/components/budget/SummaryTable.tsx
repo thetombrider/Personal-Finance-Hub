@@ -66,7 +66,11 @@ export function SummaryTable({ categories, budgetData }: SummaryTableProps) {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {categories.map((category) => (
+                            {/* INCOME SECTION */}
+                            <TableRow className="bg-muted/30">
+                                <TableCell colSpan={14} className="font-bold py-2">ENTRATE</TableCell>
+                            </TableRow>
+                            {categories.filter(c => c.type === 'income').map((category) => (
                                 <TableRow key={category.id}>
                                     <TableCell className="font-medium">
                                         <div className="flex items-center gap-2">
@@ -90,16 +94,83 @@ export function SummaryTable({ categories, budgetData }: SummaryTableProps) {
                                     </TableCell>
                                 </TableRow>
                             ))}
-                            {/* Footer Row for Monthly Totals */}
-                            <TableRow className="bg-muted/50 font-bold">
-                                <TableCell>TOTALE</TableCell>
+                            <TableRow className="bg-green-50/50 font-bold border-t-2 border-green-100">
+                                <TableCell className="text-green-700">TOTALE ENTRATE</TableCell>
                                 {months.map((_, index) => (
-                                    <TableCell key={index} className="text-right">
-                                        {formatCurrency(calculateMonthlyTotal(index))}
+                                    <TableCell key={index} className="text-right text-green-700">
+                                        {formatCurrency(categories.filter(c => c.type === 'income').reduce((sum, cat) => sum + (budgetData[cat.id]?.[index + 1]?.total || 0), 0))}
                                     </TableCell>
                                 ))}
-                                <TableCell className="text-right text-primary">
-                                    {formatCurrency(grandTotal)}
+                                <TableCell className="text-right text-green-700">
+                                    {formatCurrency(categories.filter(c => c.type === 'income').reduce((sum, cat) => sum + calculateCategoryTotal(cat.id), 0))}
+                                </TableCell>
+                            </TableRow>
+
+                            {/* EXPENSE SECTION */}
+                            <TableRow className="bg-muted/30">
+                                <TableCell colSpan={14} className="font-bold py-2 mt-4">USCITE</TableCell>
+                            </TableRow>
+                            {categories.filter(c => c.type === 'expense').map((category) => (
+                                <TableRow key={category.id}>
+                                    <TableCell className="font-medium">
+                                        <div className="flex items-center gap-2">
+                                            <div
+                                                className="w-3 h-3 rounded-full"
+                                                style={{ backgroundColor: category.color }}
+                                            />
+                                            {category.name}
+                                        </div>
+                                    </TableCell>
+                                    {months.map((_, index) => {
+                                        const amount = budgetData[category.id]?.[index + 1]?.total || 0;
+                                        return (
+                                            <TableCell key={index} className="text-right text-muted-foreground">
+                                                {amount > 0 ? formatCurrency(amount) : "-"}
+                                            </TableCell>
+                                        );
+                                    })}
+                                    <TableCell className="text-right font-bold">
+                                        {formatCurrency(calculateCategoryTotal(category.id))}
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                            <TableRow className="bg-red-50/50 font-bold border-t-2 border-red-100">
+                                <TableCell className="text-red-700">TOTALE USCITE</TableCell>
+                                {months.map((_, index) => (
+                                    <TableCell key={index} className="text-right text-red-700">
+                                        {formatCurrency(categories.filter(c => c.type === 'expense').reduce((sum, cat) => sum + (budgetData[cat.id]?.[index + 1]?.total || 0), 0))}
+                                    </TableCell>
+                                ))}
+                                <TableCell className="text-right text-red-700">
+                                    {formatCurrency(categories.filter(c => c.type === 'expense').reduce((sum, cat) => sum + calculateCategoryTotal(cat.id), 0))}
+                                </TableCell>
+                            </TableRow>
+
+                            {/* NET ROW */}
+                            <TableRow className="bg-muted/80 font-bold border-t-4 border-double">
+                                <TableCell>BILANCIO PREVISTO</TableCell>
+                                {months.map((_, index) => {
+                                    const income = categories.filter(c => c.type === 'income').reduce((sum, cat) => sum + (budgetData[cat.id]?.[index + 1]?.total || 0), 0);
+                                    const expense = categories.filter(c => c.type === 'expense').reduce((sum, cat) => sum + (budgetData[cat.id]?.[index + 1]?.total || 0), 0);
+                                    const net = income - expense;
+                                    return (
+                                        <TableCell key={index} className={`text-right ${net >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                            {formatCurrency(net)}
+                                        </TableCell>
+                                    );
+                                })}
+                                <TableCell className="text-right">
+                                    {/* Annual Net */}
+                                    {(() => {
+                                        const totalIncome = categories.filter(c => c.type === 'income').reduce((sum, cat) => sum + calculateCategoryTotal(cat.id), 0);
+                                        const totalExpense = categories.filter(c => c.type === 'expense').reduce((sum, cat) => sum + calculateCategoryTotal(cat.id), 0);
+                                        const totalNet = totalIncome - totalExpense;
+                                        return (
+                                            <span className={totalNet >= 0 ? 'text-green-600' : 'text-red-600'}>
+                                                {formatCurrency(totalNet)}
+                                            </span>
+                                        );
+                                    })()}
                                 </TableCell>
                             </TableRow>
                         </TableBody>

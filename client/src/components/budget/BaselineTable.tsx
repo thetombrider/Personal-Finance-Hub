@@ -114,7 +114,59 @@ export function BaselineTable({ categories, budgetData, onUpdateBaseline }: Base
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {categories.map((category) => (
+                            {/* INCOME SECTION */}
+                            <TableRow className="bg-muted/30">
+                                <TableCell colSpan={13} className="font-bold py-2">ENTRATE</TableCell>
+                            </TableRow>
+                            {categories.filter(c => c.type === 'income').map((category) => (
+                                <TableRow key={category.id}>
+                                    <TableCell className="font-medium">
+                                        <div className="flex items-center gap-2">
+                                            <div
+                                                className="w-3 h-3 rounded-full min-w-[12px]"
+                                                style={{ backgroundColor: category.color }}
+                                            />
+                                            <span className="truncate">{category.name}</span>
+                                        </div>
+                                    </TableCell>
+                                    {months.map((_, index) => {
+                                        const month = index + 1;
+                                        const key = getKey(category.id, month);
+                                        const isUpdating = updating === key;
+
+                                        return (
+                                            <TableCell key={index} className="p-1">
+                                                <div className="relative">
+                                                    <Input
+                                                        type="number"
+                                                        min="0"
+                                                        step="50"
+                                                        className={`text-right h-8 px-2 border-transparent hover:border-input focus:border-primary ${getValue(category.id, month) === "" ? "placeholder:text-muted-foreground/30" : ""
+                                                            }`}
+                                                        placeholder="0"
+                                                        value={getValue(category.id, month)}
+                                                        onChange={(e) => handleChange(category.id, month, e.target.value)}
+                                                        onBlur={() => handleBlur(category.id, month)}
+                                                        onKeyDown={(e) => handleKeyDown(e, category.id, month)}
+                                                        disabled={isUpdating}
+                                                    />
+                                                    {isUpdating && (
+                                                        <div className="absolute inset-0 flex items-center justify-center bg-background/50">
+                                                            <Loader2 className="h-3 w-3 animate-spin text-primary" />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </TableCell>
+                                        );
+                                    })}
+                                </TableRow>
+                            ))}
+
+                            {/* EXPENSE SECTION */}
+                            <TableRow className="bg-muted/30">
+                                <TableCell colSpan={13} className="font-bold py-2 mt-4">USCITE</TableCell>
+                            </TableRow>
+                            {categories.filter(c => c.type === 'expense').map((category) => (
                                 <TableRow key={category.id}>
                                     <TableCell className="font-medium">
                                         <div className="flex items-center gap-2">
