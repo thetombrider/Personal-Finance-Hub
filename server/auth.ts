@@ -60,10 +60,16 @@ export function setupAuth(app: Express) {
         }),
     );
 
-    const oidcIssuer = process.env.OIDC_ISSUER_URL;
-    const oidcClientId = process.env.OIDC_CLIENT_ID;
-    const oidcClientSecret = process.env.OIDC_CLIENT_SECRET;
-    const oidcCallbackUrl = process.env.OIDC_CALLBACK_URL;
+    const oidcIssuer = process.env.OIDC_ISSUER_URL?.trim();
+    const oidcClientId = process.env.OIDC_CLIENT_ID?.trim();
+    const oidcClientSecret = process.env.OIDC_CLIENT_SECRET?.trim();
+    const oidcCallbackUrl = process.env.OIDC_CALLBACK_URL?.trim();
+
+    // Allow custom endpoints (Authelia/Authentik/PocketID have different paths)
+    const oidcAuthorizationUrl = process.env.OIDC_AUTHORIZATION_URL?.trim() || `${oidcIssuer}/protocol/openid-connect/auth`;
+    const oidcTokenUrl = process.env.OIDC_TOKEN_URL?.trim() || `${oidcIssuer}/protocol/openid-connect/token`;
+    const oidcUserInfoUrl = process.env.OIDC_USERINFO_URL?.trim() || `${oidcIssuer}/protocol/openid-connect/userinfo`;
+
     const oidcEnabled = !!(oidcIssuer && oidcClientId && oidcClientSecret && oidcCallbackUrl);
 
     if (oidcEnabled) {
@@ -72,9 +78,9 @@ export function setupAuth(app: Express) {
             new OpenIDConnectStrategy(
                 {
                     issuer: oidcIssuer!,
-                    authorizationURL: `${oidcIssuer}/protocol/openid-connect/auth`,
-                    tokenURL: `${oidcIssuer}/protocol/openid-connect/token`,
-                    userInfoURL: `${oidcIssuer}/protocol/openid-connect/userinfo`,
+                    authorizationURL: oidcAuthorizationUrl,
+                    tokenURL: oidcTokenUrl,
+                    userInfoURL: oidcUserInfoUrl,
                     clientID: oidcClientId!,
                     clientSecret: oidcClientSecret!,
                     callbackURL: oidcCallbackUrl!,
