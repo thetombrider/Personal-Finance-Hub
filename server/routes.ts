@@ -6,7 +6,12 @@ import { z } from "zod";
 import crypto from "crypto";
 import { setupAuth, isAuthenticated } from "./auth";
 import { sendEmail } from "./resend";
+import { z } from "zod";
+import crypto from "crypto";
+import { setupAuth, isAuthenticated } from "./auth";
+import { sendEmail } from "./resend";
 import cron from "node-cron";
+import { TallyService } from "./services/tally";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -15,6 +20,8 @@ export async function registerRoutes(
 
   // ============ AUTH ============
   setupAuth(app);
+
+  const tallyService = new TallyService(storage);
 
   // endpoint for backward compatibility or if frontend expects this path
   app.get('/api/auth/user', isAuthenticated, (req, res) => {
@@ -303,39 +310,6 @@ export async function registerRoutes(
 
   // ============ TALLY WEBHOOK ============
 
-  // Helper to parse European number format (1.234,56 -> 1234.56)
-  function parseEuropeanNumber(value: string): number {
-    if (!value) return 0;
-    const cleaned = value.replace(/\./g, '').replace(',', '.');
-    return parseFloat(cleaned) || 0;
-  }
-
-  // Helper to parse date in various formats
-  function parseDate(dateStr: string): string {
-    if (!dateStr) return new Date().toISOString().split('T')[0];
-
-    // Try DD/MM/YYYY format
-    const ddmmyyyy = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-    if (ddmmyyyy) {
-      const [, day, month, year] = ddmmyyyy;
-      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-    }
-
-    // Try YYYY-MM-DD format
-    const yyyymmdd = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-    if (yyyymmdd) {
-      return dateStr;
-    }
-
-    // Fallback: try to parse as date
-    const parsed = new Date(dateStr);
-    if (!isNaN(parsed.getTime())) {
-      return parsed.toISOString().split('T')[0];
-    }
-
-    return new Date().toISOString().split('T')[0];
-  }
-
   app.post("/api/webhooks/tally", async (req, res) => {
     try {
       console.log("Tally webhook received:", JSON.stringify(req.body, null, 2));
@@ -344,140 +318,13 @@ export async function registerRoutes(
       const tallySecret = process.env.TALLY_WEBHOOK_SECRET;
       if (tallySecret) {
         const signature = req.headers['tally-signature'] as string;
-        if (!signature) {
-          console.warn("Tally webhook: Missing signature");
-          return res.status(401).json({ error: "Missing signature" });
-        }
-
-        const expectedSignature = crypto
-          .createHmac('sha256', tallySecret)
-          .update(JSON.stringify(req.body))
-          .digest('base64');
-
-        if (signature !== expectedSignature) {
-          console.warn("Tally webhook: Invalid signature");
-          return res.status(401).json({ error: "Invalid signature" });
+        if (!tallyService.verifySignature(req.body, signature, tallySecret)) {
+          console.warn("Tally webhook: Invalid or missing signature");
+          return res.status(401).json({ error: "Invalid or missing signature" });
         }
       }
 
-      const payload = req.body;
-
-      // Tally sends data directly or wrapped in eventType for webhooks
-      const fields = payload.data?.fields || [];
-
-      if (fields.length === 0) {
-        return res.status(400).json({ error: "No fields found in payload" });
-      }
-
-      // Helper to get field by label pattern
-      const getField = (labelPattern: RegExp): any => {
-        return fields.find((f: any) => labelPattern.test(f.label?.toLowerCase() || ''));
-      };
-
-      // Helper to get text value from a dropdown field (value is array of IDs)
-      const getDropdownText = (field: any): string => {
-        if (!field || !field.value || !Array.isArray(field.value) || field.value.length === 0) {
-          return '';
-        }
-        const selectedId = field.value[0];
-        const option = field.options?.find((o: any) => o.id === selectedId);
-        return option?.text || '';
-      };
-
-      // Helper to get simple value (string, number, or first array element)
-      const getSimpleValue = (field: any): string => {
-        if (!field) return '';
-        const val = field.value;
-        if (val === null || val === undefined) return '';
-        if (typeof val === 'string') return val;
-        if (typeof val === 'number') return val.toString();
-        if (Array.isArray(val)) return val[0]?.toString() || '';
-        return '';
-      };
-
-      // Extract fields
-      const dateField = getField(/^data$/i);
-      const descriptionField = getField(/^(causale|descrizione|description)$/i);
-      const categoryField = getField(/^categoria$/i);
-      const accountField = getField(/^conto$/i);
-      const directionField = getField(/^direzione$/i);
-      const incomeAmountField = getField(/^importo\s*entrata$/i);
-      const expenseAmountField = getField(/^importo\s*uscita$/i);
-
-      // Get values
-      const dateValue = getSimpleValue(dateField);
-      const description = getSimpleValue(descriptionField);
-      const categoryName = getDropdownText(categoryField);
-      const accountName = getDropdownText(accountField);
-      const direction = getDropdownText(directionField);
-
-      // Get amounts (Tally sends numbers directly for INPUT_NUMBER)
-      const incomeAmount = incomeAmountField?.value ? parseFloat(incomeAmountField.value) || 0 : 0;
-      const expenseAmount = expenseAmountField?.value ? parseFloat(expenseAmountField.value) || 0 : 0;
-
-      // Determine amount and type based on direction or which amount field is filled
-      let amount = 0;
-      let type: 'income' | 'expense' = 'expense';
-
-      if (direction.toLowerCase() === 'entrata' || incomeAmount > 0) {
-        amount = incomeAmount > 0 ? incomeAmount : expenseAmount;
-        type = 'income';
-      } else {
-        amount = expenseAmount > 0 ? expenseAmount : incomeAmount;
-        type = 'expense';
-      }
-
-      console.log("Parsed Tally data:", { dateValue, description, categoryName, accountName, direction, amount, type });
-
-      if (!description || amount <= 0) {
-        return res.status(400).json({
-          error: "Invalid transaction data",
-          details: { description, amount, direction, incomeAmount, expenseAmount },
-          fields: fields.map((f: any) => ({ label: f.label, value: f.value }))
-        });
-      }
-
-      // Look up account by name
-      const accounts = await storage.getAccounts();
-      const account = accounts.find(a =>
-        a.name.toLowerCase() === accountName.toLowerCase()
-      );
-
-      if (!account) {
-        return res.status(400).json({
-          error: "Account not found",
-          accountName,
-          availableAccounts: accounts.map(a => a.name)
-        });
-      }
-
-      // Look up category by name
-      const categories = await storage.getCategories();
-      const category = categories.find(c =>
-        c.name.toLowerCase() === categoryName.toLowerCase()
-      );
-
-      if (!category) {
-        return res.status(400).json({
-          error: "Category not found",
-          categoryName,
-          availableCategories: categories.map(c => c.name)
-        });
-      }
-
-      // Create the transaction
-      const transactionData = {
-        date: parseDate(dateValue),
-        description,
-        amount: amount.toFixed(2),
-        type,
-        accountId: account.id,
-        categoryId: category.id
-      };
-
-      console.log("Creating transaction from Tally:", transactionData);
-
-      const transaction = await storage.createTransaction(transactionData);
+      const transaction = await tallyService.processWebhook(req.body);
 
       res.status(201).json({
         status: "ok",
@@ -485,8 +332,11 @@ export async function registerRoutes(
         transaction
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Tally webhook error:", error);
+      if (error.message && (error.message === "Account not found" || error.message === "Category not found" || error.message === "Invalid transaction data")) {
+        return res.status(400).json({ error: error.message, ...error });
+      }
       res.status(500).json({ error: "Failed to process Tally webhook" });
     }
   });
