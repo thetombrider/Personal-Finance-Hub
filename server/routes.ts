@@ -6,12 +6,10 @@ import { z } from "zod";
 import crypto from "crypto";
 import { setupAuth, isAuthenticated } from "./auth";
 import { sendEmail } from "./resend";
-import { z } from "zod";
-import crypto from "crypto";
-import { setupAuth, isAuthenticated } from "./auth";
-import { sendEmail } from "./resend";
 import cron from "node-cron";
 import { TallyService } from "./services/tally";
+import { marketDataService } from "./services/marketData";
+import { ReportService } from "./services/reportService";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -22,6 +20,7 @@ export async function registerRoutes(
   setupAuth(app);
 
   const tallyService = new TallyService(storage);
+  const reportService = new ReportService(storage, marketDataService);
 
   // endpoint for backward compatibility or if frontend expects this path
   app.get('/api/auth/user', isAuthenticated, (req, res) => {
@@ -788,174 +787,31 @@ export async function registerRoutes(
   });
 
   // ============ ALPHA VANTAGE STOCK API ============
-
-  const ALPHA_VANTAGE_API_KEY = process.env.ALPHA_VANTAGE_API_KEY;
-
-  const isLondonExchange = (symbol: string): boolean => {
-    const upper = symbol.toUpperCase();
-    return upper.endsWith('.LON') || upper.endsWith('.L');
-  };
-
-  const CACHE_DURATION_24H = 24 * 60 * 60 * 1000;
-
-  let cachedGbpEurRate: { rate: number; timestamp: number } | null = null;
-
-  const getGbpToEurRate = async (): Promise<number> => {
-    if (cachedGbpEurRate && Date.now() - cachedGbpEurRate.timestamp < CACHE_DURATION_24H) {
-      return cachedGbpEurRate.rate;
-    }
-
-    try {
-      const response = await fetch(
-        `https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency=GBP&to_currency=EUR&apikey=${ALPHA_VANTAGE_API_KEY}`
-      );
-      const data = await response.json();
-
-      if (data["Realtime Currency Exchange Rate"]) {
-        const rate = parseFloat(data["Realtime Currency Exchange Rate"]["5. Exchange Rate"]);
-        cachedGbpEurRate = { rate, timestamp: Date.now() };
-        return rate;
-      }
-    } catch (error) {
-      console.error("Error fetching GBP/EUR rate:", error);
-    }
-
-    return cachedGbpEurRate?.rate || 1.17;
-  };
-
-  const convertToEur = async (value: number, symbol: string): Promise<number> => {
-    if (!isLondonExchange(symbol)) {
-      return value;
-    }
-    const valueInPounds = value / 100;
-    const gbpEurRate = await getGbpToEurRate();
-    return valueInPounds * gbpEurRate;
-  };
-
-  interface CachedQuote {
-    data: {
-      symbol: string;
-      price: number;
-      change: number;
-      changePercent: string;
-      high?: number;
-      low?: number;
-      open?: number;
-      previousClose?: number;
-      volume?: number;
-      latestTradingDay?: string;
-    };
-    timestamp: number;
-  }
-  const quotesCache: Record<string, CachedQuote> = {};
+  // Refactored to use MarketDataService
 
   app.get("/api/stock/quote/:symbol", async (req, res) => {
     try {
       const symbol = req.params.symbol.toUpperCase();
-
-      if (!ALPHA_VANTAGE_API_KEY) {
-        return res.status(500).json({ error: "Alpha Vantage API key not configured" });
+      const quote = await marketDataService.getQuote(symbol);
+      if (quote) {
+        res.json(quote.data);
+      } else {
+        res.status(404).json({ error: "Stock not found" });
       }
-
-      const cached = quotesCache[symbol];
-      if (cached && Date.now() - cached.timestamp < CACHE_DURATION_24H) {
-        console.log(`[cache] Returning cached quote for ${symbol}`);
-        return res.json({ ...cached.data, cached: true });
-      }
-
-      const response = await fetch(
-        `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${ALPHA_VANTAGE_API_KEY}`
-      );
-
-      const data = await response.json();
-
-      if (data["Error Message"]) {
-        return res.status(404).json({ error: "Symbol not found" });
-      }
-
-      if (data["Note"]) {
-        if (cached) {
-          console.log(`[cache] Rate limited, returning stale cache for ${symbol}`);
-          return res.json({ ...cached.data, cached: true, stale: true });
-        }
-        return res.status(429).json({ error: "API rate limit reached. Please try again later." });
-      }
-
-      const quote = data["Global Quote"];
-      if (!quote || Object.keys(quote).length === 0) {
-        if (cached) {
-          console.log(`[cache] No data, returning stale cache for ${symbol}`);
-          return res.json({ ...cached.data, cached: true, stale: true });
-        }
-        return res.status(404).json({ error: "No data found for this symbol" });
-      }
-
-      const [price, change, high, low, open, previousClose] = await Promise.all([
-        convertToEur(parseFloat(quote["05. price"]), symbol),
-        convertToEur(parseFloat(quote["09. change"]), symbol),
-        convertToEur(parseFloat(quote["03. high"]), symbol),
-        convertToEur(parseFloat(quote["04. low"]), symbol),
-        convertToEur(parseFloat(quote["02. open"]), symbol),
-        convertToEur(parseFloat(quote["08. previous close"]), symbol),
-      ]);
-
-      const quoteData = {
-        symbol: quote["01. symbol"],
-        price,
-        change,
-        changePercent: quote["10. change percent"],
-        high,
-        low,
-        open,
-        previousClose,
-        volume: parseInt(quote["06. volume"]),
-        latestTradingDay: quote["07. latest trading day"],
-        currency: isLondonExchange(symbol) ? "EUR" : undefined
-      };
-
-      quotesCache[symbol] = { data: quoteData, timestamp: Date.now() };
-      console.log(`[cache] Stored fresh quote for ${symbol}`);
-
-      res.json(quoteData);
     } catch (error) {
-      console.error("Alpha Vantage API error:", error);
-      const cached = quotesCache[req.params.symbol.toUpperCase()];
-      if (cached) {
-        return res.json({ ...cached.data, cached: true, stale: true });
-      }
-      res.status(500).json({ error: "Failed to fetch stock quote" });
+      console.error("Stock API error:", error);
+      res.status(500).json({ error: "Failed to fetch stock data" });
     }
   });
 
   app.get("/api/stock/search/:keywords", async (req, res) => {
     try {
-      const keywords = req.params.keywords;
-
-      if (!ALPHA_VANTAGE_API_KEY) {
-        return res.status(500).json({ error: "Alpha Vantage API key not configured" });
+      const results = await marketDataService.search(req.params.keywords);
+      res.json(results);
+    } catch (error: any) {
+      if (error.message && error.message.includes("rate limit")) {
+        return res.status(429).json({ error: "API rate limit reached" });
       }
-
-      const response = await fetch(
-        `https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=${encodeURIComponent(keywords)}&apikey=${ALPHA_VANTAGE_API_KEY}`
-      );
-
-      const data = await response.json();
-
-      if (data["Note"]) {
-        return res.status(429).json({ error: "API rate limit reached. Please try again later." });
-      }
-
-      const matches = data.bestMatches || [];
-
-      res.json(matches.map((match: any) => ({
-        symbol: match["1. symbol"],
-        name: match["2. name"],
-        type: match["3. type"],
-        region: match["4. region"],
-        currency: match["8. currency"]
-      })));
-    } catch (error) {
-      console.error("Alpha Vantage search error:", error);
       res.status(500).json({ error: "Failed to search symbols" });
     }
   });
@@ -963,493 +819,33 @@ export async function registerRoutes(
   app.get("/api/stock/batch-quotes", async (req, res) => {
     try {
       const symbols = (req.query.symbols as string)?.split(",").map(s => s.trim().toUpperCase()) || [];
+      if (symbols.length === 0) return res.status(400).json({ error: "No symbols provided" });
 
-      if (symbols.length === 0) {
-        return res.status(400).json({ error: "No symbols provided" });
-      }
-
-      if (!ALPHA_VANTAGE_API_KEY) {
-        return res.status(500).json({ error: "Alpha Vantage API key not configured" });
-      }
-
-      const quotes: Record<string, any> = {};
-      const symbolsToFetch: string[] = [];
-
-      for (const symbol of symbols) {
-        const cached = quotesCache[symbol];
-        if (cached && Date.now() - cached.timestamp < CACHE_DURATION_24H) {
-          quotes[symbol] = { ...cached.data, cached: true };
-          console.log(`[cache] Batch: returning cached quote for ${symbol}`);
-        } else {
-          symbolsToFetch.push(symbol);
-        }
-      }
-
-      for (const symbol of symbolsToFetch) {
-        try {
-          // Check if we have a fresh enough price in DB (fallback cache)
-          const holding = await storage.getHoldingByTicker(symbol);
-          if (holding && holding.currentPrice && holding.lastPriceUpdate) {
-            const timeDiff = Date.now() - new Date(holding.lastPriceUpdate).getTime();
-            if (timeDiff < CACHE_DURATION_24H) {
-              // If DB has fresh price, use it and don't call API to save limits
-              const price = parseFloat(holding.currentPrice.toString());
-              const quoteData = {
-                symbol: holding.ticker,
-                price: price,
-                change: 0, // We might lose change info if only storing price, but it's acceptable fallback
-                changePercent: "0%"
-              };
-              quotes[symbol] = quoteData;
-              quotesCache[symbol] = {
-                data: { ...quoteData, high: 0, low: 0, open: 0, previousClose: 0, volume: 0 },
-                timestamp: Date.now()
-              };
-              console.log(`[db-cache] Batch: returning DB quoted for ${symbol}`);
-              continue;
-            }
-          }
-
-          const response = await fetch(
-            `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${ALPHA_VANTAGE_API_KEY}`
-          );
-
-          const data = await response.json();
-
-          if (data["Note"]) {
-            // Rate limited
-            const cached = quotesCache[symbol];
-            if (cached) {
-              quotes[symbol] = { ...cached.data, cached: true, stale: true };
-              console.log(`[cache] Batch: rate limited, returning stale for ${symbol}`);
-            } else if (holding && holding.currentPrice) {
-              // Fallback to DB price even if old
-              const price = parseFloat(holding.currentPrice.toString());
-              quotes[symbol] = {
-                symbol: holding.ticker,
-                price: price,
-                change: 0,
-                changePercent: "0%"
-              };
-              console.log(`[db-fallback] Batch: returning stale DB price for ${symbol}`);
-            }
-            continue;
-          }
-
-          const quote = data["Global Quote"];
-          if (quote && Object.keys(quote).length > 0) {
-            const [price, change] = await Promise.all([
-              convertToEur(parseFloat(quote["05. price"]), symbol),
-              convertToEur(parseFloat(quote["09. change"]), symbol),
-            ]);
-
-            const quoteData = {
-              symbol: quote["01. symbol"],
-              price,
-              change,
-              changePercent: quote["10. change percent"]
-            };
-            quotes[symbol] = quoteData;
-            quotesCache[symbol] = {
-              data: { ...quoteData, high: 0, low: 0, open: 0, previousClose: 0, volume: 0 },
-              timestamp: Date.now()
-            };
-
-            // PERSIST TO DATABASE
-            if (holding) {
-              await storage.updateHolding(holding.id, {
-                currentPrice: price.toFixed(4),
-                lastPriceUpdate: new Date().toISOString()
-              });
-              console.log(`[db-save] Batch: updated price for ${symbol}`);
-            }
-
-            console.log(`[cache] Batch: stored fresh quote for ${symbol}`);
-          } else {
-            const cached = quotesCache[symbol];
-            if (cached) {
-              quotes[symbol] = { ...cached.data, cached: true, stale: true };
-            }
-          }
-        } catch (err) {
-          console.error(`Error fetching quote for ${symbol}:`, err);
-          const cached = quotesCache[symbol];
-          if (cached) {
-            quotes[symbol] = { ...cached.data, cached: true, stale: true };
-          }
-        }
-      }
-
+      const quotes = await marketDataService.getBatchQuotes(symbols);
       res.json(quotes);
     } catch (error) {
-      console.error("Batch quotes error:", error);
       res.status(500).json({ error: "Failed to fetch batch quotes" });
+    }
+  });
+
+  app.get("/api/stock/convert/:amount/:symbol", async (req, res) => {
+    try {
+      const amount = parseFloat(req.params.amount);
+      const symbol = req.params.symbol;
+      const converted = await marketDataService.convertToEur(amount, symbol);
+      res.json({ amount: converted });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to convert currency" });
     }
   });
 
   // ============ WEEKLY REPORT EMAIL ============
 
-  async function generateWeeklyReport(): Promise<string> {
-    const transactions = await storage.getTransactions();
-    const accounts = await storage.getAccounts();
-    const categories = await storage.getCategories();
-    const holdingsList = await storage.getHoldings();
-    const allTrades = await storage.getTrades();
-
-    const now = new Date();
-    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-    const weekTransactions = transactions.filter(t => {
-      const txDate = new Date(t.date);
-      return txDate >= oneWeekAgo && txDate <= now;
-    });
-
-    const totalIncome = weekTransactions
-      .filter(t => t.type === 'income')
-      .reduce((sum, t) => sum + parseFloat(t.amount), 0);
-
-    const totalExpense = weekTransactions
-      .filter(t => t.type === 'expense')
-      .reduce((sum, t) => sum + parseFloat(t.amount), 0);
-
-    const expensesByCategory: Record<string, number> = {};
-    weekTransactions.filter(t => t.type === 'expense').forEach(t => {
-      const cat = categories.find(c => c.id === t.categoryId);
-      const catName = cat?.name || 'Altro';
-      expensesByCategory[catName] = (expensesByCategory[catName] || 0) + parseFloat(t.amount);
-    });
-
-    const sortedCategories = Object.entries(expensesByCategory)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5);
-
-    // Calculate actual balance: startingBalance + all transactions for each account (including credit cards)
-    const totalBalance = accounts.reduce((sum, account) => {
-      const accountTransactions = transactions.filter(t => t.accountId === account.id);
-      const transactionSum = accountTransactions.reduce((txSum, t) => {
-        const amount = parseFloat(t.amount);
-        // Income adds, expense subtracts
-        return txSum + (t.type === 'income' ? amount : -amount);
-      }, 0);
-      return sum + parseFloat(account.startingBalance) + transactionSum;
-    }, 0);
-
-    // Get credit card accounts and their weekly transactions
-    const creditCardAccounts = accounts.filter(a => a.type === 'credit');
-    const creditCardIds = creditCardAccounts.map(a => a.id);
-    const weekCreditCardTransactions = weekTransactions
-      .filter(t => creditCardIds.includes(t.accountId) && t.type === 'expense')
-      .sort((a, b) => parseFloat(b.amount) - parseFloat(a.amount));
-
-    const totalCreditCardExpenses = weekCreditCardTransactions.reduce((sum, t) => sum + parseFloat(t.amount), 0);
-
-    // Top 5 highest expenses of the week
-    const top5Expenses = weekTransactions
-      .filter(t => t.type === 'expense')
-      .sort((a, b) => parseFloat(b.amount) - parseFloat(a.amount))
-      .slice(0, 5)
-      .map(t => {
-        const account = accounts.find(a => a.id === t.accountId);
-        const category = categories.find(c => c.id === t.categoryId);
-        return {
-          description: t.description,
-          amount: parseFloat(t.amount),
-          accountName: account?.name || 'N/A',
-          categoryName: category?.name || 'N/A',
-          date: new Date(t.date).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })
-        };
-      });
-
-    // Calculate portfolio data
-    const portfolioData: Array<{
-      ticker: string;
-      name: string;
-      quantity: number;
-      avgCost: number;
-      totalInvested: number;
-      currentPrice: number;
-      currentValue: number;
-      gainLoss: number;
-      gainLossPercent: number;
-    }> = [];
-
-    // Fetch current prices for all holdings
-    const tickers = holdingsList.map(h => h.ticker);
-    const currentPrices: Record<string, number> = {};
-
-    for (const ticker of tickers) {
-      // Try cache first
-      if (quotesCache[ticker] && (Date.now() - quotesCache[ticker].timestamp < 24 * 60 * 60 * 1000)) {
-        currentPrices[ticker] = quotesCache[ticker].data.price;
-      } else {
-        // Fetch from API
-        try {
-          const apiKey = process.env.ALPHA_VANTAGE_API_KEY;
-          if (apiKey) {
-            const response = await fetch(
-              `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${ticker}&apikey=${apiKey}`
-            );
-            const data = await response.json();
-            const quote = data["Global Quote"];
-            if (quote && quote["05. price"]) {
-              currentPrices[ticker] = parseFloat(quote["05. price"]);
-            }
-          }
-        } catch (err) {
-          console.error(`Failed to fetch price for ${ticker}:`, err);
-        }
-      }
-    }
-
-    // Calculate portfolio metrics for each holding
-    for (const holding of holdingsList) {
-      const holdingTrades = allTrades.filter(t => t.holdingId === holding.id);
-
-      let totalQuantity = 0;
-      let totalCost = 0;
-
-      for (const trade of holdingTrades) {
-        const qty = parseFloat(trade.quantity);
-        const amount = parseFloat(trade.totalAmount);
-        const fees = parseFloat(trade.fees || "0");
-
-        if (trade.type === 'buy') {
-          totalQuantity += qty;
-          totalCost += amount + fees;
-        } else {
-          totalQuantity -= qty;
-          totalCost -= amount - fees;
-        }
-      }
-
-      if (totalQuantity > 0.0001) {
-        const avgCost = totalCost / totalQuantity;
-        const currentPrice = currentPrices[holding.ticker] || avgCost;
-        const currentValue = totalQuantity * currentPrice;
-        const gainLoss = currentValue - totalCost;
-        const gainLossPercent = totalCost > 0 ? (gainLoss / totalCost) * 100 : 0;
-
-        portfolioData.push({
-          ticker: holding.ticker,
-          name: holding.name,
-          quantity: totalQuantity,
-          avgCost,
-          totalInvested: totalCost,
-          currentPrice,
-          currentValue,
-          gainLoss,
-          gainLossPercent
-        });
-      }
-    }
-
-    // Portfolio totals
-    const portfolioTotalInvested = portfolioData.reduce((sum, p) => sum + p.totalInvested, 0);
-    const portfolioTotalValue = portfolioData.reduce((sum, p) => sum + p.currentValue, 0);
-    const portfolioTotalGainLoss = portfolioTotalValue - portfolioTotalInvested;
-    const portfolioTotalGainLossPercent = portfolioTotalInvested > 0 ? (portfolioTotalGainLoss / portfolioTotalInvested) * 100 : 0;
-
-    const formatEur = (n: number) => new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(n);
-    const formatPercent = (n: number) => (n >= 0 ? '+' : '') + n.toFixed(2) + '%';
-    const startDate = oneWeekAgo.toLocaleDateString('it-IT', { day: 'numeric', month: 'long' });
-    const endDate = now.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' });
-
-    return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; padding: 20px; }
-    .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-    h1 { color: #1a1a1a; margin-bottom: 5px; }
-    .subtitle { color: #666; margin-bottom: 30px; }
-    .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px; }
-    .summary-card { background: #f8f9fa; padding: 20px; border-radius: 8px; text-align: center; }
-    .summary-card.income { background: #ecfdf5; }
-    .summary-card.expense { background: #fef2f2; }
-    .summary-label { font-size: 12px; color: #666; text-transform: uppercase; }
-    .summary-value { font-size: 24px; font-weight: 700; margin-top: 5px; }
-    .summary-value.income { color: #059669; }
-    .summary-value.expense { color: #dc2626; }
-    .category-list { margin: 20px 0; }
-    .category-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #eee; }
-    .category-name { color: #333; }
-    .category-amount { font-weight: 600; color: #dc2626; }
-    .footer { text-align: center; margin-top: 30px; color: #999; font-size: 12px; }
-    .balance-card { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 25px; border-radius: 12px; text-align: center; margin-bottom: 25px; }
-    .balance-label { font-size: 14px; opacity: 0.9; }
-    .balance-value { font-size: 32px; font-weight: 700; margin-top: 5px; }
-    .expense-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-    .expense-table th { text-align: left; padding: 10px 8px; border-bottom: 2px solid #eee; font-size: 11px; color: #666; text-transform: uppercase; }
-    .expense-table td { padding: 12px 8px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
-    .expense-table .amount { font-weight: 600; color: #dc2626; text-align: right; }
-    .expense-table .desc { color: #333; }
-    .expense-table .meta { color: #888; font-size: 11px; }
-    .credit-card-section { background: #fef3c7; border-radius: 8px; padding: 20px; margin-top: 25px; }
-    .credit-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-    .credit-card-title { font-weight: 600; color: #92400e; }
-    .credit-card-total { font-weight: 700; color: #dc2626; }
-    .portfolio-section { background: #f0fdf4; border-radius: 8px; padding: 20px; margin-top: 25px; }
-    .portfolio-header { margin-bottom: 15px; }
-    .portfolio-title { font-weight: 600; color: #166534; font-size: 16px; }
-    .portfolio-table { width: 100%; border-collapse: collapse; margin: 10px 0; }
-    .portfolio-table th { text-align: left; padding: 8px 6px; border-bottom: 2px solid #86efac; font-size: 10px; color: #166534; text-transform: uppercase; }
-    .portfolio-table td { padding: 10px 6px; border-bottom: 1px solid #dcfce7; font-size: 12px; }
-    .portfolio-table .ticker { font-weight: 600; color: #166534; }
-    .portfolio-table .number { text-align: right; }
-    .portfolio-table .gain { color: #059669; font-weight: 600; }
-    .portfolio-table .loss { color: #dc2626; font-weight: 600; }
-    .portfolio-table tfoot td { border-top: 2px solid #86efac; font-weight: 700; background: #dcfce7; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>📊 Report Settimanale</h1>
-    <p class="subtitle">${startDate} - ${endDate}</p>
-    
-    <div class="balance-card">
-      <div class="balance-label">Saldo Totale Conti</div>
-      <div class="balance-value">${formatEur(totalBalance)}</div>
-    </div>
-    
-    ${top5Expenses.length > 0 ? `
-    <h3>💸 Top 5 Spese Più Alte</h3>
-    <table class="expense-table">
-      <thead>
-        <tr>
-          <th>Descrizione</th>
-          <th>Conto</th>
-          <th>Categoria</th>
-          <th style="text-align: right;">Importo</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${top5Expenses.map(e => `
-          <tr>
-            <td class="desc">${e.description}</td>
-            <td class="meta">${e.accountName}</td>
-            <td class="meta">${e.categoryName}</td>
-            <td class="amount">${formatEur(e.amount)}</td>
-          </tr>
-        `).join('')}
-      </tbody>
-    </table>
-    ` : ''}
-    
-    <div class="summary-grid">
-      <div class="summary-card income">
-        <div class="summary-label">Entrate</div>
-        <div class="summary-value income">+${formatEur(totalIncome)}</div>
-      </div>
-      <div class="summary-card expense">
-        <div class="summary-label">Uscite</div>
-        <div class="summary-value expense">-${formatEur(totalExpense)}</div>
-      </div>
-    </div>
-    
-    <p style="text-align: center; margin-bottom: 25px;">
-      <strong>Bilancio Settimanale:</strong> 
-      <span style="color: ${totalIncome - totalExpense >= 0 ? '#059669' : '#dc2626'}; font-weight: 700;">
-        ${totalIncome - totalExpense >= 0 ? '+' : ''}${formatEur(totalIncome - totalExpense)}
-      </span>
-    </p>
-    
-    <h3>🏷️ Top 5 Categorie Spese</h3>
-    <div class="category-list">
-      ${sortedCategories.length > 0
-        ? sortedCategories.map(([name, amount]) => `
-          <div class="category-item">
-            <span class="category-name">${name}</span>
-            <span class="category-amount">${formatEur(amount)}</span>
-          </div>
-        `).join('')
-        : '<p style="color: #999; text-align: center;">Nessuna spesa questa settimana</p>'
-      }
-    </div>
-    
-    ${portfolioData.length > 0 ? `
-    <div class="portfolio-section">
-      <div class="portfolio-header">
-        <span class="portfolio-title">📈 Portafoglio Titoli</span>
-      </div>
-      <table class="portfolio-table">
-        <thead>
-          <tr>
-            <th>Titolo</th>
-            <th class="number">Investito</th>
-            <th class="number">Valore Attuale</th>
-            <th class="number">Gain/Loss</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${portfolioData.map(p => `
-            <tr>
-              <td class="ticker">${p.ticker}</td>
-              <td class="number">${formatEur(p.totalInvested)}</td>
-              <td class="number">${formatEur(p.currentValue)}</td>
-              <td class="number ${p.gainLoss >= 0 ? 'gain' : 'loss'}">${p.gainLoss >= 0 ? '+' : ''}${formatEur(p.gainLoss)} (${formatPercent(p.gainLossPercent)})</td>
-            </tr>
-          `).join('')}
-        </tbody>
-        <tfoot>
-          <tr>
-            <td><strong>TOTALE</strong></td>
-            <td class="number">${formatEur(portfolioTotalInvested)}</td>
-            <td class="number">${formatEur(portfolioTotalValue)}</td>
-            <td class="number ${portfolioTotalGainLoss >= 0 ? 'gain' : 'loss'}">${portfolioTotalGainLoss >= 0 ? '+' : ''}${formatEur(portfolioTotalGainLoss)} (${formatPercent(portfolioTotalGainLossPercent)})</td>
-          </tr>
-        </tfoot>
-      </table>
-    </div>
-    ` : ''}
-    
-    ${weekCreditCardTransactions.length > 0 ? `
-    <div class="credit-card-section">
-      <div class="credit-card-header">
-        <span class="credit-card-title">💳 Spese Carta di Credito</span>
-        <span class="credit-card-total">Totale: ${formatEur(totalCreditCardExpenses)}</span>
-      </div>
-      <table class="expense-table" style="margin: 0;">
-        <thead>
-          <tr>
-            <th>Data</th>
-            <th>Descrizione</th>
-            <th>Categoria</th>
-            <th style="text-align: right;">Importo</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${weekCreditCardTransactions.map(t => {
-        const category = categories.find(c => c.id === t.categoryId);
-        const account = accounts.find(a => a.id === t.accountId);
-        return `
-              <tr>
-                <td class="meta">${new Date(t.date).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })}</td>
-                <td class="desc">${t.description}${creditCardAccounts.length > 1 ? ` <span class="meta">(${account?.name})</span>` : ''}</td>
-                <td class="meta">${category?.name || 'N/A'}</td>
-                <td class="amount">${formatEur(parseFloat(t.amount))}</td>
-              </tr>
-            `;
-      }).join('')}
-        </tbody>
-      </table>
-    </div>
-    ` : ''}
-    
-    <div class="footer">
-      <p>Questo report è stato generato automaticamente da FinTrack</p>
-    </div>
-  </div>
-</body>
-</html>
-    `;
-  }
-
   app.post("/api/reports/weekly/send", async (req, res) => {
     try {
       const email = req.body.email || "tommasominuto@gmail.com";
-      const html = await generateWeeklyReport();
+      const data = await reportService.getWeeklyReportData();
+      const html = reportService.generateHtml(data);
 
       const now = new Date();
       const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -1467,7 +863,8 @@ export async function registerRoutes(
 
   app.get("/api/reports/weekly/preview", async (req, res) => {
     try {
-      const html = await generateWeeklyReport();
+      const data = await reportService.getWeeklyReportData();
+      const html = reportService.generateHtml(data);
       res.send(html);
     } catch (error) {
       console.error("Error generating report preview:", error);
@@ -1479,7 +876,8 @@ export async function registerRoutes(
   cron.schedule('0 9 * * 0', async () => {
     console.log("[scheduler] Sending weekly report...");
     try {
-      const html = await generateWeeklyReport();
+      const data = await reportService.getWeeklyReportData();
+      const html = reportService.generateHtml(data);
       const now = new Date();
       await sendEmail(
         "tommasominuto@gmail.com",
