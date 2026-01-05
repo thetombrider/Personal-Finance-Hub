@@ -27,6 +27,44 @@ export async function registerRoutes(
     res.json(req.user);
   });
 
+  // Global API authentication middleware
+  app.use('/api', (req, res, next) => {
+    // Exempt routes
+    if (req.path.startsWith('/webhooks')) {
+      return next();
+    }
+    // Allow login/register/logout endpoints to pass through (they are handled by passport or above)
+    // NOTE: app.use('/api') catches everything starting with /api. 
+    // Passport routes are defined in setupAuth which is called BEFORE this middleware?
+    // Let's verify route order. setupAuth uses app.use(passport...). 
+    // AND it defines routes like /api/login, /api/register.
+
+    // Express executes middleware in order of definition.
+    // setupAuth is called at line 20.
+    // This middleware is being inserted around line 25.
+    // So setupAuth routes (login/register) should be already handled if they match exactly?
+    // NO: express router matches routes. If a response is sent, it stops.
+    // setupAuth defines: app.post("/api/register"...), app.post("/api/login"...)
+    // So if a request matches those, it handles it and ends response.
+    // So this middleware will only be hit for routes NOT matched by setupAuth OR if setupAuth calls next().
+    // However, we should be careful. 
+    // Let's explicitly exempt auth routes just in case or for clarity.
+
+    if (req.path.startsWith('/auth') || req.path === '/login' || req.path === '/register' || req.path === '/user') {
+      // Wait, req.path is relative to the mount point if used in app.use?
+      // If app.use('/api', ...), then req.path for /api/foo is /foo.
+      // So for /api/auth/user, req.path is /auth/user.
+      return next();
+    }
+
+    if (req.isAuthenticated()) {
+      return next();
+    }
+
+    res.status(401).json({ message: "Unauthorized" });
+  });
+
+
   // ============ ACCOUNTS ============
 
   app.get("/api/accounts", async (req, res) => {

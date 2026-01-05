@@ -85,12 +85,11 @@ app.use((req, res, next) => {
     // Use PORT from environment (Autoscale provides this dynamically)
     // Default to 5000 only in development
     const port = parseInt(process.env.PORT || "5000", 10);
-    
+
     httpServer.listen(
       {
         port,
         host: "0.0.0.0",
-        reusePort: true,
       },
       () => {
         log(`Server started successfully on port ${port}`);
