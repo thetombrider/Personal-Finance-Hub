@@ -72,6 +72,15 @@ export function setupAuth(app: Express) {
 
     const oidcEnabled = !!(oidcIssuer && oidcClientId && oidcClientSecret && oidcCallbackUrl);
 
+    // Validate SSO_ONLY configuration
+    if (process.env.SSO_ONLY === "true" && !oidcEnabled) {
+        throw new Error(
+            "SSO_ONLY is enabled but OIDC is not properly configured. " +
+            "Please set OIDC_ISSUER_URL, OIDC_CLIENT_ID, OIDC_CLIENT_SECRET, and OIDC_CALLBACK_URL " +
+            "environment variables, or disable SSO_ONLY."
+        );
+    }
+
     if (oidcEnabled) {
         passport.use(
             "openidconnect",
@@ -216,7 +225,7 @@ export function setupAuth(app: Express) {
 
     app.post("/api/login", (req, res, next) => {
         if (process.env.SSO_ONLY === "true") {
-             return res.status(403).send("Native login disabled");
+            return res.status(403).send("Native login disabled");
         }
         passport.authenticate("local")(req, res, next);
     }, (req, res) => {
