@@ -2,15 +2,18 @@ import { useFinance } from "@/context/FinanceContext";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { useState, useMemo } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { format, subMonths, parseISO } from "date-fns";
 import { it } from "date-fns/locale";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function Accounts() {
   const { accounts, transactions, formatCurrency, isLoading } = useFinance();
   const [timeRange, setTimeRange] = useState('12');
+  const [page, setPage] = useState(0);
 
   const monthsList = useMemo(() => {
     const months = parseInt(timeRange);
@@ -25,6 +28,32 @@ export default function Accounts() {
     }
     return list;
   }, [timeRange]);
+
+  // Reset page when timeRange changes
+  useMemo(() => {
+    setPage(0);
+  }, [timeRange]);
+
+  const visibleMonths = useMemo(() => {
+    // Show 6 months per page.
+    // Page 0 = Last 6 months (indices: length-6 to length)
+    // Page 1 = Previous 6 months, etc.
+    const itemsPerPage = 6;
+    const totalMonths = monthsList.length;
+
+    // Calculate start/end indices from the END of the list (most recent)
+    // For page 0: slice(total - 6, total)
+    // For page 1: slice(total - 12, total - 6)
+
+    const endIndex = totalMonths - (page * itemsPerPage);
+    const startIndex = Math.max(0, endIndex - itemsPerPage);
+
+    return monthsList.slice(startIndex, endIndex);
+  }, [monthsList, page]);
+
+  const totalPages = Math.ceil(monthsList.length / 6);
+  const canGoBack = page < totalPages - 1;
+  const canGoForward = page > 0;
 
   const accountMonthlyData = useMemo(() => {
     const data: Record<string, Record<string, number>> = {};
@@ -66,9 +95,6 @@ export default function Accounts() {
     );
   }
 
-  const totalStartingBalance = accounts.reduce((sum, acc) => sum + parseFloat(acc.startingBalance), 0);
-  const totalCurrentBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
-
   return (
     <Layout>
       <div className="space-y-6">
@@ -77,59 +103,6 @@ export default function Accounts() {
           <p className="text-muted-foreground">Analisi del flusso per conto</p>
         </div>
 
-        {/* Account Balances Summary Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Riepilogo Saldi</CardTitle>
-            <CardDescription>Saldo iniziale e corrente per ogni conto</CardDescription>
-          </CardHeader>
-          <CardContent className="p-0">
-            <ScrollArea className="w-full">
-              <div className="w-full">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="sticky left-0 bg-card z-10 w-[20%]"></TableHead>
-                      {accounts.map(acc => (
-                        <TableHead key={acc.id} className="text-center w-auto">{acc.name}</TableHead>
-                      ))}
-                      <TableHead className="text-center w-[15%] font-semibold">Totale</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell className="sticky left-0 bg-card z-10 font-medium">Saldo Iniziale</TableCell>
-                      {accounts.map(acc => (
-                        <TableCell key={acc.id} className="text-center">
-                          {formatCurrency(parseFloat(acc.startingBalance))}
-                        </TableCell>
-                      ))}
-                      <TableCell className="text-center font-semibold">
-                        {formatCurrency(totalStartingBalance)}
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="sticky left-0 bg-card z-10 font-medium">Saldo Corrente</TableCell>
-                      {accounts.map(acc => {
-                        const isNegative = acc.balance < 0;
-                        return (
-                          <TableCell key={acc.id} className={`text-center font-semibold ${isNegative ? 'text-rose-600' : 'text-emerald-600'}`}>
-                            {formatCurrency(acc.balance)}
-                          </TableCell>
-                        );
-                      })}
-                      <TableCell className={`text-center font-bold ${totalCurrentBalance < 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
-                        {formatCurrency(totalCurrentBalance)}
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </div>
-              <ScrollBar orientation="horizontal" />
-            </ScrollArea>
-          </CardContent>
-        </Card>
-
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -137,16 +110,44 @@ export default function Accounts() {
                 <CardTitle className="text-lg">Flusso per Conto</CardTitle>
                 <CardDescription>Riepilogo mensile entrate/uscite nette per ogni conto</CardDescription>
               </div>
-              <Select value={timeRange} onValueChange={setTimeRange}>
-                <SelectTrigger className="w-[140px]" data-testid="select-time-range">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="6">Ultimi 6 mesi</SelectItem>
-                  <SelectItem value="12">Ultimi 12 mesi</SelectItem>
-                  <SelectItem value="24">Ultimi 24 mesi</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center border rounded-md mr-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setPage(p => p + 1)}
+                    disabled={!canGoBack}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="text-sm px-2 font-medium min-w-[80px] text-center">
+                    {visibleMonths.length > 0
+                      ? `${visibleMonths[0].label} - ${visibleMonths[visibleMonths.length - 1].label}`
+                      : 'Nessun dato'}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setPage(p => Math.max(0, p - 1))}
+                    disabled={!canGoForward}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                <Select value={timeRange} onValueChange={setTimeRange}>
+                  <SelectTrigger className="w-[140px]" data-testid="select-time-range">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="6">Ultimi 6 mesi</SelectItem>
+                    <SelectItem value="12">Ultimi 12 mesi</SelectItem>
+                    <SelectItem value="24">Ultimi 24 mesi</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="p-0">
@@ -155,20 +156,21 @@ export default function Accounts() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="sticky left-0 bg-card z-10 w-[15%]">Conto</TableHead>
-                      {monthsList.map(m => (
-                        <TableHead key={m.key} className="text-center w-auto text-xs sm:text-sm p-1 capitalize">{m.label}</TableHead>
+                      <TableHead className="sticky left-0 bg-card z-10 w-[20%] min-w-[150px]">Conto</TableHead>
+                      {visibleMonths.map(m => (
+                        <TableHead key={m.key} className="text-center w-[10%] min-w-[80px] text-xs sm:text-sm p-1 capitalize">{m.label}</TableHead>
                       ))}
-                      <TableHead className="text-center w-[10%] font-semibold p-1">Totale</TableHead>
+                      <TableHead className="text-center w-[10%] min-w-[100px] font-semibold p-1">Totale Periodo</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {Object.entries(accountMonthlyData).map(([accountName, months]) => {
+                      // Calculate total based on ALL months in the selected range, not just visible ones
                       const total = Object.values(months).reduce((sum, val) => sum + val, 0);
                       return (
                         <TableRow key={accountName}>
                           <TableCell className="sticky left-0 bg-card z-10 font-medium">{accountName}</TableCell>
-                          {monthsList.map(m => {
+                          {visibleMonths.map(m => {
                             const val = months[m.key];
                             return (
                               <TableCell key={m.key} className={`text-center text-xs sm:text-sm p-1 ${val > 0 ? 'text-emerald-600' : val < 0 ? 'text-rose-600' : ''}`}>
@@ -184,7 +186,7 @@ export default function Accounts() {
                     })}
                     <TableRow className="bg-muted/50 font-semibold">
                       <TableCell className="sticky left-0 bg-muted/50 z-10">Totale</TableCell>
-                      {monthsList.map(m => {
+                      {visibleMonths.map(m => {
                         const monthTotal = Object.values(accountMonthlyData).reduce((sum, acc) => sum + (acc[m.key] || 0), 0);
                         return (
                           <TableCell key={m.key} className={`text-center ${monthTotal > 0 ? 'text-emerald-600' : monthTotal < 0 ? 'text-rose-600' : ''}`}>

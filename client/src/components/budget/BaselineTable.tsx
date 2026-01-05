@@ -17,13 +17,17 @@ interface BaselineTableProps {
     categories: Category[];
     budgetData: Record<number, Record<number, { baseline: number }>>;
     onUpdateBaseline: (categoryId: number, month: number, amount: number) => Promise<void>;
+    monthRange: [number, number]; // [start, end]
 }
 
-export function BaselineTable({ categories, budgetData, onUpdateBaseline }: BaselineTableProps) {
-    const months = [
+export function BaselineTable({ categories, budgetData, onUpdateBaseline, monthRange }: BaselineTableProps) {
+    const allMonths = [
         "Gen", "Feb", "Mar", "Apr", "Mag", "Giu",
         "Lug", "Ago", "Set", "Ott", "Nov", "Dic"
     ];
+
+    const visibleMonths = allMonths.slice(monthRange[0], monthRange[1]);
+    const startMonthIndex = monthRange[0];
 
     // Local state to handle inputs before blur
     // Map key: "catId-month" -> value
@@ -47,13 +51,11 @@ export function BaselineTable({ categories, budgetData, onUpdateBaseline }: Base
         const key = getKey(catId, month);
         const valueStr = inputs[key];
 
-        // If undefined, it means user didn't touch it, so no update needed
         if (valueStr === undefined) return;
 
         const currentSavedValue = budgetData[catId]?.[month]?.baseline || 0;
         const newValue = valueStr === "" ? 0 : parseFloat(valueStr);
 
-        // If invalid number or same value, revert/ignore
         if (isNaN(newValue)) {
             setInputs(prev => {
                 const copy = { ...prev };
@@ -77,7 +79,6 @@ export function BaselineTable({ categories, budgetData, onUpdateBaseline }: Base
             await onUpdateBaseline(catId, month, newValue);
         } finally {
             setUpdating(null);
-            // Clear local state so it reflects props again
             setInputs(prev => {
                 const copy = { ...prev };
                 delete copy[key];
@@ -106,8 +107,8 @@ export function BaselineTable({ categories, budgetData, onUpdateBaseline }: Base
                         <TableHeader>
                             <TableRow>
                                 <TableHead className="w-[15%]">Categoria</TableHead>
-                                {months.map((month) => (
-                                    <TableHead key={month} className="text-right w-auto md:w-[6.5%] p-1">
+                                {visibleMonths.map((month) => (
+                                    <TableHead key={month} className="text-right w-auto md:w-[12%] p-2">
                                         {month}
                                     </TableHead>
                                 ))}
@@ -116,7 +117,7 @@ export function BaselineTable({ categories, budgetData, onUpdateBaseline }: Base
                         <TableBody>
                             {/* INCOME SECTION */}
                             <TableRow className="bg-muted/30">
-                                <TableCell colSpan={13} className="font-bold py-2">ENTRATE</TableCell>
+                                <TableCell colSpan={visibleMonths.length + 1} className="font-bold py-2">ENTRATE</TableCell>
                             </TableRow>
                             {categories.filter(c => c.type === 'income').map((category) => (
                                 <TableRow key={category.id}>
@@ -129,19 +130,19 @@ export function BaselineTable({ categories, budgetData, onUpdateBaseline }: Base
                                             <span className="truncate">{category.name}</span>
                                         </div>
                                     </TableCell>
-                                    {months.map((_, index) => {
-                                        const month = index + 1;
+                                    {visibleMonths.map((_, index) => {
+                                        const month = startMonthIndex + index + 1;
                                         const key = getKey(category.id, month);
                                         const isUpdating = updating === key;
 
                                         return (
-                                            <TableCell key={index} className="p-1">
+                                            <TableCell key={index} className="p-2">
                                                 <div className="relative">
                                                     <Input
                                                         type="number"
                                                         min="0"
                                                         step="50"
-                                                        className={`text-right h-8 px-1 text-xs sm:text-sm border-transparent hover:border-input focus:border-primary w-full ${getValue(category.id, month) === "" ? "placeholder:text-muted-foreground/30" : ""
+                                                        className={`text-right h-8 px-2 text-xs sm:text-sm border-transparent hover:border-input focus:border-primary w-full ${getValue(category.id, month) === "" ? "placeholder:text-muted-foreground/30" : ""
                                                             }`}
                                                         placeholder="0"
                                                         value={getValue(category.id, month)}
@@ -164,7 +165,7 @@ export function BaselineTable({ categories, budgetData, onUpdateBaseline }: Base
 
                             {/* EXPENSE SECTION */}
                             <TableRow className="bg-muted/30">
-                                <TableCell colSpan={13} className="font-bold py-2 mt-4">USCITE</TableCell>
+                                <TableCell colSpan={visibleMonths.length + 1} className="font-bold py-2 mt-4">USCITE</TableCell>
                             </TableRow>
                             {categories.filter(c => c.type === 'expense').map((category) => (
                                 <TableRow key={category.id}>
@@ -177,19 +178,19 @@ export function BaselineTable({ categories, budgetData, onUpdateBaseline }: Base
                                             <span className="truncate">{category.name}</span>
                                         </div>
                                     </TableCell>
-                                    {months.map((_, index) => {
-                                        const month = index + 1;
+                                    {visibleMonths.map((_, index) => {
+                                        const month = startMonthIndex + index + 1;
                                         const key = getKey(category.id, month);
                                         const isUpdating = updating === key;
 
                                         return (
-                                            <TableCell key={index} className="p-1">
+                                            <TableCell key={index} className="p-2">
                                                 <div className="relative">
                                                     <Input
                                                         type="number"
                                                         min="0"
                                                         step="50"
-                                                        className={`text-right h-8 px-1 text-xs sm:text-sm border-transparent hover:border-input focus:border-primary w-full ${getValue(category.id, month) === "" ? "placeholder:text-muted-foreground/30" : ""
+                                                        className={`text-right h-8 px-2 text-xs sm:text-sm border-transparent hover:border-input focus:border-primary w-full ${getValue(category.id, month) === "" ? "placeholder:text-muted-foreground/30" : ""
                                                             }`}
                                                         placeholder="0"
                                                         value={getValue(category.id, month)}

@@ -28,6 +28,7 @@ interface YearlyBudgetData {
 
 export default function Budget() {
     const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+    const [viewHalf, setViewHalf] = useState<'first' | 'second'>('first');
     const queryClient = useQueryClient();
     const { toast } = useToast();
     const { accounts, categories } = useFinance();
@@ -46,6 +47,8 @@ export default function Budget() {
             return res.json();
         }
     });
+
+    const monthRange: [number, number] = viewHalf === 'first' ? [0, 6] : [6, 12];
 
     // Mutations
     const updateBaselineMutation = useMutation({
@@ -138,16 +141,37 @@ export default function Budget() {
                         <h1 className="text-3xl font-heading font-bold text-foreground">Gestione Budget</h1>
                         <p className="text-muted-foreground">Pianifica le spese annuali per categoria</p>
                     </div>
-                    <div className="flex items-center gap-4 bg-card p-2 rounded-lg border shadow-sm">
-                        <Button variant="ghost" size="icon" onClick={() => setCurrentYear(currentYear - 1)}>
-                            <ChevronLeft size={20} />
-                        </Button>
-                        <span className="font-semibold text-lg min-w-[100px] text-center">
-                            {currentYear}
-                        </span>
-                        <Button variant="ghost" size="icon" onClick={() => setCurrentYear(currentYear + 1)}>
-                            <ChevronRight size={20} />
-                        </Button>
+                    <div className="flex items-center gap-4">
+                        {/* Semester Toggle */}
+                        <div className="flex items-center bg-card p-1 rounded-lg border shadow-sm">
+                            <Button
+                                variant={viewHalf === 'first' ? 'secondary' : 'ghost'}
+                                size="sm"
+                                className="text-xs"
+                                onClick={() => setViewHalf('first')}
+                            >
+                                Gen - Giu
+                            </Button>
+                            <Button
+                                variant={viewHalf === 'second' ? 'secondary' : 'ghost'}
+                                size="sm"
+                                className="text-xs"
+                                onClick={() => setViewHalf('second')}
+                            >
+                                Lug - Dic
+                            </Button>
+                        </div>
+                        <div className="flex items-center gap-4 bg-card p-2 rounded-lg border shadow-sm">
+                            <Button variant="ghost" size="icon" onClick={() => setCurrentYear(currentYear - 1)}>
+                                <ChevronLeft size={20} />
+                            </Button>
+                            <span className="font-semibold text-lg min-w-[100px] text-center">
+                                {currentYear}
+                            </span>
+                            <Button variant="ghost" size="icon" onClick={() => setCurrentYear(currentYear + 1)}>
+                                <ChevronRight size={20} />
+                            </Button>
+                        </div>
                     </div>
                 </div>
 
@@ -158,6 +182,7 @@ export default function Budget() {
                         <SummaryTable
                             categories={data.categories}
                             budgetData={data.budgetData}
+                            monthRange={monthRange}
                         />
                     </section>
 
@@ -167,6 +192,7 @@ export default function Budget() {
                             categories={data.categories}
                             budgetData={data.budgetData}
                             onUpdateBaseline={handleUpdateBaseline}
+                            monthRange={monthRange}
                         />
                     </section>
 
