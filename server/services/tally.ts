@@ -48,7 +48,15 @@ export class TallyService {
             .createHmac('sha256', secret)
             .update(JSON.stringify(payload))
             .digest('base64');
-        return signature === expectedSignature;
+
+        const signatureBuffer = Buffer.from(signature);
+        const expectedBuffer = Buffer.from(expectedSignature);
+
+        if (signatureBuffer.length !== expectedBuffer.length) {
+            return false;
+        }
+
+        return crypto.timingSafeEqual(signatureBuffer, expectedBuffer);
     }
 
     async processWebhook(payload: any) {
