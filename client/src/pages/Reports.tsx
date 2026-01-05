@@ -204,8 +204,16 @@ function IncomeStatementView() {
 
 function IncomeStatementRow({ item }: { item: IncomeStatementItem }) {
     const diff = item.difference;
-    // Backend now returns Positive difference = Good for both Income (Actual > Budget) and Expense (Budget > Actual)
-    const isGood = diff >= 0;
+    // Backend now returns Difference = Actual - Budget for ALL items.
+    // Income: Actual > Budget (Positive Diff) => GOOD (Green)
+    // Expense: Actual < Budget (Negative Diff) => GOOD (Green)
+    //          Actual > Budget (Positive Diff) => BAD (Red)
+
+    // Simplification:
+    // Income: Diff > 0 ? Green : Red
+    // Expense: Diff < 0 ? Green : Red
+
+    const isGood = item.isIncome ? diff >= 0 : diff <= 0;
 
     return (
         <div className="grid grid-cols-12 gap-4 p-4 text-sm hover:bg-muted/30 transition-colors items-center">
@@ -231,24 +239,14 @@ function IncomeStatementRow({ item }: { item: IncomeStatementItem }) {
 
 function SummaryRow({ label, summary, isIncome = false }: { label: string, summary: IncomeStatementSummary, isIncome?: boolean }) {
     // Backend returns summary: actual, budget. 
-    // We calculate diff here.
-    // For Income: Actual - Budget
-    // For Expense: Budget - Actual (since spending less is good, we want positive numbers for 'savings')
+    // We calculate diff here as Actual - Budget for consistency with backend items.
+    const diff = summary.actual - summary.budget;
 
-    // Wait, the backend returns summary totals. Does it summarize differences? No. 
-    // It returns actual and budget totals.
-    // So we need to compute difference HERE locally for the summary row.
+    // Logic for Summary Row:
+    // Income: Diff > 0 (Earned more than budget) => Green
+    // Expense: Diff < 0 (Spent less than budget) => Green (Saved)
 
-    let diff: number;
-    if (isIncome) {
-        // Income: Actual - Budget
-        diff = summary.actual - summary.budget;
-    } else {
-        // Expense: Budget - Actual (Positive means saved money)
-        diff = summary.budget - summary.actual;
-    }
-
-    const isGood = diff >= 0;
+    const isGood = isIncome ? diff >= 0 : diff <= 0;
 
     return (
         <div className="grid grid-cols-12 gap-4 p-4 font-semibold bg-muted/20 border-t">

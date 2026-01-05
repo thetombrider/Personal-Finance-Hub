@@ -237,9 +237,8 @@ export class ReportService {
         const isIncome = category.type === 'income';
 
         // Difference:
-        // For Income: Actual - Budget (Positive = Earned more than budget = Good)
-        // For Expense: Budget - Actual (Positive = Spent less than budget = Good)
-        const difference = isIncome ? actual - budget : budget - actual;
+        // Always calculated as Actual - Budget.
+        const difference = actual - budget;
 
         return {
           category,
