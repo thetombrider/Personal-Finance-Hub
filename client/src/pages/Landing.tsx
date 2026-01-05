@@ -44,7 +44,7 @@ export default function Landing() {
     }
   };
 
-  const { data: authConfig } = useQuery<{ disableSignup: boolean }>({
+  const { data: authConfig } = useQuery<{ disableSignup: boolean; oidcEnabled: boolean }>({
     queryKey: ["/api/auth/config"],
   });
 
@@ -99,6 +99,29 @@ export default function Landing() {
                 {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 Sign In
               </Button>
+
+              {authConfig?.oidcEnabled && (
+                <div className="mt-4">
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-background px-2 text-muted-foreground">
+                        Or continue with
+                      </span>
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    className="w-full mt-4"
+                    onClick={() => window.location.href = "/api/auth/oidc"}
+                    disabled={isLoading}
+                  >
+                    Single Sign-On (OIDC)
+                  </Button>
+                </div>
+              )}
             </TabsContent>
 
             {!authConfig?.disableSignup && (

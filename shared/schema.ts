@@ -25,6 +25,7 @@ export const users = pgTable("users", {
   profileImageUrl: varchar("profile_image_url"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  oidcId: varchar("oidc_id").unique(),
 });
 
 export type UpsertUser = typeof users.$inferInsert;

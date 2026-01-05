@@ -1,5 +1,6 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
+import { Strategy as OpenIDConnectStrategy } from "passport-openidconnect";
 import { Express } from "express";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
@@ -59,6 +60,114 @@ export function setupAuth(app: Express) {
         }),
     );
 
+    const oidcIssuer = process.env.OIDC_ISSUER_URL;
+    const oidcClientId = process.env.OIDC_CLIENT_ID;
+    const oidcClientSecret = process.env.OIDC_CLIENT_SECRET;
+    const oidcCallbackUrl = process.env.OIDC_CALLBACK_URL;
+    const oidcEnabled = !!(oidcIssuer && oidcClientId && oidcClientSecret && oidcCallbackUrl);
+
+    if (oidcEnabled) {
+        passport.use(
+            "openidconnect",
+            new OpenIDConnectStrategy(
+                {
+                    issuer: oidcIssuer!,
+                    authorizationURL: `${oidcIssuer}/protocol/openid-connect/auth`,
+                    tokenURL: `${oidcIssuer}/protocol/openid-connect/token`,
+                    userInfoURL: `${oidcIssuer}/protocol/openid-connect/userinfo`,
+                    clientID: oidcClientId!,
+                    clientSecret: oidcClientSecret!,
+                    callbackURL: oidcCallbackUrl!,
+                    scope: ["openid", "profile", "email"],
+                },
+                async (issuer: any, profile: any, cb: any) => {
+                    try {
+                        const oidcId = profile.id;
+                        const email = profile.emails && profile.emails.length > 0 ? profile.emails[0].value : null;
+                        const displayName = profile.displayName || profile.username || (email ? email.split('@')[0] : "user");
+
+                        // 1. Check if user exists by OIDC ID
+                        let user = await storage.getUserByOidcId(oidcId);
+                        if (user) {
+                            return cb(null, user);
+                        }
+
+                        // 2. Check if user exists by email (link account)
+                        if (email) {
+                            const existingUser = await storage.getUserByEmail(email);
+                            if (existingUser) {
+                                const updated = await storage.updateUser(existingUser.id, { oidcId: oidcId });
+                                return cb(null, updated);
+                            }
+                        }
+
+                        // 3. Auto-provision with retry for username collision
+                        const randomPassword = randomBytes(32).toString("hex");
+                        const hashedPassword = await hashPassword(randomPassword);
+                        const profileImageUrl = profile.photos && profile.photos.length > 0 ? profile.photos[0].value : null;
+
+                        let attempts = 0;
+                        const maxAttempts = 3;
+
+                        while (attempts < maxAttempts) {
+                            try {
+                                const suffix = attempts === 0 ? "" : `_${randomBytes(4).toString("hex")}`;
+                                let usernameCandidate = attempts === 0 ? displayName : `${displayName}${suffix}`;
+
+                                if (!usernameCandidate) {
+                                    usernameCandidate = `user_${randomBytes(4).toString("hex")}`;
+                                }
+
+                                user = await storage.createUser({
+                                    username: usernameCandidate,
+                                    password: hashedPassword,
+                                    email: email,
+                                    oidcId: oidcId,
+                                    profileImageUrl: profileImageUrl,
+                                });
+                                return cb(null, user);
+                            } catch (err: any) {
+                                // Check if error is constraint violation
+                                if (err.message && (err.message.includes("unique") || err.message.includes("constraint"))) {
+                                    // If it's email constraint, we should have caught it above in step 2 if we handle logic correctly.
+                                    if (err.message.includes("email") || (err.constraint && err.constraint.includes("email"))) {
+                                        if (email) {
+                                            const existingUser = await storage.getUserByEmail(email);
+                                            if (existingUser) {
+                                                const updated = await storage.updateUser(existingUser.id, { oidcId: oidcId });
+                                                return cb(null, updated);
+                                            }
+                                        }
+                                        return cb(err);
+                                    }
+
+                                    // Assume it is username collision, retry
+                                    attempts++;
+                                    if (attempts === maxAttempts) return cb(err);
+                                } else {
+                                    return cb(err);
+                                }
+                            }
+                        }
+                    } catch (err: any) {
+                        return cb(err);
+                    }
+                }
+            )
+        );
+
+        app.get("/api/auth/oidc", passport.authenticate("openidconnect"));
+
+        app.get(
+            "/api/auth/oidc/callback",
+            passport.authenticate("openidconnect", {
+                failWithError: true,
+                failureRedirect: "/auth?error=oidc_failed",
+                successRedirect: "/",
+            })
+        );
+    }
+
     passport.serializeUser((user, done) => done(null, (user as User).id));
     passport.deserializeUser(async (id: string, done) => {
         try {
@@ -69,9 +178,10 @@ export function setupAuth(app: Express) {
         }
     });
 
-    app.get("/api/auth/config", (_req, res) => {
-        res.json({ disableSignup: process.env.DISABLE_SIGNUP === "true" });
-    });
+
+    // Moved to bottom to include oidcEnabled
+    // app.get("/api/auth/config", ... 
+
 
     app.post("/api/register", async (req, res, next) => {
         if (process.env.DISABLE_SIGNUP === "true") {
@@ -150,6 +260,15 @@ export function setupAuth(app: Express) {
             next(err);
         }
     });
+
+    app.get("/api/auth/config", (_req, res) => {
+        res.json({
+            disableSignup: process.env.DISABLE_SIGNUP === "true",
+            oidcEnabled: !!(process.env.OIDC_ISSUER_URL && process.env.OIDC_CLIENT_ID && process.env.OIDC_CLIENT_SECRET && process.env.OIDC_CALLBACK_URL)
+        });
+    });
+
+
 }
 
 export function isAuthenticated(req: any, res: any, next: any) {
