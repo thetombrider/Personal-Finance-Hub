@@ -60,33 +60,37 @@ const formatCurrency = (amount: number) => {
     }).format(amount);
 };
 
+import Layout from "@/components/Layout";
+
 export default function Reports() {
     const [activeTab, setActiveTab] = useState("income-statement");
 
     return (
-        <div className="space-y-6">
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight">Reports</h1>
-                <p className="text-muted-foreground mt-2">
-                    Analisi finanziaria dettagliata e stato patrimoniale.
-                </p>
+        <Layout>
+            <div className="space-y-6">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight">Reports</h1>
+                    <p className="text-muted-foreground mt-2">
+                        Analisi finanziaria dettagliata e stato patrimoniale.
+                    </p>
+                </div>
+
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+                    <TabsList>
+                        <TabsTrigger value="income-statement">Conto Economico</TabsTrigger>
+                        <TabsTrigger value="balance-sheet">Stato Patrimoniale</TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="income-statement" className="space-y-6">
+                        <IncomeStatementView />
+                    </TabsContent>
+
+                    <TabsContent value="balance-sheet" className="space-y-6">
+                        <BalanceSheetView />
+                    </TabsContent>
+                </Tabs>
             </div>
-
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                <TabsList>
-                    <TabsTrigger value="income-statement">Conto Economico</TabsTrigger>
-                    <TabsTrigger value="balance-sheet">Stato Patrimoniale</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="income-statement" className="space-y-6">
-                    <IncomeStatementView />
-                </TabsContent>
-
-                <TabsContent value="balance-sheet" className="space-y-6">
-                    <BalanceSheetView />
-                </TabsContent>
-            </Tabs>
-        </div>
+        </Layout>
     );
 }
 
@@ -200,12 +204,8 @@ function IncomeStatementView() {
 
 function IncomeStatementRow({ item }: { item: IncomeStatementItem }) {
     const diff = item.difference;
-    // For Income: Positive diff is Good (Green). Negative is Bad (Red).
-    // For Expense: Positive diff (spent less than budget? No, diff = actual - budget). 
-    // If actual > budget (positive diff), that's Bad (Red).
-    // If actual < budget (negative diff), that's Good (Green).
-
-    const isGood = item.isIncome ? diff >= 0 : diff <= 0;
+    // Backend now returns Positive difference = Good for both Income (Actual > Budget) and Expense (Budget > Actual)
+    const isGood = diff >= 0;
 
     return (
         <div className="grid grid-cols-12 gap-4 p-4 text-sm hover:bg-muted/30 transition-colors items-center">
@@ -230,8 +230,25 @@ function IncomeStatementRow({ item }: { item: IncomeStatementItem }) {
 }
 
 function SummaryRow({ label, summary, isIncome = false }: { label: string, summary: IncomeStatementSummary, isIncome?: boolean }) {
-    const diff = summary.actual - summary.budget;
-    const isGood = isIncome ? diff >= 0 : diff <= 0;
+    // Backend returns summary: actual, budget. 
+    // We calculate diff here.
+    // For Income: Actual - Budget
+    // For Expense: Budget - Actual (since spending less is good, we want positive numbers for 'savings')
+
+    // Wait, the backend returns summary totals. Does it summarize differences? No. 
+    // It returns actual and budget totals.
+    // So we need to compute difference HERE locally for the summary row.
+
+    let diff: number;
+    if (isIncome) {
+        // Income: Actual - Budget
+        diff = summary.actual - summary.budget;
+    } else {
+        // Expense: Budget - Actual (Positive means saved money)
+        diff = summary.budget - summary.actual;
+    }
+
+    const isGood = diff >= 0;
 
     return (
         <div className="grid grid-cols-12 gap-4 p-4 font-semibold bg-muted/20 border-t">

@@ -224,23 +224,31 @@ export class ReportService {
       return tDate >= startDate && tDate <= endDate;
     });
 
-    const report = categories.map(category => {
-      const budgetItem = budgetData.find(b => b.category.id === category.id);
+    const report = categories
+      .filter(c => c.name.toLowerCase() !== 'trasferimenti')
+      .map(category => {
+        const budgetItem = budgetData.find(b => b.category.id === category.id);
 
-      // Calculate actuals
-      const categoryTransactions = monthTransactions.filter(t => t.categoryId === category.id);
-      const actual = categoryTransactions.reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
+        // Calculate actuals
+        const categoryTransactions = monthTransactions.filter(t => t.categoryId === category.id);
+        const actual = categoryTransactions.reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
 
-      const budget = budgetItem ? budgetItem.total : 0;
+        const budget = budgetItem ? budgetItem.total : 0;
+        const isIncome = category.type === 'income';
 
-      return {
-        category,
-        actual,
-        budget,
-        difference: actual - budget,
-        isIncome: category.type === 'income'
-      };
-    });
+        // Difference:
+        // For Income: Actual - Budget (Positive = Earned more than budget = Good)
+        // For Expense: Budget - Actual (Positive = Spent less than budget = Good)
+        const difference = isIncome ? actual - budget : budget - actual;
+
+        return {
+          category,
+          actual,
+          budget,
+          difference,
+          isIncome
+        };
+      });
 
     // Calculate totals
     const totalIncome = report
@@ -312,65 +320,86 @@ export class ReportService {
         const price = quote?.data.price || parseFloat(holding.currentPrice?.toString() || "0");
         investmentsValue += quantity * price;
       }
-    }
+      // Calculate net investment cost (total money sent to investment platform that isn't in transactions)
+      // Trades table has no accountId, so we assume trades are funded from "Cash" and proceeds go to "Cash".
+      // If these flows aren't in 'transactions', we must adjust cashAssets.
+      let netInvestmentCost = 0;
+      for (const trade of allTrades) {
+        const amount = parseFloat(trade.totalAmount.toString());
+        const fees = parseFloat(trade.fees?.toString() || "0");
 
-    const totalAssets = cashAssets + investmentsValue;
-
-    // Liabilities
-    // Credit cards
-    const creditCardBalances = balances.liabilities;
-    const totalLiabilities = Math.abs(creditCardBalances); // Display as positive number for "Liabilities" section usually
-
-    // Equity
-    const netWorth = totalAssets - totalLiabilities;
-
-    return {
-      assets: {
-        cash: cashAssets,
-        investments: investmentsValue,
-        total: totalAssets
-      },
-      liabilities: {
-        creditCards: totalLiabilities,
-        total: totalLiabilities
-      },
-      equity: {
-        netWorth
+        if (trade.type === 'buy') {
+          netInvestmentCost += (amount + fees);
+        } else {
+          netInvestmentCost -= (amount - fees);
+        }
       }
-    };
-  }
+
+      // Adjusted Cash Assets = Calculated Account Balances - Net Money Moved to Investments
+      // This assumes specific transactions for "Investment Funding" don't exist, or we are correcting for the trade impact.
+      // If the user HAS transactions for "Transfer to Trade Republic", then 'cashAssets' is already reduced.
+      // However, without a link, it's ambiguous. But commonly, if trades are tracked separately, the cash balance of the 'bank'
+      // doesn't automatically drop in the DB unless a transaction is recorded.
+      // If the user says "Cash is wrong", it's likely too high because trades aren't deducted.
+      const adjustedCashAssets = cashAssets - netInvestmentCost;
+
+      const totalAssets = adjustedCashAssets + investmentsValue;
+
+      // Liabilities
+      // Credit cards
+      const creditCardBalances = balances.liabilities;
+      const totalLiabilities = Math.abs(creditCardBalances); // Display as positive number for "Liabilities" section usually
+
+      // Equity
+      const netWorth = totalAssets - totalLiabilities;
+
+      return {
+        assets: {
+          cash: adjustedCashAssets,
+          investments: investmentsValue,
+          total: totalAssets
+        },
+        liabilities: {
+          creditCards: totalLiabilities,
+          total: totalLiabilities
+        },
+        equity: {
+          netWorth
+        }
+      };
+    }
 
   // Refactored from routes.ts
   async getMonthlyBudget(year: number, month: number) {
-    const [categories, monthlyBudgets, plannedExpenses, recurringExpenses] = await Promise.all([
-      this.storage.getCategories(),
-      this.storage.getMonthlyBudgets(year, month),
-      this.storage.getPlannedExpenses(year, month),
-      this.storage.getActiveRecurringExpenses()
-    ]);
+      const [categories, monthlyBudgets, plannedExpenses, recurringExpenses] = await Promise.all([
+        this.storage.getCategories(),
+        this.storage.getMonthlyBudgets(year, month),
+        this.storage.getPlannedExpenses(year, month),
+        this.storage.getActiveRecurringExpenses()
+      ]);
 
-    return categories.map(category => {
-      const monthlyBudget = monthlyBudgets.find(b => b.categoryId === category.id);
-      const baseline = monthlyBudget ? parseFloat(monthlyBudget.amount.toString()) : 0;
+      return categories.map(category => {
+        const monthlyBudget = monthlyBudgets.find(b => b.categoryId === category.id);
+        const baseline = monthlyBudget ? parseFloat(monthlyBudget.amount.toString()) : 0;
 
-      const categoryPlanned = plannedExpenses.filter(p => p.categoryId === category.id);
-      const plannedTotal = categoryPlanned.reduce((sum, p) => sum + parseFloat(p.amount.toString()), 0);
+        const categoryPlanned = plannedExpenses.filter(p => p.categoryId === category.id);
+        const plannedTotal = categoryPlanned.reduce((sum, p) => sum + parseFloat(p.amount.toString()), 0);
 
-      const categoryRecurring = recurringExpenses.filter(r => r.categoryId === category.id);
-      // Simple active check logic as per original
-      const recurringTotal = categoryRecurring.reduce((sum, r) => sum + parseFloat(r.amount.toString()), 0);
+        const categoryRecurring = recurringExpenses.filter(r => r.categoryId === category.id);
+        // Simple active check logic as per original
+        const recurringTotal = categoryRecurring.reduce((sum, r) => sum + parseFloat(r.amount.toString()), 0);
 
-      return {
-        category,
-        baseline,
-        planned: plannedTotal,
-        recurring: recurringTotal,
-        total: baseline + plannedTotal + recurringTotal,
-        plannedExpenses: categoryPlanned,
-        recurringExpenses: categoryRecurring
-      };
-    });
-  }
+        return {
+          category,
+          baseline,
+          planned: plannedTotal,
+          recurring: recurringTotal,
+          total: baseline + plannedTotal + recurringTotal,
+          plannedExpenses: categoryPlanned,
+          recurringExpenses: categoryRecurring
+        };
+      });
+    }
 
   private async calculateAccountBalances(accounts: Account[], transactions?: Transaction[]) {
     const allTransactions = transactions || await this.storage.getTransactions();
