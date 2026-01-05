@@ -88,7 +88,6 @@ export interface IStorage {
   updateTrade(id: number, trade: Partial<InsertTrade>): Promise<Trade | undefined>;
   deleteTrade(id: number): Promise<void>;
   deleteTrades(ids: number[]): Promise<void>;
-  deleteTrades(ids: number[]): Promise<void>;
 
   // Monthly Budgets
   getMonthlyBudgets(year: number, month: number): Promise<MonthlyBudget[]>;
