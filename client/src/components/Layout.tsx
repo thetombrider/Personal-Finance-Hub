@@ -16,6 +16,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     { href: "/accounts", label: "Accounts", icon: CreditCard },
     { href: "/budget", label: "Budget", icon: Calculator },
     { href: "/categories", label: "Categories", icon: PieChart },
+    { href: "/reports", label: "Reports", icon: FileSpreadsheet },
     { href: "/portfolio", label: "Portfolio", icon: TrendingUp },
     { href: "/import", label: "Import CSV", icon: FileSpreadsheet },
   ];

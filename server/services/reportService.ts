@@ -3,221 +3,418 @@ import { MarketDataService } from "./marketData";
 import { Account, Category, Holding, Trade, Transaction } from "@shared/schema";
 
 interface WeeklyReportData {
-    startDate: string;
-    endDate: string;
-    totalBalance: number;
-    totalIncome: number;
-    totalExpense: number;
-    balanceChange: number;
-    top5Expenses: Array<{
-        description: string;
-        amount: number;
-        accountName: string;
-        categoryName: string;
-        date: string;
+  startDate: string;
+  endDate: string;
+  totalBalance: number;
+  totalIncome: number;
+  totalExpense: number;
+  balanceChange: number;
+  top5Expenses: Array<{
+    description: string;
+    amount: number;
+    accountName: string;
+    categoryName: string;
+    date: string;
+  }>;
+  sortedCategories: Array<[string, number]>;
+  portfolioData: Array<{
+    ticker: string;
+    name: string;
+    quantity: number;
+    avgCost: number;
+    totalInvested: number;
+    currentPrice: number;
+    currentValue: number;
+    gainLoss: number;
+    gainLossPercent: number;
+  }>;
+  portfolioMetrics: {
+    totalInvested: number;
+    totalValue: number;
+    totalGainLoss: number;
+    totalGainLossPercent: number;
+  };
+  creditCardData: {
+    transactions: Array<{
+      date: string;
+      description: string;
+      accountName: string;
+      categoryName: string;
+      amount: number;
     }>;
-    sortedCategories: Array<[string, number]>;
-    portfolioData: Array<{
-        ticker: string;
-        name: string;
-        quantity: number;
-        avgCost: number;
-        totalInvested: number;
-        currentPrice: number;
-        currentValue: number;
-        gainLoss: number;
-        gainLossPercent: number;
-    }>;
-    portfolioMetrics: {
-        totalInvested: number;
-        totalValue: number;
-        totalGainLoss: number;
-        totalGainLossPercent: number;
-    };
-    creditCardData: {
-        transactions: Array<{
-            date: string;
-            description: string;
-            accountName: string;
-            categoryName: string;
-            amount: number;
-        }>;
-        total: number;
-        showAccountName: boolean;
-    };
+    total: number;
+    showAccountName: boolean;
+  };
 }
 
 export class ReportService {
-    constructor(
-        private storage: IStorage,
-        private marketDataService: MarketDataService
-    ) { }
+  constructor(
+    private storage: IStorage,
+    private marketDataService: MarketDataService
+  ) { }
 
-    async getWeeklyReportData(): Promise<WeeklyReportData> {
-        const [transactions, accounts, categories, holdingsList, allTrades] = await Promise.all([
-            this.storage.getTransactions(),
-            this.storage.getAccounts(),
-            this.storage.getCategories(),
-            this.storage.getHoldings(),
-            this.storage.getTrades()
-        ]);
+  async getWeeklyReportData(): Promise<WeeklyReportData> {
+    const [transactions, accounts, categories, holdingsList, allTrades] = await Promise.all([
+      this.storage.getTransactions(),
+      this.storage.getAccounts(),
+      this.storage.getCategories(),
+      this.storage.getHoldings(),
+      this.storage.getTrades()
+    ]);
 
-        const now = new Date();
-        const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const now = new Date();
+    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-        const weekTransactions = transactions.filter(t => {
-            const txDate = new Date(t.date);
-            return txDate >= oneWeekAgo && txDate <= now;
-        });
+    const weekTransactions = transactions.filter(t => {
+      const txDate = new Date(t.date);
+      return txDate >= oneWeekAgo && txDate <= now;
+    });
 
-        const totalIncome = weekTransactions
-            .filter(t => t.type === 'income')
-            .reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
+    const totalIncome = weekTransactions
+      .filter(t => t.type === 'income')
+      .reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
 
-        const totalExpense = weekTransactions
-            .filter(t => t.type === 'expense')
-            .reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
+    const totalExpense = weekTransactions
+      .filter(t => t.type === 'expense')
+      .reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
 
-        const expensesByCategory: Record<string, number> = {};
-        weekTransactions.filter(t => t.type === 'expense').forEach(t => {
-            const cat = categories.find(c => c.id === t.categoryId);
-            const catName = cat?.name || 'Altro';
-            expensesByCategory[catName] = (expensesByCategory[catName] || 0) + parseFloat(t.amount.toString());
-        });
+    const expensesByCategory: Record<string, number> = {};
+    weekTransactions.filter(t => t.type === 'expense').forEach(t => {
+      const cat = categories.find(c => c.id === t.categoryId);
+      const catName = cat?.name || 'Altro';
+      expensesByCategory[catName] = (expensesByCategory[catName] || 0) + parseFloat(t.amount.toString());
+    });
 
-        const sortedCategories = Object.entries(expensesByCategory)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 5);
+    const sortedCategories = Object.entries(expensesByCategory)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5);
 
-        // Calculate actual balance
-        const totalBalance = accounts.reduce((sum, account) => {
-            const accountTransactions = transactions.filter(t => t.accountId === account.id);
-            const transactionSum = accountTransactions.reduce((txSum, t) => {
-                const amount = parseFloat(t.amount.toString());
-                return txSum + (t.type === 'income' ? amount : -amount);
-            }, 0);
-            return sum + parseFloat(account.startingBalance.toString()) + transactionSum;
-        }, 0);
+    // Calculate actual balance
+    const totalBalance = accounts.reduce((sum, account) => {
+      const accountTransactions = transactions.filter(t => t.accountId === account.id);
+      const transactionSum = accountTransactions.reduce((txSum, t) => {
+        const amount = parseFloat(t.amount.toString());
+        return txSum + (t.type === 'income' ? amount : -amount);
+      }, 0);
+      return sum + parseFloat(account.startingBalance.toString()) + transactionSum;
+    }, 0);
 
-        // Credit Cards
-        const creditCardAccounts = accounts.filter(a => a.type === 'credit');
-        const creditCardIds = creditCardAccounts.map(a => a.id);
-        const weekCreditCardTransactions = weekTransactions
-            .filter(t => creditCardIds.includes(t.accountId) && t.type === 'expense')
-            .sort((a, b) => parseFloat(b.amount.toString()) - parseFloat(a.amount.toString()));
+    // Credit Cards
+    const creditCardAccounts = accounts.filter(a => a.type === 'credit');
+    const creditCardIds = creditCardAccounts.map(a => a.id);
+    const weekCreditCardTransactions = weekTransactions
+      .filter(t => creditCardIds.includes(t.accountId) && t.type === 'expense')
+      .sort((a, b) => parseFloat(b.amount.toString()) - parseFloat(a.amount.toString()));
 
-        const totalCreditCardExpenses = weekCreditCardTransactions.reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
+    const totalCreditCardExpenses = weekCreditCardTransactions.reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
 
-        const creditCardData = {
-            transactions: weekCreditCardTransactions.map(t => {
-                const category = categories.find(c => c.id === t.categoryId);
-                const account = accounts.find(a => a.id === t.accountId);
-                return {
-                    date: new Date(t.date).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }),
-                    description: t.description,
-                    accountName: account?.name || 'N/A',
-                    categoryName: category?.name || 'N/A',
-                    amount: parseFloat(t.amount.toString())
-                };
-            }),
-            total: totalCreditCardExpenses,
-            showAccountName: creditCardAccounts.length > 1
-        };
-
-        // Top 5 Expenses
-        const top5Expenses = weekTransactions
-            .filter(t => t.type === 'expense')
-            .sort((a, b) => parseFloat(b.amount.toString()) - parseFloat(a.amount.toString()))
-            .slice(0, 5)
-            .map(t => {
-                const account = accounts.find(a => a.id === t.accountId);
-                const category = categories.find(c => c.id === t.categoryId);
-                return {
-                    description: t.description,
-                    amount: parseFloat(t.amount.toString()),
-                    accountName: account?.name || 'N/A',
-                    categoryName: category?.name || 'N/A',
-                    date: new Date(t.date).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })
-                };
-            });
-
-        // Portfolio
-        const portfolioData: WeeklyReportData['portfolioData'] = [];
-
-        // Fetch prices in parallel
-        await Promise.all(holdingsList.map(h => this.marketDataService.getQuote(h.ticker)));
-
-        for (const holding of holdingsList) {
-            const holdingTrades = allTrades.filter(t => t.holdingId === holding.id);
-            let totalQuantity = 0;
-            let totalCost = 0;
-
-            for (const trade of holdingTrades) {
-                const qty = parseFloat(trade.quantity.toString());
-                const amount = parseFloat(trade.totalAmount.toString());
-                const fees = parseFloat(trade.fees?.toString() || "0");
-
-                if (trade.type === 'buy') {
-                    totalQuantity += qty;
-                    totalCost += amount + fees;
-                } else {
-                    totalQuantity -= qty;
-                    totalCost -= amount - fees;
-                }
-            }
-
-            if (totalQuantity > 0.0001) {
-                const avgCost = totalCost / totalQuantity;
-                const quote = await this.marketDataService.getQuote(holding.ticker);
-                const currentPrice = quote?.data.price || avgCost; // Fallback to cost if no price
-                const currentValue = totalQuantity * currentPrice;
-                const gainLoss = currentValue - totalCost;
-                const gainLossPercent = totalCost > 0 ? (gainLoss / totalCost) * 100 : 0;
-
-                portfolioData.push({
-                    ticker: holding.ticker,
-                    name: holding.name,
-                    quantity: totalQuantity,
-                    avgCost,
-                    totalInvested: totalCost,
-                    currentPrice,
-                    currentValue,
-                    gainLoss,
-                    gainLossPercent
-                });
-            }
-        }
-
-        const portfolioTotalInvested = portfolioData.reduce((sum, p) => sum + p.totalInvested, 0);
-        const portfolioTotalValue = portfolioData.reduce((sum, p) => sum + p.currentValue, 0);
-        const portfolioTotalGainLoss = portfolioTotalValue - portfolioTotalInvested;
-        const portfolioTotalGainLossPercent = portfolioTotalInvested > 0 ? (portfolioTotalGainLoss / portfolioTotalInvested) * 100 : 0;
-
+    const creditCardData = {
+      transactions: weekCreditCardTransactions.map(t => {
+        const category = categories.find(c => c.id === t.categoryId);
+        const account = accounts.find(a => a.id === t.accountId);
         return {
-            startDate: oneWeekAgo.toLocaleDateString('it-IT', { day: 'numeric', month: 'long' }),
-            endDate: now.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' }),
-            totalBalance,
-            totalIncome,
-            totalExpense,
-            balanceChange: totalIncome - totalExpense,
-            top5Expenses,
-            sortedCategories,
-            portfolioData,
-            portfolioMetrics: {
-                totalInvested: portfolioTotalInvested,
-                totalValue: portfolioTotalValue,
-                totalGainLoss: portfolioTotalGainLoss,
-                totalGainLossPercent: portfolioTotalGainLossPercent
-            },
-            creditCardData
+          date: new Date(t.date).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }),
+          description: t.description,
+          accountName: account?.name || 'N/A',
+          categoryName: category?.name || 'N/A',
+          amount: parseFloat(t.amount.toString())
         };
+      }),
+      total: totalCreditCardExpenses,
+      showAccountName: creditCardAccounts.length > 1
+    };
+
+    // Top 5 Expenses
+    const top5Expenses = weekTransactions
+      .filter(t => t.type === 'expense')
+      .sort((a, b) => parseFloat(b.amount.toString()) - parseFloat(a.amount.toString()))
+      .slice(0, 5)
+      .map(t => {
+        const account = accounts.find(a => a.id === t.accountId);
+        const category = categories.find(c => c.id === t.categoryId);
+        return {
+          description: t.description,
+          amount: parseFloat(t.amount.toString()),
+          accountName: account?.name || 'N/A',
+          categoryName: category?.name || 'N/A',
+          date: new Date(t.date).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })
+        };
+      });
+
+    // Portfolio
+    const portfolioData: WeeklyReportData['portfolioData'] = [];
+
+    // Fetch prices in parallel
+    await Promise.all(holdingsList.map(h => this.marketDataService.getQuote(h.ticker)));
+
+    for (const holding of holdingsList) {
+      const holdingTrades = allTrades.filter(t => t.holdingId === holding.id);
+      let totalQuantity = 0;
+      let totalCost = 0;
+
+      for (const trade of holdingTrades) {
+        const qty = parseFloat(trade.quantity.toString());
+        const amount = parseFloat(trade.totalAmount.toString());
+        const fees = parseFloat(trade.fees?.toString() || "0");
+
+        if (trade.type === 'buy') {
+          totalQuantity += qty;
+          totalCost += amount + fees;
+        } else {
+          totalQuantity -= qty;
+          totalCost -= amount - fees;
+        }
+      }
+
+      if (totalQuantity > 0.0001) {
+        const avgCost = totalCost / totalQuantity;
+        const quote = await this.marketDataService.getQuote(holding.ticker);
+        const currentPrice = quote?.data.price || avgCost; // Fallback to cost if no price
+        const currentValue = totalQuantity * currentPrice;
+        const gainLoss = currentValue - totalCost;
+        const gainLossPercent = totalCost > 0 ? (gainLoss / totalCost) * 100 : 0;
+
+        portfolioData.push({
+          ticker: holding.ticker,
+          name: holding.name,
+          quantity: totalQuantity,
+          avgCost,
+          totalInvested: totalCost,
+          currentPrice,
+          currentValue,
+          gainLoss,
+          gainLossPercent
+        });
+      }
     }
 
-    generateHtml(data: WeeklyReportData): string {
-        const formatEur = (n: number) => new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(n);
-        const formatPercent = (n: number) => (n >= 0 ? '+' : '') + n.toFixed(2) + '%';
+    const portfolioTotalInvested = portfolioData.reduce((sum, p) => sum + p.totalInvested, 0);
+    const portfolioTotalValue = portfolioData.reduce((sum, p) => sum + p.currentValue, 0);
+    const portfolioTotalGainLoss = portfolioTotalValue - portfolioTotalInvested;
+    const portfolioTotalGainLossPercent = portfolioTotalInvested > 0 ? (portfolioTotalGainLoss / portfolioTotalInvested) * 100 : 0;
 
-        return `
+    return {
+      startDate: oneWeekAgo.toLocaleDateString('it-IT', { day: 'numeric', month: 'long' }),
+      endDate: now.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' }),
+      totalBalance,
+      totalIncome,
+      totalExpense,
+      balanceChange: totalIncome - totalExpense,
+      top5Expenses,
+      sortedCategories,
+      portfolioData,
+      portfolioMetrics: {
+        totalInvested: portfolioTotalInvested,
+        totalValue: portfolioTotalValue,
+        totalGainLoss: portfolioTotalGainLoss,
+        totalGainLossPercent: portfolioTotalGainLossPercent
+      },
+      creditCardData
+    };
+  }
+
+  async getMonthlyIncomeStatement(year: number, month: number) {
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59);
+
+    const [categories, budgetData] = await Promise.all([
+      this.storage.getCategories(),
+      this.getMonthlyBudget(year, month)
+    ]);
+
+    const transactions = await this.storage.getTransactions();
+
+    // Filter transactions for the month
+    const monthTransactions = transactions.filter(t => {
+      const tDate = new Date(t.date);
+      return tDate >= startDate && tDate <= endDate;
+    });
+
+    const report = categories.map(category => {
+      const budgetItem = budgetData.find(b => b.category.id === category.id);
+
+      // Calculate actuals
+      const categoryTransactions = monthTransactions.filter(t => t.categoryId === category.id);
+      const actual = categoryTransactions.reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
+
+      const budget = budgetItem ? budgetItem.total : 0;
+
+      return {
+        category,
+        actual,
+        budget,
+        difference: actual - budget,
+        isIncome: category.type === 'income'
+      };
+    });
+
+    // Calculate totals
+    const totalIncome = report
+      .filter(r => r.isIncome)
+      .reduce((acc, curr) => ({
+        actual: acc.actual + curr.actual,
+        budget: acc.budget + curr.budget
+      }), { actual: 0, budget: 0 });
+
+    const totalExpenses = report
+      .filter(r => !r.isIncome)
+      .reduce((acc, curr) => ({
+        actual: acc.actual + curr.actual,
+        budget: acc.budget + curr.budget
+      }), { actual: 0, budget: 0 });
+
+    const netResult = {
+      actual: totalIncome.actual - totalExpenses.actual,
+      budget: totalIncome.budget - totalExpenses.budget
+    };
+
+    return {
+      items: report,
+      summary: {
+        income: totalIncome,
+        expenses: totalExpenses,
+        netResult
+      }
+    };
+  }
+
+  async getBalanceSheet() {
+    const [accounts, holdingsList, allTrades] = await Promise.all([
+      this.storage.getAccounts(),
+      this.storage.getHoldings(),
+      this.storage.getTrades()
+    ]);
+
+    // Assets
+    // 1. Cash (Checking, Savings, etc. - anything that isn't a liability/credit card)
+    // Note: Conventionally credit cards are liabilities, but here they are accounts with negative balance potential.
+    // If type is 'credit', it's a liability. If 'checking', 'savings', 'investment' (cash portion), it's an asset.
+
+    const assetAccounts = accounts.filter(a => a.type !== 'credit');
+    const liabilityAccounts = accounts.filter(a => a.type === 'credit');
+
+    const cashAssets = assetAccounts.reduce((sum, a) => sum + parseFloat(a.startingBalance.toString()), 0) +
+      // We need to calculate current balance for each account effectively
+      // But storage.getAccounts() returns 'startingBalance'. 
+      // We need to sum transactions for each account to get current balance.
+      // Wait, existing logic in getWeeklyReportData calculates total balance by retrieving ALL transactions.
+      // This is heavy but necessary without a cached 'currentBalance' field.
+      (await this.calculateAccountBalances(accounts)).assets;
+
+
+    // 2. Investments (Holdings)
+    // Fetch current prices
+    await Promise.all(holdingsList.map(h => this.marketDataService.getQuote(h.ticker)));
+
+    let investmentsValue = 0;
+    for (const holding of holdingsList) {
+      const holdingTrades = allTrades.filter(t => t.holdingId === holding.id);
+      let quantity = 0;
+      for (const t of holdingTrades) {
+        const qty = parseFloat(t.quantity.toString());
+        if (t.type === 'buy') quantity += qty;
+        else quantity -= qty;
+      }
+
+      if (quantity > 0.0001) {
+        const quote = await this.marketDataService.getQuote(holding.ticker);
+        // use current price or fallback to last known or avg cost if needed (though balance sheet implies market value)
+        const price = quote?.data.price || parseFloat(holding.currentPrice?.toString() || "0");
+        investmentsValue += quantity * price;
+      }
+    }
+
+    const totalAssets = cashAssets + investmentsValue;
+
+    // Liabilities
+    // Credit cards
+    const creditCardBalances = (await this.calculateAccountBalances(accounts)).liabilities;
+    const totalLiabilities = Math.abs(creditCardBalances); // Display as positive number for "Liabilities" section usually
+
+    // Equity
+    const netWorth = totalAssets - totalLiabilities;
+
+    return {
+      assets: {
+        cash: cashAssets,
+        investments: investmentsValue,
+        total: totalAssets
+      },
+      liabilities: {
+        creditCards: totalLiabilities,
+        total: totalLiabilities
+      },
+      equity: {
+        netWorth
+      }
+    };
+  }
+
+  // Refactored from routes.ts
+  async getMonthlyBudget(year: number, month: number) {
+    const [categories, monthlyBudgets, plannedExpenses, recurringExpenses] = await Promise.all([
+      this.storage.getCategories(),
+      this.storage.getMonthlyBudgets(year, month),
+      this.storage.getPlannedExpenses(year, month),
+      this.storage.getActiveRecurringExpenses()
+    ]);
+
+    return categories.map(category => {
+      const monthlyBudget = monthlyBudgets.find(b => b.categoryId === category.id);
+      const baseline = monthlyBudget ? parseFloat(monthlyBudget.amount.toString()) : 0;
+
+      const categoryPlanned = plannedExpenses.filter(p => p.categoryId === category.id);
+      const plannedTotal = categoryPlanned.reduce((sum, p) => sum + parseFloat(p.amount.toString()), 0);
+
+      const categoryRecurring = recurringExpenses.filter(r => r.categoryId === category.id);
+      // Simple active check logic as per original
+      const recurringTotal = categoryRecurring.reduce((sum, r) => sum + parseFloat(r.amount.toString()), 0);
+
+      return {
+        category,
+        baseline,
+        planned: plannedTotal,
+        recurring: recurringTotal,
+        total: baseline + plannedTotal + recurringTotal,
+        plannedExpenses: categoryPlanned,
+        recurringExpenses: categoryRecurring
+      };
+    });
+  }
+
+  private async calculateAccountBalances(accounts: Account[]) {
+    const transactions = await this.storage.getTransactions();
+
+    let assets = 0;
+    let liabilities = 0;
+
+    for (const account of accounts) {
+      const accountTx = transactions.filter(t => t.accountId === account.id);
+      const txSum = accountTx.reduce((sum, t) => {
+        const val = parseFloat(t.amount.toString());
+        return sum + (t.type === 'income' ? val : -val);
+      }, 0);
+
+      const currentBalance = parseFloat(account.startingBalance.toString()) + txSum;
+
+      if (account.type === 'credit') {
+        liabilities += currentBalance; // Usually negative for credit cards, but we track the 'balance'. 
+        // If credit card balance is -500 (owed), it's a liability.
+        // Assuming 'liabilities' sum should be the magnitude of debt.
+        // However, the function returns raw sums. Let's keep it consistent.
+      } else {
+        assets += currentBalance;
+      }
+    }
+
+    return { assets, liabilities };
+  }
+
+  generateHtml(data: WeeklyReportData): string {
+    const formatEur = (n: number) => new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(n);
+    const formatPercent = (n: number) => (n >= 0 ? '+' : '') + n.toFixed(2) + '%';
+
+    return `
 <!DOCTYPE html>
 <html>
 <head>
@@ -321,14 +518,14 @@ export class ReportService {
     <h3>🏷️ Top 5 Categorie Spese</h3>
     <div class="category-list">
       ${data.sortedCategories.length > 0
-                ? data.sortedCategories.map(([name, amount]) => `
+        ? data.sortedCategories.map(([name, amount]) => `
           <div class="category-item">
             <span class="category-name">${name}</span>
             <span class="category-amount">${formatEur(amount)}</span>
           </div>
         `).join('')
-                : '<p style="color: #999; text-align: center;">Nessuna spesa questa settimana</p>'
-            }
+        : '<p style="color: #999; text-align: center;">Nessuna spesa questa settimana</p>'
+      }
     </div>
     
     ${data.portfolioData.length > 0 ? `
@@ -403,5 +600,5 @@ export class ReportService {
 </body>
 </html>
     `;
-    }
+  }
 }

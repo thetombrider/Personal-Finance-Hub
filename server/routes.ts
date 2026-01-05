@@ -542,6 +542,30 @@ export async function registerRoutes(
     }
   });
 
+  // ============ REPORTS ============
+
+  app.get("/api/reports/income-statement/:year/:month", async (req, res) => {
+    try {
+      const year = parseInt(req.params.year);
+      const month = parseInt(req.params.month);
+      const data = await reportService.getMonthlyIncomeStatement(year, month);
+      res.json(data);
+    } catch (error) {
+      console.error("Failed to fetch income statement:", error);
+      res.status(500).json({ error: "Failed to fetch income statement" });
+    }
+  });
+
+  app.get("/api/reports/balance-sheet", async (req, res) => {
+    try {
+      const data = await reportService.getBalanceSheet();
+      res.json(data);
+    } catch (error) {
+      console.error("Failed to fetch balance sheet:", error);
+      res.status(500).json({ error: "Failed to fetch balance sheet" });
+    }
+  });
+
   // ============ BUDGET ============
 
   app.get("/api/budget/:year", async (req, res) => {
@@ -630,37 +654,7 @@ export async function registerRoutes(
       const year = parseInt(req.params.year);
       const month = parseInt(req.params.month); // 1-12
 
-      const [categories, monthlyBudgets, plannedExpenses, recurringExpenses] = await Promise.all([
-        storage.getCategories(),
-        storage.getMonthlyBudgets(year, month),
-        storage.getPlannedExpenses(year, month),
-        storage.getActiveRecurringExpenses()
-      ]);
-
-      // Calculate aggregated budget data
-      const budgetData = categories.map(category => {
-        const monthlyBudget = monthlyBudgets.find(b => b.categoryId === category.id);
-        const baseline = monthlyBudget ? parseFloat(monthlyBudget.amount.toString()) : 0;
-
-        const categoryPlanned = plannedExpenses.filter(p => p.categoryId === category.id);
-        const plannedTotal = categoryPlanned.reduce((sum, p) => sum + parseFloat(p.amount.toString()), 0);
-
-        const categoryRecurring = recurringExpenses.filter(r => r.categoryId === category.id);
-        // Ensure recurring expenses are active for this month (simple check based on start date)
-        // TODO: More complex recurrence logic could be added here
-        const recurringTotal = categoryRecurring.reduce((sum, r) => sum + parseFloat(r.amount.toString()), 0);
-
-        return {
-          category,
-          baseline,
-          planned: plannedTotal,
-          recurring: recurringTotal,
-          total: baseline + plannedTotal + recurringTotal,
-          plannedExpenses: categoryPlanned,
-          recurringExpenses: categoryRecurring
-        };
-      });
-
+      const budgetData = await reportService.getMonthlyBudget(year, month);
       res.json(budgetData);
     } catch (error) {
       console.error("Failed to fetch budget data:", error);
