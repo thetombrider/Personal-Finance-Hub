@@ -190,7 +190,7 @@ export function setupAuth(app: Express) {
 
 
     app.post("/api/register", async (req, res, next) => {
-        if (process.env.DISABLE_SIGNUP === "true") {
+        if (process.env.DISABLE_SIGNUP === "true" || process.env.SSO_ONLY === "true") {
             return res.status(403).send("Signups are disabled");
         }
         try {
@@ -214,7 +214,12 @@ export function setupAuth(app: Express) {
         }
     });
 
-    app.post("/api/login", passport.authenticate("local"), (req, res) => {
+    app.post("/api/login", (req, res, next) => {
+        if (process.env.SSO_ONLY === "true") {
+             return res.status(403).send("Native login disabled");
+        }
+        passport.authenticate("local")(req, res, next);
+    }, (req, res) => {
         res.status(200).json(req.user);
     });
 
@@ -270,7 +275,8 @@ export function setupAuth(app: Express) {
     app.get("/api/auth/config", (_req, res) => {
         res.json({
             disableSignup: process.env.DISABLE_SIGNUP === "true",
-            oidcEnabled: !!(process.env.OIDC_ISSUER_URL && process.env.OIDC_CLIENT_ID && process.env.OIDC_CLIENT_SECRET && process.env.OIDC_CALLBACK_URL)
+            oidcEnabled: !!(process.env.OIDC_ISSUER_URL && process.env.OIDC_CLIENT_ID && process.env.OIDC_CLIENT_SECRET && process.env.OIDC_CALLBACK_URL),
+            ssoOnly: process.env.SSO_ONLY === "true"
         });
     });
 

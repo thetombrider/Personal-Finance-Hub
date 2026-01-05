@@ -44,7 +44,7 @@ export default function Landing() {
     }
   };
 
-  const { data: authConfig } = useQuery<{ disableSignup: boolean; oidcEnabled: boolean }>({
+  const { data: authConfig } = useQuery<{ disableSignup: boolean; oidcEnabled: boolean; ssoOnly: boolean }>({
     queryKey: ["/api/auth/config"],
   });
 
@@ -64,7 +64,7 @@ export default function Landing() {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login" className="w-full">
-            {!authConfig?.disableSignup && (
+            {!authConfig?.ssoOnly && !authConfig?.disableSignup && (
               <TabsList className="grid w-full grid-cols-2 mb-4">
                 <TabsTrigger value="login">Login</TabsTrigger>
                 <TabsTrigger value="register">Register</TabsTrigger>
@@ -72,49 +72,55 @@ export default function Landing() {
             )}
 
             <TabsContent value="login" className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
-                <Input
-                  id="username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Enter your username"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
-                />
-              </div>
-              <Button
-                className="w-full"
-                onClick={() => handleAuth("login")}
-                disabled={isLoading}
-              >
-                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                Sign In
-              </Button>
-
-              {authConfig?.oidcEnabled && (
-                <div className="mt-4">
-                  <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                      <span className="w-full border-t" />
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-background px-2 text-muted-foreground">
-                        Or continue with
-                      </span>
-                    </div>
+              {!authConfig?.ssoOnly && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="username">Username</Label>
+                    <Input
+                      id="username"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="Enter your username"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Enter your password"
+                    />
                   </div>
                   <Button
-                    variant="outline"
-                    className="w-full mt-4"
+                    className="w-full"
+                    onClick={() => handleAuth("login")}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Sign In
+                  </Button>
+                </>
+              )}
+
+              {authConfig?.oidcEnabled && (
+                <div className={!authConfig?.ssoOnly ? "mt-4" : ""}>
+                  {!authConfig?.ssoOnly && (
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t" />
+                      </div>
+                      <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-background px-2 text-muted-foreground">
+                          Or continue with
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  <Button
+                    variant={authConfig?.ssoOnly ? "default" : "outline"}
+                    className={`w-full ${!authConfig?.ssoOnly ? "mt-4" : ""}`}
                     onClick={() => window.location.href = "/api/auth/oidc"}
                     disabled={isLoading}
                   >
@@ -124,7 +130,7 @@ export default function Landing() {
               )}
             </TabsContent>
 
-            {!authConfig?.disableSignup && (
+            {!authConfig?.ssoOnly && !authConfig?.disableSignup && (
               <TabsContent value="register" className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="reg-username">Username</Label>
