@@ -1,14 +1,14 @@
-import { useFinance } from "@/context/FinanceContext";
-import Layout from "@/components/Layout";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { format, subMonths, parseISO } from "date-fns";
 import { it } from "date-fns/locale";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useFinance } from "@/context/FinanceContext";
+import Layout from "@/components/Layout";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
 export default function Accounts() {
   const { accounts, transactions, formatCurrency, isLoading } = useFinance();
@@ -30,7 +30,7 @@ export default function Accounts() {
   }, [timeRange]);
 
   // Reset page when timeRange changes
-  useMemo(() => {
+  useEffect(() => {
     setPage(0);
   }, [timeRange]);
 
