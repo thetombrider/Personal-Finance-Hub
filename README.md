@@ -9,12 +9,14 @@ FinTrack is a comprehensive personal finance management application designed to 
 - **📝 Transactions**: Record income and expenses, categorize them, and import transactions via CSV.
 - **📉 Budgeting**: Set monthly budgets for different categories and monitor your spending in real-time.
 - **📈 Portfolio**: Manage your stock holdings, track performance, and view detailed metrics.
+- **📊 Reports**: Access detailed weekly reports and financial insights.
 - **⚙️ Settings**: Customize categories, manage application preferences, and update user profile.
+- **🔐 Authentication**: Secure login with support for OIDC providers.
 
 ## Tech Stack
 
 - **Frontend**: React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui, Recharts.
-- **Backend**: Express.js, Node.js.
+- **Backend**: Express.js, Node.js, Passport.js.
 - **Database**: PostgreSQL, Drizzle ORM.
 - **Architecture**: RESTful API with React Query for state management.
 
@@ -33,6 +35,11 @@ The application requires certain environment variables to be set. You can define
 | `DATABASE_URL` | Connection string for PostgreSQL (e.g., `postgres://user:pass@host:5432/db`) |
 | `ALPHA_VANTAGE_API_KEY` | API Key for stock market data (get one from Alpha Vantage) |
 | `TALLY_WEBHOOK_SECRET` | (Optional) Secret for Tally webhook integration |
+| `DISABLE_SIGNUP` | Set to `true` to disable new user registrations |
+| `OIDC_ISSUER_URL` | (Optional) OIDC Issuer URL |
+| `OIDC_CLIENT_ID` | (Optional) OIDC Client ID |
+| `OIDC_CLIENT_SECRET` | (Optional) OIDC Client Secret |
+| `OIDC_CALLBACK_URL` | (Optional) OIDC Callback URL |
 | `NODE_ENV` | Environment mode (`development` or `production`) |
 
 ## Installation
