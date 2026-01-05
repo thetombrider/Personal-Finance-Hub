@@ -101,13 +101,13 @@ export function BaselineTable({ categories, budgetData, onUpdateBaseline }: Base
                 </p>
             </CardHeader>
             <CardContent>
-                <div className="rounded-md border overflow-x-auto">
+                <div className="rounded-md border w-full">
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="w-[200px]">Categoria</TableHead>
+                                <TableHead className="w-[15%]">Categoria</TableHead>
                                 {months.map((month) => (
-                                    <TableHead key={month} className="text-right min-w-[80px]">
+                                    <TableHead key={month} className="text-right w-auto md:w-[6.5%] p-1">
                                         {month}
                                     </TableHead>
                                 ))}
@@ -141,7 +141,7 @@ export function BaselineTable({ categories, budgetData, onUpdateBaseline }: Base
                                                         type="number"
                                                         min="0"
                                                         step="50"
-                                                        className={`text-right h-8 px-2 border-transparent hover:border-input focus:border-primary ${getValue(category.id, month) === "" ? "placeholder:text-muted-foreground/30" : ""
+                                                        className={`text-right h-8 px-1 text-xs sm:text-sm border-transparent hover:border-input focus:border-primary w-full ${getValue(category.id, month) === "" ? "placeholder:text-muted-foreground/30" : ""
                                                             }`}
                                                         placeholder="0"
                                                         value={getValue(category.id, month)}
@@ -189,7 +189,7 @@ export function BaselineTable({ categories, budgetData, onUpdateBaseline }: Base
                                                         type="number"
                                                         min="0"
                                                         step="50"
-                                                        className={`text-right h-8 px-2 border-transparent hover:border-input focus:border-primary ${getValue(category.id, month) === "" ? "placeholder:text-muted-foreground/30" : ""
+                                                        className={`text-right h-8 px-1 text-xs sm:text-sm border-transparent hover:border-input focus:border-primary w-full ${getValue(category.id, month) === "" ? "placeholder:text-muted-foreground/30" : ""
                                                             }`}
                                                         placeholder="0"
                                                         value={getValue(category.id, month)}

@@ -28,11 +28,11 @@ export default function Categories() {
 
   const categoryMonthlyData = useMemo(() => {
     const data: Record<string, Record<string, number>> = {};
-    
-    const relevantCategories = categories.filter(c => 
+
+    const relevantCategories = categories.filter(c =>
       c.name.toLowerCase() !== 'trasferimenti'
     );
-    
+
     relevantCategories.forEach(cat => {
       data[cat.name] = {};
       monthsList.forEach(m => {
@@ -44,10 +44,10 @@ export default function Categories() {
       const category = categories.find(c => c.id === t.categoryId);
       if (!category || category.name.toLowerCase() === 'trasferimenti') return;
       if (!data[category.name]) return;
-      
+
       const tDate = parseISO(t.date);
       const monthKey = format(tDate, 'yyyy-MM');
-      
+
       if (data[category.name][monthKey] !== undefined) {
         const amount = parseFloat(t.amount) || 0;
         if (t.type === 'income') {
@@ -73,7 +73,7 @@ export default function Categories() {
 
   return (
     <Layout>
-       <div className="space-y-6">
+      <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-heading font-bold text-foreground">Categories</h1>
           <p className="text-muted-foreground">Analisi del flusso per categoria</p>
@@ -100,15 +100,15 @@ export default function Categories() {
           </CardHeader>
           <CardContent className="p-0">
             <ScrollArea className="w-full">
-              <div className="min-w-[600px]">
+              <div className="w-full">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="sticky left-0 bg-card z-10 min-w-[120px]">Categoria</TableHead>
+                      <TableHead className="sticky left-0 bg-card z-10 w-[15%]">Categoria</TableHead>
                       {monthsList.map(m => (
-                        <TableHead key={m.key} className="text-center min-w-[70px] capitalize">{m.label}</TableHead>
+                        <TableHead key={m.key} className="text-center w-auto text-xs sm:text-sm p-1 capitalize">{m.label}</TableHead>
                       ))}
-                      <TableHead className="text-center min-w-[80px] font-semibold">Totale</TableHead>
+                      <TableHead className="text-center w-[10%] font-semibold p-1">Totale</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -121,7 +121,7 @@ export default function Categories() {
                           {monthsList.map(m => {
                             const val = months[m.key];
                             return (
-                              <TableCell key={m.key} className={`text-center text-sm ${val > 0 ? 'text-emerald-600' : val < 0 ? 'text-rose-600' : ''}`}>
+                              <TableCell key={m.key} className={`text-center text-xs sm:text-sm p-1 ${val > 0 ? 'text-emerald-600' : val < 0 ? 'text-rose-600' : ''}`}>
                                 {val !== 0 ? formatCurrency(val) : '-'}
                               </TableCell>
                             );
@@ -143,7 +143,7 @@ export default function Categories() {
                         );
                       })}
                       <TableCell className="text-center">
-                        {formatCurrency(Object.values(categoryMonthlyData).reduce((sum, cat) => 
+                        {formatCurrency(Object.values(categoryMonthlyData).reduce((sum, cat) =>
                           sum + Object.values(cat).reduce((s, v) => s + v, 0), 0
                         ))}
                       </TableCell>

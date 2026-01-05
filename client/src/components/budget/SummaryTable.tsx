@@ -52,17 +52,17 @@ export function SummaryTable({ categories, budgetData }: SummaryTableProps) {
                 <CardTitle>Riepilogo Budget Annuale</CardTitle>
             </CardHeader>
             <CardContent>
-                <div className="rounded-md border overflow-x-auto">
+                <div className="rounded-md border w-full">
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="w-[200px] font-bold">Categoria</TableHead>
+                                <TableHead className="w-[15%] font-bold">Categoria</TableHead>
                                 {months.map((month) => (
-                                    <TableHead key={month} className="text-right min-w-[80px]">
+                                    <TableHead key={month} className="text-right w-auto md:w-[6.5%] p-1">
                                         {month}
                                     </TableHead>
                                 ))}
-                                <TableHead className="text-right font-bold min-w-[100px]">Totale</TableHead>
+                                <TableHead className="text-right font-bold w-[7%] p-1">Totale</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -78,7 +78,7 @@ export function SummaryTable({ categories, budgetData }: SummaryTableProps) {
                                                 className="w-3 h-3 rounded-full"
                                                 style={{ backgroundColor: category.color }}
                                             />
-                                            {category.name}
+                                            <span className="truncate">{category.name}</span>
                                         </div>
                                     </TableCell>
                                     {months.map((_, index) => {
@@ -97,7 +97,7 @@ export function SummaryTable({ categories, budgetData }: SummaryTableProps) {
                             <TableRow className="bg-green-50/50 font-bold border-t-2 border-green-100">
                                 <TableCell className="text-green-700">TOTALE ENTRATE</TableCell>
                                 {months.map((_, index) => (
-                                    <TableCell key={index} className="text-right text-green-700">
+                                    <TableCell key={index} className="text-right text-green-700 p-1 text-xs sm:text-sm">
                                         {formatCurrency(categories.filter(c => c.type === 'income').reduce((sum, cat) => sum + (budgetData[cat.id]?.[index + 1]?.total || 0), 0))}
                                     </TableCell>
                                 ))}
@@ -118,7 +118,7 @@ export function SummaryTable({ categories, budgetData }: SummaryTableProps) {
                                                 className="w-3 h-3 rounded-full"
                                                 style={{ backgroundColor: category.color }}
                                             />
-                                            {category.name}
+                                            <span className="truncate">{category.name}</span>
                                         </div>
                                     </TableCell>
                                     {months.map((_, index) => {
@@ -137,7 +137,7 @@ export function SummaryTable({ categories, budgetData }: SummaryTableProps) {
                             <TableRow className="bg-red-50/50 font-bold border-t-2 border-red-100">
                                 <TableCell className="text-red-700">TOTALE USCITE</TableCell>
                                 {months.map((_, index) => (
-                                    <TableCell key={index} className="text-right text-red-700">
+                                    <TableCell key={index} className="text-right text-red-700 p-1 text-xs sm:text-sm">
                                         {formatCurrency(categories.filter(c => c.type === 'expense').reduce((sum, cat) => sum + (budgetData[cat.id]?.[index + 1]?.total || 0), 0))}
                                     </TableCell>
                                 ))}
@@ -154,7 +154,7 @@ export function SummaryTable({ categories, budgetData }: SummaryTableProps) {
                                     const expense = categories.filter(c => c.type === 'expense').reduce((sum, cat) => sum + (budgetData[cat.id]?.[index + 1]?.total || 0), 0);
                                     const net = income - expense;
                                     return (
-                                        <TableCell key={index} className={`text-right ${net >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                        <TableCell key={index} className={`text-right p-1 text-xs sm:text-sm ${net >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                                             {formatCurrency(net)}
                                         </TableCell>
                                     );

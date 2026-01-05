@@ -62,7 +62,7 @@ export function PlannedExpensesTable({
                         <p>Nessuna spesa extra pianificata.</p>
                     </div>
                 ) : (
-                    <div className="rounded-md border">
+                    <div className="rounded-md border w-full">
                         <Table>
                             <TableHeader>
                                 <TableRow>

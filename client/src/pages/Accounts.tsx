@@ -28,7 +28,7 @@ export default function Accounts() {
 
   const accountMonthlyData = useMemo(() => {
     const data: Record<string, Record<string, number>> = {};
-    
+
     accounts.forEach(acc => {
       data[acc.name] = {};
       monthsList.forEach(m => {
@@ -39,10 +39,10 @@ export default function Accounts() {
     transactions.forEach(t => {
       const account = accounts.find(a => a.id === t.accountId);
       if (!account) return;
-      
+
       const tDate = parseISO(t.date);
       const monthKey = format(tDate, 'yyyy-MM');
-      
+
       if (data[account.name] && data[account.name][monthKey] !== undefined) {
         const amount = parseFloat(t.amount) || 0;
         if (t.type === 'income') {
@@ -85,15 +85,15 @@ export default function Accounts() {
           </CardHeader>
           <CardContent className="p-0">
             <ScrollArea className="w-full">
-              <div className="min-w-[600px]">
+              <div className="w-full">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="sticky left-0 bg-card z-10 min-w-[120px]"></TableHead>
+                      <TableHead className="sticky left-0 bg-card z-10 w-[20%]"></TableHead>
                       {accounts.map(acc => (
-                        <TableHead key={acc.id} className="text-center min-w-[100px]">{acc.name}</TableHead>
+                        <TableHead key={acc.id} className="text-center w-auto">{acc.name}</TableHead>
                       ))}
-                      <TableHead className="text-center min-w-[100px] font-semibold">Totale</TableHead>
+                      <TableHead className="text-center w-[15%] font-semibold">Totale</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -151,15 +151,15 @@ export default function Accounts() {
           </CardHeader>
           <CardContent className="p-0">
             <ScrollArea className="w-full">
-              <div className="min-w-[600px]">
+              <div className="w-full">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="sticky left-0 bg-card z-10 min-w-[120px]">Conto</TableHead>
+                      <TableHead className="sticky left-0 bg-card z-10 w-[15%]">Conto</TableHead>
                       {monthsList.map(m => (
-                        <TableHead key={m.key} className="text-center min-w-[70px] capitalize">{m.label}</TableHead>
+                        <TableHead key={m.key} className="text-center w-auto text-xs sm:text-sm p-1 capitalize">{m.label}</TableHead>
                       ))}
-                      <TableHead className="text-center min-w-[80px] font-semibold">Totale</TableHead>
+                      <TableHead className="text-center w-[10%] font-semibold p-1">Totale</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -171,7 +171,7 @@ export default function Accounts() {
                           {monthsList.map(m => {
                             const val = months[m.key];
                             return (
-                              <TableCell key={m.key} className={`text-center text-sm ${val > 0 ? 'text-emerald-600' : val < 0 ? 'text-rose-600' : ''}`}>
+                              <TableCell key={m.key} className={`text-center text-xs sm:text-sm p-1 ${val > 0 ? 'text-emerald-600' : val < 0 ? 'text-rose-600' : ''}`}>
                                 {val !== 0 ? formatCurrency(val) : '-'}
                               </TableCell>
                             );
@@ -193,7 +193,7 @@ export default function Accounts() {
                         );
                       })}
                       <TableCell className="text-center">
-                        {formatCurrency(Object.values(accountMonthlyData).reduce((sum, acc) => 
+                        {formatCurrency(Object.values(accountMonthlyData).reduce((sum, acc) =>
                           sum + Object.values(acc).reduce((s, v) => s + v, 0), 0
                         ))}
                       </TableCell>
