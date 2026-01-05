@@ -90,14 +90,8 @@ export class ReportService {
       .slice(0, 5);
 
     // Calculate actual balance
-    const totalBalance = accounts.reduce((sum, account) => {
-      const accountTransactions = transactions.filter(t => t.accountId === account.id);
-      const transactionSum = accountTransactions.reduce((txSum, t) => {
-        const amount = parseFloat(t.amount.toString());
-        return txSum + (t.type === 'income' ? amount : -amount);
-      }, 0);
-      return sum + parseFloat(account.startingBalance.toString()) + transactionSum;
-    }, 0);
+    const balances = await this.calculateAccountBalances(accounts, transactions);
+    const totalBalance = balances.assets + balances.liabilities;
 
     // Credit Cards
     const creditCardAccounts = accounts.filter(a => a.type === 'credit');
@@ -293,13 +287,9 @@ export class ReportService {
     const assetAccounts = accounts.filter(a => a.type !== 'credit');
     const liabilityAccounts = accounts.filter(a => a.type === 'credit');
 
-    const cashAssets = assetAccounts.reduce((sum, a) => sum + parseFloat(a.startingBalance.toString()), 0) +
-      // We need to calculate current balance for each account effectively
-      // But storage.getAccounts() returns 'startingBalance'. 
-      // We need to sum transactions for each account to get current balance.
-      // Wait, existing logic in getWeeklyReportData calculates total balance by retrieving ALL transactions.
-      // This is heavy but necessary without a cached 'currentBalance' field.
-      (await this.calculateAccountBalances(accounts)).assets;
+    // Fixed: removed double counting of startingBalance
+    const balances = await this.calculateAccountBalances(accounts);
+    const cashAssets = balances.assets;
 
 
     // 2. Investments (Holdings)
@@ -328,7 +318,7 @@ export class ReportService {
 
     // Liabilities
     // Credit cards
-    const creditCardBalances = (await this.calculateAccountBalances(accounts)).liabilities;
+    const creditCardBalances = balances.liabilities;
     const totalLiabilities = Math.abs(creditCardBalances); // Display as positive number for "Liabilities" section usually
 
     // Equity
@@ -382,14 +372,14 @@ export class ReportService {
     });
   }
 
-  private async calculateAccountBalances(accounts: Account[]) {
-    const transactions = await this.storage.getTransactions();
+  private async calculateAccountBalances(accounts: Account[], transactions?: Transaction[]) {
+    const allTransactions = transactions || await this.storage.getTransactions();
 
     let assets = 0;
     let liabilities = 0;
 
     for (const account of accounts) {
-      const accountTx = transactions.filter(t => t.accountId === account.id);
+      const accountTx = allTransactions.filter(t => t.accountId === account.id);
       const txSum = accountTx.reduce((sum, t) => {
         const val = parseFloat(t.amount.toString());
         return sum + (t.type === 'income' ? val : -val);

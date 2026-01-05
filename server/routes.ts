@@ -546,8 +546,21 @@ export async function registerRoutes(
 
   app.get("/api/reports/income-statement/:year/:month", async (req, res) => {
     try {
-      const year = parseInt(req.params.year);
-      const month = parseInt(req.params.month);
+      const year = parseInt(req.params.year, 10);
+      const month = parseInt(req.params.month, 10);
+
+      const currentYear = new Date().getFullYear();
+      if (
+        !Number.isInteger(year) ||
+        !Number.isInteger(month) ||
+        month < 1 ||
+        month > 12 ||
+        year < 1970 ||
+        year > currentYear + 1
+      ) {
+        return res.status(400).json({ error: "Invalid year or month" });
+      }
+
       const data = await reportService.getMonthlyIncomeStatement(year, month);
       res.json(data);
     } catch (error) {
