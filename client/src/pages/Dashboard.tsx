@@ -12,6 +12,7 @@ import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis, PieChart, 
 import { useState, useMemo } from "react";
 import { format, subMonths, isSameMonth, parseISO, startOfMonth, endOfMonth, getYear } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
+import { usePortfolioStats } from "@/hooks/usePortfolioStats";
 
 export default function Dashboard() {
   const { accounts, transactions, categories, formatCurrency } = useFinance();
@@ -48,15 +49,22 @@ export default function Dashboard() {
     return formatCurrency(amount);
   };
 
-  const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
+  const { portfolioSummary, isLoading: isPortfolioLoading } = usePortfolioStats();
+
+  const totalNonInvestmentBalance = accounts
+    .filter(acc => acc.type !== 'investment')
+    .reduce((sum, acc) => sum + acc.balance, 0);
+
+  const totalBalance = totalNonInvestmentBalance + (portfolioSummary?.totalCurrentValue || 0);
 
   // Find transfer category to exclude from income/expense calculations
   const transferCategoryId = categories.find(c => c.name.toLowerCase() === 'trasferimenti')?.id;
 
-  // Calculate monthly income/expense (excluding transfers)
-  const currentMonth = new Date();
+  // Calculate monthly income/expense (excluding transfers) - affected by filters
   const monthlyStats = useMemo(() => {
-    const stats = transactions.filter(t => {
+    // ... logic for filtered stats (existing)
+    const currentMonth = new Date();
+    return transactions.filter(t => {
       const date = parseISO(t.date);
       const isTransfer = t.categoryId === transferCategoryId;
       const matchesCategory = selectedCategory === "all" || t.categoryId === parseInt(selectedCategory);
@@ -69,8 +77,22 @@ export default function Dashboard() {
       else acc.expense += amount;
       return acc;
     }, { income: 0, expense: 0 });
-    return stats;
   }, [transactions, selectedAccount, selectedCategory, transferCategoryId]);
+
+  // Global Monthly Flow (unaffected by filters)
+  const globalMonthlyStats = useMemo(() => {
+    const currentMonth = new Date();
+    return transactions.filter(t => {
+      const date = parseISO(t.date);
+      const isTransfer = t.categoryId === transferCategoryId;
+      return !isTransfer && isSameMonth(date, currentMonth);
+    }).reduce((acc, t) => {
+      const amount = parseFloat(t.amount) || 0;
+      if (t.type === 'income') acc.income += amount;
+      else acc.expense += amount;
+      return acc;
+    }, { income: 0, expense: 0 });
+  }, [transactions, transferCategoryId]);
 
   // Prepare chart data (excluding transfers)
   const chartData = useMemo(() => {
@@ -232,11 +254,8 @@ export default function Dashboard() {
       .reduce((sum, acc) => sum + acc.balance, 0);
   }, [accounts]);
 
-  const totalInvestments = useMemo(() => {
-    return accounts
-      .filter(acc => acc.type === 'investment')
-      .reduce((sum, acc) => sum + acc.balance, 0);
-  }, [accounts]);
+  // Total Investments now comes from portfolio stats
+  const totalInvestments = portfolioSummary?.totalCurrentValue || 0;
 
   const totalCredit = useMemo(() => {
     return accounts
@@ -279,9 +298,9 @@ export default function Dashboard() {
     };
   }, [accounts, transactions]);
 
-  // Net Worth by account type
+  // Net Worth by account type with Investment Gain/Loss split
   const netWorthByTypeData = useMemo(() => {
-    const typeMap = new Map<string, number>();
+    const typeMap = new Map<string, { value: number; gain: number; loss: number; invested: number }>();
     const typeLabels: Record<string, string> = {
       'checking': 'Conto Corrente',
       'savings': 'Risparmi',
@@ -290,17 +309,75 @@ export default function Dashboard() {
       'cash': 'Contanti'
     };
 
-    accounts.forEach(acc => {
-      const label = typeLabels[acc.type] || acc.type;
-      const current = typeMap.get(label) || 0;
-      typeMap.set(label, current + acc.balance);
+    // Initialize map
+    Object.values(typeLabels).forEach(label => {
+      typeMap.set(label, { value: 0, gain: 0, loss: 0, invested: 0 });
     });
 
+    // Process non-investment accounts
+    accounts.forEach(acc => {
+      if (acc.type === 'investment') return;
+      const label = typeLabels[acc.type] || acc.type;
+      const current = typeMap.get(label)!;
+      current.value += acc.balance;
+      // For non-investments, value is the base, no gain/loss
+    });
+
+    // Process investments using portfolio summary
+    const invLabel = typeLabels['investment'];
+    const invStats = typeMap.get(invLabel)!;
+
+    if (portfolioSummary) {
+      const invested = portfolioSummary.totalInvested;
+      const current = portfolioSummary.totalCurrentValue;
+      invStats.invested = invested;
+      invStats.value = current; // Total value for sorting/display
+
+      if (current >= invested) {
+        // Find gain
+        invStats.gain = current - invested;
+        invStats.value = invested; // Base bar is invested amount
+      } else {
+        // Find loss
+        invStats.loss = invested - current;
+        invStats.value = current; // Base bar is current value
+      }
+    }
+
     return Array.from(typeMap.entries())
-      .map(([name, value]) => ({ name, value }))
-      .filter(item => item.value !== 0)
-      .sort((a, b) => Math.abs(b.value) - Math.abs(a.value));
-  }, [accounts]);
+      .map(([name, stats]) => {
+        // For non-investments, 'value' is the total. For investments, we construct the stack.
+        // Stack 1: Base (stats.value)
+        // Stack 2: Gain (stats.gain)
+        // Stack 3: Loss (stats.loss)
+        // Note: For investments, we manipulated 'value' above to be the base.
+        // Let's ensure we return the total for sorting.
+        const total = stats.value + stats.gain + stats.loss; // Wait, loss is "phantom" height?
+        // Representation:
+        // Gain: [Invested (Base)] + [Gain (Green)] = Current Value
+        // Loss: [Current (Base)] + [Loss (Red)] = Invested Amount (Showing what was lost)
+        // OR
+        // Loss: [Current (Base)] ... and maybe implicit loss?
+        // User asked: "totale investito e valore attuale sulla stessa barra ... vedere il pezzetto di gain o loss"
+        // Valid for Loss: Bar length = Invested. Color 1 = Current, Color 2 = Loss.
+        // Valid for Gain: Bar length = Current. Color 1 = Invested, Color 2 = Gain.
+
+        return {
+          name,
+          base: stats.value, // This is Invested (if Gain) or Current (if Loss) or Balance (others)
+          gain: stats.gain,
+          loss: stats.loss,
+          totalDisplay: name === 'Investimenti' && portfolioSummary ? portfolioSummary.totalCurrentValue : (stats.value + (stats.loss > 0 ? 0 : 0)) // For sorting use distinct value?
+        };
+      })
+      .filter(item => item.base > 0 || item.gain > 0 || item.loss > 0)
+      .sort((a, b) => {
+        // Sort by total magnitude
+        const valA = a.base + a.gain + a.loss;
+        const valB = b.base + b.gain + b.loss;
+        return Math.abs(valB) - Math.abs(valA);
+      });
+  }, [accounts, portfolioSummary]);
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
@@ -430,10 +507,16 @@ export default function Dashboard() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold font-heading text-violet-600 dark:text-violet-400">
-                {displayCurrency(totalInvestments)}
+              <div className="flex flex-col">
+                <div className="text-2xl font-bold font-heading text-violet-600 dark:text-violet-400">
+                  {displayCurrency(portfolioSummary?.totalInvested || 0)}
+                </div>
+                <p className="text-xs text-muted-foreground">Totale Investito</p>
+                <div className="text-lg font-bold font-heading text-violet-500 dark:text-violet-300 mt-2">
+                  {displayCurrency(portfolioSummary?.totalCurrentValue || 0)}
+                </div>
+                <p className="text-xs text-muted-foreground">Valore Attuale</p>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">Investment accounts</p>
             </CardContent>
           </Card>
 
@@ -449,7 +532,7 @@ export default function Dashboard() {
                   <span className="text-xs text-muted-foreground">Income</span>
                 </div>
                 <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
-                  +{displayCurrency(monthlyStats.income)}
+                  +{displayCurrency(globalMonthlyStats.income)}
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -458,7 +541,7 @@ export default function Dashboard() {
                   <span className="text-xs text-muted-foreground">Expenses</span>
                 </div>
                 <span className="text-sm font-bold text-rose-600 dark:text-rose-400">
-                  -{displayCurrency(monthlyStats.expense)}
+                  -{displayCurrency(globalMonthlyStats.expense)}
                 </span>
               </div>
             </CardContent>
@@ -576,21 +659,21 @@ export default function Dashboard() {
                         width={70}
                       />
                       <Tooltip
-                        formatter={(value: number) => [displayCurrency(value), 'Saldo']}
+                        formatter={(value: number, name: string) => {
+                          if (name === 'loss') return [displayCurrency(value), 'Perdita Latente'];
+                          if (name === 'gain') return [displayCurrency(value), 'Guadagno Latente'];
+                          return [displayCurrency(value), 'Valore Base'];
+                        }}
                         contentStyle={{ backgroundColor: 'var(--color-card)', borderRadius: '8px', border: '1px solid var(--color-border)' }}
                         itemStyle={{ color: 'var(--color-foreground)' }}
                       />
-                      <Bar
-                        dataKey="value"
-                        radius={[0, 4, 4, 0]}
-                      >
+                      <Bar dataKey="base" stackId="a" fill="#3b82f6" radius={[0, 4, 4, 0]}>
                         {netWorthByTypeData.map((entry, index) => (
-                          <Cell
-                            key={`cell-${index}`}
-                            fill={entry.value >= 0 ? COLORS[index % COLORS.length] : '#ef4444'}
-                          />
+                          <Cell key={`cell-base-${index}`} fill={entry.name === 'Investimenti' ? '#3b82f6' : COLORS[index % COLORS.length]} />
                         ))}
                       </Bar>
+                      <Bar dataKey="gain" stackId="a" fill="#10b981" radius={[0, 4, 4, 0]} />
+                      <Bar dataKey="loss" stackId="a" fill="#ef4444" radius={[0, 4, 4, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
