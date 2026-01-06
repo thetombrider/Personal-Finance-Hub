@@ -12,6 +12,9 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
 const formSchema = z.object({
+    firstName: z.string().optional(),
+    lastName: z.string().optional(),
+    email: z.string().email("Email non valida").optional().or(z.literal("")),
     username: z.string().min(3, "Lo username deve essere di almeno 3 caratteri"),
     password: z.string().optional(),
     confirmPassword: z.string().optional(),
@@ -33,6 +36,9 @@ export default function Settings() {
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
+            firstName: user?.firstName || "",
+            lastName: user?.lastName || "",
+            email: user?.email || "",
             username: user?.username || "",
             password: "",
             confirmPassword: "",
@@ -45,6 +51,15 @@ export default function Settings() {
             const updateData: any = {};
             if (values.username !== user?.username) {
                 updateData.username = values.username;
+            }
+            if (values.firstName !== user?.firstName) {
+                updateData.firstName = values.firstName;
+            }
+            if (values.lastName !== user?.lastName) {
+                updateData.lastName = values.lastName;
+            }
+            if (values.email !== user?.email) {
+                updateData.email = values.email || null;
             }
             if (values.password) {
                 updateData.password = values.password;
@@ -64,6 +79,9 @@ export default function Settings() {
             });
 
             form.reset({
+                firstName: values.firstName,
+                lastName: values.lastName,
+                email: values.email,
                 username: values.username,
                 password: "",
                 confirmPassword: "",
@@ -85,20 +103,72 @@ export default function Settings() {
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Impostazioni Utente</h1>
                     <p className="text-muted-foreground">
-                        Gestisci le tue credenziali di accesso.
+                        Gestisci le tue credenziali di accesso e i tuoi dati personali.
                     </p>
                 </div>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Credenziali</CardTitle>
-                        <CardDescription>
-                            Aggiorna il tuo nome utente e la password.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <Form {...form}>
-                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Dati Personali</CardTitle>
+                                <CardDescription>
+                                    Gestisci le tue informazioni personali.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="grid gap-4 md:grid-cols-2">
+                                    <FormField
+                                        control={form.control}
+                                        name="firstName"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Nome</FormLabel>
+                                                <FormControl>
+                                                    <Input {...field} placeholder="Il tuo nome" />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="lastName"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Cognome</FormLabel>
+                                                <FormControl>
+                                                    <Input {...field} placeholder="Il tuo cognome" />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                                <FormField
+                                    control={form.control}
+                                    name="email"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Email</FormLabel>
+                                            <FormControl>
+                                                <Input {...field} type="email" placeholder="latua@email.com" />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Credenziali</CardTitle>
+                                <CardDescription>
+                                    Aggiorna il tuo nome utente e la password.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
                                 <FormField
                                     control={form.control}
                                     name="username"
@@ -142,14 +212,16 @@ export default function Settings() {
                                         )}
                                     />
                                 </div>
+                            </CardContent>
+                        </Card>
 
-                                <Button type="submit" disabled={isLoading}>
-                                    {isLoading ? "Salvataggio..." : "Salva Modifiche"}
-                                </Button>
-                            </form>
-                        </Form>
-                    </CardContent>
-                </Card>
+                        <div className="flex justify-end">
+                            <Button type="submit" disabled={isLoading} size="lg">
+                                {isLoading ? "Salvataggio..." : "Salva Tutte le Modifiche"}
+                            </Button>
+                        </div>
+                    </form>
+                </Form>
             </div>
         </Layout>
     );

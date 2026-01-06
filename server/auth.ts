@@ -264,6 +264,20 @@ export function setupAuth(app: Express) {
                 updateData.username = req.body.username;
             }
 
+            // Update email (check uniqueness)
+            if (req.body.email && req.body.email !== (req.user as User).email) {
+                const existingUser = await storage.getUserByEmail(req.body.email);
+                if (existingUser) {
+                    return res.status(400).send("Email already exists");
+                }
+                updateData.email = req.body.email;
+            }
+
+            // Update profile fields
+            if (req.body.firstName !== undefined) updateData.firstName = req.body.firstName;
+            if (req.body.lastName !== undefined) updateData.lastName = req.body.lastName;
+            if (req.body.profileImageUrl !== undefined) updateData.profileImageUrl = req.body.profileImageUrl;
+
             // Update password
             if (req.body.password) {
                 updateData.password = await hashPassword(req.body.password);
