@@ -166,6 +166,7 @@ export const importStaging = pgTable("import_staging", {
   description: text("description").notNull(),
   accountId: integer("account_id").notNull().references(() => accounts.id, { onDelete: "cascade" }),
   gocardlessTransactionId: varchar("gocardless_transaction_id").unique(),
+  suggestedCategoryId: integer("suggested_category_id"),
   rawData: jsonb("raw_data"),
 });
 

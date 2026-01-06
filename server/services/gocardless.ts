@@ -4,6 +4,7 @@ import * as nordigenData from "nordigen-node";
 const NordigenClient = (nordigenData as any).NordigenClient || (nordigenData as any).default || nordigenData;
 import { storage } from "../storage";
 import { type BankConnection, type InsertBankConnection } from "@shared/schema";
+import { aiService } from "./openai";
 import crypto from "crypto";
 
 
@@ -161,9 +162,9 @@ class GoCardlessService {
 
         const gcAccountId = localAccount.gocardlessAccountId;
 
-        // Fetch last 30 days
+        // Fetch last 180 days to support retroactive reconciliation
         const dateFrom = new Date();
-        dateFrom.setDate(dateFrom.getDate() - 30);
+        dateFrom.setDate(dateFrom.getDate() - 180);
         const dateFromStr = dateFrom.toISOString().split('T')[0];
 
         const data = await this.getTransactions(gcAccountId, dateFromStr);
@@ -179,6 +180,7 @@ class GoCardlessService {
         const allTransactions = await storage.getTransactions();
         const accountTransactions = allTransactions.filter(t => t.accountId === localAccountId);
         const stagingTransactions = await storage.getImportStaging(localAccountId);
+        const categories = await storage.getCategories();
 
         let addedCount = 0;
 
@@ -240,7 +242,8 @@ class GoCardlessService {
                     amount: amount.toFixed(2), // Store signed amount
                     description: description,
                     gocardlessTransactionId: tx.transactionId,
-                    rawData: tx
+                    rawData: tx,
+                    suggestedCategoryId: await aiService.categorizeTransaction(description, categories)
                 });
                 addedCount++;
             }

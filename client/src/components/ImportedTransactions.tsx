@@ -24,6 +24,7 @@ interface StagedTransaction {
     description: string;
     accountId: number;
     gocardlessTransactionId: string;
+    suggestedCategoryId?: number;
 }
 
 export function ImportedTransactions({ accountId, isOpen, onOpenChange }: ImportedTransactionsProps) {
@@ -77,7 +78,7 @@ export function ImportedTransactions({ accountId, isOpen, onOpenChange }: Import
 
     const handleApprove = (tx: StagedTransaction) => {
         const edit = edits[tx.id] || {};
-        let categoryId = edit.categoryId;
+        let categoryId = edit.categoryId || tx.suggestedCategoryId;
 
         if (!categoryId) {
             toast({ title: "Please select a category", variant: "destructive" });
@@ -124,6 +125,9 @@ export function ImportedTransactions({ accountId, isOpen, onOpenChange }: Import
                             <TableBody>
                                 {transactions.map(tx => {
                                     const amount = parseFloat(tx.amount);
+                                    const suggestedId = tx.suggestedCategoryId;
+                                    const selectedId = edits[tx.id]?.categoryId || suggestedId;
+
                                     return (
                                         <TableRow key={tx.id}>
                                             <TableCell>{format(new Date(tx.date), "dd/MM/yyyy")}</TableCell>
@@ -138,21 +142,26 @@ export function ImportedTransactions({ accountId, isOpen, onOpenChange }: Import
                                                 {formatCurrency(parseFloat(tx.amount))}
                                             </TableCell>
                                             <TableCell>
-                                                <Select
-                                                    value={edits[tx.id]?.categoryId?.toString() || ""}
-                                                    onValueChange={(val) => handleEdit(tx.id, "categoryId", parseInt(val))}
-                                                >
-                                                    <SelectTrigger className="h-8">
-                                                        <SelectValue placeholder="Select Category" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {categories.map(c => (
-                                                            <SelectItem key={c.id} value={c.id.toString()}>
-                                                                {c.name}
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
+                                                <div className="flex items-center gap-2">
+                                                    <Select
+                                                        value={selectedId?.toString() || ""}
+                                                        onValueChange={(val) => handleEdit(tx.id, "categoryId", parseInt(val))}
+                                                    >
+                                                        <SelectTrigger className="h-8 w-full">
+                                                            <SelectValue placeholder="Select Category" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {categories.map(c => (
+                                                                <SelectItem key={c.id} value={c.id.toString()}>
+                                                                    {c.name}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    {suggestedId && !edits[tx.id]?.categoryId && (
+                                                        <div className="text-xs text-blue-500 font-bold" title="AI Suggestion">AI</div>
+                                                    )}
+                                                </div>
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex justify-end gap-2">
