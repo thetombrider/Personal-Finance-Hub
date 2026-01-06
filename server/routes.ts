@@ -27,7 +27,13 @@ export async function registerRoutes(
 
   app.post("/api/gocardless/institutions", async (req, res) => {
     try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+
       const { country } = req.body;
+      if (!country || typeof country !== "string" || country.length !== 2) {
+        return res.status(400).json({ error: "Invalid country code. Expected ISO 2-letter code." });
+      }
+
       const institutions = await gocardlessService.listInstitutions(country);
       res.json(institutions);
     } catch (error) {
@@ -42,6 +48,34 @@ export async function registerRoutes(
       const userId = (req.user as any).id;
 
       const { institutionId, redirect } = req.body;
+
+      if (!redirect || typeof redirect !== "string") {
+        return res.status(400).json({ error: "Missing or invalid redirect URL" });
+      }
+
+      // Security Check: Open Redirect Protection
+      // Ensure the redirect URL matches the current server origin
+      try {
+        // Construct base URL from request to check against
+        // Trusting 'host' header which is standard in express behind proxies if trusted, 
+        // validating that the redirect target is our own domain.
+        const requestHost = req.get("host"); // e.g. localhost:5000 or myapp.com
+        const validOrigin = requestHost;
+
+        // Parse the redirect URL. If it's relative, new URL(r, base) handles it.
+        // We use a dummy base for parsing relative URLs if needed, but the client sends absolute.
+        // If client sends absolute, we check the host.
+        // If client sends relative, it is implicitly safe regarding domain, but GoCardless needs absolute.
+        // We will assume client sends absolute as per frontend code.
+        const parsedUrl = new URL(redirect);
+
+        if (parsedUrl.host !== validOrigin) {
+          return res.status(400).json({ error: "Invalid redirect URL: Domain mismatch" });
+        }
+      } catch (e) {
+        return res.status(400).json({ error: "Invalid redirect URL format" });
+      }
+
       const result = await gocardlessService.createRequisition(userId, institutionId, redirect);
       res.json(result);
     } catch (error) {
@@ -63,10 +97,35 @@ export async function registerRoutes(
 
   app.post("/api/gocardless/accounts/link", async (req, res) => {
     try {
-      const { accountId, gocardlessAccountId } = req.body;
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      const userId = (req.user as any).id;
+
+      const schema = z.object({
+        accountId: z.number().int().positive(),
+        gocardlessAccountId: z.string().min(1)
+      });
+
+      const { accountId, gocardlessAccountId } = schema.parse(req.body);
+
+      // Verify the account exists and user has access to it
+      const account = await storage.getAccount(accountId);
+      if (!account) {
+        return res.status(404).json({ error: "Account not found" });
+      }
+
+      // TODO: Add user ownership check if accounts are user-scoped
+      // Verify the gocardlessAccountId belongs to an active connection for this user
+      // const connection = await storage.getBankConnectionByUserId(userId);
+      // if (!connection || !connection accounts includes gocardlessAccountId) {
+      //   return res.status(403).json({ error: "GoCardless account not authorized" });
+      // }
+
       await storage.updateAccount(accountId, { gocardlessAccountId });
       res.json({ success: true });
     } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
       console.error("GoCardless link error:", error);
       res.status(500).json({ error: "Failed to link account" });
     }
@@ -77,6 +136,27 @@ export async function registerRoutes(
       if (!req.user) return res.status(401).json({ error: "Unauthorized" });
       const userId = (req.user as any).id;
       const { accountId } = req.body;
+
+      // 1. Input Validation
+      if (!accountId || typeof accountId !== "number") {
+        return res.status(400).json({ error: "Invalid or missing accountId" });
+      }
+
+      // 2. Account Lookup & Existence Check
+      const account = await storage.getAccount(accountId);
+      if (!account) {
+        return res.status(404).json({ error: "Account not found" });
+      }
+
+      // Ownership check: Ideally we check if account belongs to userId.
+      // Current schema limitations: 'accounts' table lacks userId.
+      // Assuming access is valid if user is authenticated (single-user / trusted).
+      // If schema supports it later: if (account.userId !== userId) return res.status(403)...
+
+      // 3. Link Verification
+      if (!account.gocardlessAccountId) {
+        return res.status(400).json({ error: "Account is not linked to GoCardless" });
+      }
 
       const result = await gocardlessService.syncTransactions(userId, accountId);
       res.json(result);
