@@ -55,11 +55,11 @@ export default function BankCallbackPage() {
                 throw new Error(errorData.error || "Failed to complete requisition");
             }
 
+            const accounts = await res.json();
             // The API now returns enriched account objects { id, name, iban ... }
             setBankAccounts(accounts);
 
             // Default mappings: "new"
-            const newMappings: Record<string, string> = {};
             const newMappings: Record<string, string> = {};
             accounts.forEach((acc: any) => newMappings[acc.id] = "new");
             setMappings(newMappings);
