@@ -47,10 +47,10 @@ export async function registerRoutes(
       if (!req.user) return res.status(401).json({ error: "Unauthorized" });
       const userId = (req.user as any).id;
 
-      const { institutionId, redirect } = req.body;
+      const { institutionId, redirectUrl } = req.body;
 
-      if (!redirect || typeof redirect !== "string") {
-        return res.status(400).json({ error: "Missing or invalid redirect URL" });
+      if (!redirectUrl || typeof redirectUrl !== "string") {
+        return res.status(400).json({ error: "Missing or invalid redirectUrl" });
       }
 
       // Security Check: Open Redirect Protection
@@ -67,7 +67,7 @@ export async function registerRoutes(
         // If client sends absolute, we check the host.
         // If client sends relative, it is implicitly safe regarding domain, but GoCardless needs absolute.
         // We will assume client sends absolute as per frontend code.
-        const parsedUrl = new URL(redirect);
+        const parsedUrl = new URL(redirectUrl);
 
         if (parsedUrl.host !== validOrigin) {
           return res.status(400).json({ error: "Invalid redirect URL: Domain mismatch" });
@@ -76,7 +76,7 @@ export async function registerRoutes(
         return res.status(400).json({ error: "Invalid redirect URL format" });
       }
 
-      const result = await gocardlessService.createRequisition(userId, institutionId, redirect);
+      const result = await gocardlessService.createRequisition(userId, institutionId, redirectUrl);
       res.json(result);
     } catch (error) {
       console.error("GoCardless requisition error:", error);

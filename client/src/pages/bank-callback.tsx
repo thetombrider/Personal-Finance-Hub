@@ -26,7 +26,12 @@ export default function BankCallbackPage() {
         // Extract requisition_id from URL
         // wouter location doesn't give query params directly easily, use window.location
         const params = new URLSearchParams(window.location.search);
-        const requisitionId = params.get("requisition_id");
+        let requisitionId = params.get("requisition_id");
+
+        // Fallback to session storage if not in URL
+        if (!requisitionId) {
+            requisitionId = sessionStorage.getItem("gocardless_requisition_id");
+        }
 
         if (!requisitionId) {
             toast({

@@ -46,11 +46,22 @@ class GoCardlessService {
     async createRequisition(userId: string, institutionId: string, redirect: string) {
         await this.ensureToken();
 
+        // 0. Create Agreement (Step 5 in Quickstart)
+        // Explicitly asking for 180 days of history and 90 days access
+        const agreement = await this.client.agreement.createAgreement({
+            institutionId: institutionId,
+            maxHistoricalDays: 180,
+            accessValidForDays: 90,
+            accessScope: ["balances", "details", "transactions"],
+        });
+
         // 1. Create requisition
         const requisition = await this.client.requisition.createRequisition({
             redirectUrl: redirect,
             institutionId: institutionId,
             reference: userId,
+            agreement: agreement.id,
+            userLanguage: "IT", // Enforce Italian if possible
         });
 
         // 2. Save to DB
