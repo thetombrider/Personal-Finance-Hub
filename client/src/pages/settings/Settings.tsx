@@ -177,8 +177,67 @@ export default function Settings() {
                                     {connections.map((conn) => {
                                         const created = new Date(conn.createdAt);
                                         const expires = addDays(created, 90);
-                                        const expired = isPast(expires);
+                                        const expiredISO = isPast(expires); // Expired by date
                                         const daysLeft = Math.ceil((expires.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+
+                                        // Determine display status
+                                        // LN = Linked (Active)
+                                        // INIT = Initialized (Pending/Incomplete)
+                                        // CR = Created (Waiting for user)
+                                        // EX = Expired (GoCardless status)
+                                        // RJ = Rejected
+                                        // UA = User Aborted
+
+                                        let statusConfig = {
+                                            variant: "secondary" as const,
+                                            label: "Sconosciuto",
+                                            className: ""
+                                        };
+
+                                        // Status Logic
+                                        if (conn.status === "LN") {
+                                            if (expiredISO) {
+                                                statusConfig = {
+                                                    variant: "destructive",
+                                                    label: "Scaduta",
+                                                    className: "flex w-fit items-center gap-1"
+                                                };
+                                            } else {
+                                                statusConfig = {
+                                                    variant: "secondary",
+                                                    label: "Attiva",
+                                                    className: "bg-green-100 text-green-800 hover:bg-green-100 flex w-fit items-center gap-1"
+                                                };
+                                            }
+                                        } else if (conn.status === "INIT" || conn.status === "CR") {
+                                            const isStale = new Date().getTime() - created.getTime() > 24 * 60 * 60 * 1000;
+                                            if (isStale) {
+                                                statusConfig = {
+                                                    variant: "secondary",
+                                                    label: "Timeout",
+                                                    className: "bg-orange-100 text-orange-800 hover:bg-orange-100 flex w-fit items-center gap-1"
+                                                };
+                                            } else {
+                                                statusConfig = {
+                                                    variant: "outline",
+                                                    label: "In Attesa",
+                                                    className: "bg-yellow-100 text-yellow-800 hover:bg-yellow-100 flex w-fit items-center gap-1 border-yellow-200"
+                                                };
+                                            }
+                                        } else if (conn.status === "EX") {
+                                            statusConfig = {
+                                                variant: "destructive",
+                                                label: "Scaduta (GC)",
+                                                className: "flex w-fit items-center gap-1"
+                                            };
+                                        } else {
+                                            // RJ, UA, SU, or unknown
+                                            statusConfig = {
+                                                variant: "secondary",
+                                                label: "Fallita",
+                                                className: "bg-red-100 text-red-800 hover:bg-red-100 flex w-fit items-center gap-1"
+                                            };
+                                        }
 
                                         return (
                                             <TableRow key={conn.id}>
@@ -186,29 +245,30 @@ export default function Settings() {
                                                     {conn.institutionId}
                                                 </TableCell>
                                                 <TableCell>
-                                                    {expired ? (
-                                                        <Badge variant="destructive" className="flex w-fit items-center gap-1">
-                                                            <AlertCircle className="h-3 w-3" />
-                                                            Scaduta
-                                                        </Badge>
-                                                    ) : (
-                                                        <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-100 flex w-fit items-center gap-1">
-                                                            <CheckCircle2 className="h-3 w-3" />
-                                                            Attiva
-                                                        </Badge>
-                                                    )}
+                                                    <Badge
+                                                        variant={statusConfig.variant}
+                                                        className={statusConfig.className}
+                                                    >
+                                                        {statusConfig.label === "Attiva" && <CheckCircle2 className="h-3 w-3" />}
+                                                        {(statusConfig.label === "Scaduta" || statusConfig.label === "Fallita" || statusConfig.label.includes("Scaduta")) && <AlertCircle className="h-3 w-3" />}
+                                                        {statusConfig.label === "In Attesa" && <RefreshCw className="h-3 w-3 animate-spin duration-3000" />}
+                                                        {statusConfig.label}
+                                                    </Badge>
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="flex flex-col">
-                                                        <span>{format(expires, "dd/MM/yyyy")}</span>
+                                                        <span>{conn.status === "LN" ? format(expires, "dd/MM/yyyy") : "-"}</span>
                                                         <span className="text-xs text-muted-foreground">
-                                                            {expired ? "Scaduta" : `${daysLeft} giorni rimanenti`}
+                                                            {conn.status === "LN"
+                                                                ? (expiredISO ? "Scaduta" : `${daysLeft} giorni rimanenti`)
+                                                                : (conn.status === "INIT" ? "In attesa di conferma" : "Non attiva")
+                                                            }
                                                         </span>
                                                     </div>
                                                 </TableCell>
                                                 <TableCell className="text-right">
                                                     <div className="flex justify-end gap-2">
-                                                        {expired && (
+                                                        {(expiredISO || conn.status !== "LN") && (
                                                             <Button
                                                                 variant="outline"
                                                                 size="icon"
