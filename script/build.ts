@@ -30,6 +30,7 @@ const allowlist = [
   "xlsx",
   "zod",
   "zod-validation-error",
+  "nordigen-node",
 ];
 
 async function buildAll() {

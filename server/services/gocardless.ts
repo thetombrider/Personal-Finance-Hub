@@ -1,4 +1,6 @@
-import { NordigenClient } from "nordigen-node";
+import * as nordigenData from "nordigen-node";
+// Handle various import scenarios (CJS/ESM/Bundled) for the library
+const NordigenClient = (nordigenData as any).NordigenClient || (nordigenData as any).default || nordigenData;
 import { storage } from "../storage";
 import { type BankConnection, type InsertBankConnection } from "@shared/schema";
 
