@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, Edit2, Wallet, CreditCard, PiggyBank, Banknote, Building2 } from "lucide-react";
+import { Plus, Trash2, Edit2, Wallet, CreditCard, PiggyBank, Banknote, Building2, Landmark, Link } from "lucide-react";
+import { BankLinkModal } from "@/components/bank-link-modal";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -27,6 +28,7 @@ type AccountFormValues = z.infer<typeof accountSchema>;
 export default function ManageAccounts() {
   const { accounts, addAccount, updateAccount, deleteAccount, formatCurrency, isLoading } = useFinance();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
 
   const form = useForm<AccountFormValues>({
@@ -49,7 +51,7 @@ export default function ManageAccounts() {
       startingBalance: data.startingBalance.toString(),
       creditLimit: data.type === "credit" && data.creditLimit ? data.creditLimit.toString() : null,
     };
-    
+
     if (editingId) {
       await updateAccount(editingId, formattedData);
     } else {
@@ -80,7 +82,7 @@ export default function ManageAccounts() {
   };
 
   const getIcon = (type: AccountType) => {
-    switch(type) {
+    switch (type) {
       case 'checking': return Building2;
       case 'savings': return PiggyBank;
       case 'credit': return CreditCard;
@@ -109,7 +111,13 @@ export default function ManageAccounts() {
             <p className="text-muted-foreground">Aggiungi, modifica o elimina i tuoi conti</p>
           </div>
           
-          <Dialog open={isDialogOpen} onOpenChange={(open) => {
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setIsLinkModalOpen(true)}>
+              <Landmark className="mr-2 h-4 w-4" />
+              Connect Bank
+            </Button>
+
+            <Dialog open={isDialogOpen} onOpenChange={(open) => {
             setIsDialogOpen(open);
             if(!open) {
               setEditingId(null);
@@ -128,12 +136,23 @@ export default function ManageAccounts() {
                 <Plus size={16} /> Aggiungi Conto
               </Button>
             </DialogTrigger>
+            </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>{editingId ? "Modifica Conto" : "Nuovo Conto"}</DialogTitle>
               </DialogHeader>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  {editingId && (
+                    <div className="text-sm text-muted-foreground mb-4">
+                       {(accounts.find(a => a.id === editingId) as any)?.gocardlessAccountId && (
+                        <div className="flex items-center gap-2 p-2 bg-muted rounded border">
+                           <Link className="h-4 w-4" />
+                           <span>Linked to Bank (ID: {(accounts.find(a => a.id === editingId) as any)?.gocardlessAccountId})</span>
+                        </div>
+                       )}
+                    </div>
+                  )}
                   <FormField
                     control={form.control}
                     name="name"
@@ -228,6 +247,7 @@ export default function ManageAccounts() {
               </Form>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -254,7 +274,12 @@ export default function ManageAccounts() {
                     </div>
                     <div>
                       <div className="text-lg font-semibold" data-testid={`text-account-name-${account.id}`}>{account.name}</div>
-                      <div className="text-sm text-muted-foreground capitalize">{account.type}</div>
+                      <div className="text-sm text-muted-foreground capitalize flex items-center gap-1">
+                        {account.type}
+                        {(account as any).gocardlessAccountId && (
+                          <Link className="h-3 w-3 text-green-500 ml-1" />
+                        )}
+                      </div>
                     </div>
                   </div>
                 </CardContent>
@@ -263,6 +288,11 @@ export default function ManageAccounts() {
           })}
         </div>
       </div>
-    </Layout>
+      
+      <BankLinkModal
+        isOpen={isLinkModalOpen}
+        onClose={() => setIsLinkModalOpen(false)}
+      />
+    </Layout >
   );
 }

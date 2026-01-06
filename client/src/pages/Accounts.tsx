@@ -9,7 +9,6 @@ import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { BankLinkModal } from "@/components/bank-link-modal";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -17,7 +16,6 @@ export default function Accounts() {
   const { accounts, transactions, formatCurrency, isLoading } = useFinance();
   const [timeRange, setTimeRange] = useState('12');
   const [page, setPage] = useState(0);
-  const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
   const [syncing, setSyncing] = useState<number | null>(null);
   const { toast } = useToast();
 
@@ -121,10 +119,6 @@ export default function Accounts() {
             <h1 className="text-3xl font-heading font-bold text-foreground">Accounts</h1>
             <p className="text-muted-foreground">Analisi del flusso per conto</p>
           </div>
-          <Button onClick={() => setIsLinkModalOpen(true)}>
-            <Landmark className="mr-2 h-4 w-4" />
-            Connect Bank
-          </Button>
         </div>
 
         <Card>
@@ -256,10 +250,7 @@ export default function Accounts() {
         </Card>
       </div>
 
-      <BankLinkModal
-        isOpen={isLinkModalOpen}
-        onClose={() => setIsLinkModalOpen(false)}
-      />
+
     </Layout>
   );
 }
