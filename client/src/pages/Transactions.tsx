@@ -18,6 +18,8 @@ import { cn } from "@/lib/utils";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Landmark } from "lucide-react";
 
 const transactionSchema = z.object({
   amount: z.coerce.number().min(0.01, "Amount must be positive"),
@@ -918,7 +920,23 @@ export default function Transactions() {
                         />
                       </TableCell>
                       <TableCell data-testid={`text-date-${transaction.id}`}>{format(new Date(transaction.date), "MMM d, yyyy")}</TableCell>
-                      <TableCell className="font-medium" data-testid={`text-description-${transaction.id}`}>{transaction.description}</TableCell>
+                      <TableCell className="font-medium" data-testid={`text-description-${transaction.id}`}>
+                        <div className="flex items-center gap-2">
+                          {transaction.description}
+                          {transaction.gocardlessTransactionId && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Landmark size={14} className="text-blue-500/70" />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Transazione riconciliata con la banca</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <div className="w-2 h-2 rounded-full" style={{ backgroundColor: category?.color || '#ccc' }} />
