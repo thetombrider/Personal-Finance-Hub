@@ -55,23 +55,13 @@ export default function BankCallbackPage() {
                 throw new Error(errorData.error || "Failed to complete requisition");
             }
 
-            const accounts = await res.json();
-            // accounts is array of account IDs usually from Nordic/GC.
-            // We might need to fetch details for each to show name/IBAN?
-            // For now let's assume the endpoint returns useful info or just IDs.
-            // Based on my service implementation, it returns `requisitionData.accounts` which is an array of IDs (strings).
-            // Ideally I should have fetched details in the backend. 
-            // But let's work with what we have. If they are just IDs, we can't show much info.
-            // Wait, my service `getAccounts` returns `requisitionData.accounts` which is `string[]`.
-            // I should have improved the service to return details.
-            // But for now, let's treat them as IDs and maybe fetch metadata if possible?
-            // Actually, let's update the backend service to return details if possible, OR just display "Account 1", "Account 2" etc.
-            // To keep it simple for now, I will treat them as IDs.
-            setBankAccounts(accounts.map((id: string) => ({ id, name: `Bank Account (${id.substring(0, 8)}...)` })));
+            // The API now returns enriched account objects { id, name, iban ... }
+            setBankAccounts(accounts);
 
             // Default mappings: "new"
             const newMappings: Record<string, string> = {};
-            accounts.forEach((id: string) => newMappings[id] = "new");
+            const newMappings: Record<string, string> = {};
+            accounts.forEach((acc: any) => newMappings[acc.id] = "new");
             setMappings(newMappings);
 
         } catch (error) {
@@ -90,20 +80,20 @@ export default function BankCallbackPage() {
         try {
             for (const [bankAckId, localAckId] of Object.entries(mappings)) {
                 if (localAckId === "new") {
-                    // Create new account
-                    // We need details like IBAN/Currency.
-                    // Since we didn't fetch them, we'll create a generic one.
-                    // Ideally backend creates it.
-                    const res = await apiRequest("POST", "/api/accounts", {
-                        name: "New Bank Account",
+                    // Find details from state
+                    const bankAcc = bankAccounts.find((a: any) => a.id === bankAckId);
+                    const name = bankAcc ? bankAcc.name : "New Bank Account";
+                    const currency = bankAcc ? bankAcc.currency : "EUR";
+
+                    await apiRequest("POST", "/api/accounts", {
+                        name: name,
                         type: "bank",
                         startingBalance: "0",
-                        currency: "EUR",
+                        currency: currency,
                         color: "#000000",
                         gocardlessAccountId: bankAckId
                     });
                 } else if (localAckId !== "skip") {
-                    // Link existing
                     await apiRequest("POST", "/api/gocardless/accounts/link", {
                         accountId: parseInt(localAckId),
                         gocardlessAccountId: bankAckId
@@ -148,20 +138,25 @@ export default function BankCallbackPage() {
     }
 
     return (
-        <div className="container max-w-2xl py-8">
-            <Card>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
+            <Card className="w-full max-w-lg mx-4 shadow-lg animate-in fade-in zoom-in-50 duration-300">
                 <CardHeader>
                     <CardTitle>Link Accounts</CardTitle>
                     <CardDescription>
                         We found the following accounts from your bank. Choose how to map them to your local accounts.
                     </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6">
+                <CardContent className="space-y-6 max-h-[80vh] overflow-y-auto">
                     {bankAccounts.map((account) => (
-                        <div key={account.id} className="flex flex-col gap-2 p-4 border rounded-lg">
-                            <div className="font-medium">{account.name}</div>
-                            <div className="flex items-center gap-4">
-                                <span className="text-sm text-muted-foreground whitespace-nowrap">Map to:</span>
+                        <div key={account.id} className="flex flex-col gap-2 p-4 border rounded-lg bg-muted/20">
+                            <div className="font-medium flex justify-between items-center">
+                                <span>{account.name}</span>
+                                {account.currency && <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">{account.currency}</span>}
+                            </div>
+                            {account.iban && <div className="text-xs text-muted-foreground font-mono">{account.iban}</div>}
+
+                            <div className="flex items-center gap-4 mt-2">
+                                <span className="text-sm text-muted-foreground whitespace-nowrap w-16">Map to:</span>
                                 <Select
                                     value={mappings[account.id] || "new"}
                                     onValueChange={(val) => setMappings({ ...mappings, [account.id]: val })}

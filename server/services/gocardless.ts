@@ -97,8 +97,26 @@ class GoCardlessService {
         if (requisitionData.status === "LN") { // Linked
             await storage.updateBankConnection(connection.id, { status: "LINKED" });
 
-            // Return accounts
-            return requisitionData.accounts;
+            // Fetch details for each account to return useful info (name, owner, etc)
+            const accountIds = requisitionData.accounts;
+            const accountsWithDetails = await Promise.all(accountIds.map(async (id: string) => {
+                try {
+                    const details = await this.client.account(id).getDetails();
+                    // Struct: { account: { resourceId, iban, currency, name, product, ... } }
+                    return {
+                        id,
+                        name: details.account.name || details.account.product || "Bank Account",
+                        iban: details.account.iban,
+                        currency: details.account.currency,
+                        ownerName: details.account.ownerName
+                    };
+                } catch (e) {
+                    console.error(`Failed to fetch details for account ${id}`, e);
+                    return { id, name: `Bank Account (${id.substring(0, 8)}...)` };
+                }
+            }));
+
+            return accountsWithDetails;
         } else {
             await storage.updateBankConnection(connection.id, { status: requisitionData.status });
             throw new Error("Bank connection failed with status: " + requisitionData.status);
