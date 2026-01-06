@@ -12,11 +12,15 @@ FinTrack is a comprehensive personal finance management application designed to 
 - **📊 Reports**: Access detailed weekly reports and financial insights.
 - **⚙️ Settings**: Customize categories, manage application preferences, and update user profile.
 - **🔐 Authentication**: Secure login with support for OIDC providers.
+- **🏦 Bank Sync**: Connect to 2,000+ banks (including PayPal) via GoCardless to automatically sync transactions and balances to a Staging Area for review.
+- **📥 Smart Import**: Advanced CSV importer for Transactions, Trades, and Holdings with automated column mapping
+- **📧 Weekly Reports**: Automated email summaries with financial insights and market data sent via Resend.
+- **🔗 Tally Integration**: Webhook support for logging expenses on-the-go via Tally forms.
 
 ## Tech Stack
 
 - **Frontend**: React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui, Recharts.
-- **Backend**: Express.js, Node.js, Passport.js.
+- **Backend**: Express.js, Node.js, Passport.js, GoCardless (Nordigen), Resend.
 - **Database**: PostgreSQL, Drizzle ORM.
 - **Architecture**: RESTful API with React Query for state management.
 
@@ -36,11 +40,15 @@ The application requires certain environment variables to be set. You can define
 | `ALPHA_VANTAGE_API_KEY` | API Key for stock market data (get one from Alpha Vantage) |
 | `TALLY_WEBHOOK_SECRET` | (Optional) Secret for Tally webhook integration |
 | `DISABLE_SIGNUP` | Set to `true` to disable new user registrations |
+| `SSO_ONLY` | Set to `true` to disable local user registration and login|
 | `OIDC_ISSUER_URL` | (Optional) OIDC Issuer URL |
 | `OIDC_CLIENT_ID` | (Optional) OIDC Client ID |
 | `OIDC_CLIENT_SECRET` | (Optional) OIDC Client Secret |
 | `OIDC_CALLBACK_URL` | (Optional) OIDC Callback URL |
 | `NODE_ENV` | Environment mode (`development` or `production`) |
+| `GOCARDLESS_SECRET_ID` | GoCardless Secret ID |
+| `GOCARDLESS_SECRET_KEY` | GoCardless Secret Key |
+| `RESEND_API_KEY` | Resend API Key |
 
 ## Installation
 
