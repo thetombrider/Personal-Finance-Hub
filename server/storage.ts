@@ -25,7 +25,10 @@ import {
   type InsertRecurringExpense,
   plannedExpenses,
   type PlannedExpense,
-  type InsertPlannedExpense
+  type InsertPlannedExpense,
+  bankConnections,
+  type BankConnection,
+  type InsertBankConnection
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, sql, inArray, and } from "drizzle-orm";
@@ -108,6 +111,12 @@ export interface IStorage {
   createPlannedExpense(expense: InsertPlannedExpense): Promise<PlannedExpense>;
   updatePlannedExpense(id: number, expense: Partial<InsertPlannedExpense>): Promise<PlannedExpense | undefined>;
   deletePlannedExpense(id: number): Promise<void>;
+
+  // Bank Connections
+  getBankConnections(userId: string): Promise<BankConnection[]>;
+  getBankConnectionByRequisitionId(requisitionId: string): Promise<BankConnection | undefined>;
+  createBankConnection(connection: InsertBankConnection): Promise<BankConnection>;
+  updateBankConnection(id: number, connection: Partial<InsertBankConnection>): Promise<BankConnection | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -460,6 +469,29 @@ export class DatabaseStorage implements IStorage {
 
   async deletePlannedExpense(id: number): Promise<void> {
     await db.delete(plannedExpenses).where(eq(plannedExpenses.id, id));
+  }
+
+  // Bank Connections
+  async getBankConnections(userId: string): Promise<BankConnection[]> {
+    return await db.select().from(bankConnections).where(eq(bankConnections.userId, userId));
+  }
+
+  async getBankConnectionByRequisitionId(requisitionId: string): Promise<BankConnection | undefined> {
+    const result = await db.select().from(bankConnections).where(eq(bankConnections.requisitionId, requisitionId));
+    return result[0];
+  }
+
+  async createBankConnection(connection: InsertBankConnection): Promise<BankConnection> {
+    const [created] = await db.insert(bankConnections).values(connection).returning();
+    return created;
+  }
+
+  async updateBankConnection(id: number, connection: Partial<InsertBankConnection>): Promise<BankConnection | undefined> {
+    const [updated] = await db.update(bankConnections)
+      .set(connection)
+      .where(eq(bankConnections.id, id))
+      .returning();
+    return updated;
   }
 }
 

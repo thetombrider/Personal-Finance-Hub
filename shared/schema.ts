@@ -39,6 +39,7 @@ export const accounts = pgTable("accounts", {
   currency: varchar("currency", { length: 3 }).notNull().default("EUR"),
   color: varchar("color", { length: 7 }).notNull(),
   creditLimit: decimal("credit_limit", { precision: 12, scale: 2 }),
+  gocardlessAccountId: varchar("gocardless_account_id").unique(),
 });
 
 export const insertAccountSchema = createInsertSchema(accounts).omit({ id: true });
@@ -66,6 +67,7 @@ export const transactions = pgTable("transactions", {
   categoryId: serial("category_id").notNull().references(() => categories.id, { onDelete: "restrict" }),
   type: varchar("type", { length: 10 }).notNull(),
   linkedTransactionId: integer("linked_transaction_id"),
+  gocardlessTransactionId: varchar("gocardless_transaction_id").unique(),
 });
 
 export const insertTransactionSchema = createInsertSchema(transactions).omit({ id: true });
@@ -142,3 +144,16 @@ export const plannedExpenses = pgTable("planned_expenses", {
 export const insertPlannedExpenseSchema = createInsertSchema(plannedExpenses).omit({ id: true });
 export type InsertPlannedExpense = z.infer<typeof insertPlannedExpenseSchema>;
 export type PlannedExpense = typeof plannedExpenses.$inferSelect;
+
+export const bankConnections = pgTable("bank_connections", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  requisitionId: text("requisition_id").notNull(),
+  institutionId: text("institution_id").notNull(),
+  status: text("status").notNull(), // INIT, LINKED, EXPIRED
+  createdAt: timestamp("created_at", { mode: "string" }).defaultNow(),
+});
+
+export const insertBankConnectionSchema = createInsertSchema(bankConnections).omit({ id: true, createdAt: true });
+export type InsertBankConnection = z.infer<typeof insertBankConnectionSchema>;
+export type BankConnection = typeof bankConnections.$inferSelect;

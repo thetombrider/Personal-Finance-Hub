@@ -19,6 +19,7 @@ import ManageCategories from "@/pages/settings/ManageCategories";
 import EmailReports from "@/pages/settings/EmailReports";
 import Settings from "@/pages/settings/Settings";
 import { FinanceProvider } from "@/context/FinanceContext";
+import BankCallbackPage from "@/pages/bank-callback";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -50,6 +51,7 @@ function Router() {
         <Route path="/settings/categories" component={ManageCategories} />
         <Route path="/settings/email-reports" component={EmailReports} />
         <Route path="/settings" component={Settings} />
+        <Route path="/bank-callback" component={BankCallbackPage} />
         <Route component={NotFound} />
       </Switch>
     </FinanceProvider>

@@ -10,6 +10,7 @@ import cron from "node-cron";
 import { TallyService } from "./services/tally";
 import { marketDataService } from "./services/marketData";
 import { ReportService } from "./services/reportService";
+import { gocardlessService } from "./services/gocardless";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -21,6 +22,69 @@ export async function registerRoutes(
 
   const tallyService = new TallyService(storage);
   const reportService = new ReportService(storage, marketDataService);
+
+  // ============ GOCARDLESS ============
+
+  app.post("/api/gocardless/institutions", async (req, res) => {
+    try {
+      const { country } = req.body;
+      const institutions = await gocardlessService.listInstitutions(country);
+      res.json(institutions);
+    } catch (error) {
+      console.error("GoCardless institutions error:", error);
+      res.status(500).json({ error: "Failed to fetch institutions" });
+    }
+  });
+
+  app.post("/api/gocardless/requisition", async (req, res) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      const userId = (req.user as any).id;
+
+      const { institutionId, redirect } = req.body;
+      const result = await gocardlessService.createRequisition(userId, institutionId, redirect);
+      res.json(result);
+    } catch (error) {
+      console.error("GoCardless requisition error:", error);
+      res.status(500).json({ error: "Failed to create requisition" });
+    }
+  });
+
+  app.post("/api/gocardless/requisition/complete", async (req, res) => {
+    try {
+      const { requisitionId } = req.body;
+      const accounts = await gocardlessService.handleCallback(requisitionId);
+      res.json(accounts);
+    } catch (error) {
+      console.error("GoCardless complete error:", error);
+      res.status(500).json({ error: "Failed to complete requisition" });
+    }
+  });
+
+  app.post("/api/gocardless/accounts/link", async (req, res) => {
+    try {
+      const { accountId, gocardlessAccountId } = req.body;
+      await storage.updateAccount(accountId, { gocardlessAccountId });
+      res.json({ success: true });
+    } catch (error) {
+      console.error("GoCardless link error:", error);
+      res.status(500).json({ error: "Failed to link account" });
+    }
+  });
+
+  app.post("/api/gocardless/sync", async (req, res) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      const userId = (req.user as any).id;
+      const { accountId } = req.body;
+
+      const result = await gocardlessService.syncTransactions(userId, accountId);
+      res.json(result);
+    } catch (error) {
+      console.error("GoCardless sync error:", error);
+      res.status(500).json({ error: "Failed to sync transactions" });
+    }
+  });
 
   // endpoint for backward compatibility or if frontend expects this path
   app.get('/api/auth/user', isAuthenticated, (req, res) => {

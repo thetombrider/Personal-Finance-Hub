@@ -3,17 +3,23 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { format, subMonths, parseISO } from "date-fns";
 import { it } from "date-fns/locale";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Landmark, RefreshCw } from "lucide-react";
 import { useFinance } from "@/context/FinanceContext";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { BankLinkModal } from "@/components/bank-link-modal";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Accounts() {
   const { accounts, transactions, formatCurrency, isLoading } = useFinance();
   const [timeRange, setTimeRange] = useState('12');
   const [page, setPage] = useState(0);
+  const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
+  const [syncing, setSyncing] = useState<number | null>(null);
+  const { toast } = useToast();
 
   const monthsList = useMemo(() => {
     const months = parseInt(timeRange);
@@ -35,19 +41,10 @@ export default function Accounts() {
   }, [timeRange]);
 
   const visibleMonths = useMemo(() => {
-    // Show 6 months per page.
-    // Page 0 = Last 6 months (indices: length-6 to length)
-    // Page 1 = Previous 6 months, etc.
     const itemsPerPage = 6;
     const totalMonths = monthsList.length;
-
-    // Calculate start/end indices from the END of the list (most recent)
-    // For page 0: slice(total - 6, total)
-    // For page 1: slice(total - 12, total - 6)
-
     const endIndex = totalMonths - (page * itemsPerPage);
     const startIndex = Math.max(0, endIndex - itemsPerPage);
-
     return monthsList.slice(startIndex, endIndex);
   }, [monthsList, page]);
 
@@ -85,6 +82,27 @@ export default function Accounts() {
     return data;
   }, [transactions, accounts, monthsList]);
 
+  const handleSync = async (accountId: number) => {
+    setSyncing(accountId);
+    try {
+      const res = await apiRequest("POST", "/api/gocardless/sync", { accountId });
+      const data = await res.json();
+      toast({
+        title: "Sync Complete",
+        description: `Imported ${data.added} new transactions.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
+    } catch (error) {
+      toast({
+        title: "Sync Failed",
+        description: "Could not sync transactions.",
+        variant: "destructive",
+      });
+    } finally {
+      setSyncing(null);
+    }
+  };
+
   if (isLoading) {
     return (
       <Layout>
@@ -98,9 +116,15 @@ export default function Accounts() {
   return (
     <Layout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-heading font-bold text-foreground">Accounts</h1>
-          <p className="text-muted-foreground">Analisi del flusso per conto</p>
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-heading font-bold text-foreground">Accounts</h1>
+            <p className="text-muted-foreground">Analisi del flusso per conto</p>
+          </div>
+          <Button onClick={() => setIsLinkModalOpen(true)}>
+            <Landmark className="mr-2 h-4 w-4" />
+            Connect Bank
+          </Button>
         </div>
 
         <Card>
@@ -161,15 +185,24 @@ export default function Accounts() {
                         <TableHead key={m.key} className="text-center w-[10%] min-w-[80px] text-xs sm:text-sm p-1 capitalize">{m.label}</TableHead>
                       ))}
                       <TableHead className="text-center w-[10%] min-w-[100px] font-semibold p-1">Totale Periodo</TableHead>
+                      <TableHead className="text-center w-[100px]">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {Object.entries(accountMonthlyData).map(([accountName, months]) => {
-                      // Calculate total based on ALL months in the selected range, not just visible ones
                       const total = Object.values(months).reduce((sum, val) => sum + val, 0);
+                      const account = accounts.find(a => a.name === accountName);
+
                       return (
                         <TableRow key={accountName}>
-                          <TableCell className="sticky left-0 bg-card z-10 font-medium">{accountName}</TableCell>
+                          <TableCell className="sticky left-0 bg-card z-10 font-medium">
+                            <div className="flex items-center gap-2">
+                              {accountName}
+                              {account?.gocardlessAccountId && (
+                                <div className="w-2 h-2 rounded-full bg-green-500" title="Bank Linked" />
+                              )}
+                            </div>
+                          </TableCell>
                           {visibleMonths.map(m => {
                             const val = months[m.key];
                             return (
@@ -180,6 +213,19 @@ export default function Accounts() {
                           })}
                           <TableCell className={`text-center font-semibold ${total > 0 ? 'text-emerald-600' : total < 0 ? 'text-rose-600' : ''}`}>
                             {total !== 0 ? formatCurrency(total) : '-'}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {account?.gocardlessAccountId && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleSync(account.id)}
+                                disabled={syncing === account.id}
+                                title="Sync with Bank"
+                              >
+                                <RefreshCw className={`h-4 w-4 ${syncing === account.id ? 'animate-spin' : ''}`} />
+                              </Button>
+                            )}
                           </TableCell>
                         </TableRow>
                       );
@@ -199,6 +245,7 @@ export default function Accounts() {
                           sum + Object.values(acc).reduce((s, v) => s + v, 0), 0
                         ))}
                       </TableCell>
+                      <TableCell />
                     </TableRow>
                   </TableBody>
                 </Table>
@@ -208,6 +255,11 @@ export default function Accounts() {
           </CardContent>
         </Card>
       </div>
+
+      <BankLinkModal
+        isOpen={isLinkModalOpen}
+        onClose={() => setIsLinkModalOpen(false)}
+      />
     </Layout>
   );
 }
