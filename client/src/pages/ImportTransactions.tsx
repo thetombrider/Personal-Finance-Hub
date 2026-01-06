@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Upload, ArrowRight, CreditCard, TrendingUp, Wallet, Tag, Settings2, BarChart3, FileSpreadsheet } from "lucide-react";
 import { useState, useRef } from "react";
 import Papa from "papaparse";
+import { read, utils } from "xlsx";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { parse, isValid, format } from "date-fns";
@@ -149,33 +150,69 @@ export default function ImportTransactions() {
     const uploadedFiles = e.target.files ? Array.from(e.target.files) : [];
     if (uploadedFiles.length > 0) {
       const fileToProcess = uploadedFiles[0];
+      const isExcel = fileToProcess.name.endsWith('.xlsx') || fileToProcess.name.endsWith('.xls');
 
       if (isReference) {
         setReferenceFile(fileToProcess);
       } else {
-        setPrimaryFile(fileToProcess); // Replaces the single file state
-        setFile(fileToProcess); // Keep for compatibility if needed, but we should switch to primaryFile
+        setPrimaryFile(fileToProcess);
+        setFile(fileToProcess);
       }
 
-      Papa.parse(fileToProcess, {
-        header: true,
-        skipEmptyLines: true,
-        complete: (results) => {
-          const fileHeaders = results.meta.fields || [];
-          const data = results.data;
+      if (isExcel) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const data = e.target?.result;
+          if (data) {
+            const workbook = read(data, { type: 'array' });
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            const json = utils.sheet_to_json(worksheet, { defval: "" }) as any[];
 
-          if (isReference) {
-            setReferenceCsvData({ headers: fileHeaders, data });
-          } else {
-            setCsvData(data);
-            setHeaders(fileHeaders);
-            if (!isReference && step === 'upload') setStep('map');
+            if (json.length > 0) {
+              const fileHeaders = Object.keys(json[0]);
 
-            const fields = fileHeaders;
-            initializeMapping(fields, importMode);
+              if (isReference) {
+                setReferenceCsvData({ headers: fileHeaders, data: json });
+              } else {
+                setCsvData(json);
+                setHeaders(fileHeaders);
+                if (!isReference && step === 'upload') setStep('map');
+
+                const fields = fileHeaders;
+                initializeMapping(fields, importMode);
+              }
+            } else {
+              toast({
+                title: "Import Failed",
+                description: "The Excel file appears to be empty or invalid.",
+                variant: "destructive"
+              });
+            }
           }
-        }
-      });
+        };
+        reader.readAsArrayBuffer(fileToProcess);
+      } else {
+        Papa.parse(fileToProcess, {
+          header: true,
+          skipEmptyLines: true,
+          complete: (results) => {
+            const fileHeaders = results.meta.fields || [];
+            const data = results.data;
+
+            if (isReference) {
+              setReferenceCsvData({ headers: fileHeaders, data });
+            } else {
+              setCsvData(data);
+              setHeaders(fileHeaders);
+              if (!isReference && step === 'upload') setStep('map');
+
+              const fields = fileHeaders;
+              initializeMapping(fields, importMode);
+            }
+          }
+        });
+      }
     }
   };
 
@@ -668,13 +705,13 @@ export default function ImportTransactions() {
                   <div className="w-16 h-8 rounded-full bg-primary/10 flex items-center justify-center mb-2"><Upload className="w-8 h-8 text-primary" /></div>
                   <div>
                     <h3 className="text-lg font-semibold">
-                      {importMode === 'trades' ? "Upload Trades CSV" :
-                        importMode === 'holdings' ? "Upload Holdings CSV" :
-                          "Click to upload CSV"}
+                      {importMode === 'trades' ? "Upload Trades CSV/Excel" :
+                        importMode === 'holdings' ? "Upload Holdings CSV/Excel" :
+                          "Click to upload CSV/Excel"}
                     </h3>
                     <p className="text-sm text-muted-foreground mt-1">or drag and drop file here</p>
                   </div>
-                  <input type="file" ref={primaryFileInputRef} accept=".csv" className="hidden" onChange={(e) => handleFileUpload(e, false)} />
+                  <input type="file" ref={primaryFileInputRef} accept=".csv, .xlsx, .xls" className="hidden" onChange={(e) => handleFileUpload(e, false)} />
                 </div>
 
                 {/* Reference File Upload for Trades */}
@@ -694,7 +731,7 @@ export default function ImportTransactions() {
                         <Button variant="outline" size="sm" onClick={() => referenceFileInputRef.current?.click()}>Select File</Button>
                       )}
                     </div>
-                    <input type="file" ref={referenceFileInputRef} accept=".csv" className="hidden" onChange={(e) => handleFileUpload(e, true)} />
+                    <input type="file" ref={referenceFileInputRef} accept=".csv, .xlsx, .xls" className="hidden" onChange={(e) => handleFileUpload(e, true)} />
                   </div>
                 )}
               </div>
