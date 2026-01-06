@@ -3,40 +3,37 @@ version: '3.8'
 services:
   app:
     image: thetombrider/personal-finance:latest
+    container_name: fintrack
     ports:
       - "5001:5000"
-    environment:
-      - DATABASE_URL=postgres://postgres:postgres@db:5432/personal_finance
-      - NODE_ENV=production
-      - TALLY_WEBHOOK_SECRET=80e28427-3a96-4dbd-bbd4-c1e790109dab
-      - ALPHA_VANTAGE_API_KEY=N5V6H1I8FP3VESJJ
+    env_file: stack.env
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
     depends_on:
       - db
     restart: always
-    labels:
-      - "com.centurylinklabs.watchtower.enable=true"
+    networks:
+      - cloudflare_network # To talk to the Tunnel
+      - internal_finance   # To talk to the DB
 
   db:
     image: postgres:15-alpine
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=personal_finance
+    env_file: stack.env
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - personal_finance_postgres_data:/var/lib/postgresql/data
     ports:
       - "5433:5432"
     restart: always
+    networks:
+      - internal_finance
 
-  tunnel:
-    image: cloudflare/cloudflared:latest
-    container_name: cloudflared
-    restart: always
-    command: tunnel run
-    environment:
-      - TUNNEL_TOKEN=${TUNNEL_TOKEN:-your_cloudflare_tunnel_token_here}
-    depends_on:
-      - app
+
 
 volumes:
-  postgres_data:
+  personal_finance_postgres_data:
+
+networks:
+  cloudflare_network:
+    external: true
+  internal_finance:
+    driver: bridge
