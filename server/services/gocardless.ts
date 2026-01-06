@@ -49,11 +49,16 @@ class GoCardlessService {
     async createRequisition(userId: string, institutionId: string, redirect: string) {
         await this.ensureToken();
 
+        // 1. Get institution details to check limits
+        const institution = await this.client.institution.getInstitutionById(institutionId);
+        const maxHistory = institution.transaction_total_days
+            ? Math.min(180, parseInt(institution.transaction_total_days))
+            : 180;
+
         // 0. Create Agreement (Step 5 in Quickstart)
-        // Explicitly asking for 180 days of history and 90 days access
         const agreement = await this.client.agreement.createAgreement({
             institutionId: institutionId,
-            maxHistoricalDays: 180,
+            maxHistoricalDays: maxHistory,
             accessValidForDays: 90,
             accessScope: ["balances", "details", "transactions"],
         });
