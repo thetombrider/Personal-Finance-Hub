@@ -120,6 +120,7 @@ export interface IStorage {
   getBankConnectionByRequisitionId(requisitionId: string): Promise<BankConnection | undefined>;
   createBankConnection(connection: InsertBankConnection): Promise<BankConnection>;
   updateBankConnection(id: number, connection: Partial<InsertBankConnection>): Promise<BankConnection | undefined>;
+  deleteBankConnection(id: number): Promise<void>;
 
   // Import Staging
   getImportStaging(accountId?: number): Promise<ImportStaging[]>;
@@ -502,6 +503,10 @@ export class DatabaseStorage implements IStorage {
       .where(eq(bankConnections.id, id))
       .returning();
     return updated;
+  }
+
+  async deleteBankConnection(id: number): Promise<void> {
+    await db.delete(bankConnections).where(eq(bankConnections.id, id));
   }
 
   // Import Staging
