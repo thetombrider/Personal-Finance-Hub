@@ -99,7 +99,9 @@ export function setupAuth(app: Express) {
                     try {
                         const oidcId = profile.id;
                         const email = profile.emails && profile.emails.length > 0 ? profile.emails[0].value : null;
-                        const displayName = profile.displayName || profile.username || (email ? email.split('@')[0] : "user");
+
+                        // Prioritize username (preferred_username) over display name
+                        const baseUsername = profile.username || profile.displayName || (email ? email.split('@')[0] : "user");
 
                         // 1. Check if user exists by OIDC ID
                         let user = await storage.getUserByOidcId(oidcId);
@@ -127,7 +129,7 @@ export function setupAuth(app: Express) {
                         while (attempts < maxAttempts) {
                             try {
                                 const suffix = attempts === 0 ? "" : `_${randomBytes(4).toString("hex")}`;
-                                let usernameCandidate = attempts === 0 ? displayName : `${displayName}${suffix}`;
+                                let usernameCandidate = attempts === 0 ? baseUsername : `${baseUsername}${suffix}`;
 
                                 if (!usernameCandidate) {
                                     usernameCandidate = `user_${randomBytes(4).toString("hex")}`;
@@ -139,6 +141,8 @@ export function setupAuth(app: Express) {
                                     email: email,
                                     oidcId: oidcId,
                                     profileImageUrl: profileImageUrl,
+                                    firstName: profile.name?.givenName,
+                                    lastName: profile.name?.familyName,
                                 });
                                 return cb(null, user);
                             } catch (err: any) {
