@@ -197,7 +197,7 @@ export default function Budget() {
                     </section>
 
                     {/* 3. Recurring & Planned Tables */}
-                    <div className="grid lg:grid-cols-2 gap-8">
+                    <div className="space-y-8">
                         <section>
                             <RecurringExpensesTable
                                 expenses={data.recurringExpenses}
