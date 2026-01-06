@@ -14,6 +14,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      
+      - name: Create stack.env file
+        run: |
+          echo "${{ secrets.STACK_ENV_FILE }}" > stack.env
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
