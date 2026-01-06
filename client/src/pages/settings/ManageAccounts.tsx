@@ -110,7 +110,7 @@ export default function ManageAccounts() {
             <h1 className="text-3xl font-heading font-bold text-foreground">Gestione Conti</h1>
             <p className="text-muted-foreground">Aggiungi, modifica o elimina i tuoi conti</p>
           </div>
-          
+
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setIsLinkModalOpen(true)}>
               <Landmark className="mr-2 h-4 w-4" />
@@ -118,135 +118,135 @@ export default function ManageAccounts() {
             </Button>
 
             <Dialog open={isDialogOpen} onOpenChange={(open) => {
-            setIsDialogOpen(open);
-            if(!open) {
-              setEditingId(null);
-              form.reset({
-                name: "",
-                type: "checking",
-                startingBalance: 0,
-                currency: "EUR",
-                color: "#3b82f6",
-                creditLimit: undefined,
-              });
-            }
-          }}>
-            <DialogTrigger asChild>
-              <Button className="gap-2" data-testid="button-add-account">
-                <Plus size={16} /> Aggiungi Conto
-              </Button>
-            </DialogTrigger>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>{editingId ? "Modifica Conto" : "Nuovo Conto"}</DialogTitle>
-              </DialogHeader>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  {editingId && (
-                    <div className="text-sm text-muted-foreground mb-4">
-                       {(accounts.find(a => a.id === editingId) as any)?.gocardlessAccountId && (
-                        <div className="flex items-center gap-2 p-2 bg-muted rounded border">
-                           <Link className="h-4 w-4" />
-                           <span>Linked to Bank (ID: {(accounts.find(a => a.id === editingId) as any)?.gocardlessAccountId})</span>
-                        </div>
-                       )}
-                    </div>
-                  )}
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nome Conto</FormLabel>
-                        <FormControl>
-                          <Input placeholder="es. Conto Principale" {...field} data-testid="input-name" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
+              setIsDialogOpen(open);
+              if (!open) {
+                setEditingId(null);
+                form.reset({
+                  name: "",
+                  type: "checking",
+                  startingBalance: 0,
+                  currency: "EUR",
+                  color: "#3b82f6",
+                  creditLimit: undefined,
+                });
+              }
+            }}>
+              <DialogTrigger asChild>
+                <Button className="gap-2" data-testid="button-add-account">
+                  <Plus size={16} /> Aggiungi Conto
+                </Button>
+              </DialogTrigger>
+
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>{editingId ? "Modifica Conto" : "Nuovo Conto"}</DialogTitle>
+                </DialogHeader>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    {editingId && (
+                      <div className="text-sm text-muted-foreground mb-4">
+                        {(accounts.find(a => a.id === editingId) as any)?.gocardlessAccountId && (
+                          <div className="flex items-center gap-2 p-2 bg-muted rounded border">
+                            <Link className="h-4 w-4" />
+                            <span>Linked to Bank (ID: {(accounts.find(a => a.id === editingId) as any)?.gocardlessAccountId})</span>
+                          </div>
+                        )}
+                      </div>
                     )}
-                  />
-                  <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
-                      name="type"
+                      name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Tipo</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
+                          <FormLabel>Nome Conto</FormLabel>
+                          <FormControl>
+                            <Input placeholder="es. Conto Principale" {...field} data-testid="input-name" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="type"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Tipo</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger data-testid="select-type">
+                                  <SelectValue placeholder="Seleziona tipo" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="checking">Conto Corrente</SelectItem>
+                                <SelectItem value="savings">Risparmio</SelectItem>
+                                <SelectItem value="credit">Carta di Credito</SelectItem>
+                                <SelectItem value="investment">Investimenti</SelectItem>
+                                <SelectItem value="cash">Contanti</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="startingBalance"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{watchedType === "credit" ? "Debito Iniziale" : "Saldo Iniziale"}</FormLabel>
                             <FormControl>
-                              <SelectTrigger data-testid="select-type">
-                                <SelectValue placeholder="Seleziona tipo" />
-                              </SelectTrigger>
+                              <Input type="number" step="0.01" {...field} data-testid="input-starting-balance" />
                             </FormControl>
-                            <SelectContent>
-                              <SelectItem value="checking">Conto Corrente</SelectItem>
-                              <SelectItem value="savings">Risparmio</SelectItem>
-                              <SelectItem value="credit">Carta di Credito</SelectItem>
-                              <SelectItem value="investment">Investimenti</SelectItem>
-                              <SelectItem value="cash">Contanti</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="startingBalance"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{watchedType === "credit" ? "Debito Iniziale" : "Saldo Iniziale"}</FormLabel>
-                          <FormControl>
-                            <Input type="number" step="0.01" {...field} data-testid="input-starting-balance" />
-                          </FormControl>
-                          {watchedType === "credit" && (
-                            <p className="text-xs text-muted-foreground">Usa valori negativi per indicare il debito</p>
-                          )}
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  {watchedType === "credit" && (
-                    <FormField
-                      control={form.control}
-                      name="creditLimit"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Limite Credito (Plafond)</FormLabel>
-                          <FormControl>
-                            <Input type="number" step="0.01" placeholder="es. 1500" {...field} data-testid="input-credit-limit" />
-                          </FormControl>
-                          <p className="text-xs text-muted-foreground">Il massimo che puoi spendere al mese con questa carta</p>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )}
-                  <FormField
-                    control={form.control}
-                    name="color"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Colore</FormLabel>
-                        <div className="flex items-center gap-2">
-                          <FormControl>
-                            <Input type="color" className="w-12 h-9 p-1" {...field} data-testid="input-color" />
-                          </FormControl>
-                          <div className="text-sm text-muted-foreground">{field.value}</div>
-                        </div>
-                        <FormMessage />
-                      </FormItem>
+                            {watchedType === "credit" && (
+                              <p className="text-xs text-muted-foreground">Usa valori negativi per indicare il debito</p>
+                            )}
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    {watchedType === "credit" && (
+                      <FormField
+                        control={form.control}
+                        name="creditLimit"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Limite Credito (Plafond)</FormLabel>
+                            <FormControl>
+                              <Input type="number" step="0.01" placeholder="es. 1500" {...field} data-testid="input-credit-limit" />
+                            </FormControl>
+                            <p className="text-xs text-muted-foreground">Il massimo che puoi spendere al mese con questa carta</p>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     )}
-                  />
-                  <DialogFooter>
-                    <Button type="submit" data-testid="button-submit-account">{editingId ? "Salva Modifiche" : "Crea Conto"}</Button>
-                  </DialogFooter>
-                </form>
-              </Form>
-            </DialogContent>
-          </Dialog>
+                    <FormField
+                      control={form.control}
+                      name="color"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Colore</FormLabel>
+                          <div className="flex items-center gap-2">
+                            <FormControl>
+                              <Input type="color" className="w-12 h-9 p-1" {...field} data-testid="input-color" />
+                            </FormControl>
+                            <div className="text-sm text-muted-foreground">{field.value}</div>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <DialogFooter>
+                      <Button type="submit" data-testid="button-submit-account">{editingId ? "Salva Modifiche" : "Crea Conto"}</Button>
+                    </DialogFooter>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
 
@@ -263,10 +263,10 @@ export default function ManageAccounts() {
                     <Trash2 size={14} />
                   </Button>
                 </div>
-                
+
                 <CardContent className="pt-6">
                   <div className="flex items-center gap-4">
-                    <div 
+                    <div
                       className={cn("p-3 rounded-xl", "text-white shadow-md")}
                       style={{ backgroundColor: account.color }}
                     >
@@ -288,7 +288,7 @@ export default function ManageAccounts() {
           })}
         </div>
       </div>
-      
+
       <BankLinkModal
         isOpen={isLinkModalOpen}
         onClose={() => setIsLinkModalOpen(false)}
