@@ -48,7 +48,7 @@ class GoCardlessService {
 
         // 1. Create requisition
         const requisition = await this.client.requisition.createRequisition({
-            redirect: redirect,
+            redirectUrl: redirect,
             institutionId: institutionId,
             reference: userId,
         });
