@@ -101,9 +101,10 @@ class GoCardlessService {
             throw new Error("Connection not found for requisition: " + requisitionId);
         }
 
-        if (requisitionData.status === "LN") { // Linked
-            await storage.updateBankConnection(connection.id, { status: "LINKED" });
+        // Always update the status in the DB
+        await storage.updateBankConnection(connection.id, { status: requisitionData.status });
 
+        if (requisitionData.status === "LN") { // Linked
             // Fetch details for each account to return useful info (name, owner, etc)
             const accountIds = requisitionData.accounts;
             const accountsWithDetails = await Promise.all(accountIds.map(async (id: string) => {
@@ -125,8 +126,11 @@ class GoCardlessService {
 
             return accountsWithDetails;
         } else {
-            await storage.updateBankConnection(connection.id, { status: requisitionData.status });
-            throw new Error("Bank connection failed with status: " + requisitionData.status);
+            // Throw a specific error object or message that the route can interpret
+            const error = new Error(`Bank connection not completed. Status: ${requisitionData.status}`);
+            (error as any).status = 400; // Hint for the route handler
+            (error as any).code = requisitionData.status;
+            throw error;
         }
     }
 

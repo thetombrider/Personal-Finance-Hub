@@ -89,9 +89,13 @@ export async function registerRoutes(
       const { requisitionId } = req.body;
       const accounts = await gocardlessService.handleCallback(requisitionId);
       res.json(accounts);
-    } catch (error) {
+    } catch (error: any) {
       console.error("GoCardless complete error:", error);
-      res.status(500).json({ error: "Failed to complete requisition" });
+      const status = error.status || 500;
+      res.status(status).json({
+        error: error.message || "Failed to complete requisition",
+        code: error.code
+      });
     }
   });
 

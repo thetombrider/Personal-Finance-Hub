@@ -27,6 +27,18 @@ export default function BankCallbackPage() {
         // wouter location doesn't give query params directly easily, use window.location
         const params = new URLSearchParams(window.location.search);
         let requisitionId = params.get("requisition_id");
+        const error = params.get("error");
+        const details = params.get("details");
+
+        if (error) {
+            toast({
+                title: "Bank Connection Failed",
+                description: details || error,
+                variant: "destructive",
+            });
+            setLoading(false);
+            return;
+        }
 
         // Fallback to session storage if not in URL
         if (!requisitionId) {
@@ -64,10 +76,10 @@ export default function BankCallbackPage() {
             accounts.forEach((acc: any) => newMappings[acc.id] = "new");
             setMappings(newMappings);
 
-        } catch (error) {
+        } catch (error: any) {
             toast({
                 title: "Connection Failed",
-                description: "Could not retrieve bank accounts.",
+                description: error.message || "Could not retrieve bank accounts.",
                 variant: "destructive",
             });
         } finally {
