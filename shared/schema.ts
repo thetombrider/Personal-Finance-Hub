@@ -154,6 +154,21 @@ export const bankConnections = pgTable("bank_connections", {
   createdAt: timestamp("created_at", { mode: "string" }).defaultNow(),
 });
 
+
 export const insertBankConnectionSchema = createInsertSchema(bankConnections).omit({ id: true, createdAt: true });
 export type InsertBankConnection = z.infer<typeof insertBankConnectionSchema>;
 export type BankConnection = typeof bankConnections.$inferSelect;
+
+export const importStaging = pgTable("import_staging", {
+  id: serial("id").primaryKey(),
+  date: timestamp("date", { mode: "string" }).notNull(),
+  amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
+  description: text("description").notNull(),
+  accountId: integer("account_id").notNull().references(() => accounts.id, { onDelete: "cascade" }),
+  gocardlessTransactionId: varchar("gocardless_transaction_id").unique(),
+  rawData: jsonb("raw_data"),
+});
+
+export const insertImportStagingSchema = createInsertSchema(importStaging).omit({ id: true });
+export type InsertImportStaging = z.infer<typeof insertImportStagingSchema>;
+export type ImportStaging = typeof importStaging.$inferSelect;

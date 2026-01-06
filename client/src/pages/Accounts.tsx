@@ -11,12 +11,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { ImportedTransactions } from "@/components/ImportedTransactions";
+import { List } from "lucide-react";
 
 export default function Accounts() {
   const { accounts, transactions, formatCurrency, isLoading } = useFinance();
   const [timeRange, setTimeRange] = useState('12');
   const [page, setPage] = useState(0);
   const [syncing, setSyncing] = useState<number | null>(null);
+  const [reviewAccountId, setReviewAccountId] = useState<number | null>(null);
   const { toast } = useToast();
 
   const monthsList = useMemo(() => {
@@ -87,9 +90,9 @@ export default function Accounts() {
       const data = await res.json();
       toast({
         title: "Sync Complete",
-        description: `Imported ${data.added} new transactions.`,
+        description: `Staged ${data.added} new transactions for review.`,
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
+      // queryClient.invalidateQueries({ queryKey: ["/api/transactions"] }); // No longer needed as they are not imported yet
     } catch (error) {
       toast({
         title: "Sync Failed",
@@ -141,7 +144,7 @@ export default function Accounts() {
                   </Button>
                   <span className="text-sm px-2 font-medium min-w-[80px] text-center">
                     {visibleMonths.length > 0
-                      ? `${visibleMonths[0].label} - ${visibleMonths[visibleMonths.length - 1].label}`
+                      ? `${visibleMonths[0].label} - ${visibleMonths[visibleMonths.length - 1].label} `
                       : 'Nessun dato'}
                   </span>
                   <Button
@@ -200,25 +203,35 @@ export default function Accounts() {
                           {visibleMonths.map(m => {
                             const val = months[m.key];
                             return (
-                              <TableCell key={m.key} className={`text-center text-xs sm:text-sm p-1 ${val > 0 ? 'text-emerald-600' : val < 0 ? 'text-rose-600' : ''}`}>
+                              <TableCell key={m.key} className={`text - center text - xs sm: text - sm p - 1 ${val > 0 ? 'text-emerald-600' : val < 0 ? 'text-rose-600' : ''} `}>
                                 {val !== 0 ? formatCurrency(val) : '-'}
                               </TableCell>
                             );
                           })}
-                          <TableCell className={`text-center font-semibold ${total > 0 ? 'text-emerald-600' : total < 0 ? 'text-rose-600' : ''}`}>
+                          <TableCell className={`text - center font - semibold ${total > 0 ? 'text-emerald-600' : total < 0 ? 'text-rose-600' : ''} `}>
                             {total !== 0 ? formatCurrency(total) : '-'}
                           </TableCell>
                           <TableCell className="text-center">
                             {account?.gocardlessAccountId && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleSync(account.id)}
-                                disabled={syncing === account.id}
-                                title="Sync with Bank"
-                              >
-                                <RefreshCw className={`h-4 w-4 ${syncing === account.id ? 'animate-spin' : ''}`} />
-                              </Button>
+                              <div className="flex items-center">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleSync(account.id)}
+                                  disabled={syncing === account.id}
+                                  title="Sync with Bank"
+                                >
+                                  <RefreshCw className={`h-4 w-4 ${syncing === account.id ? 'animate-spin' : ''}`} />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setReviewAccountId(account.id)}
+                                  title="Review Imported Transactions"
+                                >
+                                  <List className="h-4 w-4" />
+                                </Button>
+                              </div>
                             )}
                           </TableCell>
                         </TableRow>
@@ -229,7 +242,7 @@ export default function Accounts() {
                       {visibleMonths.map(m => {
                         const monthTotal = Object.values(accountMonthlyData).reduce((sum, acc) => sum + (acc[m.key] || 0), 0);
                         return (
-                          <TableCell key={m.key} className={`text-center ${monthTotal > 0 ? 'text-emerald-600' : monthTotal < 0 ? 'text-rose-600' : ''}`}>
+                          <TableCell key={m.key} className={`text - center ${monthTotal > 0 ? 'text-emerald-600' : monthTotal < 0 ? 'text-rose-600' : ''} `}>
                             {monthTotal !== 0 ? formatCurrency(monthTotal) : '-'}
                           </TableCell>
                         );

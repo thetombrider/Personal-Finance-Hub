@@ -463,6 +463,86 @@ export async function registerRoutes(
     }
   });
 
+  // ============ STAGING ============
+
+  app.get("/api/transactions/staging", async (req, res) => {
+    try {
+      const accountId = req.query.accountId ? parseInt(req.query.accountId as string) : undefined;
+      const staged = await storage.getImportStaging(accountId);
+      res.json(staged);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch staged transactions" });
+    }
+  });
+
+  app.post("/api/transactions/staging/:id/approve", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { categoryId, description, date, amount } = req.body; // Allow overrides
+
+      // 1. Get staged
+      // We don't have getImportStagingById but we can filter or add it.
+      // Easiest is to add getImportStagingById to storage but for now distinct query via getImportStaging(account) is inefficient.
+      // Wait, deleteImportStaging uses ID. Storage has deleteImportStaging(id).
+      // I should have added getImportStagingById(id).
+      // Let's implement it in route using a broader fetch or just assume the data passed is valid?
+      // No, we need the accountId and other data from the staged record.
+      // I'll assume I can fetch all and find it, or better: implement getImportStagingById in storage?
+      // For now, let's fetch all (filtered by account if we knew it, but we don't from params).
+      // Actually, let's just add `getImportStaging(id)` to storage in next step if needed, or query directly if I was writing SQL.
+      // But I am using storage interface.
+      // Let's rely on the client passing necessary info? No security risk.
+
+      // Let's temporarily fetch ALL staged transactions and find by ID. It's not efficient but works for small scale.
+      const allStaged = await storage.getImportStaging();
+      const staged = allStaged.find(s => s.id === id);
+
+      if (!staged) {
+        return res.status(404).json({ error: "Staged transaction not found" });
+      }
+
+      // 2. Create Transaction
+      const finalAmount = amount !== undefined ? amount : staged.amount;
+      const finalDate = date || staged.date;
+      const finalDesc = description || staged.description;
+
+      // Determine type
+      // Staging stores signed amount.
+      // Transaction schema: amount is absolute, type is 'income'|'expense'.
+      const numAmount = parseFloat(finalAmount.toString());
+      const type = numAmount < 0 ? "expense" : "income";
+      const absAmount = Math.abs(numAmount).toFixed(2);
+
+      const transaction = await storage.createTransaction({
+        accountId: staged.accountId,
+        date: finalDate,
+        amount: absAmount,
+        description: finalDesc,
+        categoryId: parseInt(categoryId),
+        type: type,
+        gocardlessTransactionId: staged.gocardlessTransactionId,
+      });
+
+      // 3. Delete from staging
+      await storage.deleteImportStaging(id);
+
+      res.status(201).json(transaction);
+    } catch (error) {
+      console.error("Approve error:", error);
+      res.status(500).json({ error: "Failed to approve transaction" });
+    }
+  });
+
+  app.delete("/api/transactions/staging/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteImportStaging(id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete staged transaction" });
+    }
+  });
+
   // ============ TRANSFERS ============
 
   const transferSchema = z.object({

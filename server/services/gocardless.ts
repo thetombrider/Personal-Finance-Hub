@@ -173,13 +173,7 @@ class GoCardlessService {
         // Optimization: Fetch all data once before loop to avoid O(N*M) DB calls
         const allTransactions = await storage.getTransactions();
         const accountTransactions = allTransactions.filter(t => t.accountId === localAccountId);
-
-        // Pre-fetch categories for fallback
-        const categories = await storage.getCategories();
-        if (categories.length === 0) {
-            throw new Error("Cannot sync transactions: no categories exist. Please create at least one category first.");
-        }
-        const defaultCategoryId = categories[0].id;
+        const stagingTransactions = await storage.getImportStaging(localAccountId);
 
         let addedCount = 0;
 
@@ -188,17 +182,22 @@ class GoCardlessService {
 
             // Check if already imported (using in-memory list)
             const existing = accountTransactions.find(t => t.gocardlessTransactionId === tx.transactionId);
+            const staged = stagingTransactions.find(t => t.gocardlessTransactionId === tx.transactionId);
 
-            if (existing) {
-                continue; // Already imported
+            if (existing || staged) {
+                continue; // Already imported or staged
             }
 
             const amount = parseFloat(tx.transactionAmount.amount);
-            const absAmount = Math.abs(amount);
+            // const absAmount = Math.abs(amount); // Removed: Staging stores raw amount
             const date = tx.bookingDate || tx.valueDate;
             const description = tx.remittanceInformationUnstructured || "Bank Transaction";
 
-            // Fuzzy match: same amount (abs) and close date (+/- 3 days)
+            // Fuzzy match logic (Optional: keep this to link existing manual transactions?)
+            // For now, let's keep the logic: if we find a manual match, we LINK it.
+            // If we don't find a match, we STAGE it.
+
+            const absAmount = Math.abs(amount);
             const targetDate = new Date(date);
             const minDate = new Date(targetDate); minDate.setDate(minDate.getDate() - 3);
             const maxDate = new Date(targetDate); maxDate.setDate(maxDate.getDate() + 3);
@@ -224,20 +223,19 @@ class GoCardlessService {
                     gocardlessTransactionId: tx.transactionId
                 });
 
-                // Update in-memory list to prevent double-linking if multiple matches occur (though rare)
+                // Update in-memory list
                 match.gocardlessTransactionId = tx.transactionId;
             } else {
-                // Create new
-                console.log(`Creating new tx for GoCardless tx ${tx.transactionId}`);
+                // Create new in STAGING
+                console.log(`Staging new tx for GoCardless tx ${tx.transactionId}`);
 
-                await storage.createTransaction({
+                await storage.createImportStaging({
                     accountId: localAccountId,
                     date: date,
-                    amount: absAmount.toFixed(2),
+                    amount: amount.toFixed(2), // Store signed amount
                     description: description,
-                    categoryId: defaultCategoryId,
-                    type: amount < 0 ? "expense" : "income",
                     gocardlessTransactionId: tx.transactionId,
+                    rawData: tx
                 });
                 addedCount++;
             }

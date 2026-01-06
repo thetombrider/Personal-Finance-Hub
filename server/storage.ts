@@ -28,7 +28,10 @@ import {
   type InsertPlannedExpense,
   bankConnections,
   type BankConnection,
-  type InsertBankConnection
+  type InsertBankConnection,
+  importStaging,
+  type ImportStaging,
+  type InsertImportStaging,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, sql, inArray, and } from "drizzle-orm";
@@ -117,6 +120,13 @@ export interface IStorage {
   getBankConnectionByRequisitionId(requisitionId: string): Promise<BankConnection | undefined>;
   createBankConnection(connection: InsertBankConnection): Promise<BankConnection>;
   updateBankConnection(id: number, connection: Partial<InsertBankConnection>): Promise<BankConnection | undefined>;
+
+  // Import Staging
+  getImportStaging(accountId?: number): Promise<ImportStaging[]>;
+  getImportStagingByTransactionId(gcId: string): Promise<ImportStaging | undefined>;
+  createImportStaging(staging: InsertImportStaging): Promise<ImportStaging>;
+  deleteImportStaging(id: number): Promise<void>;
+  clearImportStaging(accountId: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -492,6 +502,32 @@ export class DatabaseStorage implements IStorage {
       .where(eq(bankConnections.id, id))
       .returning();
     return updated;
+  }
+
+  // Import Staging
+  async getImportStaging(accountId?: number): Promise<ImportStaging[]> {
+    if (accountId) {
+      return await db.select().from(importStaging).where(eq(importStaging.accountId, accountId));
+    }
+    return await db.select().from(importStaging);
+  }
+
+  async getImportStagingByTransactionId(gcId: string): Promise<ImportStaging | undefined> {
+    const result = await db.select().from(importStaging).where(eq(importStaging.gocardlessTransactionId, gcId));
+    return result[0];
+  }
+
+  async createImportStaging(staging: InsertImportStaging): Promise<ImportStaging> {
+    const [created] = await db.insert(importStaging).values(staging).returning();
+    return created;
+  }
+
+  async deleteImportStaging(id: number): Promise<void> {
+    await db.delete(importStaging).where(eq(importStaging.id, id));
+  }
+
+  async clearImportStaging(accountId: number): Promise<void> {
+    await db.delete(importStaging).where(eq(importStaging.accountId, accountId));
   }
 }
 
