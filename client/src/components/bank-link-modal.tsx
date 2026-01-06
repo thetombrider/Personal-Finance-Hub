@@ -51,6 +51,9 @@ export function BankLinkModal({ isOpen, onClose }: BankLinkModalProps) {
         setLoading(true);
         try {
             const res = await apiRequest("POST", "/api/gocardless/institutions", { country: countryCode });
+            if (!res.ok) {
+                throw new Error("Failed to fetch institutions");
+            }
             const data = await res.json();
             setInstitutions(data);
         } catch (error) {
@@ -74,6 +77,12 @@ export function BankLinkModal({ isOpen, onClose }: BankLinkModalProps) {
                 institutionId,
                 redirect,
             });
+
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({}));
+                throw new Error(errorData.error || "Failed to initiate connection");
+            }
+
             const data = await res.json();
 
             if (data.link) {

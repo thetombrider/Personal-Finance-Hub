@@ -44,6 +44,12 @@ export default function BankCallbackPage() {
     const completeRequisition = async (requisitionId: string) => {
         try {
             const res = await apiRequest("POST", "/api/gocardless/requisition/complete", { requisitionId });
+
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({}));
+                throw new Error(errorData.error || "Failed to complete requisition");
+            }
+
             const accounts = await res.json();
             // accounts is array of account IDs usually from Nordic/GC.
             // We might need to fetch details for each to show name/IBAN?
@@ -86,7 +92,7 @@ export default function BankCallbackPage() {
                     const res = await apiRequest("POST", "/api/accounts", {
                         name: "New Bank Account",
                         type: "bank",
-                        balance: "0",
+                        startingBalance: "0",
                         currency: "EUR",
                         color: "#000000",
                         gocardlessAccountId: bankAckId

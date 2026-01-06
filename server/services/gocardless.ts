@@ -128,7 +128,13 @@ class GoCardlessService {
         const dateFromStr = dateFrom.toISOString().split('T')[0];
 
         const data = await this.getTransactions(gcAccountId, dateFromStr);
-        const booked = data.transactions.booked;
+
+        if (!data || !data.transactions) {
+            console.warn("No transaction data returned from GoCardless");
+            return { added: 0, total: 0 };
+        }
+
+        const booked = data.transactions.booked || [];
 
         // Optimization: Fetch all data once before loop to avoid O(N*M) DB calls
         const allTransactions = await storage.getTransactions();
@@ -136,7 +142,10 @@ class GoCardlessService {
 
         // Pre-fetch categories for fallback
         const categories = await storage.getCategories();
-        const defaultCategoryId = categories.length > 0 ? categories[0].id : 1;
+        if (categories.length === 0) {
+            throw new Error("Cannot sync transactions: no categories exist. Please create at least one category first.");
+        }
+        const defaultCategoryId = categories[0].id;
 
         let addedCount = 0;
 
