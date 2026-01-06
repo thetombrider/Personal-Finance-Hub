@@ -3,6 +3,8 @@ import * as nordigenData from "nordigen-node";
 const NordigenClient = (nordigenData as any).NordigenClient || (nordigenData as any).default || nordigenData;
 import { storage } from "../storage";
 import { type BankConnection, type InsertBankConnection } from "@shared/schema";
+import crypto from "crypto";
+
 
 // These should be in .env
 const SECRET_ID = process.env.GOCARDLESS_SECRET_ID;
@@ -55,11 +57,11 @@ class GoCardlessService {
             accessScope: ["balances", "details", "transactions"],
         });
 
-        // 1. Create requisition
+        const reference = crypto.randomUUID();
         const requisition = await this.client.requisition.createRequisition({
             redirectUrl: redirect,
             institutionId: institutionId,
-            reference: userId,
+            reference: reference, // Must be unique per requisition
             agreement: agreement.id,
             userLanguage: "IT", // Enforce Italian if possible
         });
@@ -223,6 +225,31 @@ class GoCardlessService {
         }
 
         return { added: addedCount, total: booked.length };
+    }
+
+    async syncBalances(localAccountId: number) {
+        const localAccount = await storage.getAccount(localAccountId);
+        if (!localAccount || !localAccount.gocardlessAccountId) return;
+
+        try {
+            const balances = await this.getBalances(localAccount.gocardlessAccountId);
+            if (balances && balances.balances) {
+                // Find the interimAvailable or closingBooked balance
+                // GoCardless returns an array of balances with different types
+                const balanceObj = balances.balances.find((b: any) => b.balanceType === "interimAvailable")
+                    || balances.balances.find((b: any) => b.balanceType === "expected")
+                    || balances.balances.find((b: any) => b.balanceType === "closingBooked");
+
+                if (balanceObj && balanceObj.balanceAmount) {
+                    const amount = parseFloat(balanceObj.balanceAmount.amount);
+                    await storage.updateAccount(localAccountId, { balance: amount.toString() });
+                    console.log(`Updated balance for account ${localAccountId} to ${amount}`);
+                }
+            }
+        } catch (error) {
+            console.error(`Failed to sync balance for account ${localAccountId}:`, error);
+            // Don't fail the whole sync if balance fails
+        }
     }
 }
 

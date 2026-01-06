@@ -78,9 +78,9 @@ export async function registerRoutes(
 
       const result = await gocardlessService.createRequisition(userId, institutionId, redirectUrl);
       res.json(result);
-    } catch (error) {
-      console.error("GoCardless requisition error:", error);
-      res.status(500).json({ error: "Failed to create requisition" });
+    } catch (error: any) {
+      console.error("GoCardless requisition error:", JSON.stringify(error.response?.data || error, null, 2));
+      res.status(500).json({ error: "Failed to create requisition. Check server logs." });
     }
   });
 
@@ -159,6 +159,7 @@ export async function registerRoutes(
       }
 
       const result = await gocardlessService.syncTransactions(userId, accountId);
+      await gocardlessService.syncBalances(accountId);
       res.json(result);
     } catch (error) {
       console.error("GoCardless sync error:", error);
