@@ -6,10 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Upload, ArrowRight, CreditCard, TrendingUp, Wallet, Tag, Settings2, BarChart3, FileSpreadsheet } from "lucide-react";
+import { Upload, ArrowRight, CreditCard, TrendingUp, Wallet, Tag, Settings2, BarChart3, FileSpreadsheet, Download } from "lucide-react";
 import { useState, useRef } from "react";
 import Papa from "papaparse";
-import { read, utils } from "xlsx";
+import { read, utils, writeFile } from "xlsx";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { parse, isValid, format } from "date-fns";
@@ -656,6 +656,34 @@ export default function ImportTransactions() {
     return false;
   };
 
+  const handleDownloadTemplate = () => {
+    let headers: string[] = [];
+    let filename = `template_${importMode}.xlsx`;
+
+    switch (importMode) {
+      case 'transactions':
+        headers = ['Date', 'Description', 'Amount', 'Type', 'Account', 'Category'];
+        break;
+      case 'accounts':
+        headers = ['Name', 'Type', 'Balance', 'Currency'];
+        break;
+      case 'categories':
+        headers = ['Name', 'Type', 'Budget'];
+        break;
+      case 'trades':
+        headers = ['Date', 'Ticker', 'Name', 'Type', 'Quantity', 'Price', 'TotalAmount', 'Fees'];
+        break;
+      case 'holdings':
+        headers = ['Ticker', 'Name', 'AssetType', 'Currency'];
+        break;
+    }
+
+    const ws = utils.aoa_to_sheet([headers]);
+    const wb = utils.book_new();
+    utils.book_append_sheet(wb, ws, "Template");
+    writeFile(wb, filename);
+  };
+
   return (
     <Layout>
       <div className="max-w-4xl mx-auto space-y-8">
@@ -712,6 +740,13 @@ export default function ImportTransactions() {
                     <p className="text-sm text-muted-foreground mt-1">or drag and drop file here</p>
                   </div>
                   <input type="file" ref={primaryFileInputRef} accept=".csv, .xlsx, .xls" className="hidden" onChange={(e) => handleFileUpload(e, false)} />
+                </div>
+
+                <div className="flex justify-center">
+                  <Button variant="link" onClick={handleDownloadTemplate} className="gap-2 text-muted-foreground hover:text-primary">
+                    <Download className="h-4 w-4" />
+                    Download {importMode} template
+                  </Button>
                 </div>
 
                 {/* Reference File Upload for Trades */}

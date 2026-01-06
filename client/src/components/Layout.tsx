@@ -18,7 +18,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     { href: "/categories", label: "Categories", icon: PieChart },
     { href: "/reports", label: "Reports", icon: FileSpreadsheet },
     { href: "/portfolio", label: "Portfolio", icon: TrendingUp },
-    { href: "/import", label: "Import CSV", icon: FileSpreadsheet },
+    { href: "/import", label: "Import Data", icon: FileSpreadsheet },
   ];
 
   const settingsItems = [
