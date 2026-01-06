@@ -375,94 +375,6 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/transactions/:id", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const transaction = await storage.getTransaction(id);
-      if (!transaction) {
-        return res.status(404).json({ error: "Transaction not found" });
-      }
-      res.json(transaction);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch transaction" });
-    }
-  });
-
-  app.post("/api/transactions", async (req, res) => {
-    try {
-      const validated = insertTransactionSchema.parse(req.body);
-      const transaction = await storage.createTransaction(validated);
-      res.status(201).json(transaction);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: error.errors });
-      }
-      res.status(500).json({ error: "Failed to create transaction" });
-    }
-  });
-
-  app.post("/api/transactions/bulk", async (req, res) => {
-    try {
-      const validated = z.array(insertTransactionSchema).parse(req.body);
-      const transactions = await storage.createTransactions(validated);
-      res.status(201).json(transactions);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: error.errors });
-      }
-      res.status(500).json({ error: "Failed to create transactions" });
-    }
-  });
-
-  app.patch("/api/transactions/:id", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const validated = insertTransactionSchema.partial().parse(req.body);
-      const transaction = await storage.updateTransaction(id, validated);
-      if (!transaction) {
-        return res.status(404).json({ error: "Transaction not found" });
-      }
-      res.json(transaction);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: error.errors });
-      }
-      res.status(500).json({ error: "Failed to update transaction" });
-    }
-  });
-
-  app.delete("/api/transactions/:id", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      await storage.deleteTransaction(id);
-      res.status(204).send();
-    } catch (error) {
-      res.status(500).json({ error: "Failed to delete transaction" });
-    }
-  });
-
-  app.post("/api/transactions/bulk-delete", async (req, res) => {
-    try {
-      const { ids } = z.object({ ids: z.array(z.number()) }).parse(req.body);
-      await storage.deleteTransactions(ids);
-      res.status(204).send();
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: error.errors });
-      }
-      res.status(500).json({ error: "Failed to delete transactions" });
-    }
-  });
-
-  app.delete("/api/transactions", async (req, res) => {
-    try {
-      await storage.clearTransactions();
-      res.status(204).send();
-    } catch (error) {
-      res.status(500).json({ error: "Failed to clear transactions" });
-    }
-  });
-
   // ============ STAGING ============
 
   app.get("/api/transactions/staging", async (req, res) => {
@@ -551,6 +463,95 @@ export async function registerRoutes(
       res.status(500).json({ error: "Failed to delete staged transaction" });
     }
   });
+
+  app.get("/api/transactions/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const transaction = await storage.getTransaction(id);
+      if (!transaction) {
+        return res.status(404).json({ error: "Transaction not found" });
+      }
+      res.json(transaction);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch transaction" });
+    }
+  });
+
+  app.post("/api/transactions", async (req, res) => {
+    try {
+      const validated = insertTransactionSchema.parse(req.body);
+      const transaction = await storage.createTransaction(validated);
+      res.status(201).json(transaction);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create transaction" });
+    }
+  });
+
+  app.post("/api/transactions/bulk", async (req, res) => {
+    try {
+      const validated = z.array(insertTransactionSchema).parse(req.body);
+      const transactions = await storage.createTransactions(validated);
+      res.status(201).json(transactions);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create transactions" });
+    }
+  });
+
+  app.patch("/api/transactions/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const validated = insertTransactionSchema.partial().parse(req.body);
+      const transaction = await storage.updateTransaction(id, validated);
+      if (!transaction) {
+        return res.status(404).json({ error: "Transaction not found" });
+      }
+      res.json(transaction);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to update transaction" });
+    }
+  });
+
+  app.delete("/api/transactions/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteTransaction(id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete transaction" });
+    }
+  });
+
+  app.post("/api/transactions/bulk-delete", async (req, res) => {
+    try {
+      const { ids } = z.object({ ids: z.array(z.number()) }).parse(req.body);
+      await storage.deleteTransactions(ids);
+      res.status(204).send();
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to delete transactions" });
+    }
+  });
+
+  app.delete("/api/transactions", async (req, res) => {
+    try {
+      await storage.clearTransactions();
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to clear transactions" });
+    }
+  });
+
 
   // ============ TRANSFERS ============
 
