@@ -501,6 +501,15 @@ export async function registerRoutes(
         return res.status(404).json({ error: "Staged transaction not found" });
       }
 
+      if (categoryId === undefined || categoryId === null) {
+        return res.status(400).json({ error: "Missing categoryId" });
+      }
+
+      const parsedCategoryId = parseInt(categoryId);
+      if (isNaN(parsedCategoryId) || !Number.isInteger(parsedCategoryId)) {
+        return res.status(400).json({ error: "Invalid categoryId" });
+      }
+
       // 2. Create Transaction
       const finalAmount = amount !== undefined ? amount : staged.amount;
       const finalDate = date || staged.date;
@@ -518,7 +527,7 @@ export async function registerRoutes(
         date: finalDate,
         amount: absAmount,
         description: finalDesc,
-        categoryId: parseInt(categoryId),
+        categoryId: parsedCategoryId,
         type: type,
         gocardlessTransactionId: staged.gocardlessTransactionId,
       });

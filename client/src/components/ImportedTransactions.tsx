@@ -77,16 +77,12 @@ export function ImportedTransactions({ accountId, isOpen, onOpenChange }: Import
 
     const handleApprove = (tx: StagedTransaction) => {
         const edit = edits[tx.id] || {};
-        // Use first category if none selected? Or require selection?
-        // Let's default to first category if not set, or leave it to user (validation).
-        // Better: default to a generic "Uncategorized" logic if possible, or just require it.
-        // For now, if no category selected, use the first one from list as fallback or error.
         let categoryId = edit.categoryId;
-        if (!categoryId && categories.length > 0) {
-            categoryId = categories[0].id;
-        }
 
-        if (!categoryId) return; // Should not happen if categories exist
+        if (!categoryId) {
+            toast({ title: "Please select a category", variant: "destructive" });
+            return;
+        }
 
         approveMutation.mutate({
             id: tx.id,

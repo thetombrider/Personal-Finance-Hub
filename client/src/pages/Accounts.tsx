@@ -203,12 +203,12 @@ export default function Accounts() {
                           {visibleMonths.map(m => {
                             const val = months[m.key];
                             return (
-                              <TableCell key={m.key} className={`text - center text - xs sm: text - sm p - 1 ${val > 0 ? 'text-emerald-600' : val < 0 ? 'text-rose-600' : ''} `}>
+                              <TableCell key={m.key} className={`text-center text-xs sm:text-sm p-1 ${val > 0 ? 'text-emerald-600' : val < 0 ? 'text-rose-600' : ''}`}>
                                 {val !== 0 ? formatCurrency(val) : '-'}
                               </TableCell>
                             );
                           })}
-                          <TableCell className={`text - center font - semibold ${total > 0 ? 'text-emerald-600' : total < 0 ? 'text-rose-600' : ''} `}>
+                          <TableCell className={`text-center font-semibold ${total > 0 ? 'text-emerald-600' : total < 0 ? 'text-rose-600' : ''}`}>
                             {total !== 0 ? formatCurrency(total) : '-'}
                           </TableCell>
                           <TableCell className="text-center">
@@ -242,7 +242,7 @@ export default function Accounts() {
                       {visibleMonths.map(m => {
                         const monthTotal = Object.values(accountMonthlyData).reduce((sum, acc) => sum + (acc[m.key] || 0), 0);
                         return (
-                          <TableCell key={m.key} className={`text - center ${monthTotal > 0 ? 'text-emerald-600' : monthTotal < 0 ? 'text-rose-600' : ''} `}>
+                          <TableCell key={m.key} className={`text-center ${monthTotal > 0 ? 'text-emerald-600' : monthTotal < 0 ? 'text-rose-600' : ''}`}>
                             {monthTotal !== 0 ? formatCurrency(monthTotal) : '-'}
                           </TableCell>
                         );
@@ -264,6 +264,13 @@ export default function Accounts() {
       </div>
 
 
+      {reviewAccountId && (
+        <ImportedTransactions
+          accountId={reviewAccountId}
+          isOpen={!!reviewAccountId}
+          onOpenChange={(open) => !open && setReviewAccountId(null)}
+        />
+      )}
     </Layout>
   );
 }
