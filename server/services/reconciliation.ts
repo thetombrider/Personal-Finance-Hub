@@ -46,7 +46,8 @@ export class ReconciliationService {
             const diff = Math.abs(tAmount - expAmount);
 
             // Strict amount check for now, can be loosened
-            const isAmountMatch = diff < 1.0;
+            // Increased to 12.0 as per user request to handle fluctuations (e.g. 1.7 vs 1.98)
+            const isAmountMatch = diff < 12.0;
 
             // Description Match
             // If matchPattern is set, use regex/includes. Else use name.

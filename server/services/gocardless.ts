@@ -148,7 +148,10 @@ class GoCardlessService {
                     }
                 }));
 
-                return accountsWithDetails;
+                return {
+                    accounts: accountsWithDetails,
+                    bankConnectionId: connection.id
+                };
             } else {
                 // Throw a specific error object or message that the route can interpret
                 const error = new Error(`Bank connection not completed. Status: ${requisitionData.status}`);

@@ -147,10 +147,11 @@ export async function registerRoutes(
 
       const schema = z.object({
         accountId: z.number().int().positive(),
-        gocardlessAccountId: z.string().min(1)
+        gocardlessAccountId: z.string().min(1),
+        bankConnectionId: z.number().int().optional().nullable()
       });
 
-      const { accountId, gocardlessAccountId } = schema.parse(req.body);
+      const { accountId, gocardlessAccountId, bankConnectionId } = schema.parse(req.body);
 
       // Verify the account exists and user has access to it
       const account = await storage.getAccount(accountId);
@@ -165,7 +166,7 @@ export async function registerRoutes(
       //   return res.status(403).json({ error: "GoCardless account not authorized" });
       // }
 
-      await storage.updateAccount(accountId, { gocardlessAccountId });
+      await storage.updateAccount(accountId, { gocardlessAccountId, bankConnectionId });
       res.json({ success: true });
     } catch (error) {
       if (error instanceof z.ZodError) {

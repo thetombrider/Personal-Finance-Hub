@@ -16,6 +16,7 @@ export default function BankCallbackPage() {
     const [bankAccounts, setBankAccounts] = useState<any[]>([]);
     const [mappings, setMappings] = useState<Record<string, string>>({}); // bankAccountId -> localAccountId (or "new")
     const [processing, setProcessing] = useState(false);
+    const [bankConnectionId, setBankConnectionId] = useState<number | null>(null);
 
     // Fetch local accounts
     const { data: localAccounts } = useQuery<Account[]>({
@@ -67,9 +68,13 @@ export default function BankCallbackPage() {
                 throw new Error(errorData.error || "Failed to complete requisition");
             }
 
-            const accounts = await res.json();
-            // The API now returns enriched account objects { id, name, iban ... }
+            const data = await res.json();
+            // Data is now { accounts: [...], bankConnectionId: 123 }
+            const accounts = data.accounts || []; // Fallback if old API format
+            const connectionId = data.bankConnectionId;
+
             setBankAccounts(accounts);
+            if (connectionId) setBankConnectionId(connectionId);
 
             // Default mappings: "new"
             const newMappings: Record<string, string> = {};
@@ -103,12 +108,14 @@ export default function BankCallbackPage() {
                         startingBalance: "0",
                         currency: currency,
                         color: "#000000",
-                        gocardlessAccountId: bankAckId
+                        gocardlessAccountId: bankAckId,
+                        bankConnectionId: bankConnectionId
                     });
                 } else if (localAckId !== "skip") {
                     await apiRequest("POST", "/api/gocardless/accounts/link", {
                         accountId: parseInt(localAckId),
-                        gocardlessAccountId: bankAckId
+                        gocardlessAccountId: bankAckId,
+                        bankConnectionId: bankConnectionId
                     });
                 }
             }
