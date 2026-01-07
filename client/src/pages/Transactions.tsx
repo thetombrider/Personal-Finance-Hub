@@ -19,7 +19,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Landmark } from "lucide-react";
+import { Landmark, CheckCircle2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { RecurringExpenseCheck } from "@shared/schema";
 
 const transactionSchema = z.object({
   amount: z.coerce.number().min(0.01, "Amount must be positive"),
@@ -58,6 +60,27 @@ export default function Transactions() {
   const [sortField, setSortField] = useState<SortField>('date');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [currentPage, setCurrentPage] = useState(1);
+
+  const { data: checks } = useQuery<RecurringExpenseCheck[]>({
+    queryKey: ['reconciliation', 'all'],
+    queryFn: async () => {
+      const res = await fetch('/api/reconciliation/checks');
+      if (!res.ok) throw new Error('Failed to fetch checks');
+      return res.json();
+    }
+  });
+
+  const matchedTransactions = useMemo(() => {
+    const map = new Map<number, RecurringExpenseCheck>();
+    if (checks) {
+      checks.forEach(check => {
+        if (check.transactionId) {
+          map.set(check.transactionId, check);
+        }
+      });
+    }
+    return map;
+  }, [checks]);
 
   // Filter states
   const [searchQuery, setSearchQuery] = useState('');
@@ -931,6 +954,18 @@ export default function Transactions() {
                                 </TooltipTrigger>
                                 <TooltipContent>
                                   <p>Transazione riconciliata con la banca</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                          {matchedTransactions.has(transaction.id) && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <CheckCircle2 size={14} className="text-green-500/70" />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Riconciliata con spesa ricorrente</p>
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>

@@ -25,6 +25,7 @@ export function AddRecurringExpenseForm({ onSuccess, categories, accounts, initi
     const [categoryId, setCategoryId] = useState<string>(initialData?.categoryId?.toString() || "");
     const [accountId, setAccountId] = useState<string>(initialData?.accountId?.toString() || "");
     const [startDate, setStartDate] = useState(initialData?.startDate ? new Date(initialData.startDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
+    const [matchPattern, setMatchPattern] = useState(initialData?.matchPattern || "");
     const [active, setActive] = useState(initialData?.active ?? true);
 
     const isEditing = !!initialData;
@@ -74,7 +75,8 @@ export function AddRecurringExpenseForm({ onSuccess, categories, accounts, initi
             startDate: new Date(startDate).toISOString(), // Ensure ISO string
             interval: 'monthly', // Fixed for now
             dayOfMonth: new Date(startDate).getDate(), // Derive from start date
-            active
+            active,
+            matchPattern // Add matchPattern
         });
     };
 
@@ -83,6 +85,16 @@ export function AddRecurringExpenseForm({ onSuccess, categories, accounts, initi
             <div className="space-y-2">
                 <Label>Nome Spesa</Label>
                 <Input value={name} onChange={e => setName(e.target.value)} placeholder="Es. Netflix" />
+            </div>
+
+            <div className="space-y-2">
+                <Label>Pattern di Riconciliazione (Opzionale)</Label>
+                <Input
+                    value={matchPattern}
+                    onChange={e => setMatchPattern(e.target.value)}
+                    placeholder="Testo da cercare nella transazione (es. 'Netflix')"
+                />
+                <p className="text-xs text-muted-foreground">Lascia vuoto per usare il nome della spesa.</p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">

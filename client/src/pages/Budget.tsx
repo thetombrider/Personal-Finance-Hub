@@ -18,6 +18,7 @@ import { AddRecurringExpenseForm } from "@/components/budget/AddRecurringExpense
 import { AddPlannedExpenseForm } from "@/components/budget/AddPlannedExpenseForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useFinance } from "@/context/FinanceContext";
+import { RecurringExpensesMonitoring } from "@/components/budget/RecurringExpensesMonitoring";
 
 interface YearlyBudgetData {
     categories: any[];
@@ -207,6 +208,11 @@ export default function Budget() {
                                 onDelete={(id) => deleteRecurringMutation.mutate(id)}
                             />
                         </section>
+
+                        <section>
+                            <RecurringExpensesMonitoring recurringExpenses={data.recurringExpenses} />
+                        </section>
+
                         <section>
                             <PlannedExpensesTable
                                 expenses={data.plannedExpenses}

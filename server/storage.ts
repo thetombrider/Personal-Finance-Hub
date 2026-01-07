@@ -23,6 +23,10 @@ import {
   recurringExpenses,
   type RecurringExpense,
   type InsertRecurringExpense,
+  insertRecurringExpenseSchema,
+  recurringExpenseChecks,
+  type RecurringExpenseCheck,
+  type InsertRecurringExpenseCheck,
   plannedExpenses,
   type PlannedExpense,
   type InsertPlannedExpense,
@@ -108,6 +112,9 @@ export interface IStorage {
   createRecurringExpense(expense: InsertRecurringExpense): Promise<RecurringExpense>;
   updateRecurringExpense(id: number, expense: Partial<InsertRecurringExpense>): Promise<RecurringExpense | undefined>;
   deleteRecurringExpense(id: number): Promise<void>;
+  upsertRecurringExpenseCheck(check: InsertRecurringExpenseCheck): Promise<void>;
+  getRecurringExpenseChecks(year: number, month: number): Promise<RecurringExpenseCheck[]>;
+  getAllRecurringExpenseChecks(): Promise<RecurringExpenseCheck[]>;
 
   // Planned Expenses
   getPlannedExpenses(year: number, month: number): Promise<PlannedExpense[]>;
@@ -434,6 +441,34 @@ export class DatabaseStorage implements IStorage {
 
   async deleteRecurringExpense(id: number): Promise<void> {
     await db.delete(recurringExpenses).where(eq(recurringExpenses.id, id));
+  }
+
+  async upsertRecurringExpenseCheck(check: InsertRecurringExpenseCheck): Promise<void> {
+    // Check if exists
+    const existing = await db.select().from(recurringExpenseChecks).where(and(
+      eq(recurringExpenseChecks.recurringExpenseId, check.recurringExpenseId),
+      eq(recurringExpenseChecks.month, check.month),
+      eq(recurringExpenseChecks.year, check.year)
+    ));
+
+    if (existing.length > 0) {
+      await db.update(recurringExpenseChecks)
+        .set(check)
+        .where(eq(recurringExpenseChecks.id, existing[0].id));
+    } else {
+      await db.insert(recurringExpenseChecks).values(check);
+    }
+  }
+
+  async getRecurringExpenseChecks(year: number, month: number): Promise<RecurringExpenseCheck[]> {
+    return await db.select().from(recurringExpenseChecks).where(and(
+      eq(recurringExpenseChecks.year, year),
+      eq(recurringExpenseChecks.month, month)
+    ));
+  }
+
+  async getAllRecurringExpenseChecks(): Promise<RecurringExpenseCheck[]> {
+    return await db.select().from(recurringExpenseChecks);
   }
 
   // Planned Expenses

@@ -40,6 +40,7 @@ export const accounts = pgTable("accounts", {
   color: varchar("color", { length: 7 }).notNull(),
   creditLimit: decimal("credit_limit", { precision: 12, scale: 2 }),
   gocardlessAccountId: varchar("gocardless_account_id").unique(),
+  bankConnectionId: integer("bank_connection_id").references(() => bankConnections.id, { onDelete: "set null" }),
 });
 
 export const insertAccountSchema = createInsertSchema(accounts).omit({ id: true });
@@ -126,11 +127,27 @@ export const recurringExpenses = pgTable("recurring_expenses", {
   startDate: timestamp("start_date", { mode: "string" }).notNull(),
   lastGenerated: timestamp("last_generated", { mode: "string" }),
   active: boolean("active").notNull().default(true),
+  matchPattern: text("match_pattern"),
 });
 
 export const insertRecurringExpenseSchema = createInsertSchema(recurringExpenses).omit({ id: true });
 export type InsertRecurringExpense = z.infer<typeof insertRecurringExpenseSchema>;
 export type RecurringExpense = typeof recurringExpenses.$inferSelect;
+
+export const recurringExpenseChecks = pgTable("recurring_expense_checks", {
+  id: serial("id").primaryKey(),
+  recurringExpenseId: integer("recurring_expense_id").notNull().references(() => recurringExpenses.id, { onDelete: "cascade" }),
+  month: integer("month").notNull(),
+  year: integer("year").notNull(),
+  status: varchar("status", { length: 20 }).notNull(), // MATCHED, MISSING, PENDING
+  transactionId: integer("transaction_id").references(() => transactions.id, { onDelete: "set null" }),
+  matchedDate: timestamp("matched_date", { mode: "string" }),
+  matchedAmount: decimal("matched_amount", { precision: 12, scale: 2 }),
+});
+
+export const insertRecurringExpenseCheckSchema = createInsertSchema(recurringExpenseChecks).omit({ id: true });
+export type InsertRecurringExpenseCheck = z.infer<typeof insertRecurringExpenseCheckSchema>;
+export type RecurringExpenseCheck = typeof recurringExpenseChecks.$inferSelect;
 
 export const plannedExpenses = pgTable("planned_expenses", {
   id: serial("id").primaryKey(),
