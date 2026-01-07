@@ -8,6 +8,7 @@ import { eq, desc } from "drizzle-orm";
 const server = new MCPServer({
     name: "Personal Finance MCP",
     version: "1.0.0",
+    host: "0.0.0.0",
 });
 
 // Authentication Middleware
