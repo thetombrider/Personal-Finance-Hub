@@ -396,7 +396,7 @@ export default function Portfolio() {
           <div className="flex gap-2">
             <Button
               variant="outline"
-              onClick={refreshQuotes}
+              onClick={() => refreshQuotes(true)}
               disabled={isRefreshingQuotes}
               data-testid="button-refresh-quotes"
             >

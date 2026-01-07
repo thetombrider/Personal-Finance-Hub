@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState, useEffect } from "react";
 import * as api from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 import type { Holding } from "@shared/schema";
 
 export interface HoldingWithStats extends Omit<Holding, 'currentPrice'> {
@@ -27,15 +28,39 @@ export function usePortfolioStats() {
         queryFn: api.fetchTrades,
     });
 
-    const refreshQuotes = async () => {
+    const { toast } = useToast();
+
+    const refreshQuotes = async (isManual: boolean = false) => {
         if (holdings.length === 0) return;
         setIsRefreshingQuotes(true);
         try {
             const symbols = holdings.map(h => h.ticker);
             const newQuotes = await api.fetchBatchQuotes(symbols);
             setQuotes(newQuotes);
+
+            if (isManual) {
+                const cachedCount = Object.values(newQuotes).filter(q => q.cached).length;
+                if (cachedCount > 0) {
+                    toast({
+                        title: "Prezzi aggiornati",
+                        description: `Recuperati ${cachedCount} prezzi dalla cache locale (validi 24h).`,
+                    });
+                } else {
+                    toast({
+                        title: "Prezzi aggiornati",
+                        description: "I prezzi sono stati scaricati in tempo reale.",
+                    });
+                }
+            }
         } catch (error) {
             console.error("Failed to refresh quotes:", error);
+            if (isManual) {
+                toast({
+                    title: "Errore",
+                    description: "Impossibile aggiornare i prezzi.",
+                    variant: "destructive"
+                });
+            }
         } finally {
             setIsRefreshingQuotes(false);
         }

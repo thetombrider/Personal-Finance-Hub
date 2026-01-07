@@ -288,6 +288,8 @@ export interface StockQuote {
   previousClose: number;
   volume: number;
   latestTradingDay: string;
+  cached?: boolean;
+  stale?: boolean;
 }
 
 export interface StockSearchResult {
@@ -316,7 +318,7 @@ export async function searchStocks(keywords: string): Promise<StockSearchResult[
   return res.json();
 }
 
-export async function fetchBatchQuotes(symbols: string[]): Promise<Record<string, { symbol: string; price: number; change: number; changePercent: string }>> {
+export async function fetchBatchQuotes(symbols: string[]): Promise<Record<string, { symbol: string; price: number; change: number; changePercent: string; cached?: boolean; stale?: boolean }>> {
   const res = await fetch(`${API_BASE}/stock/batch-quotes?symbols=${symbols.join(",")}`);
   if (!res.ok) {
     const error = await res.json();
