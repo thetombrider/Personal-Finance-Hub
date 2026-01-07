@@ -1,9 +1,13 @@
-name: Build and Push Docker Image
+name: Build and Push App Docker Image
 
 on:
   push:
     branches: [ "main" ]
     tags: [ 'v*' ]
+    paths-ignore:
+      - 'server/mcp.ts'
+      - 'Dockerfile.mcp'
+      - '.github/workflows/docker-publish-mcp.yml'
 
 env:
   IMAGE_NAME: thetombrider/personal-finance

@@ -16,6 +16,23 @@ services:
       - cloudflare_network # To talk to the Tunnel
       - internal_finance   # To talk to the DB
 
+  mcp:
+    image: thetombrider/personal-finance-mcp:latest
+    container_name: fintrack-mcp
+    ports:
+      - "3001:3001"
+    env_file: stack.env
+    environment:
+      - PORT=3001
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    depends_on:
+      - db
+    restart: always
+    networks:
+      - cloudflare_network
+      - internal_finance
+
   db:
     image: postgres:15-alpine
     env_file: stack.env
