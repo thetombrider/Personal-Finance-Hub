@@ -1,6 +1,6 @@
 
 import { MCPServer } from "mcp-use/server";
-import { z } from "zod";
+import { z } from "zod-mcp";
 import { db } from "./db";
 import { accounts, transactions } from "@shared/schema";
 import { eq, desc } from "drizzle-orm";
