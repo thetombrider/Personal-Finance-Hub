@@ -42,120 +42,147 @@ class GoCardlessService {
         }
     }
 
+    async executeWithRetry<T>(operation: () => Promise<T>): Promise<T> {
+        try {
+            return await operation();
+        } catch (error: any) {
+            // Check for 401 Unauthorized which indicates expired token
+            if (error.response && error.response.status === 401) {
+                console.log("GoCardless token expired (401), refreshing...");
+                this.client.token = null; // Force clear token
+                await this.ensureToken(); // Generate new token
+                return await operation(); // Retry once
+            }
+            throw error;
+        }
+    }
+
     async listInstitutions(country: string) {
         await this.ensureToken();
-        return await this.client.institution.getInstitutions({ country });
+        return await this.executeWithRetry(() => this.client.institution.getInstitutions({ country }));
     }
 
     async createRequisition(userId: string, institutionId: string, redirect: string) {
         await this.ensureToken();
 
-        // 1. Get institution details to check limits
-        const institution = await this.client.institution.getInstitutionById(institutionId);
-        const maxHistory = institution.transaction_total_days
-            ? Math.min(180, parseInt(institution.transaction_total_days))
-            : 180;
+        return await this.executeWithRetry(async () => {
+            // 1. Get institution details to check limits
+            const institution = await this.client.institution.getInstitutionById(institutionId);
+            const maxHistory = institution.transaction_total_days
+                ? Math.min(180, parseInt(institution.transaction_total_days))
+                : 180;
 
-        // 0. Create Agreement (Step 5 in Quickstart)
-        const agreement = await this.client.agreement.createAgreement({
-            institutionId: institutionId,
-            maxHistoricalDays: maxHistory,
-            accessValidForDays: 90,
-            accessScope: ["balances", "details", "transactions"],
+            // 0. Create Agreement (Step 5 in Quickstart)
+            const agreement = await this.client.agreement.createAgreement({
+                institutionId: institutionId,
+                maxHistoricalDays: maxHistory,
+                accessValidForDays: 90,
+                accessScope: ["balances", "details", "transactions"],
+            });
+
+            const reference = crypto.randomUUID();
+            const requisition = await this.client.requisition.createRequisition({
+                redirectUrl: redirect,
+                institutionId: institutionId,
+                reference: reference, // Must be unique per requisition
+                agreement: agreement.id,
+                userLanguage: "IT", // Enforce Italian if possible
+            });
+
+            // 2. Save to DB
+            const connection: InsertBankConnection = {
+                userId,
+                requisitionId: requisition.id,
+                institutionId,
+                status: "INIT",
+            };
+            await storage.createBankConnection(connection);
+
+            // 3. Build link
+            const link = requisition.link;
+
+            return { link, requisitionId: requisition.id };
         });
-
-        const reference = crypto.randomUUID();
-        const requisition = await this.client.requisition.createRequisition({
-            redirectUrl: redirect,
-            institutionId: institutionId,
-            reference: reference, // Must be unique per requisition
-            agreement: agreement.id,
-            userLanguage: "IT", // Enforce Italian if possible
-        });
-
-        // 2. Save to DB
-        const connection: InsertBankConnection = {
-            userId,
-            requisitionId: requisition.id,
-            institutionId,
-            status: "INIT",
-        };
-        await storage.createBankConnection(connection);
-
-        // 3. Build link
-        const link = requisition.link;
-
-        return { link, requisitionId: requisition.id };
     }
 
     // Called when user returns from bank
     async handleCallback(requisitionId: string) {
         await this.ensureToken();
 
-        // 1. Get requisition status
-        const requisitionData = await this.client.requisition.getRequisitionById(requisitionId);
+        return await this.executeWithRetry(async () => {
+            // 1. Get requisition status
+            const requisitionData = await this.client.requisition.getRequisitionById(requisitionId);
 
-        // 2. Update DB
-        const connection = await storage.getBankConnectionByRequisitionId(requisitionId);
-        if (!connection) {
-            throw new Error("Connection not found for requisition: " + requisitionId);
-        }
+            // 2. Update DB
+            const connection = await storage.getBankConnectionByRequisitionId(requisitionId);
+            if (!connection) {
+                throw new Error("Connection not found for requisition: " + requisitionId);
+            }
 
-        // Always update the status in the DB
-        await storage.updateBankConnection(connection.id, { status: requisitionData.status });
+            // Always update the status in the DB
+            await storage.updateBankConnection(connection.id, { status: requisitionData.status });
 
-        if (requisitionData.status === "LN") { // Linked
-            // Fetch details for each account to return useful info (name, owner, etc)
-            const accountIds = requisitionData.accounts;
-            const accountsWithDetails = await Promise.all(accountIds.map(async (id: string) => {
-                try {
-                    const details = await this.client.account(id).getDetails();
-                    // Struct: { account: { resourceId, iban, currency, name, product, ... } }
-                    return {
-                        id,
-                        name: details.account.name || details.account.product || "Bank Account",
-                        iban: details.account.iban,
-                        currency: details.account.currency,
-                        ownerName: details.account.ownerName
-                    };
-                } catch (e) {
-                    console.error(`Failed to fetch details for account ${id}`, e);
-                    return { id, name: `Bank Account (${id.substring(0, 8)}...)` };
-                }
-            }));
+            if (requisitionData.status === "LN") { // Linked
+                // Fetch details for each account to return useful info (name, owner, etc)
+                const accountIds = requisitionData.accounts;
+                const accountsWithDetails = await Promise.all(accountIds.map(async (id: string) => {
+                    try {
+                        const details = await this.client.account(id).getDetails();
+                        // Struct: { account: { resourceId, iban, currency, name, product, ... } }
+                        return {
+                            id,
+                            name: details.account.name || details.account.product || "Bank Account",
+                            iban: details.account.iban,
+                            currency: details.account.currency,
+                            ownerName: details.account.ownerName
+                        };
+                    } catch (e) {
+                        console.error(`Failed to fetch details for account ${id}`, e);
+                        return { id, name: `Bank Account (${id.substring(0, 8)}...)` };
+                    }
+                }));
 
-            return accountsWithDetails;
-        } else {
-            // Throw a specific error object or message that the route can interpret
-            const error = new Error(`Bank connection not completed. Status: ${requisitionData.status}`);
-            (error as any).status = 400; // Hint for the route handler
-            (error as any).code = requisitionData.status;
-            throw error;
-        }
+                return accountsWithDetails;
+            } else {
+                // Throw a specific error object or message that the route can interpret
+                const error = new Error(`Bank connection not completed. Status: ${requisitionData.status}`);
+                (error as any).status = 400; // Hint for the route handler
+                (error as any).code = requisitionData.status;
+                throw error;
+            }
+        });
     }
 
     async getAccounts(requisitionId: string) {
         await this.ensureToken();
-        const requisitionData = await this.client.requisition.getRequisitionById(requisitionId);
-        return requisitionData.accounts;
+        return await this.executeWithRetry(async () => {
+            const requisitionData = await this.client.requisition.getRequisitionById(requisitionId);
+            return requisitionData.accounts;
+        });
     }
 
     async getAccountDetails(accountId: string) {
         await this.ensureToken();
-        const account = this.client.account(accountId);
-        return await account.getDetails();
+        return await this.executeWithRetry(async () => {
+            const account = this.client.account(accountId);
+            return await account.getDetails();
+        });
     }
 
     async getBalances(accountId: string) {
         await this.ensureToken();
-        const account = this.client.account(accountId);
-        return await account.getBalances();
+        return await this.executeWithRetry(async () => {
+            const account = this.client.account(accountId);
+            return await account.getBalances();
+        });
     }
 
     async getTransactions(accountId: string, dateFrom?: string, dateTo?: string) {
         await this.ensureToken();
-        const account = this.client.account(accountId);
-        return await account.getTransactions({ dateFrom, dateTo });
+        return await this.executeWithRetry(async () => {
+            const account = this.client.account(accountId);
+            return await account.getTransactions({ dateFrom, dateTo });
+        });
     }
 
     async syncTransactions(userId: string, localAccountId: number) {
