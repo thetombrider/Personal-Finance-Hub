@@ -424,40 +424,54 @@ export default function ManageAccounts() {
                         )}
                       </TableCell>
                       <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                              <span className="sr-only">Open menu</span>
-                              <MoreHorizontal className="h-4 w-4" />
+                        <div className="flex items-center justify-end gap-2">
+                          {status && (status.isExpired || (status.days !== undefined && status.days < 10) || status.label === "Linked (Legacy)") && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setRenewingInstitutionId(status.institutionId);
+                                setIsLinkModalOpen(true);
+                              }}
+                              className="text-indigo-600 border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 h-8"
+                            >
+                              <RefreshCw className="mr-2 h-3.5 w-3.5" />
+                              Rinnova
                             </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Azioni</DropdownMenuLabel>
-                            <DropdownMenuItem onClick={() => handleEdit(account)} className="gap-2">
-                              <Edit2 className="h-4 w-4" /> Modifica
-                            </DropdownMenuItem>
-                            {status && (status.isExpired || status.days! < 10) && (
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setRenewingInstitutionId(status.institutionId);
-                                  setIsLinkModalOpen(true);
-                                }}
-                                className="gap-2 text-indigo-600 focus:text-indigo-600"
-                              >
-                                <RefreshCw className="h-4 w-4" /> Rinnova Connessione
-                              </DropdownMenuItem>
-                            )}
-                            {(account as any).gocardlessAccountId && (
-                              <DropdownMenuItem onClick={() => handleUnlink(account.id)} className="gap-2 text-orange-600 focus:text-orange-600">
-                                <Unlink className="h-4 w-4" /> Scollega Banca
-                              </DropdownMenuItem>
-                            )}
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => handleDelete(account.id)} className="gap-2 text-destructive focus:text-destructive">
-                              <Trash2 className="h-4 w-4" /> Elimina
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                          )}
+
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit(account)}
+                            className="h-8 w-8 text-muted-foreground hover:text-primary"
+                            title="Modifica"
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+
+                          {(account as any).gocardlessAccountId && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleUnlink(account.id)}
+                              className="h-8 w-8 text-orange-400 hover:text-orange-600 hover:bg-orange-50"
+                              title="Scollega Banca"
+                            >
+                              <Unlink className="h-4 w-4" />
+                            </Button>
+                          )}
+
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(account.id)}
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                            title="Elimina"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
