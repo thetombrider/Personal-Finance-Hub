@@ -1,24 +1,17 @@
 
-import { McpServer } from "mcp-use";
+import { MCPServer } from "mcp-use/server";
 import { z } from "zod";
 import { db } from "./db";
 import { accounts, transactions } from "@shared/schema";
 import { eq, desc } from "drizzle-orm";
 
-const server = new McpServer({
+const server = new MCPServer({
     name: "Personal Finance MCP",
     version: "1.0.0",
-    transport: {
-        type: "sse",
-        options: {
-            port: 3001,
-            endpoint: "/sse",
-        },
-    },
 });
 
 // Authentication Middleware
-server.use(async (req, next) => {
+server.use(async (req, res, next) => {
     const authHeader = req.headers["authorization"];
     const apiKey = process.env.MCP_API_KEY;
 
@@ -28,17 +21,20 @@ server.use(async (req, next) => {
     }
 
     if (!authHeader || !authHeader.startsWith("Bearer ") || authHeader.split(" ")[1] !== apiKey) {
-        throw new Error("Unauthorized");
+        res.status(401).send("Unauthorized");
+        return;
     }
 
-    return next();
+    next();
 });
 
 // Tool: Get Accounts
 server.tool(
-    "get_accounts",
-    "List all finance accounts",
-    z.object({}),
+    {
+        name: "get_accounts",
+        description: "List all finance accounts",
+        schema: z.object({}),
+    },
     async () => {
         try {
             const allAccounts = await db.select().from(accounts);
@@ -61,12 +57,14 @@ server.tool(
 
 // Tool: Get Transactions
 server.tool(
-    "get_transactions",
-    "List transactions with optional pagination",
-    z.object({
-        limit: z.number().optional().default(10),
-        offset: z.number().optional().default(0),
-    }),
+    {
+        name: "get_transactions",
+        description: "List transactions with optional pagination",
+        schema: z.object({
+            limit: z.number().optional().default(10),
+            offset: z.number().optional().default(0),
+        }),
+    },
     async ({ limit, offset }) => {
         try {
             const txs = await db
@@ -94,16 +92,18 @@ server.tool(
 
 // Tool: Create Transaction
 server.tool(
-    "create_transaction",
-    "Create a new transaction manually",
-    z.object({
-        date: z.string().describe("ISO date string"),
-        amount: z.string().describe("Amount as string"),
-        description: z.string(),
-        accountId: z.number(),
-        categoryId: z.number(),
-        type: z.enum(["income", "expense"]),
-    }),
+    {
+        name: "create_transaction",
+        description: "Create a new transaction manually",
+        schema: z.object({
+            date: z.string().describe("ISO date string"),
+            amount: z.string().describe("Amount as string"),
+            description: z.string(),
+            accountId: z.number(),
+            categoryId: z.number(),
+            type: z.enum(["income", "expense"]),
+        }),
+    },
     async (input) => {
         try {
             const [newTx] = await db.insert(transactions).values(input).returning();
@@ -124,6 +124,6 @@ server.tool(
     }
 );
 
-server.start().then(() => {
-    console.log("MCP Server running on port 3001 (SSE)");
+server.listen(3001).then(() => {
+    console.log("MCP Server running on port 3001");
 });
