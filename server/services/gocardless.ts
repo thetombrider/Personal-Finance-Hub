@@ -53,6 +53,12 @@ class GoCardlessService {
                 await this.ensureToken(); // Generate new token
                 return await operation(); // Retry once
             }
+            // Pass through 429 errors specifically
+            if (error.response && error.response.status === 429) {
+                const err = new Error("Rate limit reached");
+                (err as any).status = 429;
+                throw err;
+            }
             throw error;
         }
     }
@@ -150,6 +156,14 @@ class GoCardlessService {
                 (error as any).code = requisitionData.status;
                 throw error;
             }
+        });
+    }
+
+    async getRequisitionStatus(requisitionId: string) {
+        await this.ensureToken();
+        return await this.executeWithRetry(async () => {
+            const requisitionData = await this.client.requisition.getRequisitionById(requisitionId);
+            return requisitionData;
         });
     }
 

@@ -47,6 +47,7 @@ export default function Settings() {
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
     const [isBankModalOpen, setIsBankModalOpen] = useState(false);
+    const [renewingInstitutionId, setRenewingInstitutionId] = useState<string | null>(null);
 
     const { data: connections = [], refetch: refetchConnections } = useQuery<any[]>({
         queryKey: ["/api/gocardless/connections"],
@@ -188,8 +189,12 @@ export default function Settings() {
                                         // RJ = Rejected
                                         // UA = User Aborted
 
-                                        let statusConfig = {
-                                            variant: "secondary" as const,
+                                        let statusConfig: {
+                                            variant: "default" | "secondary" | "destructive" | "outline";
+                                            label: string;
+                                            className: string;
+                                        } = {
+                                            variant: "secondary",
                                             label: "Sconosciuto",
                                             className: ""
                                         };
@@ -272,7 +277,10 @@ export default function Settings() {
                                                             <Button
                                                                 variant="outline"
                                                                 size="icon"
-                                                                onClick={() => setIsBankModalOpen(true)}
+                                                                onClick={() => {
+                                                                    setRenewingInstitutionId(conn.institutionId);
+                                                                    setIsBankModalOpen(true);
+                                                                }}
                                                                 title="Rinnova"
                                                             >
                                                                 <RefreshCw className="h-4 w-4" />
@@ -418,8 +426,10 @@ export default function Settings() {
                 isOpen={isBankModalOpen}
                 onClose={() => {
                     setIsBankModalOpen(false);
+                    setRenewingInstitutionId(null);
                     refetchConnections();
                 }}
+                initialInstitutionId={renewingInstitutionId} // Pass the ID
             />
         </Layout>
     );

@@ -93,10 +93,23 @@ export default function Accounts() {
         description: `Staged ${data.added} new transactions for review.`,
       });
       // queryClient.invalidateQueries({ queryKey: ["/api/transactions"] }); // No longer needed as they are not imported yet
-    } catch (error) {
+    } catch (error: any) {
+      // Check if it's a rate limit error (parsed from response by queryClient/apiRequest helper usually returns error object)
+      // Note: apiRequest throws if !res.ok. We need to catch the error object which might have status or we need to check the response manually if apiRequest didn't throw.
+      // Actually apiRequest from `lib/queryClient` usually throws an Error object.
+      // Let's assume the standard error handling, but we might need to parse the response if the error object contains it.
+
+      // If we use standard fetch pattern, we get response.
+      // But here we used `apiRequest`. Let's see how `apiRequest` behaves.
+      // Usually it throws.
+
+      const isRateLimit = error.message?.includes("429") || error.message?.includes("Rate limit") || (error as any).status === 429;
+
       toast({
-        title: "Sync Failed",
-        description: "Could not sync transactions.",
+        title: isRateLimit ? "Limite Raggiunto" : "Sync Failed",
+        description: isRateLimit
+          ? "Troppe richieste verso la banca. Riprova più tardi."
+          : "Impossibile sincronizzare le transazioni.",
         variant: "destructive",
       });
     } finally {

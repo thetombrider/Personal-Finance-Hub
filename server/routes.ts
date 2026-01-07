@@ -197,8 +197,11 @@ export async function registerRoutes(
       const result = await gocardlessService.syncTransactions(userId, accountId);
       await gocardlessService.syncBalances(accountId);
       res.json(result);
-    } catch (error) {
+    } catch (error: any) {
       console.error("GoCardless sync error:", error);
+      if (error.status === 429) {
+        return res.status(429).json({ error: "Rate limit reached. Please try again later." });
+      }
       res.status(500).json({ error: "Failed to sync transactions" });
     }
   });
