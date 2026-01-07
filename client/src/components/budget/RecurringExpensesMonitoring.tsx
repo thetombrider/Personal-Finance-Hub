@@ -17,10 +17,10 @@ export function RecurringExpensesMonitoring({ recurringExpenses }: RecurringExpe
     const queryClient = useQueryClient();
     const [selectedCheck, setSelectedCheck] = useState<{ check: RecurringExpenseCheck, expense: RecurringExpense } | null>(null);
 
-    // Determine range: last 6 months + current
+    // Determine range: last 12 months + current
     const today = new Date();
-    const months = Array.from({ length: 6 }).map((_, i) => {
-        const d = subMonths(today, 5 - i);
+    const months = Array.from({ length: 12 }).map((_, i) => {
+        const d = subMonths(today, 11 - i);
         return {
             date: d,
             month: d.getMonth() + 1,
@@ -30,18 +30,6 @@ export function RecurringExpensesMonitoring({ recurringExpenses }: RecurringExpe
     });
 
     // Fetch checks for these months
-    // Ideally we need a bulk fetch or single endpoint returning matrix. 
-    // reusing /api/reconciliation/status for loop is causing N calls. 
-    // Let's implement client-side cache or just N calls for now (6 is small).
-    // Better: Create useQueries or assume we want just one big data structure.
-    // Actually, let's use the individual fetches for simplicity or refactor endpoint if slow.
-
-    // Refactor: We can't easily fetch all in one go with current endpoint.
-    // Since we are in frontend, let's just make 6 calls.
-
-    // Wait, I can't easily do useQueries loop inside component body conditionally?
-    // I will just fetch each month status.
-
     const checkQueries = months.map(m => useQuery<RecurringExpenseCheck[]>({
         queryKey: ['reconciliation', m.year, m.month],
         queryFn: async () => {
@@ -89,21 +77,21 @@ export function RecurringExpensesMonitoring({ recurringExpenses }: RecurringExpe
                 <div className="flex items-center justify-between">
                     <div>
                         <CardTitle>Monitoraggio Ricorrenti</CardTitle>
-                        <CardDescription>Verifica storico pagamenti ultimi 6 mesi</CardDescription>
+                        <CardDescription>Verifica storico pagamenti ultimi 12 mesi</CardDescription>
                     </div>
                     <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => {
-                            // Run check for all visible months? Or just current?
-                            // Let's run for current month by default
-                            const current = months[months.length - 1];
-                            runCheckMutation.mutate({ year: current.year, month: current.month });
+                        onClick={async () => {
+                            // Run check for all visible months
+                            // Sequentially to avoid overwhelming server or parallel? Parallel is fine for 12 requests usually.
+                            // But mutateAsync returns promise.
+                            await Promise.all(months.map(m => runCheckMutation.mutateAsync({ year: m.year, month: m.month })));
                         }}
                         disabled={runCheckMutation.isPending}
                     >
                         {runCheckMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
-                        Controlla Ora (Mese Corrente)
+                        Controlla Ora (Ultimi 12 Mesi)
                     </Button>
                 </div>
             </CardHeader>
