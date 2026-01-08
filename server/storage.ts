@@ -88,7 +88,9 @@ export interface IStorage {
   // Holdings
   getHoldings(userId: string): Promise<Holding[]>;
   getHolding(id: number): Promise<Holding | undefined>;
-  getHoldingByTicker(ticker: string, userId?: string): Promise<Holding | undefined>;
+  getHolding(id: number): Promise<Holding | undefined>;
+  getHoldingByTicker(ticker: string, userId: string): Promise<Holding | undefined>;
+  getGlobalHoldingByTicker(ticker: string): Promise<Holding | undefined>;
   createHolding(holding: InsertHolding): Promise<Holding>;
   updateHolding(id: number, holding: Partial<InsertHolding>): Promise<Holding | undefined>;
   deleteHolding(id: number): Promise<void>;
@@ -329,11 +331,12 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
-  async getHoldingByTicker(ticker: string, userId?: string): Promise<Holding | undefined> {
-    if (userId) {
-      const result = await db.select().from(holdings).where(and(eq(holdings.ticker, ticker.toUpperCase()), eq(holdings.userId, userId)));
-      return result[0];
-    }
+  async getHoldingByTicker(ticker: string, userId: string): Promise<Holding | undefined> {
+    const result = await db.select().from(holdings).where(and(eq(holdings.ticker, ticker.toUpperCase()), eq(holdings.userId, userId)));
+    return result[0];
+  }
+
+  async getGlobalHoldingByTicker(ticker: string): Promise<Holding | undefined> {
     const result = await db.select().from(holdings).where(eq(holdings.ticker, ticker.toUpperCase())).limit(1);
     return result[0];
   }
