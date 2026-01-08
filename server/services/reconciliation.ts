@@ -5,14 +5,14 @@ import { format, addMonths, setDate, parseISO, subDays, addDays, isSameMonth, ge
 
 export class ReconciliationService {
 
-    async checkRecurringExpenses(year: number, month: number): Promise<void> {
-        const recurringExpenses = await storage.getRecurringExpenses();
+    async checkRecurringExpenses(userId: string, year: number, month: number): Promise<void> {
+        const recurringExpenses = await storage.getRecurringExpenses(userId);
         const activeExpenses = recurringExpenses.filter(e => e.active);
 
         // Get all transactions for the month +/- buffer
         // For simplicity, let's just get all transactions and filter in memory, or we could add a date range query
         // Optimisation: Fetch only relevant transactions
-        const transactions = await storage.getTransactions();
+        const transactions = await storage.getTransactions(userId);
 
         for (const expense of activeExpenses) {
             await this.checkExpense(expense, year, month, transactions);

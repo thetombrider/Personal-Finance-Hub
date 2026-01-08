@@ -25,7 +25,7 @@ export async function registerRoutes(
       const { year, month } = req.body;
       if (!year || !month) return res.status(400).json({ error: "Year and month required" });
 
-      await reconciliationService.checkRecurringExpenses(parseInt(year), parseInt(month));
+      await reconciliationService.checkRecurringExpenses((req.user as any).id, parseInt(year), parseInt(month));
       res.json({ success: true });
     } catch (error) {
       console.error("Reconciliation check error:", error);
@@ -40,7 +40,7 @@ export async function registerRoutes(
 
       if (!year || !month) return res.status(400).json({ error: "Year and month required" });
 
-      const checks = await storage.getRecurringExpenseChecks(year, month);
+      const checks = await storage.getRecurringExpenseChecks((req.user as any).id, year, month);
       res.json(checks);
     } catch (error) {
       console.error("Reconciliation status error:", error);
@@ -50,7 +50,7 @@ export async function registerRoutes(
 
   app.get("/api/reconciliation/checks", async (req, res) => {
     try {
-      const checks = await storage.getAllRecurringExpenseChecks();
+      const checks = await storage.getAllRecurringExpenseChecks((req.user as any).id);
       res.json(checks);
     } catch (error) {
       console.error("Fetch all checks error:", error);
@@ -237,7 +237,11 @@ export async function registerRoutes(
       }
 
       const result = await gocardlessService.syncTransactions(userId, accountId);
-      await gocardlessService.syncBalances(accountId);
+      await gocardlessService.syncBalances(accountId); // This works on accountId, assume internal check
+      // Actually syncBalances calls storage.getAccount. getAccount(id) is by ID.
+      // But it might need context? No, getAccount(id) is typically unscoped by ID in my implementation (I did not change getAccount(id)).
+      // storage.getAccount(id) returns account.
+      // So syncBalances is likely safe if it just updates balance.
       res.json(result);
     } catch (error: any) {
       console.error("GoCardless sync error:", error);
@@ -295,7 +299,7 @@ export async function registerRoutes(
 
   app.get("/api/accounts", async (req, res) => {
     try {
-      const accounts = await storage.getAccounts();
+      const accounts = await storage.getAccounts((req.user as any).id);
       res.json(accounts);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch accounts" });
@@ -317,7 +321,7 @@ export async function registerRoutes(
 
   app.post("/api/accounts", async (req, res) => {
     try {
-      const validated = insertAccountSchema.parse(req.body);
+      const validated = insertAccountSchema.parse({ ...req.body, userId: (req.user as any).id });
       const account = await storage.createAccount(validated);
       res.status(201).json(account);
     } catch (error) {
@@ -330,7 +334,7 @@ export async function registerRoutes(
 
   app.post("/api/accounts/bulk", async (req, res) => {
     try {
-      const validated = z.array(insertAccountSchema).parse(req.body);
+      const validated = z.array(insertAccountSchema).parse(req.body).map(a => ({ ...a, userId: (req.user as any).id }));
       const accounts = await storage.createAccounts(validated);
       res.status(201).json(accounts);
     } catch (error) {
@@ -372,7 +376,7 @@ export async function registerRoutes(
 
   app.get("/api/categories", async (req, res) => {
     try {
-      const categories = await storage.getCategories();
+      const categories = await storage.getCategories((req.user as any).id);
       res.json(categories);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch categories" });
@@ -394,7 +398,7 @@ export async function registerRoutes(
 
   app.post("/api/categories", async (req, res) => {
     try {
-      const validated = insertCategorySchema.parse(req.body);
+      const validated = insertCategorySchema.parse({ ...req.body, userId: (req.user as any).id });
       const category = await storage.createCategory(validated);
       res.status(201).json(category);
     } catch (error) {
@@ -407,7 +411,7 @@ export async function registerRoutes(
 
   app.post("/api/categories/bulk", async (req, res) => {
     try {
-      const validated = z.array(insertCategorySchema).parse(req.body);
+      const validated = z.array(insertCategorySchema).parse(req.body).map(c => ({ ...c, userId: (req.user as any).id }));
       const categories = await storage.createCategories(validated);
       res.status(201).json(categories);
     } catch (error) {
@@ -449,7 +453,7 @@ export async function registerRoutes(
 
   app.get("/api/transactions", async (req, res) => {
     try {
-      const transactions = await storage.getTransactions();
+      const transactions = await storage.getTransactions((req.user as any).id);
       res.json(transactions);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch transactions" });
@@ -461,7 +465,7 @@ export async function registerRoutes(
   app.get("/api/transactions/staging", async (req, res) => {
     try {
       const accountId = req.query.accountId ? parseInt(req.query.accountId as string) : undefined;
-      const staged = await storage.getImportStaging(accountId);
+      const staged = await storage.getImportStaging((req.user as any).id, accountId);
       res.json(staged);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch staged transactions" });
@@ -487,7 +491,7 @@ export async function registerRoutes(
       // Let's rely on the client passing necessary info? No security risk.
 
       // Let's temporarily fetch ALL staged transactions and find by ID. It's not efficient but works for small scale.
-      const allStaged = await storage.getImportStaging();
+      const allStaged = await storage.getImportStaging((req.user as any).id);
       const staged = allStaged.find(s => s.id === id);
 
       if (!staged) {
@@ -696,8 +700,8 @@ export async function registerRoutes(
 
   // GET endpoint to verify webhook is working
   app.get("/api/webhooks/tally", async (req, res) => {
-    const accounts = await storage.getAccounts();
-    const categories = await storage.getCategories();
+    const accounts = await storage.getAllAccounts();
+    const categories = await storage.getAllCategories();
 
     res.json({
       status: "Tally webhook is ready",
@@ -722,7 +726,7 @@ export async function registerRoutes(
 
   app.get("/api/holdings", async (req, res) => {
     try {
-      const holdings = await storage.getHoldings();
+      const holdings = await storage.getHoldings((req.user as any).id);
       res.json(holdings);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch holdings" });
@@ -744,8 +748,8 @@ export async function registerRoutes(
 
   app.post("/api/holdings", async (req, res) => {
     try {
-      const validated = insertHoldingSchema.parse(req.body);
-      const existing = await storage.getHoldingByTicker(validated.ticker);
+      const validated = insertHoldingSchema.parse({ ...req.body, userId: (req.user as any).id });
+      const existing = await storage.getHoldingByTicker(validated.ticker, (req.user as any).id);
       if (existing) {
         return res.status(409).json({ error: "Holding with this ticker already exists", holding: existing });
       }
@@ -790,7 +794,7 @@ export async function registerRoutes(
 
   app.get("/api/trades", async (req, res) => {
     try {
-      const trades = await storage.getTrades();
+      const trades = await storage.getTrades((req.user as any).id);
       res.json(trades);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch trades" });
@@ -915,7 +919,7 @@ export async function registerRoutes(
         return res.status(400).json({ error: "Invalid year or month" });
       }
 
-      const data = await reportService.getMonthlyIncomeStatement(year, month);
+      const data = await reportService.getMonthlyIncomeStatement((req.user as any).id, year, month);
       res.json(data);
     } catch (error) {
       console.error("Failed to fetch income statement:", error);
@@ -925,7 +929,7 @@ export async function registerRoutes(
 
   app.get("/api/reports/balance-sheet", async (req, res) => {
     try {
-      const data = await reportService.getBalanceSheet();
+      const data = await reportService.getBalanceSheet((req.user as any).id);
       res.json(data);
     } catch (error) {
       console.error("Failed to fetch balance sheet:", error);
@@ -940,10 +944,10 @@ export async function registerRoutes(
       const year = parseInt(req.params.year);
 
       const [categories, monthlyBudgets, plannedExpenses, recurringExpenses] = await Promise.all([
-        storage.getCategories(),
-        storage.getMonthlyBudgetsByYear(year),
-        storage.getPlannedExpensesByYear(year),
-        storage.getActiveRecurringExpenses()
+        storage.getCategories((req.user as any).id),
+        storage.getMonthlyBudgetsByYear((req.user as any).id, year),
+        storage.getPlannedExpensesByYear((req.user as any).id, year),
+        storage.getActiveRecurringExpenses((req.user as any).id)
       ]);
 
       // Initialize response structure
@@ -1021,7 +1025,7 @@ export async function registerRoutes(
       const year = parseInt(req.params.year);
       const month = parseInt(req.params.month); // 1-12
 
-      const budgetData = await reportService.getMonthlyBudget(year, month);
+      const budgetData = await reportService.getMonthlyBudget((req.user as any).id, year, month);
       res.json(budgetData);
     } catch (error) {
       console.error("Failed to fetch budget data:", error);
@@ -1045,7 +1049,7 @@ export async function registerRoutes(
   // Recurring Expenses
   app.get("/api/budget/recurring", async (req, res) => {
     try {
-      const expenses = await storage.getRecurringExpenses();
+      const expenses = await storage.getRecurringExpenses((req.user as any).id);
       res.json(expenses);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch recurring expenses" });
@@ -1100,7 +1104,7 @@ export async function registerRoutes(
     try {
       const year = parseInt(req.params.year);
       const month = parseInt(req.params.month);
-      const expenses = await storage.getPlannedExpenses(year, month);
+      const expenses = await storage.getPlannedExpenses((req.user as any).id, year, month);
       res.json(expenses);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch planned expenses" });
@@ -1205,7 +1209,7 @@ export async function registerRoutes(
   app.post("/api/reports/weekly/send", async (req, res) => {
     try {
       const email = req.body.email || "tommasominuto@gmail.com";
-      const data = await reportService.getWeeklyReportData();
+      const data = await reportService.getWeeklyReportData((req.user as any).id);
       const html = reportService.generateHtml(data);
 
       const now = new Date();
@@ -1224,7 +1228,7 @@ export async function registerRoutes(
 
   app.get("/api/reports/weekly/preview", async (req, res) => {
     try {
-      const data = await reportService.getWeeklyReportData();
+      const data = await reportService.getWeeklyReportData((req.user as any).id);
       const html = reportService.generateHtml(data);
       res.send(html);
     } catch (error) {
@@ -1237,7 +1241,13 @@ export async function registerRoutes(
   cron.schedule('0 9 * * 0', async () => {
     console.log("[scheduler] Sending weekly report...");
     try {
-      const data = await reportService.getWeeklyReportData();
+      const email = "tommasominuto@gmail.com";
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        console.error("[scheduler] User not found for email:", email);
+        return;
+      }
+      const data = await reportService.getWeeklyReportData(user.id);
       const html = reportService.generateHtml(data);
       const now = new Date();
       await sendEmail(

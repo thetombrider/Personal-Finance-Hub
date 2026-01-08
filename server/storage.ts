@@ -50,23 +50,25 @@ export interface IStorage {
   updateUser(id: string, user: Partial<UpsertUser>): Promise<User | undefined>;
 
   // Accounts
-  getAccounts(): Promise<Account[]>;
+  getAccounts(userId: string): Promise<Account[]>;
   getAccount(id: number): Promise<Account | undefined>;
   createAccount(account: InsertAccount): Promise<Account>;
   createAccounts(accounts: InsertAccount[]): Promise<Account[]>;
   updateAccount(id: number, account: Partial<InsertAccount>): Promise<Account | undefined>;
   deleteAccount(id: number): Promise<void>;
+  getAllAccounts(): Promise<Account[]>;
 
   // Categories
-  getCategories(): Promise<Category[]>;
+  getCategories(userId: string): Promise<Category[]>;
   getCategory(id: number): Promise<Category | undefined>;
   createCategory(category: InsertCategory): Promise<Category>;
   createCategories(categories: InsertCategory[]): Promise<Category[]>;
   updateCategory(id: number, category: Partial<InsertCategory>): Promise<Category | undefined>;
   deleteCategory(id: number): Promise<void>;
+  getAllCategories(): Promise<Category[]>;
 
   // Transactions
-  getTransactions(): Promise<Transaction[]>;
+  getTransactions(userId: string): Promise<Transaction[]>;
   getTransaction(id: number): Promise<Transaction | undefined>;
   createTransaction(transaction: InsertTransaction): Promise<Transaction>;
   createTransactions(transactions: InsertTransaction[]): Promise<Transaction[]>;
@@ -84,15 +86,15 @@ export interface IStorage {
   clearTransactions(): Promise<void>;
 
   // Holdings
-  getHoldings(): Promise<Holding[]>;
+  getHoldings(userId: string): Promise<Holding[]>;
   getHolding(id: number): Promise<Holding | undefined>;
-  getHoldingByTicker(ticker: string): Promise<Holding | undefined>;
+  getHoldingByTicker(ticker: string, userId?: string): Promise<Holding | undefined>;
   createHolding(holding: InsertHolding): Promise<Holding>;
   updateHolding(id: number, holding: Partial<InsertHolding>): Promise<Holding | undefined>;
   deleteHolding(id: number): Promise<void>;
 
   // Trades
-  getTrades(): Promise<Trade[]>;
+  getTrades(userId: string): Promise<Trade[]>;
   getTradesByHolding(holdingId: number): Promise<Trade[]>;
   getTrade(id: number): Promise<Trade | undefined>;
   createTrade(trade: InsertTrade): Promise<Trade>;
@@ -102,22 +104,23 @@ export interface IStorage {
   deleteTrades(ids: number[]): Promise<void>;
 
   // Monthly Budgets
-  getMonthlyBudgets(year: number, month: number): Promise<MonthlyBudget[]>;
-  getMonthlyBudgetsByYear(year: number): Promise<MonthlyBudget[]>;
+  getMonthlyBudgets(userId: string, year: number, month: number): Promise<MonthlyBudget[]>;
+  getMonthlyBudgetsByYear(userId: string, year: number): Promise<MonthlyBudget[]>;
   upsertMonthlyBudget(budget: InsertMonthlyBudget): Promise<MonthlyBudget>;
 
   // Recurring Expenses
-  getRecurringExpenses(): Promise<RecurringExpense[]>;
-  getActiveRecurringExpenses(): Promise<RecurringExpense[]>;
+  getRecurringExpenses(userId: string): Promise<RecurringExpense[]>;
+  getActiveRecurringExpenses(userId: string): Promise<RecurringExpense[]>;
   createRecurringExpense(expense: InsertRecurringExpense): Promise<RecurringExpense>;
   updateRecurringExpense(id: number, expense: Partial<InsertRecurringExpense>): Promise<RecurringExpense | undefined>;
   deleteRecurringExpense(id: number): Promise<void>;
   upsertRecurringExpenseCheck(check: InsertRecurringExpenseCheck): Promise<void>;
-  getRecurringExpenseChecks(year: number, month: number): Promise<RecurringExpenseCheck[]>;
-  getAllRecurringExpenseChecks(): Promise<RecurringExpenseCheck[]>;
+  getRecurringExpenseChecks(userId: string, year: number, month: number): Promise<RecurringExpenseCheck[]>;
+  getAllRecurringExpenseChecks(userId: string): Promise<RecurringExpenseCheck[]>;
 
   // Planned Expenses
-  getPlannedExpenses(year: number, month: number): Promise<PlannedExpense[]>;
+  getPlannedExpenses(userId: string, year: number, month: number): Promise<PlannedExpense[]>;
+  getPlannedExpensesByYear(userId: string, year: number): Promise<PlannedExpense[]>;
   createPlannedExpense(expense: InsertPlannedExpense): Promise<PlannedExpense>;
   updatePlannedExpense(id: number, expense: Partial<InsertPlannedExpense>): Promise<PlannedExpense | undefined>;
   deletePlannedExpense(id: number): Promise<void>;
@@ -130,7 +133,7 @@ export interface IStorage {
   deleteBankConnection(id: number): Promise<void>;
 
   // Import Staging
-  getImportStaging(accountId?: number): Promise<ImportStaging[]>;
+  getImportStaging(userId: string, accountId?: number): Promise<ImportStaging[]>;
   getImportStagingByTransactionId(gcId: string): Promise<ImportStaging | undefined>;
   createImportStaging(staging: InsertImportStaging): Promise<ImportStaging>;
   deleteImportStaging(id: number): Promise<void>;
@@ -171,8 +174,8 @@ export class DatabaseStorage implements IStorage {
 
 
   // Accounts
-  async getAccounts(): Promise<Account[]> {
-    return await db.select().from(accounts);
+  async getAccounts(userId: string): Promise<Account[]> {
+    return await db.select().from(accounts).where(eq(accounts.userId, userId));
   }
 
   async getAccount(id: number): Promise<Account | undefined> {
@@ -200,9 +203,13 @@ export class DatabaseStorage implements IStorage {
     await db.delete(accounts).where(eq(accounts.id, id));
   }
 
+  async getAllAccounts(): Promise<Account[]> {
+    return await db.select().from(accounts);
+  }
+
   // Categories
-  async getCategories(): Promise<Category[]> {
-    return await db.select().from(categories);
+  async getCategories(userId: string): Promise<Category[]> {
+    return await db.select().from(categories).where(eq(categories.userId, userId));
   }
 
   async getCategory(id: number): Promise<Category | undefined> {
@@ -230,9 +237,14 @@ export class DatabaseStorage implements IStorage {
     await db.delete(categories).where(eq(categories.id, id));
   }
 
+  async getAllCategories(): Promise<Category[]> {
+    return await db.select().from(categories);
+  }
+
   // Transactions
-  async getTransactions(): Promise<Transaction[]> {
-    return await db.select().from(transactions);
+  async getTransactions(userId: string): Promise<Transaction[]> {
+    const userAccounts = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.userId, userId));
+    return await db.select().from(transactions).where(inArray(transactions.accountId, userAccounts));
   }
 
   async getTransaction(id: number): Promise<Transaction | undefined> {
@@ -308,8 +320,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Holdings
-  async getHoldings(): Promise<Holding[]> {
-    return await db.select().from(holdings);
+  async getHoldings(userId: string): Promise<Holding[]> {
+    return await db.select().from(holdings).where(eq(holdings.userId, userId));
   }
 
   async getHolding(id: number): Promise<Holding | undefined> {
@@ -317,8 +329,12 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
-  async getHoldingByTicker(ticker: string): Promise<Holding | undefined> {
-    const result = await db.select().from(holdings).where(eq(holdings.ticker, ticker.toUpperCase()));
+  async getHoldingByTicker(ticker: string, userId?: string): Promise<Holding | undefined> {
+    if (userId) {
+      const result = await db.select().from(holdings).where(and(eq(holdings.ticker, ticker.toUpperCase()), eq(holdings.userId, userId)));
+      return result[0];
+    }
+    const result = await db.select().from(holdings).where(eq(holdings.ticker, ticker.toUpperCase())).limit(1);
     return result[0];
   }
 
@@ -343,8 +359,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Trades
-  async getTrades(): Promise<Trade[]> {
-    return await db.select().from(trades);
+  async getTrades(userId: string): Promise<Trade[]> {
+    const userHoldings = db.select({ id: holdings.id }).from(holdings).where(eq(holdings.userId, userId));
+    return await db.select().from(trades).where(inArray(trades.holdingId, userHoldings));
   }
 
   async getTradesByHolding(holdingId: number): Promise<Trade[]> {
@@ -382,18 +399,25 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Monthly Budgets
-  async getMonthlyBudgets(year: number, month: number): Promise<MonthlyBudget[]> {
+  async getMonthlyBudgets(userId: string, year: number, month: number): Promise<MonthlyBudget[]> {
+    const userCategories = db.select({ id: categories.id }).from(categories).where(eq(categories.userId, userId));
     return await db.select()
       .from(monthlyBudgets)
       .where(and(
         eq(monthlyBudgets.year, year),
+        eq(monthlyBudgets.month, month),
+        inArray(monthlyBudgets.categoryId, userCategories)
       ));
   }
 
-  async getMonthlyBudgetsByYear(year: number): Promise<MonthlyBudget[]> {
+  async getMonthlyBudgetsByYear(userId: string, year: number): Promise<MonthlyBudget[]> {
+    const userCategories = db.select({ id: categories.id }).from(categories).where(eq(categories.userId, userId));
     return await db.select()
       .from(monthlyBudgets)
-      .where(eq(monthlyBudgets.year, year));
+      .where(and(
+        eq(monthlyBudgets.year, year),
+        inArray(monthlyBudgets.categoryId, userCategories)
+      ));
   }
 
   async upsertMonthlyBudget(budget: InsertMonthlyBudget): Promise<MonthlyBudget> {
@@ -418,12 +442,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Recurring Expenses
-  async getRecurringExpenses(): Promise<RecurringExpense[]> {
-    return await db.select().from(recurringExpenses);
+  async getRecurringExpenses(userId: string): Promise<RecurringExpense[]> {
+    const userAccounts = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.userId, userId));
+    return await db.select().from(recurringExpenses).where(inArray(recurringExpenses.accountId, userAccounts));
   }
 
-  async getActiveRecurringExpenses(): Promise<RecurringExpense[]> {
-    return await db.select().from(recurringExpenses).where(eq(recurringExpenses.active, true));
+  async getActiveRecurringExpenses(userId: string): Promise<RecurringExpense[]> {
+    const userAccounts = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.userId, userId));
+    return await db.select().from(recurringExpenses).where(and(
+      eq(recurringExpenses.active, true),
+      inArray(recurringExpenses.accountId, userAccounts)
+    ));
   }
 
   async createRecurringExpense(expense: InsertRecurringExpense): Promise<RecurringExpense> {
@@ -460,43 +489,52 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getRecurringExpenseChecks(year: number, month: number): Promise<RecurringExpenseCheck[]> {
+  async getRecurringExpenseChecks(userId: string, year: number, month: number): Promise<RecurringExpenseCheck[]> {
+    const userAccounts = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.userId, userId));
+    const userExpenses = db.select({ id: recurringExpenses.id }).from(recurringExpenses).where(inArray(recurringExpenses.accountId, userAccounts));
     return await db.select().from(recurringExpenseChecks).where(and(
       eq(recurringExpenseChecks.year, year),
-      eq(recurringExpenseChecks.month, month)
+      eq(recurringExpenseChecks.month, month),
+      inArray(recurringExpenseChecks.recurringExpenseId, userExpenses)
     ));
   }
 
-  async getAllRecurringExpenseChecks(): Promise<RecurringExpenseCheck[]> {
-    return await db.select().from(recurringExpenseChecks);
+  async getAllRecurringExpenseChecks(userId: string): Promise<RecurringExpenseCheck[]> {
+    const userAccounts = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.userId, userId));
+    const userExpenses = db.select({ id: recurringExpenses.id }).from(recurringExpenses).where(inArray(recurringExpenses.accountId, userAccounts));
+    return await db.select().from(recurringExpenseChecks).where(inArray(recurringExpenseChecks.recurringExpenseId, userExpenses));
   }
 
   // Planned Expenses
-  async getPlannedExpensesByYear(year: number): Promise<PlannedExpense[]> {
+  async getPlannedExpensesByYear(userId: string, year: number): Promise<PlannedExpense[]> {
     const startDate = `${year}-01-01`;
     const endDate = `${year + 1}-01-01`;
+    const userCategories = db.select({ id: categories.id }).from(categories).where(eq(categories.userId, userId));
 
     return await db.select()
       .from(plannedExpenses)
       .where(and(
         sql`${plannedExpenses.date} >= ${startDate}`,
-        sql`${plannedExpenses.date} < ${endDate}`
+        sql`${plannedExpenses.date} < ${endDate}`,
+        inArray(plannedExpenses.categoryId, userCategories)
       ));
   }
 
-  async getPlannedExpenses(year: number, month: number): Promise<PlannedExpense[]> {
+  async getPlannedExpenses(userId: string, year: number, month: number): Promise<PlannedExpense[]> {
     // We need to filter by date range for the month
     const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
     // Calculate end date (start of next month)
     const nextMonth = month === 12 ? 1 : month + 1;
     const nextYear = month === 12 ? year + 1 : year;
     const endDate = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`;
+    const userCategories = db.select({ id: categories.id }).from(categories).where(eq(categories.userId, userId));
 
     return await db.select()
       .from(plannedExpenses)
       .where(and(
         sql`${plannedExpenses.date} >= ${startDate}`,
-        sql`${plannedExpenses.date} < ${endDate}`
+        sql`${plannedExpenses.date} < ${endDate}`,
+        inArray(plannedExpenses.categoryId, userCategories)
       ));
   }
 
@@ -545,11 +583,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Import Staging
-  async getImportStaging(accountId?: number): Promise<ImportStaging[]> {
+  async getImportStaging(userId: string, accountId?: number): Promise<ImportStaging[]> {
+    const userAccounts = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.userId, userId));
+
     if (accountId) {
-      return await db.select().from(importStaging).where(eq(importStaging.accountId, accountId));
+      // additional check to ensure accountId belongs to user
+      return await db.select().from(importStaging).where(and(
+        eq(importStaging.accountId, accountId),
+        inArray(importStaging.accountId, userAccounts)
+      ));
     }
-    return await db.select().from(importStaging);
+    return await db.select().from(importStaging).where(inArray(importStaging.accountId, userAccounts));
   }
 
   async getImportStagingByTransactionId(gcId: string): Promise<ImportStaging | undefined> {

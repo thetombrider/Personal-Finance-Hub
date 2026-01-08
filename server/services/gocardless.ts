@@ -225,10 +225,11 @@ class GoCardlessService {
         const booked = data.transactions.booked || [];
 
         // Optimization: Fetch all data once before loop to avoid O(N*M) DB calls
-        const allTransactions = await storage.getTransactions();
+        // Optimization: Fetch all data once before loop to avoid O(N*M) DB calls
+        const allTransactions = await storage.getTransactions(userId);
         const accountTransactions = allTransactions.filter(t => t.accountId === localAccountId);
-        const stagingTransactions = await storage.getImportStaging(localAccountId);
-        const categories = await storage.getCategories();
+        const stagingTransactions = await storage.getImportStaging(userId, localAccountId);
+        const categories = await storage.getCategories(userId);
 
         let addedCount = 0;
 
