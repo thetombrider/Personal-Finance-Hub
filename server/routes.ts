@@ -1208,7 +1208,10 @@ export async function registerRoutes(
 
   app.post("/api/reports/weekly/send", async (req, res) => {
     try {
-      const email = req.body.email || "tommasominuto@gmail.com";
+      const email = req.body.email;
+      if (!email) {
+        return res.status(400).json({ error: "Email address is required" });
+      }
       const data = await reportService.getWeeklyReportData((req.user as any).id);
       const html = reportService.generateHtml(data);
 

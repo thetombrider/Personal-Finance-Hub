@@ -32,7 +32,7 @@ export default function AuthPage() {
     try {
       await apiRequest("POST", `/api/${action}`, { username, password });
       await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      // Redirect or let App.tsx handle it via auth state change
+      setLocation("/");
     } catch (error: any) {
       toast({
         title: "Error",
