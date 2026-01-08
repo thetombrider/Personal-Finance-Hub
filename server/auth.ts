@@ -315,6 +315,32 @@ export function setupAuth(app: Express) {
         }
     });
 
+    app.delete("/api/user", async (req, res, next) => {
+        if (!req.isAuthenticated()) return res.sendStatus(401);
+
+        try {
+            const userId = (req.user as User).id;
+
+            // Delete all user data
+            await storage.deleteUser(userId);
+
+            // Logout and destroy session
+            req.logout((err) => {
+                if (err) return next(err);
+                if (req.session) {
+                    req.session.destroy((err) => {
+                        if (err) return next(err);
+                        res.sendStatus(204);
+                    });
+                } else {
+                    res.sendStatus(204);
+                }
+            });
+        } catch (err) {
+            next(err);
+        }
+    });
+
     app.get("/api/auth/config", (_req, res) => {
         res.json({
             disableSignup: process.env.DISABLE_SIGNUP === "true",

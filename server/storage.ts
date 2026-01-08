@@ -140,6 +140,10 @@ export interface IStorage {
   createImportStaging(staging: InsertImportStaging): Promise<ImportStaging>;
   deleteImportStaging(id: number): Promise<void>;
   clearImportStaging(accountId: number): Promise<void>;
+
+  // Data Management
+  deleteUser(id: string): Promise<void>;
+  exportUserData(userId: string): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -615,6 +619,103 @@ export class DatabaseStorage implements IStorage {
 
   async clearImportStaging(accountId: number): Promise<void> {
     await db.delete(importStaging).where(eq(importStaging.accountId, accountId));
+  }
+
+  // Data Management
+  async deleteUser(id: string): Promise<void> {
+    // 1. Get user's resources to query child tables
+    const userAccounts = await this.getAccounts(id);
+    const userAccountIds = userAccounts.map(a => a.id);
+    const userCategories = await this.getCategories(id);
+    const userCategoryIds = userCategories.map(c => c.id);
+    const userHoldings = await this.getHoldings(id);
+    const userHoldingIds = userHoldings.map(h => h.id);
+
+    // 2. Delete deepest children first
+
+    // Trades (linked to Holdings)
+    if (userHoldingIds.length > 0) {
+      await db.delete(trades).where(inArray(trades.holdingId, userHoldingIds));
+    }
+
+    // Staging and Transactions (linked to Accounts)
+    if (userAccountIds.length > 0) {
+      await db.delete(importStaging).where(inArray(importStaging.accountId, userAccountIds));
+      await db.delete(transactions).where(inArray(transactions.accountId, userAccountIds));
+
+      // Recurring Expenses (linked to Accounts)
+      const userRecurringExpenses = await db.select({ id: recurringExpenses.id })
+        .from(recurringExpenses)
+        .where(inArray(recurringExpenses.accountId, userAccountIds));
+      const recurringExpenseIds = userRecurringExpenses.map(r => r.id);
+
+      if (recurringExpenseIds.length > 0) {
+        await db.delete(recurringExpenseChecks).where(inArray(recurringExpenseChecks.recurringExpenseId, recurringExpenseIds));
+        await db.delete(recurringExpenses).where(inArray(recurringExpenses.accountId, userAccountIds));
+      }
+    }
+
+    // Budget items (linked to Categories)
+    if (userCategoryIds.length > 0) {
+      await db.delete(monthlyBudgets).where(inArray(monthlyBudgets.categoryId, userCategoryIds));
+      await db.delete(plannedExpenses).where(inArray(plannedExpenses.categoryId, userCategoryIds));
+    }
+
+    // 3. Delete middle layer
+    // Holdings
+    await db.delete(holdings).where(eq(holdings.userId, id));
+
+    // Bank Connections
+    await db.delete(bankConnections).where(eq(bankConnections.userId, id));
+
+    // Accounts
+    await db.delete(accounts).where(eq(accounts.userId, id));
+
+    // Categories
+    await db.delete(categories).where(eq(categories.userId, id));
+
+    // 4. Delete User
+    await db.delete(users).where(eq(users.id, id));
+  }
+
+  async exportUserData(userId: string): Promise<any> {
+    // Fetch all data for the user
+    // We can use existing getters but some might filter too much or join.
+    // Raw selects are safer for full dump.
+
+    const _accounts = await this.getAccounts(userId);
+    const _categories = await this.getCategories(userId);
+    const _transactions = await this.getTransactions(userId);
+    const _holdings = await this.getHoldings(userId);
+    const _trades = await this.getTrades(userId);
+    const _bankConnections = await this.getBankConnections(userId);
+    const _recurringExpenses = await this.getRecurringExpenses(userId);
+
+    // Check tables not covered by simple getters or where we want raw data
+    // Monthly Budgets - getMonthlyBudgetsByYear needs a year. We want ALL.
+    // We need to implement a "getAll" private or inline query.
+
+    const userCategories = db.select({ id: categories.id }).from(categories).where(eq(categories.userId, userId));
+    const _monthlyBudgets = await db.select().from(monthlyBudgets).where(inArray(monthlyBudgets.categoryId, userCategories));
+    const _plannedExpenses = await db.select().from(plannedExpenses).where(inArray(plannedExpenses.categoryId, userCategories));
+
+    // Recurring Expense Checks - tricky, linked to recurring expenses
+    const userAccounts = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.userId, userId));
+    const userRecurringExpenses = db.select({ id: recurringExpenses.id }).from(recurringExpenses).where(inArray(recurringExpenses.accountId, userAccounts));
+    const _recurringExpenseChecks = await db.select().from(recurringExpenseChecks).where(inArray(recurringExpenseChecks.recurringExpenseId, userRecurringExpenses));
+
+    return {
+      Accounts: _accounts,
+      Categories: _categories,
+      Transactions: _transactions,
+      Holdings: _holdings,
+      Trades: _trades,
+      BankConnections: _bankConnections,
+      RecurringExpenses: _recurringExpenses,
+      RecurringExpenseChecks: _recurringExpenseChecks,
+      MonthlyBudgets: _monthlyBudgets,
+      PlannedExpenses: _plannedExpenses
+    };
   }
 }
 

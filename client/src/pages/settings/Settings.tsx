@@ -11,7 +11,18 @@ import Layout from "@/components/Layout";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
-import { Plus, Trash2, RefreshCw, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Plus, Trash2, RefreshCw, AlertCircle, CheckCircle2, Download } from "lucide-react";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { BankLinkModal } from "@/components/bank-link-modal";
 import { useQuery } from "@tanstack/react-query";
 import { format, addDays, isPast } from "date-fns";
@@ -277,6 +288,79 @@ export default function Settings() {
                                 </CardContent>
                             </Card>
                         )}
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Gestione Dati</CardTitle>
+                                <CardDescription>
+                                    Esporta i tuoi dati o cancella definitivamente il tuo account.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg bg-background">
+                                    <div>
+                                        <h4 className="font-medium">Esporta Dati</h4>
+                                        <p className="text-sm text-muted-foreground">
+                                            Scarica un file Excel con tutti i tuoi dati personali.
+                                        </p>
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => window.open("/api/export-data", "_blank")}
+                                    >
+                                        <Download className="mr-2 h-4 w-4" />
+                                        Esporta Excel
+                                    </Button>
+                                </div>
+
+                                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg bg-destructive/5 border-destructive/20">
+                                    <div>
+                                        <h4 className="font-medium text-destructive">Cancella Account</h4>
+                                        <p className="text-sm text-destructive/80">
+                                            Questa azione è irreversibile. Tutti i tuoi dati verranno persi.
+                                        </p>
+                                    </div>
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button type="button" variant="destructive">
+                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                Cancella Account
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Sei assolutamente sicuro?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    Questa azione non può essere annullata. Cancellerà permanentemente il tuo
+                                                    account e rimuoverà tutti i tuoi dati dai nostri server.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Annulla</AlertDialogCancel>
+                                                <AlertDialogAction
+                                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                                    onClick={async () => {
+                                                        try {
+                                                            await apiRequest("DELETE", "/api/user");
+                                                            window.location.href = "/auth";
+                                                        } catch (error) {
+                                                            toast({
+                                                                variant: "destructive",
+                                                                title: "Errore",
+                                                                description: "Si è verificato un errore durante la cancellazione dell'account.",
+                                                            });
+                                                        }
+                                                    }}
+                                                >
+                                                    Cancella Definitivamente
+                                                </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                </div>
+                            </CardContent>
+                        </Card>
 
                         <div className="flex justify-end">
                             <Button type="submit" disabled={isLoading} size="lg">
