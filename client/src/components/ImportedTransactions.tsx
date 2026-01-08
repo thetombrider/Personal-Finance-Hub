@@ -23,7 +23,7 @@ interface StagedTransaction {
     amount: string;
     description: string;
     accountId: number;
-    gocardlessTransactionId: string;
+    externalId: string;
     suggestedCategoryId?: number;
 }
 

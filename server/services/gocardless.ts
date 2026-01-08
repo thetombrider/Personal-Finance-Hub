@@ -236,31 +236,35 @@ class GoCardlessService {
         for (const tx of booked) {
             if (!tx.transactionId) continue;
 
-            // Check if already imported (using in-memory list)
-            const existing = accountTransactions.find(t => t.gocardlessTransactionId === tx.transactionId);
-            const staged = stagingTransactions.find(t => t.gocardlessTransactionId === tx.transactionId);
-
-            if (existing || staged) {
-                continue; // Already imported or staged
-            }
-
             const amount = parseFloat(tx.transactionAmount.amount);
-            // const absAmount = Math.abs(amount); // Removed: Staging stores raw amount
             const date = tx.bookingDate || tx.valueDate;
             const description = tx.remittanceInformationUnstructured || "Bank Transaction";
 
-            // Fuzzy match logic (Optional: keep this to link existing manual transactions?)
-            // For now, let's keep the logic: if we find a manual match, we LINK it.
-            // If we don't find a match, we STAGE it.
+            // Check if already imported
+            const existing = accountTransactions.find(t => t.externalId === tx.transactionId);
+            const staged = stagingTransactions.find(t => t.externalId === tx.transactionId);
+
+            if (existing || staged) {
+                continue; // Already imported or staged with EXACT externalId match
+            }
+
+            // Fuzzy match logic
+            // 1. Find potential matches (same amount, close date)
+            // 2. Allow matching if:
+            //    a) No externalId exists (pure manual)
+            //    b) externalId is "Legacy" (numeric) AND different from new UUID
 
             const absAmount = Math.abs(amount);
             const targetDate = new Date(date);
             const minDate = new Date(targetDate); minDate.setDate(minDate.getDate() - 3);
             const maxDate = new Date(targetDate); maxDate.setDate(maxDate.getDate() + 3);
 
-            // Match against transactions NOT linked to GC, for this account
             const potentialMatches = accountTransactions.filter(t => {
-                if (t.gocardlessTransactionId) return false;
+                // EXCLUSION CRITERIA:
+                // If it has an external ID, check if it's a UUID.
+                // If it's a UUID (length > 20), we treat it as a "Verified Bank Transaction" and DO NOT touch it.
+                // If it's short (numeric legacy), we ALLOW matching.
+                if (t.externalId && t.externalId.length > 20) return false;
 
                 // Fuzzy comparison for float equality
                 const EPSILON = 0.001;
@@ -274,13 +278,14 @@ class GoCardlessService {
             if (potentialMatches.length > 0) {
                 // Link to the first match
                 const match = potentialMatches[0];
-                console.log(`Linking GoCardless tx ${tx.transactionId} to existing tx ${match.id}`);
+                console.log(`Linking GoCardless tx ${tx.transactionId} to existing tx ${match.id} (Legacy ID: ${match.externalId})`);
+
                 await storage.updateTransaction(match.id, {
-                    gocardlessTransactionId: tx.transactionId
+                    externalId: tx.transactionId
                 });
 
                 // Update in-memory list
-                match.gocardlessTransactionId = tx.transactionId;
+                match.externalId = tx.transactionId;
             } else {
                 // Create new in STAGING
                 console.log(`Staging new tx for GoCardless tx ${tx.transactionId}`);
@@ -290,7 +295,7 @@ class GoCardlessService {
                     date: date,
                     amount: amount.toFixed(2), // Store signed amount
                     description: description,
-                    gocardlessTransactionId: tx.transactionId,
+                    externalId: tx.transactionId,
                     rawData: tx,
                     suggestedCategoryId: await aiService.categorizeTransaction(description, categories)
                 });

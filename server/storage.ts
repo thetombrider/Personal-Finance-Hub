@@ -265,7 +265,47 @@ export class DatabaseStorage implements IStorage {
 
   async createTransactions(txs: InsertTransaction[]): Promise<Transaction[]> {
     if (txs.length === 0) return [];
-    const result = await db.insert(transactions).values(txs).returning();
+
+    // 1. Get unique accounts involved
+    const accountIds = [...new Set(txs.map(t => t.accountId))];
+
+    // 2. Fetch existing transactions for these accounts to check duplicates
+    // Optimization: We could filter by date range if inputs are sorted/ranged, 
+    // but for now fetching all for these accounts is safer and usually fast enough for personal finance scale.
+    const existing = await db.select()
+      .from(transactions)
+      .where(inArray(transactions.accountId, accountIds));
+
+    // 3. Filter out duplicates
+    // Match criteria: Same Account, Date, Amount (exact), and Description (normalized?)
+    const toInsert = txs.filter(newTx => {
+      const isDuplicate = existing.some(existingTx => {
+        if (existingTx.accountId !== newTx.accountId) return false;
+
+        // Date compare (assuming string format YYYY-MM-DDT...)
+        const d1 = new Date(existingTx.date).getTime();
+        const d2 = new Date(newTx.date).getTime();
+        if (Math.abs(d1 - d2) > 86400000) return false; // allow 1 day drift? Or exact? 
+        // Let's stick to EXACT date string for CSV imports usually match exactly what they exported.
+        // Actually, db stores as ISO string. newTx comes as string. 
+        // Ideally strict equality on date string if formats align. 
+        // Let's parse to ensure safety.
+        if (new Date(existingTx.date).toISOString().split('T')[0] !== new Date(newTx.date).toISOString().split('T')[0]) return false;
+
+        // Amount compare
+        if (Math.abs(parseFloat(existingTx.amount) - parseFloat(newTx.amount.toString())) > 0.001) return false;
+
+        // Description compare (exact match for now, maybe case insensitive?)
+        if (existingTx.description.toLowerCase().trim() !== newTx.description.toLowerCase().trim()) return false;
+
+        return true;
+      });
+      return !isDuplicate;
+    });
+
+    if (toInsert.length === 0) return [];
+
+    const result = await db.insert(transactions).values(toInsert).returning();
     return result;
   }
 
@@ -604,7 +644,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getImportStagingByTransactionId(gcId: string): Promise<ImportStaging | undefined> {
-    const result = await db.select().from(importStaging).where(eq(importStaging.gocardlessTransactionId, gcId));
+    const result = await db.select().from(importStaging).where(eq(importStaging.externalId, gcId));
     return result[0];
   }
 

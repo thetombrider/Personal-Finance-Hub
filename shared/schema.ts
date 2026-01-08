@@ -70,7 +70,7 @@ export const transactions = pgTable("transactions", {
   categoryId: serial("category_id").notNull().references(() => categories.id, { onDelete: "restrict" }),
   type: varchar("type", { length: 10 }).notNull(),
   linkedTransactionId: integer("linked_transaction_id"),
-  gocardlessTransactionId: varchar("gocardless_transaction_id").unique(),
+  externalId: varchar("external_id").unique(),
 });
 
 export const insertTransactionSchema = createInsertSchema(transactions).omit({ id: true });
@@ -185,7 +185,7 @@ export const importStaging = pgTable("import_staging", {
   amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
   description: text("description").notNull(),
   accountId: integer("account_id").notNull().references(() => accounts.id, { onDelete: "cascade" }),
-  gocardlessTransactionId: varchar("gocardless_transaction_id").unique(),
+  externalId: varchar("external_id").unique(),
   suggestedCategoryId: integer("suggested_category_id"),
   rawData: jsonb("raw_data"),
 });

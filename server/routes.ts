@@ -557,7 +557,7 @@ export async function registerRoutes(
         description: finalDesc,
         categoryId: parsedCategoryId,
         type: type,
-        gocardlessTransactionId: staged.gocardlessTransactionId,
+        externalId: staged.externalId,
       });
 
       // 3. Delete from staging
