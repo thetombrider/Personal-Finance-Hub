@@ -48,11 +48,25 @@ class GoCardlessService {
         } catch (error: any) {
             // Check for 401 Unauthorized which indicates expired token
             if (error.response && error.response.status === 401) {
-                console.log("GoCardless token expired (401), refreshing...");
-                this.client.token = null; // Force clear token
-                await this.ensureToken(); // Generate new token
-                return await operation(); // Retry once
+                console.log("[GoCardless] Token expired (401). Refreshing...");
+                try {
+                    this.client.token = null; // Force clear token
+                    await this.ensureToken(); // Generate new token
+                    console.log("[GoCardless] Token refreshed successfully. Retrying operation...");
+                    return await operation(); // Retry once
+                } catch (refreshError) {
+                    console.error("[GoCardless] Failed to refresh token:", refreshError);
+                    throw refreshError; // Re-throw the refresh error
+                }
             }
+
+            // Log full error details for debugging
+            console.error("[GoCardless] API Request Failed:", {
+                status: error.response?.status,
+                data: error.response?.data,
+                message: error.message
+            });
+
             // Pass through 429 errors specifically
             if (error.response && error.response.status === 429) {
                 const err = new Error("Rate limit reached");
@@ -127,6 +141,16 @@ class GoCardlessService {
 
             // Always update the status in the DB
             await storage.updateBankConnection(connection.id, { status: requisitionData.status });
+
+            // debug: check actual agreement validity
+            if (requisitionData.agreement) {
+                try {
+                    const agreementData = await this.client.agreement.getAgreement(requisitionData.agreement);
+                    console.log("[GoCardless] Agreement Details:", JSON.stringify(agreementData, null, 2));
+                } catch (e) {
+                    console.error("[GoCardless] Failed to fetch agreement details:", e);
+                }
+            }
 
             if (requisitionData.status === "LN") { // Linked
                 // Fetch details for each account to return useful info (name, owner, etc)
