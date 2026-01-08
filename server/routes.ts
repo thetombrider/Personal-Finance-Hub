@@ -60,6 +60,11 @@ export async function registerRoutes(
   });
 
 
+
+
+  // ============ AUTH ============
+  setupAuth(app);
+
   // ============ EXPORT DATA ============
   app.get("/api/export-data", async (req, res) => {
     try {
@@ -86,9 +91,6 @@ export async function registerRoutes(
       res.status(500).json({ error: "Failed to export data" });
     }
   });
-
-  // ============ AUTH ============
-  setupAuth(app);
 
   const tallyService = new TallyService(storage);
   const reportService = new ReportService(storage, marketDataService);
