@@ -49,6 +49,9 @@ export default function Settings() {
     const [isBankModalOpen, setIsBankModalOpen] = useState(false);
     const [renewingInstitutionId, setRenewingInstitutionId] = useState<string | null>(null);
 
+    const { data: authConfig } = useQuery({
+        queryKey: ["/api/auth/config"],
+    });
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -231,6 +234,49 @@ export default function Settings() {
                                 </div>
                             </CardContent>
                         </Card>
+
+                        {authConfig?.oidcEnabled && (
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Single Sign-On (SSO)</CardTitle>
+                                    <CardDescription>
+                                        Gestisci l'accesso tramite provider esterno (es. Replit).
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    {user?.oidcId ? (
+                                        <div className="flex items-center gap-2 p-4 bg-muted/50 rounded-lg border">
+                                            <CheckCircle2 className="h-5 w-5 text-green-500" />
+                                            <div className="flex-1">
+                                                <p className="font-medium">Account Collegato</p>
+                                                <p className="text-sm text-muted-foreground">
+                                                    Il tuo account è collegato correttamente al provider SSO.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col gap-4">
+                                            <div className="flex items-center gap-2 p-4 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
+                                                <AlertCircle className="h-5 w-5 text-yellow-600" />
+                                                <div className="flex-1">
+                                                    <p className="font-medium text-yellow-700">Nessun account collegato</p>
+                                                    <p className="text-sm text-yellow-600/80">
+                                                        Collega il tuo account per accedere senza password.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                onClick={() => window.location.href = "/api/auth/oidc"}
+                                            >
+                                                Collega Account SSO
+                                            </Button>
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        )}
 
                         <div className="flex justify-end">
                             <Button type="submit" disabled={isLoading} size="lg">

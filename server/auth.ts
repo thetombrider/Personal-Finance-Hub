@@ -94,11 +94,27 @@ export function setupAuth(app: Express) {
                     clientSecret: oidcClientSecret!,
                     callbackURL: oidcCallbackUrl!,
                     scope: ["openid", "profile", "email"],
+                    passReqToCallback: true,
                 },
-                async (issuer: any, profile: any, cb: any) => {
+                async (req: any, issuer: any, profile: any, cb: any) => {
                     try {
                         const oidcId = profile.id;
                         const email = profile.emails && profile.emails.length > 0 ? profile.emails[0].value : null;
+
+                        // Case 1: Link to existing logged-in user
+                        if (req.user) {
+                            const existingUser = await storage.getUserByOidcId(oidcId);
+                            if (existingUser && existingUser.id !== req.user.id) {
+                                return cb(new Error("This SSO account is already connected to another user."));
+                            }
+                            if (!existingUser) {
+                                const updated = await storage.updateUser(req.user.id, { oidcId: oidcId });
+                                return cb(null, updated);
+                            }
+                            return cb(null, req.user);
+                        }
+
+                        // Case 2: Standard Login/Register
 
                         // Prioritize username (preferred_username) over display name
                         const baseUsername = profile.username || profile.displayName || (email ? email.split('@')[0] : "user");
