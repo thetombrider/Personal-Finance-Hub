@@ -41,6 +41,7 @@ export const accounts = pgTable("accounts", {
   creditLimit: decimal("credit_limit", { precision: 12, scale: 2 }),
   gocardlessAccountId: varchar("gocardless_account_id").unique(),
   bankConnectionId: integer("bank_connection_id").references(() => bankConnections.id, { onDelete: "set null" }),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }),
 });
 
 export const insertAccountSchema = createInsertSchema(accounts).omit({ id: true });
@@ -53,6 +54,7 @@ export const categories = pgTable("categories", {
   type: varchar("type", { length: 10 }).notNull(),
   color: varchar("color", { length: 7 }).notNull(),
   icon: text("icon"),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }),
 });
 
 export const insertCategorySchema = createInsertSchema(categories).omit({ id: true });
@@ -83,6 +85,7 @@ export const holdings = pgTable("holdings", {
   currency: varchar("currency", { length: 3 }).notNull().default("EUR"),
   currentPrice: decimal("current_price", { precision: 12, scale: 4 }),
   lastPriceUpdate: timestamp("last_price_update", { mode: "string" }),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }),
 });
 
 export const insertHoldingSchema = createInsertSchema(holdings).omit({ id: true });
