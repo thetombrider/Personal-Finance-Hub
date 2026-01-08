@@ -1,6 +1,6 @@
 
 import { db } from "../server/db";
-import { users, accounts, categories, holdings } from "@shared/schema";
+import { users, accounts, categories, holdings } from "../shared/schema";
 import { eq, isNull } from "drizzle-orm";
 
 async function migrate() {
