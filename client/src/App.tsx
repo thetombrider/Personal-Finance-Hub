@@ -5,7 +5,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import NotFound from "@/pages/not-found";
+import AuthPage from "@/pages/AuthPage";
 import Landing from "@/pages/Landing";
+
 import Dashboard from "@/pages/Dashboard";
 import Accounts from "@/pages/Accounts";
 import Categories from "@/pages/Categories";
@@ -33,7 +35,14 @@ function Router() {
   }
 
   if (!isAuthenticated) {
-    return <Landing />;
+    return (
+      <Switch>
+        <Route path="/auth" component={AuthPage} />
+        <Route path="/" component={Landing} />
+        {/* Redirect any other route to Landing for unauthenticated users */}
+        <Route component={Landing} />
+      </Switch>
+    );
   }
 
   return (
