@@ -606,6 +606,9 @@ export default function ImportTransactions() {
       case 'trades':
         headers = ['Date', 'Ticker', 'Name', 'Type', 'Quantity', 'Price', 'TotalAmount', 'Fees'];
         break;
+      case 'holdings':
+        headers = ['ID', 'Ticker', 'Name'];
+        break;
 
     }
 
@@ -672,11 +675,17 @@ export default function ImportTransactions() {
                   <input type="file" ref={primaryFileInputRef} accept=".csv, .xlsx, .xls" className="hidden" onChange={(e) => handleFileUpload(e, false)} />
                 </div>
 
-                <div className="flex justify-center">
+                <div className="flex flex-col items-center justify-center gap-2">
                   <Button variant="link" onClick={() => handleDownloadTemplate()} className="gap-2 text-muted-foreground hover:text-primary">
                     <Download className="h-4 w-4" />
                     Download {importMode} template
                   </Button>
+                  {importMode === 'trades' && (
+                    <Button variant="link" onClick={() => handleDownloadTemplate('holdings')} className="gap-2 text-muted-foreground hover:text-primary">
+                      <Download className="h-4 w-4" />
+                      Download holdings template
+                    </Button>
+                  )}
                 </div>
 
                 {/* Reference File Upload for Trades */}
