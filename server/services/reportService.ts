@@ -381,6 +381,17 @@ export class ReportService {
       this.storage.getActiveRecurringExpenses(userId)
     ]);
 
+    // Filter recurring expenses to only those valid for this month/year
+    const validRecurringExpenses = recurringExpenses.filter(re => {
+      const start = new Date(re.startDate);
+      const startYear = start.getFullYear();
+      const startMonth = start.getMonth() + 1; // 1-indexed
+
+      if (startYear < year) return true;
+      if (startYear === year && startMonth <= month) return true;
+      return false;
+    });
+
     return categories.map(category => {
       const monthlyBudget = monthlyBudgets.find(b => b.categoryId === category.id);
       const baseline = monthlyBudget ? parseFloat(monthlyBudget.amount.toString()) : 0;
@@ -388,7 +399,7 @@ export class ReportService {
       const categoryPlanned = plannedExpenses.filter(p => p.categoryId === category.id);
       const plannedTotal = categoryPlanned.reduce((sum, p) => sum + parseFloat(p.amount.toString()), 0);
 
-      const categoryRecurring = recurringExpenses.filter(r => r.categoryId === category.id);
+      const categoryRecurring = validRecurringExpenses.filter(r => r.categoryId === category.id);
       // Simple active check logic as per original
       const recurringTotal = categoryRecurring.reduce((sum, r) => sum + parseFloat(r.amount.toString()), 0);
 
