@@ -565,7 +565,7 @@ export default function Dashboard() {
               <Wallet className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-xl lg:text-2xl font-bold font-heading truncate tracking-tight" title={displayCurrency(totalBalance)}>
+              <div className="text-lg font-bold font-heading truncate" title={displayCurrency(totalBalance)}>
                 {displayCurrency(totalBalance)}
               </div>
               <p className="text-xs text-muted-foreground mt-1 truncate">
@@ -586,7 +586,7 @@ export default function Dashboard() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-xl lg:text-2xl font-bold font-heading text-blue-600 dark:text-blue-400 truncate tracking-tight" title={displayCurrency(totalCash)}>
+              <div className="text-lg font-bold font-heading text-blue-600 dark:text-blue-400 truncate" title={displayCurrency(totalCash)}>
                 {displayCurrency(totalCash)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">Cash & Checking</p>
@@ -605,7 +605,7 @@ export default function Dashboard() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-xl lg:text-2xl font-bold font-heading text-emerald-600 dark:text-emerald-400 truncate tracking-tight" title={displayCurrency(totalSavings)}>
+              <div className="text-lg font-bold font-heading text-emerald-600 dark:text-emerald-400 truncate" title={displayCurrency(totalSavings)}>
                 {displayCurrency(totalSavings)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">Savings accounts</p>
@@ -678,7 +678,7 @@ export default function Dashboard() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold font-heading text-rose-600 dark:text-rose-400 truncate" title={displayCurrency(Math.abs(totalCredit))}>
+              <div className="text-lg font-bold font-heading text-rose-600 dark:text-rose-400 truncate" title={displayCurrency(Math.abs(totalCredit))}>
                 {displayCurrency(Math.abs(totalCredit))}
               </div>
               {creditUsageThisMonth && creditUsageThisMonth.limit > 0 ? (
