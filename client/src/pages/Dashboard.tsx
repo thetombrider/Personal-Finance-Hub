@@ -9,7 +9,7 @@ import { ArrowUpRight, ArrowDownRight, Wallet, TrendingUp, Activity, PiggyBank, 
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis, PieChart, Pie, Cell, BarChart, Bar, ComposedChart, Line, ReferenceLine, Legend, Area as RechartsArea } from "recharts";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { format, subMonths, isSameMonth, parseISO, startOfMonth, endOfMonth, getYear } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { usePortfolioStats } from "@/hooks/usePortfolioStats";
