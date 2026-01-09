@@ -565,7 +565,7 @@ export default function Dashboard() {
               <Wallet className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold font-heading truncate" title={displayCurrency(totalBalance)}>
+              <div className="text-xl lg:text-2xl font-bold font-heading truncate tracking-tight" title={displayCurrency(totalBalance)}>
                 {displayCurrency(totalBalance)}
               </div>
               <p className="text-xs text-muted-foreground mt-1 truncate">
@@ -586,7 +586,7 @@ export default function Dashboard() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold font-heading text-blue-600 dark:text-blue-400 truncate" title={displayCurrency(totalCash)}>
+              <div className="text-xl lg:text-2xl font-bold font-heading text-blue-600 dark:text-blue-400 truncate tracking-tight" title={displayCurrency(totalCash)}>
                 {displayCurrency(totalCash)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">Cash & Checking</p>
@@ -605,7 +605,7 @@ export default function Dashboard() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold font-heading text-emerald-600 dark:text-emerald-400 truncate" title={displayCurrency(totalSavings)}>
+              <div className="text-xl lg:text-2xl font-bold font-heading text-emerald-600 dark:text-emerald-400 truncate tracking-tight" title={displayCurrency(totalSavings)}>
                 {displayCurrency(totalSavings)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">Savings accounts</p>
@@ -647,22 +647,24 @@ export default function Dashboard() {
               <Activity className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent className="space-y-4 pt-4">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <ArrowUpRight className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-                  <span>Income</span>
+              <div className="flex flex-col gap-1">
+                <div>
+                  <div className="text-lg font-bold font-heading text-emerald-600 dark:text-emerald-400 truncate" title={displayCurrency(globalMonthlyStats.income)}>
+                    +{displayCurrency(globalMonthlyStats.income)}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Income</p>
+                    <ArrowUpRight className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                  </div>
                 </div>
-                <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400 truncate" title={displayCurrency(globalMonthlyStats.income)}>
-                  +{displayCurrency(globalMonthlyStats.income)}
-                </div>
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <ArrowDownRight className="h-3 w-3 text-rose-600 dark:text-rose-400" />
-                  <span>Expenses</span>
-                </div>
-                <div className="text-lg font-bold text-rose-600 dark:text-rose-400 truncate" title={displayCurrency(globalMonthlyStats.expense)}>
-                  -{displayCurrency(globalMonthlyStats.expense)}
+                <div>
+                  <div className="text-lg font-bold font-heading text-rose-600 dark:text-rose-400 truncate" title={displayCurrency(globalMonthlyStats.expense)}>
+                    -{displayCurrency(globalMonthlyStats.expense)}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Expenses</p>
+                    <ArrowDownRight className="h-3 w-3 text-rose-600 dark:text-rose-400" />
+                  </div>
                 </div>
               </div>
             </CardContent>
