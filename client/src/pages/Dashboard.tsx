@@ -241,6 +241,72 @@ export default function Dashboard() {
     return data;
   }, [transactions, categoryTrendId, timeRange, selectedAccount, selectedCategoryForTrend, currentYearBudget, previousYearBudget, currentYear]);
 
+  // Budget vs Actual Expenses (Global)
+  const budgetComparisonData = useMemo(() => {
+    const months = parseInt(timeRange);
+    const data = [];
+
+    // Helper to get budget for a specific month and year
+    const getMonthlyBudgetTotal = (monthIndex: number, year: number) => {
+      const budgetSource = year === currentYear ? currentYearBudget : (year === currentYear - 1 ? previousYearBudget : null);
+      if (!budgetSource || !budgetSource.budgetData) return 0;
+
+      let total = 0;
+      categories.forEach(cat => {
+        if (cat.type === 'expense' && cat.name.toLowerCase() !== 'trasferimenti') {
+          const catBudget = budgetSource.budgetData[cat.id];
+          if (catBudget && catBudget[monthIndex]) {
+            total += catBudget[monthIndex].total || 0;
+          }
+        }
+      });
+      return total;
+    };
+
+    for (let i = months - 1; i >= 0; i--) {
+      const date = subMonths(new Date(), i);
+      const monthStart = startOfMonth(date);
+      const monthEnd = endOfMonth(date);
+      const year = getYear(date);
+      const monthIndex = date.getMonth() + 1; // 1-12
+
+      // Actual Expenses
+      const actual = transactions.filter(t => {
+        const tDate = parseISO(t.date);
+        const isTransfer = t.categoryId === transferCategoryId;
+        const matchesCategory = selectedCategory === "all" || t.categoryId === parseInt(selectedCategory);
+        return !isTransfer && t.type === 'expense' && tDate >= monthStart && tDate <= monthEnd &&
+          (selectedAccount === "all" || t.accountId === parseInt(selectedAccount)) &&
+          matchesCategory;
+      }).reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+
+      // Calculate total budget for this month
+      // Note: This sums ALL expense budgets, regardless of category filter, 
+      // because filtering budget by category would require 'selectedCategory' to be applied here too.
+      // If the user selects a category, they probably want to see Budget vs Actual for THAT category.
+      // Let's support that.
+      let budget = 0;
+      if (selectedCategory !== "all") {
+        // Specific category budget
+        const catId = parseInt(selectedCategory);
+        const budgetSource = year === currentYear ? currentYearBudget : (year === currentYear - 1 ? previousYearBudget : null);
+        if (budgetSource && budgetSource.budgetData && budgetSource.budgetData[catId] && budgetSource.budgetData[catId][monthIndex]) {
+          budget = budgetSource.budgetData[catId][monthIndex].total || 0;
+        }
+      } else {
+        // All expense categories budget
+        budget = getMonthlyBudgetTotal(monthIndex, year);
+      }
+
+      data.push({
+        name: format(date, 'MMM'),
+        budget,
+        actual
+      });
+    }
+    return data;
+  }, [transactions, timeRange, selectedAccount, selectedCategory, categories, transferCategoryId, currentYearBudget, previousYearBudget, currentYear]);
+
   // Totals by account type
   const totalCash = useMemo(() => {
     return accounts
@@ -771,6 +837,45 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Budget vs Actual Chart */}
+        <Card className="col-span-1 md:col-span-7">
+          <CardHeader>
+            <CardTitle>Budget vs Actual Expenses</CardTitle>
+            <CardDescription>Monthly comparison of budgeted vs actual spending</CardDescription>
+          </CardHeader>
+          <CardContent className="pl-0">
+            <div className="h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={budgetComparisonData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorBudget" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="colorActual" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#ef4444" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => privacyMode ? "•••" : `€${value.toFixed(0)}`} />
+                  <Tooltip
+                    formatter={(value: number, name: string) => {
+                      const formattedValue = privacyMode ? "•••••" : `€${value.toFixed(2)}`;
+                      const label = name === 'budget' ? 'Budget' : 'Spese Reali';
+                      return [formattedValue, label];
+                    }}
+                    contentStyle={{ backgroundColor: 'var(--color-card)', borderRadius: '8px', border: '1px solid var(--color-border)' }}
+                    itemStyle={{ color: 'var(--color-foreground)' }}
+                  />
+                  <Area type="monotone" dataKey="budget" stroke="#3b82f6" fillOpacity={1} fill="url(#colorBudget)" strokeWidth={2} name="budget" />
+                  <Area type="monotone" dataKey="actual" stroke="#ef4444" fillOpacity={1} fill="url(#colorActual)" strokeWidth={2} name="actual" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Category Trend Chart */}
         <Card>
