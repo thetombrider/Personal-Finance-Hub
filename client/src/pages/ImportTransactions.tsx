@@ -632,7 +632,7 @@ export default function ImportTransactions() {
           setCsvData([]);
           setReferenceCsvData(null);
         }} className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="w-max">
             <TabsTrigger value="transactions" className="gap-2"><CreditCard className="h-4 w-4" /> Transazioni</TabsTrigger>
             <TabsTrigger value="accounts" className="gap-2"><Wallet className="h-4 w-4" /> Conti</TabsTrigger>
             <TabsTrigger value="categories" className="gap-2"><Tag className="h-4 w-4" /> Categorie</TabsTrigger>

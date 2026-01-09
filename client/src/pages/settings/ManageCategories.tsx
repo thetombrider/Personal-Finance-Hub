@@ -191,10 +191,10 @@ export default function ManageCategories() {
           <Table>
             <TableHeader className="sticky top-0 bg-card z-10 shadow-sm">
               <TableRow>
-                <TableHead className="w-[40%]">Nome</TableHead>
-                <TableHead className="w-[20%]">Tipo</TableHead>
-                <TableHead className="w-[20%]">Colore</TableHead>
-                <TableHead className="w-[20%] text-right">Azioni</TableHead>
+                <TableHead>Nome</TableHead>
+                <TableHead className="w-[1%] whitespace-nowrap">Tipo</TableHead>
+                <TableHead className="w-[1%] whitespace-nowrap">Colore</TableHead>
+                <TableHead className="w-[1%] whitespace-nowrap text-right">Azioni</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
