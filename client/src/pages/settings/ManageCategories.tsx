@@ -12,6 +12,7 @@ import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 const categorySchema = z.object({
   name: z.string().min(2, "Name is required"),
@@ -101,8 +102,8 @@ export default function ManageCategories() {
 
   return (
     <Layout>
-      <div className="space-y-8 h-[calc(100vh-6rem)] flex flex-col">
-        <div className="flex items-center justify-between flex-shrink-0">
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-heading font-bold text-foreground">Gestione Categorie</h1>
             <p className="text-muted-foreground">Aggiungi, modifica o elimina le categorie</p>
@@ -187,110 +188,112 @@ export default function ManageCategories() {
           </Dialog>
         </div>
 
-        <div className="border rounded-md flex-1 overflow-auto bg-card">
-          <Table>
-            <TableHeader className="sticky top-0 bg-card z-10 shadow-sm">
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Colore</TableHead>
-                <TableHead className="w-[100px] text-right">Azioni</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sortedCategories.map((category) => {
-                const isEditing = editingId === category.id;
+        <Card>
+          <CardHeader>
+            <CardTitle>Le Tue Categorie</CardTitle>
+            <CardDescription>Gestisci le tue categorie di spesa e entrata.</CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Colore</TableHead>
+                  <TableHead className="w-[100px] text-right">Azioni</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sortedCategories.map((category) => {
+                  const isEditing = editingId === category.id;
 
-                return (
-                  <TableRow key={category.id} data-testid={`row-category-${category.id}`}>
-                    <TableCell>
-                      {isEditing ? (
-                        <div className="flex items-center gap-3">
-                          {/* Show color preview next to input while editing? Or just keep color in color column. 
-                                 Plan said: Name edit -> Input. Color edit -> Input type=color.
-                                 Let's keep it simple.
-                             */}
-                          <Input
-                            value={editForm.name}
-                            onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                            className="h-8"
-                            autoFocus
-                          />
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-3">
-                          <div
-                            className="w-4 h-4 rounded-full flex-shrink-0"
-                            style={{ backgroundColor: category.color }}
-                          />
-                          <span className="font-medium">{category.name}</span>
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {isEditing ? (
-                        <Select
-                          value={editForm.type}
-                          onValueChange={(val: "income" | "expense") => setEditForm({ ...editForm, type: val })}
-                        >
-                          <SelectTrigger className="h-8 w-[120px]">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="income">Entrata</SelectItem>
-                            <SelectItem value="expense">Uscita</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <Badge variant={category.type === 'income' ? 'default' : 'secondary'} className={category.type === 'income' ? 'bg-emerald-500 hover:bg-emerald-600' : ''}>
-                          {category.type === 'income' ? 'Entrata' : 'Uscita'}
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {isEditing ? (
-                        <div className="flex items-center gap-2">
-                          <Input
-                            type="color"
-                            value={editForm.color}
-                            onChange={(e) => setEditForm({ ...editForm, color: e.target.value })}
-                            className="w-12 h-8 p-1"
-                          />
-                          <span className="text-xs text-muted-foreground">{editForm.color}</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                          <span className="font-mono text-xs">{category.color}</span>
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {isEditing ? (
-                        <div className="flex items-center justify-end gap-1">
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-600" onClick={() => saveEditing(category.id)}>
-                            <Check size={16} />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={cancelEditing}>
-                            <X size={16} />
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-end gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => startEditing(category)} data-testid={`button-edit-${category.id}`}>
-                            <Edit2 size={14} />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(category.id)} data-testid={`button-delete-${category.id}`}>
-                            <Trash2 size={14} />
-                          </Button>
-                        </div>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </div>
+                  return (
+                    <TableRow key={category.id} data-testid={`row-category-${category.id}`}>
+                      <TableCell>
+                        {isEditing ? (
+                          <div className="flex items-center gap-3">
+                            <Input
+                              value={editForm.name}
+                              onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                              className="h-8"
+                              autoFocus
+                            />
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-3">
+                            <div
+                              className="w-4 h-4 rounded-full flex-shrink-0"
+                              style={{ backgroundColor: category.color }}
+                            />
+                            <span className="font-medium">{category.name}</span>
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {isEditing ? (
+                          <Select
+                            value={editForm.type}
+                            onValueChange={(val: "income" | "expense") => setEditForm({ ...editForm, type: val })}
+                          >
+                            <SelectTrigger className="h-8 w-[120px]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="income">Entrata</SelectItem>
+                              <SelectItem value="expense">Uscita</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Badge variant={category.type === 'income' ? 'default' : 'secondary'} className={category.type === 'income' ? 'bg-emerald-500 hover:bg-emerald-600' : ''}>
+                            {category.type === 'income' ? 'Entrata' : 'Uscita'}
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {isEditing ? (
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="color"
+                              value={editForm.color}
+                              onChange={(e) => setEditForm({ ...editForm, color: e.target.value })}
+                              className="w-12 h-8 p-1"
+                            />
+                            <span className="text-xs text-muted-foreground">{editForm.color}</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                            <span className="font-mono text-xs">{category.color}</span>
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {isEditing ? (
+                          <div className="flex items-center justify-end gap-1">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-600" onClick={() => saveEditing(category.id)}>
+                              <Check size={16} />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={cancelEditing}>
+                              <X size={16} />
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-end gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => startEditing(category)} data-testid={`button-edit-${category.id}`}>
+                              <Edit2 size={14} />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(category.id)} data-testid={`button-delete-${category.id}`}>
+                              <Trash2 size={14} />
+                            </Button>
+                          </div>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       </div>
     </Layout>
   );
