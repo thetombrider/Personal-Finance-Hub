@@ -982,14 +982,14 @@ export async function registerRoutes(
       ]);
 
       // Initialize response structure
-      // budgetData: map of categoryId -> map of month (1-12) -> { baseline, planned, recurring, total, actual }
-      const budgetData: Record<number, Record<number, { baseline: number; planned: number; recurring: number; total: number; actual: number }>> = {};
+      // budgetData: map of categoryId -> map of month (1-12) -> { baseline, planned, recurring, total }
+      const budgetData: Record<number, Record<number, { baseline: number; planned: number; recurring: number; total: number }>> = {};
 
       // Initialize all categories and months with 0
       categories.forEach(cat => {
         budgetData[cat.id] = {};
         for (let m = 1; m <= 12; m++) {
-          budgetData[cat.id][m] = { baseline: 0, planned: 0, recurring: 0, total: 0, actual: 0 };
+          budgetData[cat.id][m] = { baseline: 0, planned: 0, recurring: 0, total: 0 };
         }
       });
 
@@ -1038,21 +1038,6 @@ export async function registerRoutes(
           cell.total = cell.baseline + cell.planned + cell.recurring;
         }
       }
-
-      // Fill Actuals from Transactions
-      const transactions = await storage.getTransactions((req.user as any).id);
-      transactions.forEach(tx => {
-        const date = new Date(tx.date);
-        if (date.getFullYear() === year) {
-          const m = date.getMonth() + 1;
-          if (budgetData[tx.categoryId] && budgetData[tx.categoryId][m]) {
-            // Note: Transactions are absolute amounts. We assume they are correctly categorized.
-            // Income categories -> Income txs, Expense categories -> Expense txs.
-            // We just sum the amount.
-            budgetData[tx.categoryId][m].actual += parseFloat(tx.amount.toString());
-          }
-        }
-      });
 
       res.json({
         categories,
