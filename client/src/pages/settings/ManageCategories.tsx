@@ -1,16 +1,17 @@
 import { useFinance, Category } from "@/context/FinanceContext";
 import Layout from "@/components/Layout";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, Edit2 } from "lucide-react";
+import { Plus, Trash2, Edit2, Check, X, Circle } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 
 const categorySchema = z.object({
   name: z.string().min(2, "Name is required"),
@@ -23,7 +24,14 @@ type CategoryFormValues = z.infer<typeof categorySchema>;
 export default function ManageCategories() {
   const { categories, addCategory, updateCategory, deleteCategory, isLoading } = useFinance();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  // Inline editing state
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [editForm, setEditForm] = useState<CategoryFormValues>({
+    name: "",
+    type: "expense",
+    color: "#3b82f6",
+  });
 
   const form = useForm<CategoryFormValues>({
     resolver: zodResolver(categorySchema),
@@ -35,27 +43,36 @@ export default function ManageCategories() {
   });
 
   const onSubmit = async (data: CategoryFormValues) => {
-    const submitData = {
-      ...data,
-    };
-    if (editingId) {
-      await updateCategory(editingId, submitData);
-    } else {
-      await addCategory(submitData);
-    }
+    await addCategory(data);
     setIsDialogOpen(false);
-    setEditingId(null);
     form.reset();
   };
 
-  const handleEdit = (category: Category) => {
+  const startEditing = (category: Category) => {
     setEditingId(category.id);
-    form.reset({
+    setEditForm({
       name: category.name,
       type: category.type,
       color: category.color,
     });
-    setIsDialogOpen(true);
+  };
+
+  const cancelEditing = () => {
+    setEditingId(null);
+  };
+
+  const saveEditing = async (id: number) => {
+    try {
+      // Basic validation
+      if (!editForm.name || editForm.name.length < 2) {
+        // Ideally should show error, for now just relying on not saving
+        return;
+      }
+      await updateCategory(id, editForm);
+      setEditingId(null);
+    } catch (error) {
+      console.error("Failed to update category", error);
+    }
   };
 
   const handleDelete = async (id: number) => {
@@ -63,45 +80,6 @@ export default function ManageCategories() {
       await deleteCategory(id);
     }
   };
-
-  const incomeCategories = categories.filter(c => c.type === 'income');
-  const expenseCategories = categories.filter(c => c.type === 'expense');
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(amount);
-  };
-
-  const CategoryList = ({ items, title }: { items: Category[], title: string }) => (
-    <div className="space-y-4">
-      <h3 className="font-heading font-semibold text-lg text-muted-foreground">{title}</h3>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {items.map((category) => (
-          <Card key={category.id} className="group hover:shadow-sm transition-all" data-testid={`card-category-${category.id}`}>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-4 h-4 rounded-full"
-                    style={{ backgroundColor: category.color }}
-                  />
-                  <span className="font-medium" data-testid={`text-category-name-${category.id}`}>{category.name}</span>
-                </div>
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(category)} data-testid={`button-edit-${category.id}`}>
-                    <Edit2 size={14} />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(category.id)} data-testid={`button-delete-${category.id}`}>
-                    <Trash2 size={14} />
-                  </Button>
-                </div>
-              </div>
-
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
 
   if (isLoading) {
     return (
@@ -113,10 +91,18 @@ export default function ManageCategories() {
     );
   }
 
+  // Sort categories by name naturally? Or type? Let's group by type or just list all.
+  // User asked for "one row x category", implying a unified list.
+  // I will sort by Type then Name for clarity.
+  const sortedCategories = [...categories].sort((a, b) => {
+    if (a.type !== b.type) return a.type.localeCompare(b.type);
+    return a.name.localeCompare(b.name);
+  });
+
   return (
     <Layout>
-      <div className="space-y-8">
-        <div className="flex items-center justify-between">
+      <div className="space-y-8 h-[calc(100vh-6rem)] flex flex-col">
+        <div className="flex items-center justify-between flex-shrink-0">
           <div>
             <h1 className="text-3xl font-heading font-bold text-foreground">Gestione Categorie</h1>
             <p className="text-muted-foreground">Aggiungi, modifica o elimina le categorie</p>
@@ -125,7 +111,6 @@ export default function ManageCategories() {
           <Dialog open={isDialogOpen} onOpenChange={(open) => {
             setIsDialogOpen(open);
             if (!open) {
-              setEditingId(null);
               form.reset({ name: "", type: "expense", color: "#3b82f6" });
             }
           }}>
@@ -136,7 +121,7 @@ export default function ManageCategories() {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>{editingId ? "Modifica Categoria" : "Nuova Categoria"}</DialogTitle>
+                <DialogTitle>Nuova Categoria</DialogTitle>
               </DialogHeader>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -194,7 +179,7 @@ export default function ManageCategories() {
                   </div>
 
                   <DialogFooter>
-                    <Button type="submit" data-testid="button-submit-category">{editingId ? "Salva Modifiche" : "Crea Categoria"}</Button>
+                    <Button type="submit" data-testid="button-submit-category">Crea Categoria</Button>
                   </DialogFooter>
                 </form>
               </Form>
@@ -202,8 +187,110 @@ export default function ManageCategories() {
           </Dialog>
         </div>
 
-        <CategoryList items={incomeCategories} title="Entrate" />
-        <CategoryList items={expenseCategories} title="Uscite" />
+        <div className="border rounded-md flex-1 overflow-auto bg-card">
+          <Table>
+            <TableHeader className="sticky top-0 bg-card z-10 shadow-sm">
+              <TableRow>
+                <TableHead className="w-[40%]">Nome</TableHead>
+                <TableHead className="w-[20%]">Tipo</TableHead>
+                <TableHead className="w-[20%]">Colore</TableHead>
+                <TableHead className="w-[20%] text-right">Azioni</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sortedCategories.map((category) => {
+                const isEditing = editingId === category.id;
+
+                return (
+                  <TableRow key={category.id} data-testid={`row-category-${category.id}`}>
+                    <TableCell>
+                      {isEditing ? (
+                        <div className="flex items-center gap-3">
+                          {/* Show color preview next to input while editing? Or just keep color in color column. 
+                                 Plan said: Name edit -> Input. Color edit -> Input type=color.
+                                 Let's keep it simple.
+                             */}
+                          <Input
+                            value={editForm.name}
+                            onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                            className="h-8"
+                            autoFocus
+                          />
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-3">
+                          <div
+                            className="w-4 h-4 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: category.color }}
+                          />
+                          <span className="font-medium">{category.name}</span>
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {isEditing ? (
+                        <Select
+                          value={editForm.type}
+                          onValueChange={(val: "income" | "expense") => setEditForm({ ...editForm, type: val })}
+                        >
+                          <SelectTrigger className="h-8 w-[120px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="income">Entrata</SelectItem>
+                            <SelectItem value="expense">Uscita</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Badge variant={category.type === 'income' ? 'default' : 'secondary'} className={category.type === 'income' ? 'bg-emerald-500 hover:bg-emerald-600' : ''}>
+                          {category.type === 'income' ? 'Entrata' : 'Uscita'}
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {isEditing ? (
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="color"
+                            value={editForm.color}
+                            onChange={(e) => setEditForm({ ...editForm, color: e.target.value })}
+                            className="w-12 h-8 p-1"
+                          />
+                          <span className="text-xs text-muted-foreground">{editForm.color}</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                          <span className="font-mono text-xs">{category.color}</span>
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {isEditing ? (
+                        <div className="flex items-center justify-end gap-1">
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-600" onClick={() => saveEditing(category.id)}>
+                            <Check size={16} />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={cancelEditing}>
+                            <X size={16} />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-end gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => startEditing(category)} data-testid={`button-edit-${category.id}`}>
+                            <Edit2 size={14} />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(category.id)} data-testid={`button-delete-${category.id}`}>
+                            <Trash2 size={14} />
+                          </Button>
+                        </div>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
       </div>
     </Layout>
   );
