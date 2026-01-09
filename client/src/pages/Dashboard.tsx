@@ -1063,7 +1063,7 @@ export default function Dashboard() {
 
       {/* Account Detail Modal */}
       <Dialog open={detailModal !== null} onOpenChange={(open) => !open && setDetailModal(null)}>
-        <DialogContent className={detailModal === 'total' ? "max-w-3xl w-[95%] md:w-full max-h-[85vh] overflow-hidden flex flex-col" : "max-w-md w-[95%] md:w-full"}>
+        <DialogContent className="max-w-3xl w-[95%] md:w-full max-h-[85vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>
               {detailModal === 'total' && 'Tutti i Conti'}
