@@ -236,13 +236,27 @@ export class ReportService {
 
         // Calculate actuals
         const categoryTransactions = monthTransactions.filter(t => t.categoryId === category.id);
-        const actual = categoryTransactions.reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
+
+        // Calculate net amount based on category type
+        // If Category is INCOME: Net = Sum(Income Txs) - Sum(Expense Txs)
+        // If Category is EXPENSE: Net = Sum(Expense Txs) - Sum(Income Txs)
+        const actual = categoryTransactions.reduce((sum, t) => {
+          const amount = parseFloat(t.amount.toString());
+          if (category.type === 'income') {
+            return sum + (t.type === 'income' ? amount : -amount);
+          } else {
+            return sum + (t.type === 'expense' ? amount : -amount);
+          }
+        }, 0);
 
         const budget = budgetItem ? budgetItem.total : 0;
         const isIncome = category.type === 'income';
 
         // Difference:
-        // Always calculated as Actual - Budget.
+        // isIncome ? Actual - Budget : Budget - Actual?
+        // Original logic was always Actual - Budget.
+        // Let's stick to user request: "Actual" column is what we are fixing.
+        // Difference logic remains: Actual - Budget.
         const difference = actual - budget;
 
         return {
