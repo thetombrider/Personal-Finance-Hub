@@ -797,10 +797,25 @@ export default function ImportTransactions() {
                   {/* Dynamic Mapping Fields based on Mode */}
                   {importMode === 'transactions' && (
                     <>
+                      <div className="col-span-full flex items-center space-x-2 mb-4 bg-muted/30 p-3 rounded-md">
+                        <Switch id="dual-cols" checked={useDualAmountColumns} onCheckedChange={setUseDualAmountColumns} />
+                        <Label htmlFor="dual-cols" className="cursor-pointer">Use 2 columns for Amount (Income/Expense)</Label>
+                      </div>
+
                       <div className="space-y-2"><Label>Date *</Label><Select value={mapping.date} onValueChange={v => setMapping({ ...mapping, date: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
                       <div className="space-y-2"><Label>Description *</Label><Select value={mapping.description} onValueChange={v => setMapping({ ...mapping, description: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
-                      <div className="space-y-2"><Label>Amount *</Label><Select value={mapping.amount} onValueChange={v => setMapping({ ...mapping, amount: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
-                      <div className="space-y-2"><Label>Type Column (Optional)</Label><Select value={mapping.type} onValueChange={v => setMapping({ ...mapping, type: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">-- Detect by Sign --</SelectItem>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
+
+                      {!useDualAmountColumns ? (
+                        <>
+                          <div className="space-y-2"><Label>Amount *</Label><Select value={mapping.amount} onValueChange={v => setMapping({ ...mapping, amount: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
+                          <div className="space-y-2"><Label>Type Column (Optional)</Label><Select value={mapping.type} onValueChange={v => setMapping({ ...mapping, type: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">-- Detect by Sign --</SelectItem>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="space-y-2"><Label>Income Amount *</Label><Select value={mapping.incomeAmount} onValueChange={v => setMapping({ ...mapping, incomeAmount: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
+                          <div className="space-y-2"><Label>Expense Amount *</Label><Select value={mapping.expenseAmount} onValueChange={v => setMapping({ ...mapping, expenseAmount: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
+                        </>
+                      )}
                       <div className="space-y-2"><Label>Account Column (Optional)</Label><Select value={mapping.account} onValueChange={v => setMapping({ ...mapping, account: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">-- Use Fallback --</SelectItem>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
                       <div className="space-y-2"><Label>Category Column (Optional)</Label><Select value={mapping.category} onValueChange={v => setMapping({ ...mapping, category: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">-- Default Category --</SelectItem>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
                     </>
