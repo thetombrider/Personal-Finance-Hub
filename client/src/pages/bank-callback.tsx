@@ -166,36 +166,46 @@ export default function BankCallbackPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6 max-h-[80vh] overflow-y-auto">
-                    {bankAccounts.map((account) => (
-                        <div key={account.id} className="flex flex-col gap-2 p-4 border rounded-lg bg-muted/20">
-                            <div className="font-medium flex justify-between items-center">
-                                <span>{account.name}</span>
-                                {account.currency && <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">{account.currency}</span>}
-                            </div>
-                            {account.iban && <div className="text-xs text-muted-foreground font-mono">{account.iban}</div>}
+                    {bankAccounts.map((account) => {
+                        const selectedInOtherRows = Object.entries(mappings)
+                            .filter(([accId, val]) => accId !== account.id && val !== "new" && val !== "skip")
+                            .map(([, val]) => val);
 
-                            <div className="flex items-center gap-4 mt-2">
-                                <span className="text-sm text-muted-foreground whitespace-nowrap w-16">Map to:</span>
-                                <Select
-                                    value={mappings[account.id] || "new"}
-                                    onValueChange={(val) => setMappings({ ...mappings, [account.id]: val })}
-                                >
-                                    <SelectTrigger className="w-full">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="new">Create New Account</SelectItem>
-                                        <SelectItem value="skip">Do Not Import</SelectItem>
-                                        {localAccounts?.map((local) => (
-                                            <SelectItem key={local.id} value={local.id.toString()}>
-                                                Link to: {local.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                        const availableLocalAccounts = localAccounts?.filter(local =>
+                            !selectedInOtherRows.includes(local.id.toString())
+                        );
+
+                        return (
+                            <div key={account.id} className="flex flex-col gap-2 p-4 border rounded-lg bg-muted/20">
+                                <div className="font-medium flex justify-between items-center">
+                                    <span>{account.name}</span>
+                                    {account.currency && <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">{account.currency}</span>}
+                                </div>
+                                {account.iban && <div className="text-xs text-muted-foreground font-mono">{account.iban}</div>}
+
+                                <div className="flex items-center gap-4 mt-2">
+                                    <span className="text-sm text-muted-foreground whitespace-nowrap w-16">Map to:</span>
+                                    <Select
+                                        value={mappings[account.id] || "new"}
+                                        onValueChange={(val) => setMappings({ ...mappings, [account.id]: val })}
+                                    >
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="new">Create New Account</SelectItem>
+                                            <SelectItem value="skip">Do Not Import</SelectItem>
+                                            {availableLocalAccounts?.map((local) => (
+                                                <SelectItem key={local.id} value={local.id.toString()}>
+                                                    Link to: {local.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
 
                     <div className="flex justify-end gap-2 pt-4">
                         <Button variant="outline" onClick={() => setLocation("/accounts")} disabled={processing}>
