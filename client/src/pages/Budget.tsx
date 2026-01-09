@@ -22,14 +22,14 @@ import { RecurringExpensesMonitoring } from "@/components/budget/RecurringExpens
 
 interface YearlyBudgetData {
     categories: any[];
-    budgetData: Record<number, Record<number, { baseline: number; planned: number; recurring: number; total: number }>>;
+    budgetData: Record<number, Record<number, { baseline: number; planned: number; recurring: number; total: number; actual: number }>>;
     plannedExpenses: PlannedExpense[];
     recurringExpenses: RecurringExpense[];
 }
 
 export default function Budget() {
     const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
-    const [viewHalf, setViewHalf] = useState<'first' | 'second'>('first');
+    const [viewHalf, setViewHalf] = useState<'first' | 'second' | 'year'>('first');
     const queryClient = useQueryClient();
     const { toast } = useToast();
     const { accounts, categories } = useFinance();
@@ -49,7 +49,7 @@ export default function Budget() {
         }
     });
 
-    const monthRange: [number, number] = viewHalf === 'first' ? [0, 6] : [6, 12];
+    const monthRange: [number, number] = viewHalf === 'first' ? [0, 6] : viewHalf === 'second' ? [6, 12] : [0, 12];
 
     // Mutations
     const updateBaselineMutation = useMutation({
@@ -161,6 +161,14 @@ export default function Budget() {
                             >
                                 Lug - Dic
                             </Button>
+                            <Button
+                                variant={viewHalf === 'year' ? 'secondary' : 'ghost'}
+                                size="sm"
+                                className="text-xs"
+                                onClick={() => setViewHalf('year')}
+                            >
+                                Tutto l'anno
+                            </Button>
                         </div>
                         <div className="flex items-center gap-4 bg-card p-2 rounded-lg border shadow-sm">
                             <Button variant="ghost" size="icon" onClick={() => setCurrentYear(currentYear - 1)}>
@@ -187,15 +195,17 @@ export default function Budget() {
                         />
                     </section>
 
-                    {/* 2. Baseline Table (Editable) */}
-                    <section>
-                        <BaselineTable
-                            categories={data.categories}
-                            budgetData={data.budgetData}
-                            onUpdateBaseline={handleUpdateBaseline}
-                            monthRange={monthRange}
-                        />
-                    </section>
+                    {/* 2. Baseline Table (Editable) - Only visible when not in Year mode */}
+                    {viewHalf !== 'year' && (
+                        <section>
+                            <BaselineTable
+                                categories={data.categories}
+                                budgetData={data.budgetData}
+                                onUpdateBaseline={handleUpdateBaseline}
+                                monthRange={monthRange}
+                            />
+                        </section>
+                    )}
 
                     {/* 3. Recurring & Planned Tables */}
                     <div className="space-y-8">
