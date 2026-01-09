@@ -843,7 +843,7 @@ export default function Transactions() {
           )}
         </Card>
 
-        <Card className="flex-1 flex flex-col min-h-0">
+        <Card className="flex-1 flex flex-col min-h-0 overflow-hidden">
           <div className="flex-1 overflow-auto relative">
             <Table>
               <TableHeader className="sticky top-0 z-10 bg-card">

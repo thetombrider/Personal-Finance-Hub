@@ -553,7 +553,7 @@ export default function Dashboard() {
         </div>
 
         {/* Stats Grid - Asset Breakdown */}
-        <div className="grid gap-4 md:grid-cols-6">
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
           <Card
             className="relative overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
             onClick={() => setDetailModal('total')}
@@ -561,12 +561,14 @@ export default function Dashboard() {
           >
             <div className="absolute right-0 top-0 h-full w-1/2 bg-gradient-to-l from-primary/5 to-transparent" />
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Balance</CardTitle>
+              <CardTitle className="text-sm font-medium whitespace-nowrap">Total Balance</CardTitle>
               <Wallet className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold font-heading">{displayCurrency(totalBalance)}</div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <div className="text-2xl font-bold font-heading truncate" title={displayCurrency(totalBalance)}>
+                {displayCurrency(totalBalance)}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1 truncate">
                 Across {accounts.length} accounts
               </p>
             </CardContent>
@@ -579,12 +581,12 @@ export default function Dashboard() {
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Cash</CardTitle>
-              <div className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+              <div className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
                 <Wallet className="h-4 w-4 text-blue-600 dark:text-blue-400" />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold font-heading text-blue-600 dark:text-blue-400">
+              <div className="text-2xl font-bold font-heading text-blue-600 dark:text-blue-400 truncate" title={displayCurrency(totalCash)}>
                 {displayCurrency(totalCash)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">Cash & Checking</p>
@@ -598,12 +600,12 @@ export default function Dashboard() {
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Savings</CardTitle>
-              <div className="h-8 w-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+              <div className="h-8 w-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
                 <PiggyBank className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold font-heading text-emerald-600 dark:text-emerald-400">
+              <div className="text-2xl font-bold font-heading text-emerald-600 dark:text-emerald-400 truncate" title={displayCurrency(totalSavings)}>
                 {displayCurrency(totalSavings)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">Savings accounts</p>
@@ -616,21 +618,25 @@ export default function Dashboard() {
             data-testid="card-total-investments"
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Investments</CardTitle>
-              <div className="h-8 w-8 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
+              <CardTitle className="text-sm font-medium">Investments</CardTitle>
+              <div className="h-8 w-8 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center shrink-0">
                 <TrendingUp className="h-4 w-4 text-violet-600 dark:text-violet-400" />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col">
-                <div className="text-2xl font-bold font-heading text-violet-600 dark:text-violet-400">
-                  {displayCurrency(portfolioSummary?.totalInvested || 0)}
+              <div className="flex flex-col gap-1">
+                <div>
+                  <div className="text-lg font-bold font-heading text-violet-600 dark:text-violet-400 truncate" title={displayCurrency(portfolioSummary?.totalInvested || 0)}>
+                    {displayCurrency(portfolioSummary?.totalInvested || 0)}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Investito</p>
                 </div>
-                <p className="text-xs text-muted-foreground">Totale Investito</p>
-                <div className="text-lg font-bold font-heading text-violet-500 dark:text-violet-300 mt-2">
-                  {displayCurrency(portfolioSummary?.totalCurrentValue || 0)}
+                <div>
+                  <div className="text-lg font-bold font-heading text-violet-500 dark:text-violet-300 truncate" title={displayCurrency(portfolioSummary?.totalCurrentValue || 0)}>
+                    {displayCurrency(portfolioSummary?.totalCurrentValue || 0)}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Attuale</p>
                 </div>
-                <p className="text-xs text-muted-foreground">Valore Attuale</p>
               </div>
             </CardContent>
           </Card>
@@ -640,24 +646,24 @@ export default function Dashboard() {
               <CardTitle className="text-sm font-medium">Monthly Flow</CardTitle>
               <Activity className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <ArrowUpRight className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                  <span className="text-xs text-muted-foreground">Income</span>
+            <CardContent className="space-y-4 pt-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <ArrowUpRight className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                  <span>Income</span>
                 </div>
-                <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400 truncate" title={displayCurrency(globalMonthlyStats.income)}>
                   +{displayCurrency(globalMonthlyStats.income)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <ArrowDownRight className="h-4 w-4 text-rose-600 dark:text-rose-400" />
-                  <span className="text-xs text-muted-foreground">Expenses</span>
                 </div>
-                <span className="text-sm font-bold text-rose-600 dark:text-rose-400">
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <ArrowDownRight className="h-3 w-3 text-rose-600 dark:text-rose-400" />
+                  <span>Expenses</span>
+                </div>
+                <div className="text-lg font-bold text-rose-600 dark:text-rose-400 truncate" title={displayCurrency(globalMonthlyStats.expense)}>
                   -{displayCurrency(globalMonthlyStats.expense)}
-                </span>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -665,24 +671,27 @@ export default function Dashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Carte di Credito</CardTitle>
-              <div className="h-8 w-8 rounded-full bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center">
+              <div className="h-8 w-8 rounded-full bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center shrink-0">
                 <CreditCard className="h-4 w-4 text-rose-600 dark:text-rose-400" />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold font-heading text-rose-600 dark:text-rose-400">
+              <div className="text-2xl font-bold font-heading text-rose-600 dark:text-rose-400 truncate" title={displayCurrency(Math.abs(totalCredit))}>
                 {displayCurrency(Math.abs(totalCredit))}
               </div>
               {creditUsageThisMonth && creditUsageThisMonth.limit > 0 ? (
                 <div className="mt-2 space-y-1">
                   <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>Speso questo mese</span>
-                    <span>{displayCurrency(creditUsageThisMonth.spent)} / {displayCurrency(creditUsageThisMonth.limit)}</span>
+                    <span>Speso</span>
+                    <span className="truncate ml-2">{displayCurrency(creditUsageThisMonth.spent)}</span>
                   </div>
                   <Progress
                     value={Math.min(creditUsageThisMonth.percentage, 100)}
                     className={creditUsageThisMonth.percentage > 80 ? "bg-rose-200" : ""}
                   />
+                  <div className="text-[10px] text-right text-muted-foreground">
+                    di {displayCurrency(creditUsageThisMonth.limit)}
+                  </div>
                 </div>
               ) : (
                 <p className="text-xs text-muted-foreground mt-1">Debito totale</p>
