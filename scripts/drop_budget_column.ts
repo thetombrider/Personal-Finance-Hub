@@ -16,7 +16,7 @@ async function main() {
             console.log("Column 'budget' does not exist in 'categories'. Nothing to clean up.");
         } else {
             console.log("Column 'budget' found. Removing it...");
-            await db.execute(sql`ALTER TABLE categories DROP COLUMN budget;`);
+            await db.execute(sql`ALTER TABLE categories DROP COLUMN IF EXISTS budget CASCADE;`);
             console.log("Column 'budget' successfully removed.");
         }
         process.exit(0);

@@ -300,7 +300,7 @@ export default function ImportTransactions() {
     if (!value) return format(new Date(), "yyyy-MM-dd'T'HH:mm:ss");
 
     // Clean value: trim and remove surrounding quotes (double or single)
-    const cleanValue = value.trim().replace(/^["']+|["']+$/g, '');
+    const cleanValue = String(value).trim().replace(/^["']+|["']+$/g, '');
 
     const parts = cleanValue.split(/[-/.]/);
     if (parts.length === 3) {
