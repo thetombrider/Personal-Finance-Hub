@@ -67,7 +67,7 @@ export default function Reports() {
 
     return (
         <Layout>
-            <div className="space-y-6">
+            <div className="flex flex-col gap-6 h-[calc(100vh-6rem)] md:h-[calc(100vh-4rem)]">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Reports</h1>
                     <p className="text-muted-foreground mt-2">
@@ -75,17 +75,17 @@ export default function Reports() {
                     </p>
                 </div>
 
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6 flex flex-col flex-1 min-h-0">
                     <TabsList>
                         <TabsTrigger value="income-statement">Conto Economico</TabsTrigger>
                         <TabsTrigger value="balance-sheet">Stato Patrimoniale</TabsTrigger>
                     </TabsList>
 
-                    <TabsContent value="income-statement" className="space-y-6">
+                    <TabsContent value="income-statement" className="space-y-6 flex-1 overflow-auto min-h-0 pr-4">
                         <IncomeStatementView />
                     </TabsContent>
 
-                    <TabsContent value="balance-sheet" className="space-y-6">
+                    <TabsContent value="balance-sheet" className="space-y-6 flex-1 overflow-auto min-h-0 pr-4">
                         <BalanceSheetView />
                     </TabsContent>
                 </Tabs>

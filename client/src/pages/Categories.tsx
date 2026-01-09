@@ -96,13 +96,13 @@ export default function Categories() {
 
   return (
     <Layout>
-      <div className="space-y-6">
+      <div className="flex flex-col gap-6 h-[calc(100vh-6rem)] md:h-[calc(100vh-4rem)]">
         <div>
           <h1 className="text-3xl font-heading font-bold text-foreground">Categories</h1>
           <p className="text-muted-foreground">Analisi del flusso per categoria</p>
         </div>
 
-        <Card>
+        <Card className="flex-1 flex flex-col min-h-0">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
@@ -149,8 +149,8 @@ export default function Categories() {
               </div>
             </div>
           </CardHeader>
-          <CardContent className="p-0">
-            <ScrollArea className="w-full">
+          <CardContent className="p-0 flex-1 overflow-hidden relative">
+            <ScrollArea className="w-full h-full">
               <div className="w-full">
                 <Table>
                   <TableHeader>

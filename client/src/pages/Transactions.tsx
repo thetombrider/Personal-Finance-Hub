@@ -377,7 +377,7 @@ export default function Transactions() {
 
   return (
     <Layout>
-      <div className="space-y-6">
+      <div className="flex flex-col gap-6 h-[calc(100vh-6rem)] md:h-[calc(100vh-4rem)]">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-heading font-bold text-foreground">Transactions</h1>
@@ -843,161 +843,163 @@ export default function Transactions() {
           )}
         </Card>
 
-        <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[120px]">
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      checked={allPageSelected ? true : somePageSelected ? "indeterminate" : false}
-                      onCheckedChange={toggleAll}
-                      aria-label="Select all on page"
-                      data-testid="checkbox-select-all"
-                    />
-                    {sortedTransactions.length > 0 && (hasActiveFilters || sortedTransactions.length > paginatedTransactions.length) && (
-                      <Button
-                        variant={allFilteredSelected ? "secondary" : "ghost"}
-                        size="sm"
-                        className="h-6 px-2 text-xs"
-                        onClick={toggleAllFiltered}
-                        data-testid="button-select-all-filtered"
-                      >
-                        Tutte ({sortedTransactions.length})
-                      </Button>
-                    )}
-                  </div>
-                </TableHead>
-                <TableHead
-                  className="cursor-pointer hover:bg-muted/50 transition-colors select-none"
-                  onClick={() => handleSort('date')}
-                  data-testid="header-date"
-                >
-                  <div className="flex items-center">
-                    Date
-                    <SortIcon field="date" />
-                  </div>
-                </TableHead>
-                <TableHead
-                  className="cursor-pointer hover:bg-muted/50 transition-colors select-none"
-                  onClick={() => handleSort('description')}
-                  data-testid="header-description"
-                >
-                  <div className="flex items-center">
-                    Description
-                    <SortIcon field="description" />
-                  </div>
-                </TableHead>
-                <TableHead
-                  className="cursor-pointer hover:bg-muted/50 transition-colors select-none"
-                  onClick={() => handleSort('category')}
-                  data-testid="header-category"
-                >
-                  <div className="flex items-center">
-                    Category
-                    <SortIcon field="category" />
-                  </div>
-                </TableHead>
-                <TableHead
-                  className="cursor-pointer hover:bg-muted/50 transition-colors select-none"
-                  onClick={() => handleSort('account')}
-                  data-testid="header-account"
-                >
-                  <div className="flex items-center">
-                    Account
-                    <SortIcon field="account" />
-                  </div>
-                </TableHead>
-                <TableHead
-                  className="text-right cursor-pointer hover:bg-muted/50 transition-colors select-none"
-                  onClick={() => handleSort('amount')}
-                  data-testid="header-amount"
-                >
-                  <div className="flex items-center justify-end">
-                    Amount
-                    <SortIcon field="amount" />
-                  </div>
-                </TableHead>
-                <TableHead className="w-[100px]"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedTransactions.length === 0 ? (
+        <Card className="flex-1 flex flex-col min-h-0">
+          <div className="flex-1 overflow-auto relative">
+            <Table>
+              <TableHeader className="sticky top-0 z-10 bg-card">
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                    No transactions yet. Add one to get started.
-                  </TableCell>
+                  <TableHead className="w-[120px]">
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        checked={allPageSelected ? true : somePageSelected ? "indeterminate" : false}
+                        onCheckedChange={toggleAll}
+                        aria-label="Select all on page"
+                        data-testid="checkbox-select-all"
+                      />
+                      {sortedTransactions.length > 0 && (hasActiveFilters || sortedTransactions.length > paginatedTransactions.length) && (
+                        <Button
+                          variant={allFilteredSelected ? "secondary" : "ghost"}
+                          size="sm"
+                          className="h-6 px-2 text-xs"
+                          onClick={toggleAllFiltered}
+                          data-testid="button-select-all-filtered"
+                        >
+                          Tutte ({sortedTransactions.length})
+                        </Button>
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer hover:bg-muted/50 transition-colors select-none"
+                    onClick={() => handleSort('date')}
+                    data-testid="header-date"
+                  >
+                    <div className="flex items-center">
+                      Date
+                      <SortIcon field="date" />
+                    </div>
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer hover:bg-muted/50 transition-colors select-none"
+                    onClick={() => handleSort('description')}
+                    data-testid="header-description"
+                  >
+                    <div className="flex items-center">
+                      Description
+                      <SortIcon field="description" />
+                    </div>
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer hover:bg-muted/50 transition-colors select-none"
+                    onClick={() => handleSort('category')}
+                    data-testid="header-category"
+                  >
+                    <div className="flex items-center">
+                      Category
+                      <SortIcon field="category" />
+                    </div>
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer hover:bg-muted/50 transition-colors select-none"
+                    onClick={() => handleSort('account')}
+                    data-testid="header-account"
+                  >
+                    <div className="flex items-center">
+                      Account
+                      <SortIcon field="account" />
+                    </div>
+                  </TableHead>
+                  <TableHead
+                    className="text-right cursor-pointer hover:bg-muted/50 transition-colors select-none"
+                    onClick={() => handleSort('amount')}
+                    data-testid="header-amount"
+                  >
+                    <div className="flex items-center justify-end">
+                      Amount
+                      <SortIcon field="amount" />
+                    </div>
+                  </TableHead>
+                  <TableHead className="w-[100px]"></TableHead>
                 </TableRow>
-              ) : (
-                paginatedTransactions.map((transaction) => {
-                  const category = getCategory(transaction.categoryId);
-                  const isSelected = selectedIds.has(transaction.id);
-                  return (
-                    <TableRow key={transaction.id} className={cn("group", isSelected && "bg-muted/50")} data-testid={`row-transaction-${transaction.id}`}>
-                      <TableCell>
-                        <Checkbox
-                          checked={isSelected}
-                          onCheckedChange={() => toggleSelection(transaction.id)}
-                          aria-label="Select row"
-                          data-testid={`checkbox-transaction-${transaction.id}`}
-                        />
-                      </TableCell>
-                      <TableCell data-testid={`text-date-${transaction.id}`}>{format(new Date(transaction.date), "MMM d, yyyy")}</TableCell>
-                      <TableCell className="font-medium" data-testid={`text-description-${transaction.id}`}>
-                        <div className="flex items-center gap-2">
-                          {transaction.description}
-                          {transaction.externalId && (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Landmark size={14} className="text-blue-500/70" />
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Transazione riconciliata con la banca</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
-                          {matchedTransactions.has(transaction.id) && (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <CheckCircle2 size={14} className="text-green-500/70" />
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Riconciliata con spesa ricorrente</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: category?.color || '#ccc' }} />
-                          {category?.name || 'Unknown'}
-                        </div>
-                      </TableCell>
-                      <TableCell data-testid={`text-account-${transaction.id}`}>{getAccountName(transaction.accountId)}</TableCell>
-                      <TableCell className={cn("text-right font-medium", transaction.type === 'income' ? 'text-emerald-600' : 'text-foreground')} data-testid={`text-amount-${transaction.id}`}>
-                        {transaction.type === 'income' ? '+' : ''}{formatCurrency(parseFloat(transaction.amount))}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(transaction)} data-testid={`button-edit-${transaction.id}`}>
-                            <Edit2 size={14} />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(transaction.id)} data-testid={`button-delete-${transaction.id}`}>
-                            <Trash2 size={14} />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {paginatedTransactions.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                      No transactions yet. Add one to get started.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  paginatedTransactions.map((transaction) => {
+                    const category = getCategory(transaction.categoryId);
+                    const isSelected = selectedIds.has(transaction.id);
+                    return (
+                      <TableRow key={transaction.id} className={cn("group", isSelected && "bg-muted/50")} data-testid={`row-transaction-${transaction.id}`}>
+                        <TableCell>
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => toggleSelection(transaction.id)}
+                            aria-label="Select row"
+                            data-testid={`checkbox-transaction-${transaction.id}`}
+                          />
+                        </TableCell>
+                        <TableCell data-testid={`text-date-${transaction.id}`}>{format(new Date(transaction.date), "MMM d, yyyy")}</TableCell>
+                        <TableCell className="font-medium" data-testid={`text-description-${transaction.id}`}>
+                          <div className="flex items-center gap-2">
+                            {transaction.description}
+                            {transaction.externalId && (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Landmark size={14} className="text-blue-500/70" />
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Transazione riconciliata con la banca</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            )}
+                            {matchedTransactions.has(transaction.id) && (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <CheckCircle2 size={14} className="text-green-500/70" />
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Riconciliata con spesa ricorrente</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: category?.color || '#ccc' }} />
+                            {category?.name || 'Unknown'}
+                          </div>
+                        </TableCell>
+                        <TableCell data-testid={`text-account-${transaction.id}`}>{getAccountName(transaction.accountId)}</TableCell>
+                        <TableCell className={cn("text-right font-medium", transaction.type === 'income' ? 'text-emerald-600' : 'text-foreground')} data-testid={`text-amount-${transaction.id}`}>
+                          {transaction.type === 'income' ? '+' : ''}{formatCurrency(parseFloat(transaction.amount))}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(transaction)} data-testid={`button-edit-${transaction.id}`}>
+                              <Edit2 size={14} />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(transaction.id)} data-testid={`button-delete-${transaction.id}`}>
+                              <Trash2 size={14} />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </div>
 
           {totalPages > 1 && (
             <div className="flex items-center justify-between px-4 py-3 border-t">

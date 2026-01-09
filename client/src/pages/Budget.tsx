@@ -135,7 +135,7 @@ export default function Budget() {
 
     return (
         <Layout>
-            <div className="space-y-8 pb-10">
+            <div className="flex flex-col gap-8 pb-4 h-[calc(100vh-6rem)] md:h-[calc(100vh-4rem)]">
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
@@ -177,7 +177,7 @@ export default function Budget() {
                 </div>
 
                 {/* Main Content */}
-                <div className="space-y-8">
+                <div className="flex-1 overflow-auto pr-4 space-y-8">
                     {/* 1. Summary Table (Read Only) */}
                     <section>
                         <SummaryTable
