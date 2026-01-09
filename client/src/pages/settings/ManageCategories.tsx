@@ -277,7 +277,7 @@ export default function ManageCategories() {
                             </Button>
                           </div>
                         ) : (
-                          <div className="flex items-center justify-end gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                          <div className="flex items-center justify-end gap-2">
                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => startEditing(category)} data-testid={`button-edit-${category.id}`}>
                               <Edit2 size={14} />
                             </Button>
