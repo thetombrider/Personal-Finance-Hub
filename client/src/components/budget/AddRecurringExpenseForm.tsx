@@ -114,7 +114,7 @@ export function AddRecurringExpenseForm({ onSuccess, categories, accounts, initi
                     <SelectTrigger>
                         <SelectValue placeholder="Seleziona categoria" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="max-h-[200px]">
                         {categories.map(cat => (
                             <SelectItem key={cat.id} value={cat.id.toString()}>
                                 <div className="flex items-center gap-2">
@@ -133,7 +133,7 @@ export function AddRecurringExpenseForm({ onSuccess, categories, accounts, initi
                     <SelectTrigger>
                         <SelectValue placeholder="Seleziona conto" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="max-h-[200px]">
                         {accounts.map(acc => (
                             <SelectItem key={acc.id} value={acc.id.toString()}>{acc.name}</SelectItem>
                         ))}

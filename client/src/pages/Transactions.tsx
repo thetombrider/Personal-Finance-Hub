@@ -490,7 +490,7 @@ export default function Transactions() {
                                   <SelectValue placeholder="Select account" />
                                 </SelectTrigger>
                               </FormControl>
-                              <SelectContent>
+                              <SelectContent className="max-h-[200px]">
                                 {accounts.map(acc => (
                                   <SelectItem key={acc.id} value={acc.id.toString()}>{acc.name}</SelectItem>
                                 ))}
@@ -512,7 +512,7 @@ export default function Transactions() {
                                   <SelectValue placeholder="Select category" />
                                 </SelectTrigger>
                               </FormControl>
-                              <SelectContent>
+                              <SelectContent className="max-h-[200px]">
                                 {categories.filter(c => c.type === form.watch("type")).map(cat => (
                                   <SelectItem key={cat.id} value={cat.id.toString()}>{cat.name}</SelectItem>
                                 ))}
@@ -633,7 +633,7 @@ export default function Transactions() {
                                   <SelectValue placeholder="Seleziona conto" />
                                 </SelectTrigger>
                               </FormControl>
-                              <SelectContent>
+                              <SelectContent className="max-h-[200px]">
                                 {accounts.map(acc => (
                                   <SelectItem key={acc.id} value={acc.id.toString()}>{acc.name}</SelectItem>
                                 ))}
@@ -655,7 +655,7 @@ export default function Transactions() {
                                   <SelectValue placeholder="Seleziona conto" />
                                 </SelectTrigger>
                               </FormControl>
-                              <SelectContent>
+                              <SelectContent className="max-h-[200px]">
                                 {accounts.map(acc => (
                                   <SelectItem key={acc.id} value={acc.id.toString()}>{acc.name}</SelectItem>
                                 ))}
@@ -802,7 +802,7 @@ export default function Transactions() {
                 <SelectTrigger data-testid="select-filter-account">
                   <SelectValue placeholder="Tutti i conti" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-h-[200px]">
                   <SelectItem value="all">Tutti i conti</SelectItem>
                   {accounts.map(acc => (
                     <SelectItem key={acc.id} value={acc.id.toString()}>{acc.name}</SelectItem>
@@ -818,7 +818,7 @@ export default function Transactions() {
                 <SelectTrigger data-testid="select-filter-category">
                   <SelectValue placeholder="Tutte le categorie" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-h-[200px]">
                   <SelectItem value="all">Tutte le categorie</SelectItem>
                   {categories.map(cat => (
                     <SelectItem key={cat.id} value={cat.id.toString()}>{cat.name}</SelectItem>

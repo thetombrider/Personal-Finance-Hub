@@ -103,7 +103,7 @@ export function AddPlannedExpenseForm({ onSuccess, categories, year, initialData
                     <SelectTrigger>
                         <SelectValue placeholder="Seleziona categoria" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="max-h-[200px]">
                         {categories.map(cat => (
                             <SelectItem key={cat.id} value={cat.id.toString()}>
                                 <div className="flex items-center gap-2">

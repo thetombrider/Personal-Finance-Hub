@@ -150,7 +150,7 @@ export function ImportedTransactions({ accountId, isOpen, onOpenChange }: Import
                                                         <SelectTrigger className="h-8 w-full">
                                                             <SelectValue placeholder="Select Category" />
                                                         </SelectTrigger>
-                                                        <SelectContent>
+                                                        <SelectContent className="max-h-[200px]">
                                                             {categories.map(c => (
                                                                 <SelectItem key={c.id} value={c.id.toString()}>
                                                                     {c.name}
