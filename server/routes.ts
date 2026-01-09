@@ -942,7 +942,7 @@ export async function registerRoutes(
       if (
         !Number.isInteger(year) ||
         !Number.isInteger(month) ||
-        month < 1 ||
+        month < 0 ||
         month > 12 ||
         year < 1970 ||
         year > currentYear + 1

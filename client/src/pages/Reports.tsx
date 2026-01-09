@@ -107,7 +107,13 @@ function IncomeStatementView() {
         }
     });
 
-    const months = Array.from({ length: 12 }, (_, i) => i + 1);
+    const months = [
+        { value: 0, label: "Tutto l'anno" },
+        ...Array.from({ length: 12 }, (_, i) => ({
+            value: i + 1,
+            label: format(new Date(year, i), "MMMM", { locale: it }).charAt(0).toUpperCase() + format(new Date(year, i), "MMMM", { locale: it }).slice(1)
+        }))
+    ];
     const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
 
     if (isLoading) {
@@ -125,18 +131,22 @@ function IncomeStatementView() {
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                     <div className="space-y-1">
-                        <CardTitle>Conto Economico Mensile</CardTitle>
-                        <CardDescription>Confronto tra reale e budget per il mese selezionato</CardDescription>
+                        <CardTitle>{month === 0 ? "Conto Economico Annuale" : "Conto Economico Mensile"}</CardTitle>
+                        <CardDescription>
+                            {month === 0
+                                ? "Confronto tra reale e budget per l'anno selezionato"
+                                : "Confronto tra reale e budget per il mese selezionato"}
+                        </CardDescription>
                     </div>
                     <div className="flex gap-2">
                         <Select value={month.toString()} onValueChange={(v) => setMonth(parseInt(v))}>
-                            <SelectTrigger className="w-[140px]">
+                            <SelectTrigger className="w-[180px]">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
                                 {months.map((m) => (
-                                    <SelectItem key={m} value={m.toString()}>
-                                        {format(new Date(year, m - 1), "MMMM", { locale: it })}
+                                    <SelectItem key={m.value} value={m.value.toString()}>
+                                        {m.label}
                                     </SelectItem>
                                 ))}
                             </SelectContent>
