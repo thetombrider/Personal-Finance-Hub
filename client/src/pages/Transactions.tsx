@@ -946,7 +946,7 @@ export default function Transactions() {
                       <TableCell className="font-medium" data-testid={`text-description-${transaction.id}`}>
                         <div className="flex items-center gap-2">
                           {transaction.description}
-                          {transaction.gocardlessTransactionId && (
+                          {transaction.externalId && (
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>

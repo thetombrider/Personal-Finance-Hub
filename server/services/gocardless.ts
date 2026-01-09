@@ -48,11 +48,25 @@ class GoCardlessService {
         } catch (error: any) {
             // Check for 401 Unauthorized which indicates expired token
             if (error.response && error.response.status === 401) {
-                console.log("GoCardless token expired (401), refreshing...");
-                this.client.token = null; // Force clear token
-                await this.ensureToken(); // Generate new token
-                return await operation(); // Retry once
+                console.log("[GoCardless] Token expired (401). Refreshing...");
+                try {
+                    this.client.token = null; // Force clear token
+                    await this.ensureToken(); // Generate new token
+                    console.log("[GoCardless] Token refreshed successfully. Retrying operation...");
+                    return await operation(); // Retry once
+                } catch (refreshError) {
+                    console.error("[GoCardless] Failed to refresh token:", refreshError);
+                    throw refreshError; // Re-throw the refresh error
+                }
             }
+
+            // Log full error details for debugging
+            console.error("[GoCardless] API Request Failed:", {
+                status: error.response?.status,
+                data: error.response?.data,
+                message: error.message
+            });
+
             // Pass through 429 errors specifically
             if (error.response && error.response.status === 429) {
                 const err = new Error("Rate limit reached");
@@ -127,6 +141,16 @@ class GoCardlessService {
 
             // Always update the status in the DB
             await storage.updateBankConnection(connection.id, { status: requisitionData.status });
+
+            // debug: check actual agreement validity
+            if (requisitionData.agreement) {
+                try {
+                    const agreementData = await this.client.agreement.getAgreement(requisitionData.agreement);
+                    console.log("[GoCardless] Agreement Details:", JSON.stringify(agreementData, null, 2));
+                } catch (e) {
+                    console.error("[GoCardless] Failed to fetch agreement details:", e);
+                }
+            }
 
             if (requisitionData.status === "LN") { // Linked
                 // Fetch details for each account to return useful info (name, owner, etc)
@@ -225,41 +249,46 @@ class GoCardlessService {
         const booked = data.transactions.booked || [];
 
         // Optimization: Fetch all data once before loop to avoid O(N*M) DB calls
-        const allTransactions = await storage.getTransactions();
+        // Optimization: Fetch all data once before loop to avoid O(N*M) DB calls
+        const allTransactions = await storage.getTransactions(userId);
         const accountTransactions = allTransactions.filter(t => t.accountId === localAccountId);
-        const stagingTransactions = await storage.getImportStaging(localAccountId);
-        const categories = await storage.getCategories();
+        const stagingTransactions = await storage.getImportStaging(userId, localAccountId);
+        const categories = await storage.getCategories(userId);
 
         let addedCount = 0;
 
         for (const tx of booked) {
             if (!tx.transactionId) continue;
 
-            // Check if already imported (using in-memory list)
-            const existing = accountTransactions.find(t => t.gocardlessTransactionId === tx.transactionId);
-            const staged = stagingTransactions.find(t => t.gocardlessTransactionId === tx.transactionId);
-
-            if (existing || staged) {
-                continue; // Already imported or staged
-            }
-
             const amount = parseFloat(tx.transactionAmount.amount);
-            // const absAmount = Math.abs(amount); // Removed: Staging stores raw amount
             const date = tx.bookingDate || tx.valueDate;
             const description = tx.remittanceInformationUnstructured || "Bank Transaction";
 
-            // Fuzzy match logic (Optional: keep this to link existing manual transactions?)
-            // For now, let's keep the logic: if we find a manual match, we LINK it.
-            // If we don't find a match, we STAGE it.
+            // Check if already imported
+            const existing = accountTransactions.find(t => t.externalId === tx.transactionId);
+            const staged = stagingTransactions.find(t => t.externalId === tx.transactionId);
+
+            if (existing || staged) {
+                continue; // Already imported or staged with EXACT externalId match
+            }
+
+            // Fuzzy match logic
+            // 1. Find potential matches (same amount, close date)
+            // 2. Allow matching if:
+            //    a) No externalId exists (pure manual)
+            //    b) externalId is "Legacy" (numeric) AND different from new UUID
 
             const absAmount = Math.abs(amount);
             const targetDate = new Date(date);
             const minDate = new Date(targetDate); minDate.setDate(minDate.getDate() - 3);
             const maxDate = new Date(targetDate); maxDate.setDate(maxDate.getDate() + 3);
 
-            // Match against transactions NOT linked to GC, for this account
             const potentialMatches = accountTransactions.filter(t => {
-                if (t.gocardlessTransactionId) return false;
+                // EXCLUSION CRITERIA:
+                // If it has an external ID, check if it's a UUID.
+                // If it's a UUID (length > 20), we treat it as a "Verified Bank Transaction" and DO NOT touch it.
+                // If it's short (numeric legacy), we ALLOW matching.
+                if (t.externalId && t.externalId.length > 20) return false;
 
                 // Fuzzy comparison for float equality
                 const EPSILON = 0.001;
@@ -273,13 +302,14 @@ class GoCardlessService {
             if (potentialMatches.length > 0) {
                 // Link to the first match
                 const match = potentialMatches[0];
-                console.log(`Linking GoCardless tx ${tx.transactionId} to existing tx ${match.id}`);
+                console.log(`Linking GoCardless tx ${tx.transactionId} to existing tx ${match.id} (Legacy ID: ${match.externalId})`);
+
                 await storage.updateTransaction(match.id, {
-                    gocardlessTransactionId: tx.transactionId
+                    externalId: tx.transactionId
                 });
 
                 // Update in-memory list
-                match.gocardlessTransactionId = tx.transactionId;
+                match.externalId = tx.transactionId;
             } else {
                 // Create new in STAGING
                 console.log(`Staging new tx for GoCardless tx ${tx.transactionId}`);
@@ -289,7 +319,7 @@ class GoCardlessService {
                     date: date,
                     amount: amount.toFixed(2), // Store signed amount
                     description: description,
-                    gocardlessTransactionId: tx.transactionId,
+                    externalId: tx.transactionId,
                     rawData: tx,
                     suggestedCategoryId: await aiService.categorizeTransaction(description, categories)
                 });

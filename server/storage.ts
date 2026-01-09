@@ -50,23 +50,25 @@ export interface IStorage {
   updateUser(id: string, user: Partial<UpsertUser>): Promise<User | undefined>;
 
   // Accounts
-  getAccounts(): Promise<Account[]>;
+  getAccounts(userId: string): Promise<Account[]>;
   getAccount(id: number): Promise<Account | undefined>;
   createAccount(account: InsertAccount): Promise<Account>;
   createAccounts(accounts: InsertAccount[]): Promise<Account[]>;
   updateAccount(id: number, account: Partial<InsertAccount>): Promise<Account | undefined>;
   deleteAccount(id: number): Promise<void>;
+  getAllAccounts(): Promise<Account[]>;
 
   // Categories
-  getCategories(): Promise<Category[]>;
+  getCategories(userId: string): Promise<Category[]>;
   getCategory(id: number): Promise<Category | undefined>;
   createCategory(category: InsertCategory): Promise<Category>;
   createCategories(categories: InsertCategory[]): Promise<Category[]>;
   updateCategory(id: number, category: Partial<InsertCategory>): Promise<Category | undefined>;
   deleteCategory(id: number): Promise<void>;
+  getAllCategories(): Promise<Category[]>;
 
   // Transactions
-  getTransactions(): Promise<Transaction[]>;
+  getTransactions(userId: string): Promise<Transaction[]>;
   getTransaction(id: number): Promise<Transaction | undefined>;
   createTransaction(transaction: InsertTransaction): Promise<Transaction>;
   createTransactions(transactions: InsertTransaction[]): Promise<Transaction[]>;
@@ -84,15 +86,17 @@ export interface IStorage {
   clearTransactions(): Promise<void>;
 
   // Holdings
-  getHoldings(): Promise<Holding[]>;
+  getHoldings(userId: string): Promise<Holding[]>;
   getHolding(id: number): Promise<Holding | undefined>;
-  getHoldingByTicker(ticker: string): Promise<Holding | undefined>;
+  getHolding(id: number): Promise<Holding | undefined>;
+  getHoldingByTicker(ticker: string, userId: string): Promise<Holding | undefined>;
+  getGlobalHoldingByTicker(ticker: string): Promise<Holding | undefined>;
   createHolding(holding: InsertHolding): Promise<Holding>;
   updateHolding(id: number, holding: Partial<InsertHolding>): Promise<Holding | undefined>;
   deleteHolding(id: number): Promise<void>;
 
   // Trades
-  getTrades(): Promise<Trade[]>;
+  getTrades(userId: string): Promise<Trade[]>;
   getTradesByHolding(holdingId: number): Promise<Trade[]>;
   getTrade(id: number): Promise<Trade | undefined>;
   createTrade(trade: InsertTrade): Promise<Trade>;
@@ -102,22 +106,23 @@ export interface IStorage {
   deleteTrades(ids: number[]): Promise<void>;
 
   // Monthly Budgets
-  getMonthlyBudgets(year: number, month: number): Promise<MonthlyBudget[]>;
-  getMonthlyBudgetsByYear(year: number): Promise<MonthlyBudget[]>;
+  getMonthlyBudgets(userId: string, year: number, month: number): Promise<MonthlyBudget[]>;
+  getMonthlyBudgetsByYear(userId: string, year: number): Promise<MonthlyBudget[]>;
   upsertMonthlyBudget(budget: InsertMonthlyBudget): Promise<MonthlyBudget>;
 
   // Recurring Expenses
-  getRecurringExpenses(): Promise<RecurringExpense[]>;
-  getActiveRecurringExpenses(): Promise<RecurringExpense[]>;
+  getRecurringExpenses(userId: string): Promise<RecurringExpense[]>;
+  getActiveRecurringExpenses(userId: string): Promise<RecurringExpense[]>;
   createRecurringExpense(expense: InsertRecurringExpense): Promise<RecurringExpense>;
   updateRecurringExpense(id: number, expense: Partial<InsertRecurringExpense>): Promise<RecurringExpense | undefined>;
   deleteRecurringExpense(id: number): Promise<void>;
   upsertRecurringExpenseCheck(check: InsertRecurringExpenseCheck): Promise<void>;
-  getRecurringExpenseChecks(year: number, month: number): Promise<RecurringExpenseCheck[]>;
-  getAllRecurringExpenseChecks(): Promise<RecurringExpenseCheck[]>;
+  getRecurringExpenseChecks(userId: string, year: number, month: number): Promise<RecurringExpenseCheck[]>;
+  getAllRecurringExpenseChecks(userId: string): Promise<RecurringExpenseCheck[]>;
 
   // Planned Expenses
-  getPlannedExpenses(year: number, month: number): Promise<PlannedExpense[]>;
+  getPlannedExpenses(userId: string, year: number, month: number): Promise<PlannedExpense[]>;
+  getPlannedExpensesByYear(userId: string, year: number): Promise<PlannedExpense[]>;
   createPlannedExpense(expense: InsertPlannedExpense): Promise<PlannedExpense>;
   updatePlannedExpense(id: number, expense: Partial<InsertPlannedExpense>): Promise<PlannedExpense | undefined>;
   deletePlannedExpense(id: number): Promise<void>;
@@ -130,11 +135,15 @@ export interface IStorage {
   deleteBankConnection(id: number): Promise<void>;
 
   // Import Staging
-  getImportStaging(accountId?: number): Promise<ImportStaging[]>;
+  getImportStaging(userId: string, accountId?: number): Promise<ImportStaging[]>;
   getImportStagingByTransactionId(gcId: string): Promise<ImportStaging | undefined>;
   createImportStaging(staging: InsertImportStaging): Promise<ImportStaging>;
   deleteImportStaging(id: number): Promise<void>;
   clearImportStaging(accountId: number): Promise<void>;
+
+  // Data Management
+  deleteUser(id: string): Promise<void>;
+  exportUserData(userId: string): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -171,8 +180,8 @@ export class DatabaseStorage implements IStorage {
 
 
   // Accounts
-  async getAccounts(): Promise<Account[]> {
-    return await db.select().from(accounts);
+  async getAccounts(userId: string): Promise<Account[]> {
+    return await db.select().from(accounts).where(eq(accounts.userId, userId));
   }
 
   async getAccount(id: number): Promise<Account | undefined> {
@@ -200,9 +209,13 @@ export class DatabaseStorage implements IStorage {
     await db.delete(accounts).where(eq(accounts.id, id));
   }
 
+  async getAllAccounts(): Promise<Account[]> {
+    return await db.select().from(accounts);
+  }
+
   // Categories
-  async getCategories(): Promise<Category[]> {
-    return await db.select().from(categories);
+  async getCategories(userId: string): Promise<Category[]> {
+    return await db.select().from(categories).where(eq(categories.userId, userId));
   }
 
   async getCategory(id: number): Promise<Category | undefined> {
@@ -230,9 +243,14 @@ export class DatabaseStorage implements IStorage {
     await db.delete(categories).where(eq(categories.id, id));
   }
 
+  async getAllCategories(): Promise<Category[]> {
+    return await db.select().from(categories);
+  }
+
   // Transactions
-  async getTransactions(): Promise<Transaction[]> {
-    return await db.select().from(transactions);
+  async getTransactions(userId: string): Promise<Transaction[]> {
+    const userAccounts = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.userId, userId));
+    return await db.select().from(transactions).where(inArray(transactions.accountId, userAccounts));
   }
 
   async getTransaction(id: number): Promise<Transaction | undefined> {
@@ -247,7 +265,47 @@ export class DatabaseStorage implements IStorage {
 
   async createTransactions(txs: InsertTransaction[]): Promise<Transaction[]> {
     if (txs.length === 0) return [];
-    const result = await db.insert(transactions).values(txs).returning();
+
+    // 1. Get unique accounts involved
+    const accountIds = [...new Set(txs.map(t => t.accountId))];
+
+    // 2. Fetch existing transactions for these accounts to check duplicates
+    // Optimization: We could filter by date range if inputs are sorted/ranged, 
+    // but for now fetching all for these accounts is safer and usually fast enough for personal finance scale.
+    const existing = await db.select()
+      .from(transactions)
+      .where(inArray(transactions.accountId, accountIds));
+
+    // 3. Filter out duplicates
+    // Match criteria: Same Account, Date, Amount (exact), and Description (normalized?)
+    const toInsert = txs.filter(newTx => {
+      const isDuplicate = existing.some(existingTx => {
+        if (existingTx.accountId !== newTx.accountId) return false;
+
+        // Date compare (assuming string format YYYY-MM-DDT...)
+        const d1 = new Date(existingTx.date).getTime();
+        const d2 = new Date(newTx.date).getTime();
+        if (Math.abs(d1 - d2) > 86400000) return false; // allow 1 day drift? Or exact? 
+        // Let's stick to EXACT date string for CSV imports usually match exactly what they exported.
+        // Actually, db stores as ISO string. newTx comes as string. 
+        // Ideally strict equality on date string if formats align. 
+        // Let's parse to ensure safety.
+        if (new Date(existingTx.date).toISOString().split('T')[0] !== new Date(newTx.date).toISOString().split('T')[0]) return false;
+
+        // Amount compare
+        if (Math.abs(parseFloat(existingTx.amount) - parseFloat(newTx.amount.toString())) > 0.001) return false;
+
+        // Description compare (exact match for now, maybe case insensitive?)
+        if (existingTx.description.toLowerCase().trim() !== newTx.description.toLowerCase().trim()) return false;
+
+        return true;
+      });
+      return !isDuplicate;
+    });
+
+    if (toInsert.length === 0) return [];
+
+    const result = await db.insert(transactions).values(toInsert).returning();
     return result;
   }
 
@@ -308,8 +366,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Holdings
-  async getHoldings(): Promise<Holding[]> {
-    return await db.select().from(holdings);
+  async getHoldings(userId: string): Promise<Holding[]> {
+    return await db.select().from(holdings).where(eq(holdings.userId, userId));
   }
 
   async getHolding(id: number): Promise<Holding | undefined> {
@@ -317,8 +375,13 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
-  async getHoldingByTicker(ticker: string): Promise<Holding | undefined> {
-    const result = await db.select().from(holdings).where(eq(holdings.ticker, ticker.toUpperCase()));
+  async getHoldingByTicker(ticker: string, userId: string): Promise<Holding | undefined> {
+    const result = await db.select().from(holdings).where(and(eq(holdings.ticker, ticker.toUpperCase()), eq(holdings.userId, userId)));
+    return result[0];
+  }
+
+  async getGlobalHoldingByTicker(ticker: string): Promise<Holding | undefined> {
+    const result = await db.select().from(holdings).where(eq(holdings.ticker, ticker.toUpperCase())).limit(1);
     return result[0];
   }
 
@@ -343,8 +406,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Trades
-  async getTrades(): Promise<Trade[]> {
-    return await db.select().from(trades);
+  async getTrades(userId: string): Promise<Trade[]> {
+    const userHoldings = db.select({ id: holdings.id }).from(holdings).where(eq(holdings.userId, userId));
+    return await db.select().from(trades).where(inArray(trades.holdingId, userHoldings));
   }
 
   async getTradesByHolding(holdingId: number): Promise<Trade[]> {
@@ -382,18 +446,25 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Monthly Budgets
-  async getMonthlyBudgets(year: number, month: number): Promise<MonthlyBudget[]> {
+  async getMonthlyBudgets(userId: string, year: number, month: number): Promise<MonthlyBudget[]> {
+    const userCategories = db.select({ id: categories.id }).from(categories).where(eq(categories.userId, userId));
     return await db.select()
       .from(monthlyBudgets)
       .where(and(
         eq(monthlyBudgets.year, year),
+        eq(monthlyBudgets.month, month),
+        inArray(monthlyBudgets.categoryId, userCategories)
       ));
   }
 
-  async getMonthlyBudgetsByYear(year: number): Promise<MonthlyBudget[]> {
+  async getMonthlyBudgetsByYear(userId: string, year: number): Promise<MonthlyBudget[]> {
+    const userCategories = db.select({ id: categories.id }).from(categories).where(eq(categories.userId, userId));
     return await db.select()
       .from(monthlyBudgets)
-      .where(eq(monthlyBudgets.year, year));
+      .where(and(
+        eq(monthlyBudgets.year, year),
+        inArray(monthlyBudgets.categoryId, userCategories)
+      ));
   }
 
   async upsertMonthlyBudget(budget: InsertMonthlyBudget): Promise<MonthlyBudget> {
@@ -418,12 +489,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Recurring Expenses
-  async getRecurringExpenses(): Promise<RecurringExpense[]> {
-    return await db.select().from(recurringExpenses);
+  async getRecurringExpenses(userId: string): Promise<RecurringExpense[]> {
+    const userAccounts = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.userId, userId));
+    return await db.select().from(recurringExpenses).where(inArray(recurringExpenses.accountId, userAccounts));
   }
 
-  async getActiveRecurringExpenses(): Promise<RecurringExpense[]> {
-    return await db.select().from(recurringExpenses).where(eq(recurringExpenses.active, true));
+  async getActiveRecurringExpenses(userId: string): Promise<RecurringExpense[]> {
+    const userAccounts = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.userId, userId));
+    return await db.select().from(recurringExpenses).where(and(
+      eq(recurringExpenses.active, true),
+      inArray(recurringExpenses.accountId, userAccounts)
+    ));
   }
 
   async createRecurringExpense(expense: InsertRecurringExpense): Promise<RecurringExpense> {
@@ -460,43 +536,52 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getRecurringExpenseChecks(year: number, month: number): Promise<RecurringExpenseCheck[]> {
+  async getRecurringExpenseChecks(userId: string, year: number, month: number): Promise<RecurringExpenseCheck[]> {
+    const userAccounts = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.userId, userId));
+    const userExpenses = db.select({ id: recurringExpenses.id }).from(recurringExpenses).where(inArray(recurringExpenses.accountId, userAccounts));
     return await db.select().from(recurringExpenseChecks).where(and(
       eq(recurringExpenseChecks.year, year),
-      eq(recurringExpenseChecks.month, month)
+      eq(recurringExpenseChecks.month, month),
+      inArray(recurringExpenseChecks.recurringExpenseId, userExpenses)
     ));
   }
 
-  async getAllRecurringExpenseChecks(): Promise<RecurringExpenseCheck[]> {
-    return await db.select().from(recurringExpenseChecks);
+  async getAllRecurringExpenseChecks(userId: string): Promise<RecurringExpenseCheck[]> {
+    const userAccounts = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.userId, userId));
+    const userExpenses = db.select({ id: recurringExpenses.id }).from(recurringExpenses).where(inArray(recurringExpenses.accountId, userAccounts));
+    return await db.select().from(recurringExpenseChecks).where(inArray(recurringExpenseChecks.recurringExpenseId, userExpenses));
   }
 
   // Planned Expenses
-  async getPlannedExpensesByYear(year: number): Promise<PlannedExpense[]> {
+  async getPlannedExpensesByYear(userId: string, year: number): Promise<PlannedExpense[]> {
     const startDate = `${year}-01-01`;
     const endDate = `${year + 1}-01-01`;
+    const userCategories = db.select({ id: categories.id }).from(categories).where(eq(categories.userId, userId));
 
     return await db.select()
       .from(plannedExpenses)
       .where(and(
         sql`${plannedExpenses.date} >= ${startDate}`,
-        sql`${plannedExpenses.date} < ${endDate}`
+        sql`${plannedExpenses.date} < ${endDate}`,
+        inArray(plannedExpenses.categoryId, userCategories)
       ));
   }
 
-  async getPlannedExpenses(year: number, month: number): Promise<PlannedExpense[]> {
+  async getPlannedExpenses(userId: string, year: number, month: number): Promise<PlannedExpense[]> {
     // We need to filter by date range for the month
     const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
     // Calculate end date (start of next month)
     const nextMonth = month === 12 ? 1 : month + 1;
     const nextYear = month === 12 ? year + 1 : year;
     const endDate = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`;
+    const userCategories = db.select({ id: categories.id }).from(categories).where(eq(categories.userId, userId));
 
     return await db.select()
       .from(plannedExpenses)
       .where(and(
         sql`${plannedExpenses.date} >= ${startDate}`,
-        sql`${plannedExpenses.date} < ${endDate}`
+        sql`${plannedExpenses.date} < ${endDate}`,
+        inArray(plannedExpenses.categoryId, userCategories)
       ));
   }
 
@@ -545,15 +630,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Import Staging
-  async getImportStaging(accountId?: number): Promise<ImportStaging[]> {
+  async getImportStaging(userId: string, accountId?: number): Promise<ImportStaging[]> {
+    const userAccounts = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.userId, userId));
+
     if (accountId) {
-      return await db.select().from(importStaging).where(eq(importStaging.accountId, accountId));
+      // additional check to ensure accountId belongs to user
+      return await db.select().from(importStaging).where(and(
+        eq(importStaging.accountId, accountId),
+        inArray(importStaging.accountId, userAccounts)
+      ));
     }
-    return await db.select().from(importStaging);
+    return await db.select().from(importStaging).where(inArray(importStaging.accountId, userAccounts));
   }
 
   async getImportStagingByTransactionId(gcId: string): Promise<ImportStaging | undefined> {
-    const result = await db.select().from(importStaging).where(eq(importStaging.gocardlessTransactionId, gcId));
+    const result = await db.select().from(importStaging).where(eq(importStaging.externalId, gcId));
     return result[0];
   }
 
@@ -568,6 +659,103 @@ export class DatabaseStorage implements IStorage {
 
   async clearImportStaging(accountId: number): Promise<void> {
     await db.delete(importStaging).where(eq(importStaging.accountId, accountId));
+  }
+
+  // Data Management
+  async deleteUser(id: string): Promise<void> {
+    // 1. Get user's resources to query child tables
+    const userAccounts = await this.getAccounts(id);
+    const userAccountIds = userAccounts.map(a => a.id);
+    const userCategories = await this.getCategories(id);
+    const userCategoryIds = userCategories.map(c => c.id);
+    const userHoldings = await this.getHoldings(id);
+    const userHoldingIds = userHoldings.map(h => h.id);
+
+    // 2. Delete deepest children first
+
+    // Trades (linked to Holdings)
+    if (userHoldingIds.length > 0) {
+      await db.delete(trades).where(inArray(trades.holdingId, userHoldingIds));
+    }
+
+    // Staging and Transactions (linked to Accounts)
+    if (userAccountIds.length > 0) {
+      await db.delete(importStaging).where(inArray(importStaging.accountId, userAccountIds));
+      await db.delete(transactions).where(inArray(transactions.accountId, userAccountIds));
+
+      // Recurring Expenses (linked to Accounts)
+      const userRecurringExpenses = await db.select({ id: recurringExpenses.id })
+        .from(recurringExpenses)
+        .where(inArray(recurringExpenses.accountId, userAccountIds));
+      const recurringExpenseIds = userRecurringExpenses.map(r => r.id);
+
+      if (recurringExpenseIds.length > 0) {
+        await db.delete(recurringExpenseChecks).where(inArray(recurringExpenseChecks.recurringExpenseId, recurringExpenseIds));
+        await db.delete(recurringExpenses).where(inArray(recurringExpenses.accountId, userAccountIds));
+      }
+    }
+
+    // Budget items (linked to Categories)
+    if (userCategoryIds.length > 0) {
+      await db.delete(monthlyBudgets).where(inArray(monthlyBudgets.categoryId, userCategoryIds));
+      await db.delete(plannedExpenses).where(inArray(plannedExpenses.categoryId, userCategoryIds));
+    }
+
+    // 3. Delete middle layer
+    // Holdings
+    await db.delete(holdings).where(eq(holdings.userId, id));
+
+    // Bank Connections
+    await db.delete(bankConnections).where(eq(bankConnections.userId, id));
+
+    // Accounts
+    await db.delete(accounts).where(eq(accounts.userId, id));
+
+    // Categories
+    await db.delete(categories).where(eq(categories.userId, id));
+
+    // 4. Delete User
+    await db.delete(users).where(eq(users.id, id));
+  }
+
+  async exportUserData(userId: string): Promise<any> {
+    // Fetch all data for the user
+    // We can use existing getters but some might filter too much or join.
+    // Raw selects are safer for full dump.
+
+    const _accounts = await this.getAccounts(userId);
+    const _categories = await this.getCategories(userId);
+    const _transactions = await this.getTransactions(userId);
+    const _holdings = await this.getHoldings(userId);
+    const _trades = await this.getTrades(userId);
+    const _bankConnections = await this.getBankConnections(userId);
+    const _recurringExpenses = await this.getRecurringExpenses(userId);
+
+    // Check tables not covered by simple getters or where we want raw data
+    // Monthly Budgets - getMonthlyBudgetsByYear needs a year. We want ALL.
+    // We need to implement a "getAll" private or inline query.
+
+    const userCategories = db.select({ id: categories.id }).from(categories).where(eq(categories.userId, userId));
+    const _monthlyBudgets = await db.select().from(monthlyBudgets).where(inArray(monthlyBudgets.categoryId, userCategories));
+    const _plannedExpenses = await db.select().from(plannedExpenses).where(inArray(plannedExpenses.categoryId, userCategories));
+
+    // Recurring Expense Checks - tricky, linked to recurring expenses
+    const userAccounts = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.userId, userId));
+    const userRecurringExpenses = db.select({ id: recurringExpenses.id }).from(recurringExpenses).where(inArray(recurringExpenses.accountId, userAccounts));
+    const _recurringExpenseChecks = await db.select().from(recurringExpenseChecks).where(inArray(recurringExpenseChecks.recurringExpenseId, userRecurringExpenses));
+
+    return {
+      Accounts: _accounts,
+      Categories: _categories,
+      Transactions: _transactions,
+      Holdings: _holdings,
+      Trades: _trades,
+      BankConnections: _bankConnections,
+      RecurringExpenses: _recurringExpenses,
+      RecurringExpenseChecks: _recurringExpenseChecks,
+      MonthlyBudgets: _monthlyBudgets,
+      PlannedExpenses: _plannedExpenses
+    };
   }
 }
 

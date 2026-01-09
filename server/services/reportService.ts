@@ -53,13 +53,13 @@ export class ReportService {
     private marketDataService: MarketDataService
   ) { }
 
-  async getWeeklyReportData(): Promise<WeeklyReportData> {
+  async getWeeklyReportData(userId: string): Promise<WeeklyReportData> {
     const [transactions, accounts, categories, holdingsList, allTrades] = await Promise.all([
-      this.storage.getTransactions(),
-      this.storage.getAccounts(),
-      this.storage.getCategories(),
-      this.storage.getHoldings(),
-      this.storage.getTrades()
+      this.storage.getTransactions(userId),
+      this.storage.getAccounts(userId),
+      this.storage.getCategories(userId),
+      this.storage.getHoldings(userId),
+      this.storage.getTrades(userId)
     ]);
 
     const now = new Date();
@@ -207,16 +207,16 @@ export class ReportService {
     };
   }
 
-  async getMonthlyIncomeStatement(year: number, month: number) {
+  async getMonthlyIncomeStatement(userId: string, year: number, month: number) {
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59);
 
     const [categories, budgetData] = await Promise.all([
-      this.storage.getCategories(),
-      this.getMonthlyBudget(year, month)
+      this.storage.getCategories(userId),
+      this.getMonthlyBudget(userId, year, month)
     ]);
 
-    const transactions = await this.storage.getTransactions();
+    const transactions = await this.storage.getTransactions(userId);
 
     // Filter transactions for the month
     const monthTransactions = transactions.filter(t => {
@@ -279,11 +279,11 @@ export class ReportService {
     };
   }
 
-  async getBalanceSheet() {
+  async getBalanceSheet(userId: string) {
     const [accounts, holdingsList, allTrades] = await Promise.all([
-      this.storage.getAccounts(),
-      this.storage.getHoldings(),
-      this.storage.getTrades()
+      this.storage.getAccounts(userId),
+      this.storage.getHoldings(userId),
+      this.storage.getTrades(userId)
     ]);
 
     // Assets
@@ -291,7 +291,7 @@ export class ReportService {
     // Calculated as the sum of current balances for 'checking', 'savings', and 'cash' accounts.
     // We fetch all transactions once to calculate current balances.
 
-    const allTransactions = await this.storage.getTransactions();
+    const allTransactions = await this.storage.getTransactions(userId);
     let cashAssets = 0;
 
     // We reuse logic similar to calculateAccountBalances but filter by specific types
@@ -368,12 +368,12 @@ export class ReportService {
   }
 
   // Refactored from routes.ts
-  async getMonthlyBudget(year: number, month: number) {
+  async getMonthlyBudget(userId: string, year: number, month: number) {
     const [categories, monthlyBudgets, plannedExpenses, recurringExpenses] = await Promise.all([
-      this.storage.getCategories(),
-      this.storage.getMonthlyBudgets(year, month),
-      this.storage.getPlannedExpenses(year, month),
-      this.storage.getActiveRecurringExpenses()
+      this.storage.getCategories(userId),
+      this.storage.getMonthlyBudgets(userId, year, month),
+      this.storage.getPlannedExpenses(userId, year, month),
+      this.storage.getActiveRecurringExpenses(userId)
     ]);
 
     return categories.map(category => {
@@ -400,7 +400,23 @@ export class ReportService {
   }
 
   private async calculateAccountBalances(accounts: Account[], transactions?: Transaction[]) {
-    const allTransactions = transactions || await this.storage.getTransactions();
+    // Note: This method relies on passed transactions, or needs userId if it were to fetch.
+    // However, logic says transactions should be passed for consistency or fetched using userId.
+    // Since 'accounts' is passed, we can assume caller handles userId context.
+    // But line 403 fetches if not passed.
+    // We should throw or Require transactions, OR accept userId.
+    // Let's assume for now it falls back to empty array if no transactions passed? 
+    // No, logic was await this.storage.getTransactions().
+    // We must remove the fallback or require userId.
+    // Given the usages in getWeeklyReportData and getBalanceSheet pass data or fetch it, let's fix the fallback.
+    // Actually, getWeeklyReport passes transactions. getBalanceSheet implementation above does not use this method but implements its own logic?
+    // Let's check getBalanceSheet usage... getWeeklyReport calls it.
+    // getWeeklyReport calls calculateAccountBalances(accounts, transactions).
+    // So transactions IS passed.
+    // The fallback was just safety. I will remove the fallback fetch to avoid needing userId here, 
+    // since we shouldn't be fetching inside helper if we can avoid it.
+    const allTransactions = transactions || [];
+
 
     let assets = 0;
     let liabilities = 0;

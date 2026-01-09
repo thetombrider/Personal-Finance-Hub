@@ -134,7 +134,7 @@ export class TallyService {
         }
 
         // Look up account by name
-        const accounts = await this.storage.getAccounts();
+        const accounts = await this.storage.getAllAccounts();
         const account = accounts.find(a =>
             a.name.toLowerCase() === accountName.toLowerCase()
         );
@@ -148,7 +148,7 @@ export class TallyService {
         }
 
         // Look up category by name
-        const categories = await this.storage.getCategories();
+        const categories = await this.storage.getAllCategories();
         const category = categories.find(c =>
             c.name.toLowerCase() === categoryName.toLowerCase()
         );

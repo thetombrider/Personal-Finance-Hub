@@ -142,7 +142,7 @@ export class MarketDataService {
 
         // Check DB as fallback
         try {
-            const holding = await storage.getHoldingByTicker(upperSymbol);
+            const holding = await storage.getGlobalHoldingByTicker(upperSymbol);
             // DB Freshness check (if we consider DB as a cache layer)
             if (holding && holding.currentPrice && holding.lastPriceUpdate) {
                 const timeDiff = Date.now() - new Date(holding.lastPriceUpdate).getTime();
@@ -189,7 +189,7 @@ export class MarketDataService {
                 if (cached) return { ...cached, data: { ...cached.data, stale: true, cached: true } };
 
                 // Try DB again even if stale
-                const holding = await storage.getHoldingByTicker(upperSymbol);
+                const holding = await storage.getGlobalHoldingByTicker(upperSymbol);
                 if (holding && holding.currentPrice) {
                     const price = parseFloat(holding.currentPrice.toString());
                     return {
@@ -255,7 +255,7 @@ export class MarketDataService {
 
                 // Persist to DB
                 try {
-                    const holding = await storage.getHoldingByTicker(upperSymbol);
+                    const holding = await storage.getGlobalHoldingByTicker(upperSymbol);
                     if (holding) {
                         await storage.updateHolding(holding.id, {
                             currentPrice: price.toFixed(4),

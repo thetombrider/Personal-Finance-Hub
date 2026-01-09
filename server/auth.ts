@@ -94,11 +94,27 @@ export function setupAuth(app: Express) {
                     clientSecret: oidcClientSecret!,
                     callbackURL: oidcCallbackUrl!,
                     scope: ["openid", "profile", "email"],
+                    passReqToCallback: true,
                 },
-                async (issuer: any, profile: any, cb: any) => {
+                async (req: any, issuer: any, profile: any, cb: any) => {
                     try {
                         const oidcId = profile.id;
                         const email = profile.emails && profile.emails.length > 0 ? profile.emails[0].value : null;
+
+                        // Case 1: Link to existing logged-in user
+                        if (req.user) {
+                            const existingUser = await storage.getUserByOidcId(oidcId);
+                            if (existingUser && existingUser.id !== req.user.id) {
+                                return cb(new Error("This SSO account is already connected to another user."));
+                            }
+                            if (!existingUser) {
+                                const updated = await storage.updateUser(req.user.id, { oidcId: oidcId });
+                                return cb(null, updated);
+                            }
+                            return cb(null, req.user);
+                        }
+
+                        // Case 2: Standard Login/Register
 
                         // Prioritize username (preferred_username) over display name
                         const baseUsername = profile.username || profile.displayName || (email ? email.split('@')[0] : "user");
@@ -293,6 +309,32 @@ export function setupAuth(app: Express) {
             req.login(updatedUser!, (err) => {
                 if (err) return next(err);
                 res.status(200).json(updatedUser);
+            });
+        } catch (err) {
+            next(err);
+        }
+    });
+
+    app.delete("/api/user", async (req, res, next) => {
+        if (!req.isAuthenticated()) return res.sendStatus(401);
+
+        try {
+            const userId = (req.user as User).id;
+
+            // Delete all user data
+            await storage.deleteUser(userId);
+
+            // Logout and destroy session
+            req.logout((err) => {
+                if (err) return next(err);
+                if (req.session) {
+                    req.session.destroy((err) => {
+                        if (err) return next(err);
+                        res.sendStatus(204);
+                    });
+                } else {
+                    res.sendStatus(204);
+                }
             });
         } catch (err) {
             next(err);
