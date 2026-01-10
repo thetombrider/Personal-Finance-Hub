@@ -596,10 +596,15 @@ export class DatabaseStorage implements IStorage {
       const trade = await tx.select().from(trades).where(eq(trades.id, id)).limit(1);
       if (trade.length === 0) return;
 
-      if (trade[0].transactionId) {
-        await tx.delete(transactions).where(eq(transactions.id, trade[0].transactionId));
-      }
+      const transactionId = trade[0].transactionId;
+
+      // Delete trade first (child) to satisfy FK constraint
       await tx.delete(trades).where(eq(trades.id, id));
+
+      // Then delete associated transaction (parent)
+      if (transactionId) {
+        await tx.delete(transactions).where(eq(transactions.id, transactionId));
+      }
     });
   }
 
@@ -610,10 +615,13 @@ export class DatabaseStorage implements IStorage {
       const tradesToDelete = await tx.select().from(trades).where(inArray(trades.id, ids));
       const transactionIds = tradesToDelete.map(t => t.transactionId).filter(id => id !== null) as number[];
 
+      // Delete trades first (children)
+      await tx.delete(trades).where(inArray(trades.id, ids));
+
+      // Then delete associated transactions (parents)
       if (transactionIds.length > 0) {
         await tx.delete(transactions).where(inArray(transactions.id, transactionIds));
       }
-      await tx.delete(trades).where(inArray(trades.id, ids));
     });
   }
 
