@@ -440,39 +440,50 @@ export class DatabaseStorage implements IStorage {
   async createTrade(trade: InsertTrade): Promise<Trade> {
     return await db.transaction(async (tx) => {
       let transactionId: number | undefined;
-
+      // If we have an account ID, creating a linked transaction
       if (trade.accountId) {
-        // Find category
-        const cats = await tx.select().from(categories).where(eq(categories.type, 'investment')).limit(1);
-        let categoryId = cats[0]?.id;
-        if (!categoryId) {
-          const anyCats = await tx.select().from(categories).limit(1);
-          categoryId = anyCats[0]?.id;
-        }
+        // Get userId from holding to ensure we pick/create the right category for THIS user
+        const holding = await tx.select().from(holdings).where(eq(holdings.id, trade.holdingId)).limit(1);
+        const userId = holding[0]?.userId;
 
-        if (categoryId) {
-          // Get holding for description
-          const holding = await tx.select().from(holdings).where(eq(holdings.id, trade.holdingId)).limit(1);
-          const ticker = holding[0]?.ticker || 'Unknown';
+        if (userId) {
+          // Find category for transaction (investment type)
+          const cats = await tx.select().from(categories).where(and(eq(categories.type, 'investment'), eq(categories.userId, userId))).limit(1);
+          let categoryId = cats[0]?.id;
 
-          const description = `${trade.type === 'buy' ? 'Buy' : 'Sell'} ${parseFloat(trade.quantity.toString()).toFixed(4)} ${ticker} @ ${parseFloat(trade.pricePerUnit.toString()).toFixed(2)}`;
+          // If no investment category exists for this user, create one
+          if (!categoryId) {
+            const [newCat] = await tx.insert(categories).values({
+              name: "Trading",
+              type: "investment",
+              color: "#0ea5e9", // Sky blue
+              icon: "TrendingUp",
+              userId: userId
+            }).returning();
+            categoryId = newCat.id;
+          }
 
-          const [newTx] = await tx.insert(transactions).values({
-            date: trade.date,
-            amount: trade.totalAmount.toString(),
-            description: description,
-            accountId: trade.accountId,
-            categoryId: categoryId,
-            type: trade.type === 'buy' ? 'expense' : 'income',
-          }).returning();
-          transactionId = newTx.id;
+          if (categoryId) {
+            // Determine transaction details
+            const holdingTicker = holding[0]?.ticker || 'Unknown';
+            const description = `${trade.type === 'buy' ? 'Buy' : 'Sell'} ${parseFloat(trade.quantity.toString()).toFixed(4)} ${holdingTicker} @ ${parseFloat(trade.pricePerUnit.toString()).toFixed(2)}`;
+            const type = trade.type === 'buy' ? 'expense' : 'income';
+
+            // Create transaction
+            const [newTx] = await tx.insert(transactions).values({
+              date: trade.date,
+              amount: trade.totalAmount.toString(),
+              description: description,
+              accountId: trade.accountId,
+              categoryId: categoryId,
+              type: type
+            }).returning();
+            transactionId = newTx.id;
+          }
         }
       }
 
-      const [newTrade] = await tx.insert(trades).values({
-        ...trade,
-        transactionId
-      }).returning();
+      const [newTrade] = await tx.insert(trades).values({ ...trade, transactionId }).returning();
       return newTrade;
     });
   }
@@ -496,64 +507,73 @@ export class DatabaseStorage implements IStorage {
       let transactionId = existingTrade.transactionId;
       const accountId = trade.accountId !== undefined ? trade.accountId : existingTrade.accountId;
 
-      // If we have an account ID (either new or existing)
       if (accountId) {
-        // Find category for transaction (investment type)
-        const cats = await tx.select().from(categories).where(eq(categories.type, 'investment')).limit(1);
-        let categoryId = cats[0]?.id;
-        if (!categoryId) {
-          const anyCats = await tx.select().from(categories).limit(1);
-          categoryId = anyCats[0]?.id;
-        }
+        // Get userId from holding (needed for category lookup/creation)
+        const holdingId = trade.holdingId || existingTrade.holdingId;
+        const holding = await tx.select().from(holdings).where(eq(holdings.id, holdingId)).limit(1);
+        const userId = holding[0]?.userId;
+        const ticker = holding[0]?.ticker || 'Unknown';
 
-        if (categoryId) {
-          // Determine transaction details
-          // Merge existing trade data with updates to calculate final values
-          const finalType = trade.type || existingTrade.type;
-          // Use new date if provided, valid, and not empty; otherwise fallback to existing
-          const finalDate = (trade.date !== undefined && trade.date !== null && trade.date !== "")
-            ? trade.date
-            : existingTrade.date;
+        if (userId) {
+          // Find category for transaction (investment type) for this user
+          const cats = await tx.select().from(categories).where(and(eq(categories.type, 'investment'), eq(categories.userId, userId))).limit(1);
+          let categoryId = cats[0]?.id;
 
-          console.log(`[updateTrade] Transaction Date Logic: Input='${trade.date}', Existing='${existingTrade.date}', Final='${finalDate}'`);
-
-          const finalQty = trade.quantity !== undefined ? parseFloat(trade.quantity.toString()) : parseFloat(existingTrade.quantity.toString());
-          const finalPrice = trade.pricePerUnit !== undefined ? parseFloat(trade.pricePerUnit.toString()) : parseFloat(existingTrade.pricePerUnit.toString());
-          const finalFees = trade.fees !== undefined ? parseFloat(trade.fees.toString()) : parseFloat(existingTrade.fees.toString());
-
-          // Recalculate total amount if not provided explicitly (though it usually is from frontend)
-          // But better to trust the totalAmount passed or recalculate if missing?
-          // Frontend passes totalAmount usually. If not, we should probably recalc or use existing.
-          // Let's use the one passed or existing.
-          const finalTotalAmount = trade.totalAmount !== undefined ? trade.totalAmount.toString() : existingTrade.totalAmount.toString();
-
-          const holdingId = trade.holdingId || existingTrade.holdingId;
-          const holding = await tx.select().from(holdings).where(eq(holdings.id, holdingId)).limit(1);
-          const ticker = holding[0]?.ticker || 'Unknown';
-          const description = `${finalType === 'buy' ? 'Buy' : 'Sell'} ${finalQty.toFixed(4)} ${ticker} @ ${finalPrice.toFixed(2)}`;
-          const type = finalType === 'buy' ? 'expense' : 'income';
-
-          if (transactionId) {
-            // Update existing transaction
-            await tx.update(transactions).set({
-              date: finalDate,
-              amount: finalTotalAmount,
-              description: description,
-              accountId: accountId,
-              categoryId: categoryId,
-              type: type
-            }).where(eq(transactions.id, transactionId));
-          } else {
-            // Create new transaction
-            const [newTx] = await tx.insert(transactions).values({
-              date: finalDate,
-              amount: finalTotalAmount,
-              description: description,
-              accountId: accountId,
-              categoryId: categoryId,
-              type: type
+          // If no investment category exists for this user, create one
+          if (!categoryId) {
+            const [newCat] = await tx.insert(categories).values({
+              name: "Trading",
+              type: "investment",
+              color: "#0ea5e9", // Sky blue
+              icon: "TrendingUp",
+              userId: userId
             }).returning();
-            transactionId = newTx.id;
+            categoryId = newCat.id;
+          }
+
+          if (categoryId) {
+            // Determine transaction details
+            // Merge existing trade data with updates to calculate final values
+            const finalType = trade.type || existingTrade.type;
+            // Use new date if provided, valid, and not empty; otherwise fallback to existing
+            const finalDate = (trade.date !== undefined && trade.date !== null && trade.date !== "")
+              ? trade.date
+              : existingTrade.date;
+
+            console.log(`[updateTrade] Transaction Date Logic: Input='${trade.date}', Existing='${existingTrade.date}', Final='${finalDate}'`);
+
+            const finalQty = trade.quantity !== undefined ? parseFloat(trade.quantity.toString()) : parseFloat(existingTrade.quantity.toString());
+            const finalPrice = trade.pricePerUnit !== undefined ? parseFloat(trade.pricePerUnit.toString()) : parseFloat(existingTrade.pricePerUnit.toString());
+            const finalFees = trade.fees !== undefined ? parseFloat(trade.fees.toString()) : parseFloat(existingTrade.fees.toString());
+
+            // Recalculate total amount if not provided explicitly
+            const finalTotalAmount = trade.totalAmount !== undefined ? trade.totalAmount.toString() : existingTrade.totalAmount.toString();
+
+            const description = `${finalType === 'buy' ? 'Buy' : 'Sell'} ${finalQty.toFixed(4)} ${ticker} @ ${finalPrice.toFixed(2)}`;
+            const type = finalType === 'buy' ? 'expense' : 'income';
+
+            if (transactionId) {
+              // Update existing transaction
+              await tx.update(transactions).set({
+                date: finalDate,
+                amount: finalTotalAmount,
+                description: description,
+                accountId: accountId,
+                categoryId: categoryId,
+                type: type
+              }).where(eq(transactions.id, transactionId));
+            } else {
+              // Create new transaction
+              const [newTx] = await tx.insert(transactions).values({
+                date: finalDate,
+                amount: finalTotalAmount,
+                description: description,
+                accountId: accountId,
+                categoryId: categoryId,
+                type: type
+              }).returning();
+              transactionId = newTx.id;
+            }
           }
         }
       } else {

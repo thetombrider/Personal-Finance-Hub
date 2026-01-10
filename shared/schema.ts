@@ -53,7 +53,7 @@ export type Account = typeof accounts.$inferSelect;
 export const categories = pgTable("categories", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  type: varchar("type", { length: 10 }).notNull(),
+  type: varchar("type", { length: 50 }).notNull(),
   color: varchar("color", { length: 7 }).notNull(),
   icon: text("icon"),
   userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }),
