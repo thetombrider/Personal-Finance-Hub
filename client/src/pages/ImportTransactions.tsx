@@ -154,7 +154,7 @@ export default function ImportTransactions() {
         reader.onload = (e) => {
           const data = e.target?.result;
           if (data) {
-            const workbook = read(data, { type: 'array' });
+            const workbook = read(data, { type: 'array', cellDates: true });
             const firstSheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[firstSheetName];
             const json = utils.sheet_to_json(worksheet, { defval: "" }) as any[];
@@ -276,11 +276,29 @@ export default function ImportTransactions() {
     }
   };
 
-  const parseDate = (value: string) => {
+  const parseDate = (value: any) => {
     if (!value) return format(new Date(), "yyyy-MM-dd'T'HH:mm:ss");
 
-    // Clean value: trim and remove surrounding quotes (double or single)
+    // Handle Date objects (from Excel with cellDates: true)
+    if (value instanceof Date) {
+      if (isValid(value)) return format(value, "yyyy-MM-dd'T'HH:mm:ss");
+      return format(new Date(), "yyyy-MM-dd'T'HH:mm:ss");
+    }
+
+    // Clean value: trim and remove surrounding quotes
     const cleanValue = String(value).trim().replace(/^["']+|["']+$/g, '');
+
+    // Handle numeric Excel serial dates as string fallback
+    // Excel base date: Dec 30 1899. 
+    // Heuristic: serial numbers for recent years are around 40000+ (40000 is ~2009)
+    if (/^\d{5}(\.\d+)?$/.test(cleanValue)) {
+      const serial = parseFloat(cleanValue);
+      // JS Date is ms since 1970. Excel is days since 1899-12-30.
+      // Difference is 25569 days.
+      // 86,400,000 ms per day.
+      const date = new Date((serial - 25569) * 86400 * 1000);
+      if (isValid(date)) return format(date, "yyyy-MM-dd'T'HH:mm:ss");
+    }
 
     const parts = cleanValue.split(/[-/.]/);
     if (parts.length === 3) {
