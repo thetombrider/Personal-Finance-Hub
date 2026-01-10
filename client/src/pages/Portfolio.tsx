@@ -304,7 +304,7 @@ export default function Portfolio() {
       return;
     }
 
-    const csvHeader = "Data,Tipo,Ticker,Nome,Quantità,Prezzo Unitario,Commissioni,Totale\n";
+    const csvHeader = "Data,Tipo,Ticker,Nome,Quantità,Prezzo Unitario,Commissioni,Totale,Conto\n";
     const csvRows = trades.map(trade => {
       const holding = holdings.find(h => h.id === trade.holdingId);
       const date = format(parseISO(trade.date), "yyyy-MM-dd");
@@ -315,8 +315,10 @@ export default function Portfolio() {
       const pricePerUnit = parseFloat(trade.pricePerUnit).toFixed(2);
       const fees = parseFloat(trade.fees).toFixed(2);
       const totalAmount = parseFloat(trade.totalAmount).toFixed(2);
+      const account = accountsData?.find((a: Account) => a.id === trade.accountId);
+      const accountName = (account?.name || "").replace(/,/g, " ");
 
-      return `${date},${type},${ticker},"${name}",${quantity},${pricePerUnit},${fees},${totalAmount}`;
+      return `${date},${type},${ticker},"${name}",${quantity},${pricePerUnit},${fees},${totalAmount},"${accountName}"`;
     }).join("\n");
 
     const csvContent = csvHeader + csvRows;
