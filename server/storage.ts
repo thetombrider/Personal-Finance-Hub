@@ -447,15 +447,15 @@ export class DatabaseStorage implements IStorage {
         const userId = holding[0]?.userId;
 
         if (userId) {
-          // Find category for transaction (investment type)
-          const cats = await tx.select().from(categories).where(and(eq(categories.type, 'investment'), eq(categories.userId, userId))).limit(1);
+          // Find category for transaction (lookup by specific name "Investimenti")
+          const cats = await tx.select().from(categories).where(and(eq(categories.name, 'Investimenti'), eq(categories.userId, userId))).limit(1);
           let categoryId = cats[0]?.id;
 
-          // If no investment category exists for this user, create one
+          // If no "Investimenti" category exists for this user, create one
           if (!categoryId) {
             const [newCat] = await tx.insert(categories).values({
-              name: "Trading",
-              type: "investment",
+              name: "Investimenti",
+              type: "expense",
               color: "#0ea5e9", // Sky blue
               icon: "TrendingUp",
               userId: userId
@@ -515,23 +515,21 @@ export class DatabaseStorage implements IStorage {
         const ticker = holding[0]?.ticker || 'Unknown';
 
         if (userId) {
-          // Find category for transaction (investment type) for this user
-          const cats = await tx.select().from(categories).where(and(eq(categories.type, 'investment'), eq(categories.userId, userId))).limit(1);
+          // Find category for transaction (lookup by specific name "Investimenti")
+          const cats = await tx.select().from(categories).where(and(eq(categories.name, 'Investimenti'), eq(categories.userId, userId))).limit(1);
           let categoryId = cats[0]?.id;
 
-          // If no investment category exists for this user, create one
+          // If no "Investimenti" category exists for this user, create one
           if (!categoryId) {
             const [newCat] = await tx.insert(categories).values({
-              name: "Trading",
-              type: "investment",
+              name: "Investimenti",
+              type: "expense",
               color: "#0ea5e9", // Sky blue
               icon: "TrendingUp",
               userId: userId
             }).returning();
             categoryId = newCat.id;
-          }
-
-          if (categoryId) {
+          } if (categoryId) {
             // Determine transaction details
             // Merge existing trade data with updates to calculate final values
             const finalType = trade.type || existingTrade.type;
