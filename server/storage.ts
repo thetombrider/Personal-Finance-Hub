@@ -353,12 +353,29 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteTransaction(id: number): Promise<void> {
-    await db.delete(transactions).where(eq(transactions.id, id));
+    await db.transaction(async (tx) => {
+      // Unlink any trades that reference this transaction
+      await tx.update(trades)
+        .set({ transactionId: null })
+        .where(eq(trades.transactionId, id));
+
+      // Delete the transaction
+      await tx.delete(transactions).where(eq(transactions.id, id));
+    });
   }
 
   async deleteTransactions(ids: number[]): Promise<void> {
     if (ids.length === 0) return;
-    await db.delete(transactions).where(inArray(transactions.id, ids));
+
+    await db.transaction(async (tx) => {
+      // Unlink any trades that reference these transactions
+      await tx.update(trades)
+        .set({ transactionId: null })
+        .where(inArray(trades.transactionId, ids));
+
+      // Delete the transactions
+      await tx.delete(transactions).where(inArray(transactions.id, ids));
+    });
   }
 
   async clearTransactions(): Promise<void> {
@@ -470,6 +487,7 @@ export class DatabaseStorage implements IStorage {
 
   async updateTrade(id: number, trade: Partial<InsertTrade>): Promise<Trade | undefined> {
     return await db.transaction(async (tx) => {
+      console.log(`[updateTrade] Updating trade ${id} with data:`, trade);
       // Get existing trade first to see if we need to update/create linked transaction
       const existingTrades = await tx.select().from(trades).where(eq(trades.id, id));
       if (existingTrades.length === 0) return undefined;
@@ -492,7 +510,13 @@ export class DatabaseStorage implements IStorage {
           // Determine transaction details
           // Merge existing trade data with updates to calculate final values
           const finalType = trade.type || existingTrade.type;
-          const finalDate = trade.date || existingTrade.date;
+          // Use new date if provided, valid, and not empty; otherwise fallback to existing
+          const finalDate = (trade.date !== undefined && trade.date !== null && trade.date !== "")
+            ? trade.date
+            : existingTrade.date;
+
+          console.log(`[updateTrade] Transaction Date Logic: Input='${trade.date}', Existing='${existingTrade.date}', Final='${finalDate}'`);
+
           const finalQty = trade.quantity !== undefined ? parseFloat(trade.quantity.toString()) : parseFloat(existingTrade.quantity.toString());
           const finalPrice = trade.pricePerUnit !== undefined ? parseFloat(trade.pricePerUnit.toString()) : parseFloat(existingTrade.pricePerUnit.toString());
           const finalFees = trade.fees !== undefined ? parseFloat(trade.fees.toString()) : parseFloat(existingTrade.fees.toString());
