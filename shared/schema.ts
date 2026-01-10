@@ -103,6 +103,8 @@ export const trades = pgTable("trades", {
   totalAmount: decimal("total_amount", { precision: 12, scale: 2 }).notNull(),
   fees: decimal("fees", { precision: 12, scale: 2 }).notNull().default("0"),
   type: varchar("type", { length: 10 }).notNull(),
+  accountId: integer("account_id").references(() => accounts.id),
+  transactionId: integer("transaction_id").references(() => transactions.id),
 });
 
 export const insertTradeSchema = createInsertSchema(trades).omit({ id: true });

@@ -421,28 +421,158 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createTrade(trade: InsertTrade): Promise<Trade> {
-    const result = await db.insert(trades).values(trade).returning();
-    return result[0];
+    return await db.transaction(async (tx) => {
+      let transactionId: number | undefined;
+
+      if (trade.accountId) {
+        // Find category
+        const cats = await tx.select().from(categories).where(eq(categories.type, 'investment')).limit(1);
+        let categoryId = cats[0]?.id;
+        if (!categoryId) {
+          const anyCats = await tx.select().from(categories).limit(1);
+          categoryId = anyCats[0]?.id;
+        }
+
+        if (categoryId) {
+          // Get holding for description
+          const holding = await tx.select().from(holdings).where(eq(holdings.id, trade.holdingId)).limit(1);
+          const ticker = holding[0]?.ticker || 'Unknown';
+
+          const description = `${trade.type === 'buy' ? 'Buy' : 'Sell'} ${parseFloat(trade.quantity.toString()).toFixed(4)} ${ticker} @ ${parseFloat(trade.pricePerUnit.toString()).toFixed(2)}`;
+
+          const [newTx] = await tx.insert(transactions).values({
+            date: trade.date,
+            amount: trade.totalAmount.toString(),
+            description: description,
+            accountId: trade.accountId,
+            categoryId: categoryId,
+            type: trade.type === 'buy' ? 'expense' : 'income',
+          }).returning();
+          transactionId = newTx.id;
+        }
+      }
+
+      const [newTrade] = await tx.insert(trades).values({
+        ...trade,
+        transactionId
+      }).returning();
+      return newTrade;
+    });
   }
 
   async createTrades(tradesData: InsertTrade[]): Promise<Trade[]> {
-    if (tradesData.length === 0) return [];
-    const result = await db.insert(trades).values(tradesData).returning();
-    return result;
+    const results: Trade[] = [];
+    for (const trade of tradesData) {
+      results.push(await this.createTrade(trade));
+    }
+    return results;
   }
 
   async updateTrade(id: number, trade: Partial<InsertTrade>): Promise<Trade | undefined> {
-    const result = await db.update(trades).set(trade).where(eq(trades.id, id)).returning();
-    return result[0];
+    return await db.transaction(async (tx) => {
+      // Get existing trade first to see if we need to update/create linked transaction
+      const existingTrades = await tx.select().from(trades).where(eq(trades.id, id));
+      if (existingTrades.length === 0) return undefined;
+      const existingTrade = existingTrades[0];
+
+      let transactionId = existingTrade.transactionId;
+      const accountId = trade.accountId !== undefined ? trade.accountId : existingTrade.accountId;
+
+      // If we have an account ID (either new or existing)
+      if (accountId) {
+        // Find category for transaction (investment type)
+        const cats = await tx.select().from(categories).where(eq(categories.type, 'investment')).limit(1);
+        let categoryId = cats[0]?.id;
+        if (!categoryId) {
+          const anyCats = await tx.select().from(categories).limit(1);
+          categoryId = anyCats[0]?.id;
+        }
+
+        if (categoryId) {
+          // Determine transaction details
+          // Merge existing trade data with updates to calculate final values
+          const finalType = trade.type || existingTrade.type;
+          const finalDate = trade.date || existingTrade.date;
+          const finalQty = trade.quantity !== undefined ? parseFloat(trade.quantity.toString()) : parseFloat(existingTrade.quantity.toString());
+          const finalPrice = trade.pricePerUnit !== undefined ? parseFloat(trade.pricePerUnit.toString()) : parseFloat(existingTrade.pricePerUnit.toString());
+          const finalFees = trade.fees !== undefined ? parseFloat(trade.fees.toString()) : parseFloat(existingTrade.fees.toString());
+
+          // Recalculate total amount if not provided explicitly (though it usually is from frontend)
+          // But better to trust the totalAmount passed or recalculate if missing?
+          // Frontend passes totalAmount usually. If not, we should probably recalc or use existing.
+          // Let's use the one passed or existing.
+          const finalTotalAmount = trade.totalAmount !== undefined ? trade.totalAmount.toString() : existingTrade.totalAmount.toString();
+
+          const holdingId = trade.holdingId || existingTrade.holdingId;
+          const holding = await tx.select().from(holdings).where(eq(holdings.id, holdingId)).limit(1);
+          const ticker = holding[0]?.ticker || 'Unknown';
+          const description = `${finalType === 'buy' ? 'Buy' : 'Sell'} ${finalQty.toFixed(4)} ${ticker} @ ${finalPrice.toFixed(2)}`;
+          const type = finalType === 'buy' ? 'expense' : 'income';
+
+          if (transactionId) {
+            // Update existing transaction
+            await tx.update(transactions).set({
+              date: finalDate,
+              amount: finalTotalAmount,
+              description: description,
+              accountId: accountId,
+              categoryId: categoryId,
+              type: type
+            }).where(eq(transactions.id, transactionId));
+          } else {
+            // Create new transaction
+            const [newTx] = await tx.insert(transactions).values({
+              date: finalDate,
+              amount: finalTotalAmount,
+              description: description,
+              accountId: accountId,
+              categoryId: categoryId,
+              type: type
+            }).returning();
+            transactionId = newTx.id;
+          }
+        }
+      } else {
+        // If accountId is specifically set to null (if that were allowed) or we are removing it...
+        // But trade.accountId comes as number | null.
+        // If it is explicitly nullify, we might want to delete the transaction?
+        // Current schema has accountId as optional.
+        // If user unlinks account, we should probably delete the transaction?
+        if (trade.accountId === null && transactionId) {
+          await tx.delete(transactions).where(eq(transactions.id, transactionId));
+          transactionId = null; // Remove link
+        }
+      }
+
+      const [updatedTrade] = await tx.update(trades).set({ ...trade, transactionId }).where(eq(trades.id, id)).returning();
+      return updatedTrade;
+    });
   }
 
   async deleteTrade(id: number): Promise<void> {
-    await db.delete(trades).where(eq(trades.id, id));
+    await db.transaction(async (tx) => {
+      const trade = await tx.select().from(trades).where(eq(trades.id, id)).limit(1);
+      if (trade.length === 0) return;
+
+      if (trade[0].transactionId) {
+        await tx.delete(transactions).where(eq(transactions.id, trade[0].transactionId));
+      }
+      await tx.delete(trades).where(eq(trades.id, id));
+    });
   }
 
   async deleteTrades(ids: number[]): Promise<void> {
     if (ids.length === 0) return;
-    await db.delete(trades).where(inArray(trades.id, ids));
+
+    await db.transaction(async (tx) => {
+      const tradesToDelete = await tx.select().from(trades).where(inArray(trades.id, ids));
+      const transactionIds = tradesToDelete.map(t => t.transactionId).filter(id => id !== null) as number[];
+
+      if (transactionIds.length > 0) {
+        await tx.delete(transactions).where(inArray(transactions.id, transactionIds));
+      }
+      await tx.delete(trades).where(inArray(trades.id, ids));
+    });
   }
 
   // Monthly Budgets

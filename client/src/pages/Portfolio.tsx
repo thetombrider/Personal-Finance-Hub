@@ -18,7 +18,7 @@ import { format, parseISO } from "date-fns";
 import { it } from "date-fns/locale";
 import { Checkbox } from "@/components/ui/checkbox";
 import * as api from "@/lib/api";
-import type { Holding, Trade } from "@shared/schema";
+import type { Holding, Trade, Account } from "@shared/schema";
 import { StockDetailModal } from "@/components/portfolio/StockDetailModal";
 import { usePortfolioStats, type HoldingWithStats } from "@/hooks/usePortfolioStats";
 
@@ -41,12 +41,20 @@ export default function Portfolio() {
     pricePerUnit: "",
     fees: "0",
     date: format(new Date(), "yyyy-MM-dd"),
-    type: "buy" as "buy" | "sell"
+    type: "buy" as "buy" | "sell",
+    accountId: ""
   });
+
+  const { data: accountsData } = useQuery({
+    queryKey: ["accounts"],
+    queryFn: api.fetchAccounts
+  });
+
+  const investmentAccounts = accountsData?.filter((a: Account) => a.type === "investment") || [];
   const {
     holdings,
     trades,
-    quotes,
+    quotes, // Ensure quotes are available
     holdingsWithStats,
     portfolioSummary,
     refreshQuotes,
@@ -60,7 +68,8 @@ export default function Portfolio() {
     pricePerUnit: "",
     fees: "0",
     date: "",
-    type: "buy" as "buy" | "sell"
+    type: "buy" as "buy" | "sell",
+    accountId: ""
   });
   const [tradeToDelete, setTradeToDelete] = useState<(Trade & { holding?: Holding }) | null>(null);
   const [showHoldingsDropdown, setShowHoldingsDropdown] = useState(false);
@@ -140,7 +149,8 @@ export default function Portfolio() {
       pricePerUnit: "",
       fees: "0",
       date: format(new Date(), "yyyy-MM-dd"),
-      type: "buy"
+      type: "buy",
+      accountId: ""
     });
   };
 
@@ -171,7 +181,9 @@ export default function Portfolio() {
       pricePerUnit: trade.pricePerUnit,
       fees: trade.fees,
       date: dateStr,
-      type: trade.type as "buy" | "sell"
+      date: dateStr,
+      type: trade.type as "buy" | "sell",
+      accountId: trade.accountId ? trade.accountId.toString() : ""
     });
   };
 
@@ -208,7 +220,9 @@ export default function Portfolio() {
         pricePerUnit: pricePerUnit.toString(),
         totalAmount: totalAmount.toFixed(2),
         fees: fees.toFixed(2),
+        fees: fees.toFixed(2),
         type: editForm.type,
+        accountId: parseInt(editForm.accountId) || undefined
       }
     });
   };
@@ -247,7 +261,7 @@ export default function Portfolio() {
     const ticker = isManual ? manualTicker.trim().toUpperCase() : selectedStock?.symbol;
     const name = isManual ? (manualName.trim() || manualTicker.trim().toUpperCase()) : selectedStock?.name;
 
-    if (!ticker || !tradeForm.quantity || !tradeForm.pricePerUnit) {
+    if (!ticker || !tradeForm.quantity || !tradeForm.pricePerUnit || !tradeForm.accountId) {
       toast({ title: "Dati mancanti", description: "Compila tutti i campi obbligatori.", variant: "destructive" });
       return;
     }
@@ -276,6 +290,7 @@ export default function Portfolio() {
         totalAmount: totalAmount.toFixed(2),
         fees: fees.toFixed(2),
         type: tradeForm.type,
+        accountId: parseInt(tradeForm.accountId) || undefined
       });
     } catch (error) {
       console.error("Error creating trade:", error);
@@ -522,6 +537,25 @@ export default function Portfolio() {
                         )}
                       </div>
 
+                      <div className="space-y-2">
+                        <Label>Conto di Investimento</Label>
+                        <Select
+                          value={tradeForm.accountId}
+                          onValueChange={(v) => setTradeForm(prev => ({ ...prev, accountId: v }))}
+                        >
+                          <SelectTrigger data-testid="select-trade-account">
+                            <SelectValue placeholder="Seleziona conto..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {investmentAccounts.map((account: Account) => (
+                              <SelectItem key={account.id} value={account.id.toString()}>
+                                {account.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
                       {selectedStock && (
                         <div className="p-3 bg-accent rounded-lg">
                           <div className="flex justify-between items-center">
@@ -634,6 +668,7 @@ export default function Portfolio() {
                       (entryMode === "manual" ? !manualTicker.trim() : !selectedStock) ||
                       !tradeForm.quantity ||
                       !tradeForm.pricePerUnit ||
+                      !tradeForm.accountId ||
                       createTradeMutation.isPending
                     }
                     data-testid="button-submit-trade"
@@ -972,6 +1007,25 @@ export default function Portfolio() {
               <div className="p-3 bg-muted rounded-lg">
                 <p className="font-medium">{editingTrade.holding?.ticker}</p>
                 <p className="text-sm text-muted-foreground">{editingTrade.holding?.name}</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Conto di Investimento</Label>
+                <Select
+                  value={editForm.accountId}
+                  onValueChange={(v) => setEditForm(prev => ({ ...prev, accountId: v }))}
+                >
+                  <SelectTrigger data-testid="select-edit-trade-account">
+                    <SelectValue placeholder="Seleziona conto..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {investmentAccounts.map((account: Account) => (
+                      <SelectItem key={account.id} value={account.id.toString()}>
+                        {account.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
