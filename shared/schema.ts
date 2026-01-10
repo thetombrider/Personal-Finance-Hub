@@ -44,7 +44,9 @@ export const accounts = pgTable("accounts", {
   userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }),
 });
 
-export const insertAccountSchema = createInsertSchema(accounts).omit({ id: true });
+export const insertAccountSchema = createInsertSchema(accounts).omit({ id: true }).extend({
+  type: z.enum(["checking", "savings", "credit", "investment", "cash"]),
+});
 export type InsertAccount = z.infer<typeof insertAccountSchema>;
 export type Account = typeof accounts.$inferSelect;
 

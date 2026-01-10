@@ -432,10 +432,18 @@ export default function Dashboard() {
     // Process non-investment accounts
     accounts.forEach(acc => {
       if (acc.type === 'investment') return;
-      const label = typeLabels[acc.type] || acc.type;
+
+      let label = typeLabels[acc.type];
+      if (!label) {
+        // Fallback for unknown types
+        label = acc.type.charAt(0).toUpperCase() + acc.type.slice(1);
+        if (!typeMap.has(label)) {
+          typeMap.set(label, { value: 0, gain: 0, loss: 0, invested: 0 });
+        }
+      }
+
       const current = typeMap.get(label)!;
       current.value += acc.balance;
-      // For non-investments, value is the base, no gain/loss
     });
 
     // Process investments using portfolio summary

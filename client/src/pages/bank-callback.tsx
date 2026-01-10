@@ -104,7 +104,7 @@ export default function BankCallbackPage() {
 
                     await apiRequest("POST", "/api/accounts", {
                         name: name,
-                        type: "bank",
+                        type: "checking",
                         startingBalance: "0",
                         currency: currency,
                         color: "#000000",
