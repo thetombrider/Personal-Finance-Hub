@@ -54,6 +54,7 @@ interface TradeMapping {
   pricePerUnit: string;
   totalAmount?: string;
   fees?: string;
+  account?: string;
 }
 
 
@@ -100,7 +101,8 @@ export default function ImportTransactions() {
     quantity: "",
     pricePerUnit: "",
     totalAmount: "",
-    fees: ""
+    fees: "",
+    account: ""
   });
 
 
@@ -264,11 +266,22 @@ export default function ImportTransactions() {
         if (lower.includes('ticker') || lower.includes('symbol') || lower.includes('isin')) currentTradeMapping.ticker = field;
         if (lower.includes('holdingid')) { if (!currentTradeMapping.ticker) currentTradeMapping.ticker = field; }
         if (lower.includes('name') || lower.includes('nome')) currentTradeMapping.name = field;
-        if (lower.includes('type') || lower.includes('tipo') || lower.includes('side')) currentTradeMapping.type = field;
+
+        // Improved Type detection
+        if (lower.includes('type') || lower.includes('tipo') || lower.includes('side') ||
+          lower.includes('segno') || lower.includes('direction') || lower.includes('operazione')) {
+          currentTradeMapping.type = field;
+        }
+
         if (lower.includes('quantity') || lower.includes('quant') || lower.includes('qty')) currentTradeMapping.quantity = field;
         if (lower.includes('price') || lower.includes('prezzo')) currentTradeMapping.pricePerUnit = field;
         if (lower.includes('total') || lower.includes('amount') || lower.includes('controvalore')) currentTradeMapping.totalAmount = field;
         if (lower.includes('fee') || lower.includes('commission')) currentTradeMapping.fees = field;
+
+        // Auto-detect Account
+        if (lower.includes('account') || lower.includes('conto') || lower.includes('bank') || lower.includes('banca')) {
+          currentTradeMapping.account = field;
+        }
       });
       setTradeMapping(currentTradeMapping);
       api.fetchHoldings().then(setHoldings);
@@ -539,14 +552,30 @@ export default function ImportTransactions() {
 
       const rawType = (row[tradeMapping.type] || "").toString().toLowerCase().trim();
       let type: "buy" | "sell" = "buy";
-      if (rawType.match(/sell|vendita|vend|s|v/)) type = "sell";
+      if (rawType.match(/sell|vendita|vend|s|v|^-$|^uscita$|^debit$/)) type = "sell";
+
       const quantity = Math.abs(parseNumeric(row[tradeMapping.quantity]));
       const pricePerUnit = Math.abs(parseNumeric(row[tradeMapping.pricePerUnit]));
       let totalAmount = tradeMapping.totalAmount ? Math.abs(parseNumeric(row[tradeMapping.totalAmount])) : 0;
       if (!totalAmount && quantity && pricePerUnit) totalAmount = quantity * pricePerUnit;
       const fees = tradeMapping.fees ? Math.abs(parseNumeric(row[tradeMapping.fees])) : 0;
 
-      return { ticker, name, type, date: parseDate(row[tradeMapping.date]), quantity: quantity.toString(), pricePerUnit: pricePerUnit.toString(), totalAmount: totalAmount.toString(), fees: fees.toString(), _isValid: !!ticker && quantity > 0 && pricePerUnit > 0 };
+      // Account Resolution
+      let accountId: number | null = null;
+      if (tradeMapping.account && row[tradeMapping.account]) {
+        const rawAcc = row[tradeMapping.account].toString().trim();
+        const accLower = rawAcc.toLowerCase();
+        // Try match by name
+        let matched = accounts.find(a => a.name.toLowerCase() === accLower);
+        // Try match by ID
+        if (!matched) {
+          const numId = parseInt(rawAcc);
+          if (!isNaN(numId)) matched = accounts.find(a => a.id === numId);
+        }
+        if (matched) accountId = matched.id;
+      }
+
+      return { ticker, name, type, date: parseDate(row[tradeMapping.date]), quantity: quantity.toString(), pricePerUnit: pricePerUnit.toString(), totalAmount: totalAmount.toString(), fees: fees.toString(), accountId, _isValid: !!ticker && quantity > 0 && pricePerUnit > 0 };
     }).filter(t => t._isValid);
 
     if (tradeRows.length === 0) {
@@ -588,7 +617,8 @@ export default function ImportTransactions() {
       pricePerUnit: t.pricePerUnit,
       totalAmount: t.totalAmount,
       fees: t.fees,
-      type: t.type
+      type: t.type,
+      accountId: t.accountId
     }));
 
     await api.createTradesBulk(validTrades);
@@ -622,7 +652,7 @@ export default function ImportTransactions() {
         headers = ['Name', 'Type', 'Budget'];
         break;
       case 'trades':
-        headers = ['Date', 'Ticker', 'Name', 'Type', 'Quantity', 'Price', 'TotalAmount', 'Fees'];
+        headers = ['Date', 'Ticker', 'Name', 'Type', 'Quantity', 'Price', 'TotalAmount', 'Fees', 'Account'];
         break;
       case 'holdings':
         headers = ['ID', 'Ticker', 'Name'];
@@ -798,6 +828,7 @@ export default function ImportTransactions() {
                       <div className="space-y-2"><Label>Ticker / Holding ID *</Label><Select value={tradeMapping.ticker} onValueChange={v => setTradeMapping({ ...tradeMapping, ticker: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
                       <div className="space-y-2"><Label>Quantity *</Label><Select value={tradeMapping.quantity} onValueChange={v => setTradeMapping({ ...tradeMapping, quantity: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
                       <div className="space-y-2"><Label>Price *</Label><Select value={tradeMapping.pricePerUnit} onValueChange={v => setTradeMapping({ ...tradeMapping, pricePerUnit: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
+                      <div className="space-y-2"><Label>Account (Optional)</Label><Select value={tradeMapping.account || "none"} onValueChange={v => setTradeMapping({ ...tradeMapping, account: v === 'none' ? undefined : v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">-- None --</SelectItem>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
                     </>
                   )}
 
@@ -828,7 +859,7 @@ export default function ImportTransactions() {
                         {importMode === 'accounts' && <><TableHead>Name</TableHead><TableHead>Type</TableHead><TableHead>Balance</TableHead></>}
                         {importMode === 'categories' && <><TableHead>Name</TableHead><TableHead>Type</TableHead><TableHead>Budget</TableHead></>}
                         {importMode === 'transactions' && <><TableHead>Date</TableHead><TableHead>Description</TableHead><TableHead>Amount</TableHead><TableHead>Account</TableHead><TableHead>Category</TableHead></>}
-                        {importMode === 'trades' && <><TableHead>Date</TableHead><TableHead>Ticker</TableHead><TableHead>Name</TableHead><TableHead>Type</TableHead><TableHead>Quantity</TableHead><TableHead>Price</TableHead></>}
+                        {importMode === 'trades' && <><TableHead>Date</TableHead><TableHead>Ticker</TableHead><TableHead>Name</TableHead><TableHead>Type</TableHead><TableHead>Quantity</TableHead><TableHead>Price</TableHead><TableHead>Account</TableHead></>}
 
                       </TableRow>
                     </TableHeader>
@@ -898,9 +929,21 @@ export default function ImportTransactions() {
 
                           const rawType = (row[tradeMapping.type] || "").toString().toLowerCase().trim();
                           let type: "buy" | "sell" = "buy";
-                          if (rawType.match(/sell|vendita|vend|s|v/)) type = "sell";
+                          if (rawType.match(/sell|vendita|vend|s|v|^-$|^uscita$|^debit$/)) type = "sell";
                           const quantity = Math.abs(parseNumeric(row[tradeMapping.quantity]));
                           const pricePerUnit = Math.abs(parseNumeric(row[tradeMapping.pricePerUnit]));
+
+                          let accountName = "-";
+                          if (tradeMapping.account && row[tradeMapping.account]) {
+                            const rawAcc = row[tradeMapping.account].toString().trim();
+                            const accLower = rawAcc.toLowerCase();
+                            let matched = accounts.find(a => a.name.toLowerCase() === accLower);
+                            if (!matched) {
+                              const numId = parseInt(rawAcc);
+                              if (!isNaN(numId)) matched = accounts.find(a => a.id === numId);
+                            }
+                            if (matched) accountName = matched.name;
+                          }
 
                           return (
                             <TableRow key={i}>
@@ -910,6 +953,7 @@ export default function ImportTransactions() {
                               <TableCell className="capitalize">{type}</TableCell>
                               <TableCell>{quantity}</TableCell>
                               <TableCell>{pricePerUnit}</TableCell>
+                              <TableCell className="text-xs">{accountName}</TableCell>
                             </TableRow>
                           );
                         }
