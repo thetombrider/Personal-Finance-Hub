@@ -152,9 +152,7 @@ export function registerTransactionRoutes(app: Express) {
             const validated = insertTransactionSchema.parse(req.body);
 
             // Verify account belongs to user
-            if (!validated.accountId) {
-                return res.status(400).json({ error: "Account ID is required" });
-            }
+            // Verify account belongs to user
             const account = await storage.getAccount(validated.accountId);
             if (!account) {
                 return res.status(400).json({ error: "Account not found" });
@@ -180,7 +178,7 @@ export function registerTransactionRoutes(app: Express) {
             const validated = z.array(insertTransactionSchema).parse(req.body);
 
             // Verify all accounts belong to user
-            const accountIds = Array.from(new Set(validated.map(t => t.accountId).filter((id): id is number => id !== undefined)));
+            const accountIds = Array.from(new Set(validated.map(t => t.accountId)));
             for (const accountId of accountIds) {
                 const account = await storage.getAccount(accountId);
                 if (!account || !checkOwnership(account.userId, req.user.id)) {
