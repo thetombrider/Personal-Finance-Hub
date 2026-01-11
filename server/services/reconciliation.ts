@@ -86,7 +86,7 @@ export class ReconciliationService {
 
                 const tDesc = t.description.toLowerCase();
                 const cleanName = expense.name.toLowerCase().trim();
-                const cleanPattern = expense.matchPattern?.toLowerCase().trim();
+                const cleanPattern = expense.matchPattern ? expense.matchPattern.toLowerCase().trim() : undefined;
 
                 let isDescMatch = false;
 
