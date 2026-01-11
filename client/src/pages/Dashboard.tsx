@@ -51,11 +51,10 @@ export default function Dashboard() {
 
   const { portfolioSummary, isLoading: isPortfolioLoading } = usePortfolioStats();
 
-  const totalNonInvestmentBalance = accounts
-    .filter(acc => acc.type !== 'investment')
+  const totalAccountBalance = accounts
     .reduce((sum, acc) => sum + acc.balance, 0);
 
-  const totalBalance = totalNonInvestmentBalance + (portfolioSummary?.totalCurrentValue || 0);
+  const totalBalance = totalAccountBalance + (portfolioSummary?.totalCurrentValue || 0);
 
   // Find transfer category to exclude from income/expense calculations
   const transferCategoryId = categories.find(c => c.name.toLowerCase() === 'trasferimenti')?.id;
@@ -569,7 +568,7 @@ export default function Dashboard() {
           >
             <div className="absolute right-0 top-0 h-full w-1/2 bg-gradient-to-l from-primary/5 to-transparent" />
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium whitespace-nowrap">Total Balance</CardTitle>
+              <CardTitle className="text-sm font-medium whitespace-nowrap">Net Worth</CardTitle>
               <Wallet className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
