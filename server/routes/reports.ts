@@ -3,7 +3,11 @@ import { ReportService } from "../services/reportService";
 import { storage } from "../storage";
 import { marketDataService } from "../services/marketData";
 import { sendEmail } from "../resend";
-import cron from "node-cron";
+import cron, { ScheduledTask } from "node-cron";
+import "./types";
+
+// Module-level variable to prevent duplicate cron scheduling
+let weeklyReportJob: ScheduledTask | null = null;
 
 export function registerReportRoutes(app: Express) {
     // ============ REPORTS ============
@@ -12,6 +16,8 @@ export function registerReportRoutes(app: Express) {
 
     app.get("/api/reports/income-statement/:year/:month", async (req, res) => {
         try {
+            if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+
             const year = parseInt(req.params.year, 10);
             const month = parseInt(req.params.month, 10);
 
@@ -19,7 +25,7 @@ export function registerReportRoutes(app: Express) {
             if (
                 !Number.isInteger(year) ||
                 !Number.isInteger(month) ||
-                month < 0 ||
+                month < 1 ||
                 month > 12 ||
                 year < 1970 ||
                 year > currentYear + 1
@@ -27,7 +33,7 @@ export function registerReportRoutes(app: Express) {
                 return res.status(400).json({ error: "Invalid year or month" });
             }
 
-            const data = await reportService.getMonthlyIncomeStatement((req.user as any).id, year, month);
+            const data = await reportService.getMonthlyIncomeStatement(req.user.id, year, month);
             res.json(data);
         } catch (error) {
             console.error("Failed to fetch income statement:", error);
@@ -37,7 +43,8 @@ export function registerReportRoutes(app: Express) {
 
     app.get("/api/reports/balance-sheet", async (req, res) => {
         try {
-            const data = await reportService.getBalanceSheet((req.user as any).id);
+            if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+            const data = await reportService.getBalanceSheet(req.user.id);
             res.json(data);
         } catch (error) {
             console.error("Failed to fetch balance sheet:", error);
@@ -49,15 +56,21 @@ export function registerReportRoutes(app: Express) {
 
     app.post("/api/reports/weekly/send", async (req, res) => {
         try {
-            const email = req.body.email;
+            if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+
+            // Use authenticated user's email, fall back to provided email
+            const email = req.body.email || req.user.email;
             if (!email) {
                 return res.status(400).json({ error: "Email address is required" });
             }
-            const data = await reportService.getWeeklyReportData((req.user as any).id);
+            const data = await reportService.getWeeklyReportData(req.user.id);
             const html = reportService.generateHtml(data);
 
             const now = new Date();
-            const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            // DST-safe week calculation using calendar arithmetic
+            const weekStart = new Date(now);
+            weekStart.setDate(now.getDate() - 7);
+
             const subject = `📊 Report Settimanale FinTrack - ${weekStart.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })} / ${now.toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' })}`;
 
             const result = await sendEmail(email, subject, html);
@@ -72,7 +85,8 @@ export function registerReportRoutes(app: Express) {
 
     app.get("/api/reports/weekly/preview", async (req, res) => {
         try {
-            const data = await reportService.getWeeklyReportData((req.user as any).id);
+            if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+            const data = await reportService.getWeeklyReportData(req.user.id);
             const html = reportService.generateHtml(data);
             res.send(html);
         } catch (error) {
@@ -82,30 +96,44 @@ export function registerReportRoutes(app: Express) {
     });
 
     // Weekly report scheduler - Runs every Sunday at 9:00 AM Europe/Rome
-    // Note: Cron jobs are global. If this function is called multiple times (e.g. during tests or re-initializations)
-    // it might schedule multiple jobs. But in this architecture it should be fine as routes are registered once.
-    cron.schedule('0 9 * * 0', async () => {
-        console.log("[scheduler] Sending weekly report...");
-        try {
-            const email = "tommasominuto@gmail.com";
-            const user = await storage.getUserByEmail(email);
-            if (!user) {
-                console.error("[scheduler] User not found for email:", email);
-                return;
+    // Guard against duplicate scheduling
+    if (!weeklyReportJob) {
+        weeklyReportJob = cron.schedule('0 9 * * 0', async () => {
+            console.log("[scheduler] Sending weekly report...");
+            try {
+                // Get all users with email addresses and send reports
+                // For now, keeping the original single-user behavior but using email from user record
+                const email = "tommasominuto@gmail.com";
+                const user = await storage.getUserByEmail(email);
+                if (!user) {
+                    console.error("[scheduler] User not found for email:", email);
+                    return;
+                }
+                const data = await reportService.getWeeklyReportData(user.id);
+                const html = reportService.generateHtml(data);
+                const now = new Date();
+                await sendEmail(
+                    email,
+                    `📊 Report Settimanale FinTrack - ${now.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })}`,
+                    html
+                );
+                console.log(`[scheduler] Weekly report sent successfully to ${email}`);
+            } catch (error) {
+                console.error("[scheduler] Failed to send weekly report:", error);
             }
-            const data = await reportService.getWeeklyReportData(user.id);
-            const html = reportService.generateHtml(data);
-            const now = new Date();
-            await sendEmail(
-                "tommasominuto@gmail.com",
-                `📊 Report Settimanale FinTrack - ${now.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })}`,
-                html
-            );
-            console.log("[scheduler] Weekly report sent successfully");
-        } catch (error) {
-            console.error("[scheduler] Failed to send weekly report:", error);
-        }
-    }, {
-        timezone: "Europe/Rome"
-    });
+        }, {
+            timezone: "Europe/Rome"
+        });
+    }
 }
+
+/**
+ * Stop the weekly report scheduler (for testing/cleanup)
+ */
+export function stopReportScheduler(): void {
+    if (weeklyReportJob) {
+        weeklyReportJob.stop();
+        weeklyReportJob = null;
+    }
+}
+

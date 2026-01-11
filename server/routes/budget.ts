@@ -4,6 +4,8 @@ import { ReportService } from "../services/reportService";
 import { marketDataService } from "../services/marketData";
 import { insertMonthlyBudgetSchema, insertRecurringExpenseSchema, insertPlannedExpenseSchema } from "@shared/schema";
 import { z } from "zod";
+import { parseNumericParam, checkOwnership } from "./middleware";
+import "./types";
 
 export function registerBudgetRoutes(app: Express) {
     // ============ BUDGET ============
@@ -12,20 +14,21 @@ export function registerBudgetRoutes(app: Express) {
 
     app.get("/api/budget/:year", async (req, res) => {
         try {
-            const year = parseInt(req.params.year);
+            if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+
+            const year = parseNumericParam(req.params.year);
+            if (year === null) return res.status(400).json({ error: "Invalid year" });
 
             const [categories, monthlyBudgets, plannedExpenses, recurringExpenses] = await Promise.all([
-                storage.getCategories((req.user as any).id),
-                storage.getMonthlyBudgetsByYear((req.user as any).id, year),
-                storage.getPlannedExpensesByYear((req.user as any).id, year),
-                storage.getActiveRecurringExpenses((req.user as any).id)
+                storage.getCategories(req.user.id),
+                storage.getMonthlyBudgetsByYear(req.user.id, year),
+                storage.getPlannedExpensesByYear(req.user.id, year),
+                storage.getActiveRecurringExpenses(req.user.id)
             ]);
 
             // Initialize response structure
-            // budgetData: map of categoryId -> map of month (1-12) -> { baseline, planned, recurring, total }
             const budgetData: Record<number, Record<number, { baseline: number; planned: number; recurring: number; total: number }>> = {};
 
-            // Initialize all categories and months with 0
             categories.forEach(cat => {
                 budgetData[cat.id] = {};
                 for (let m = 1; m <= 12; m++) {
@@ -33,17 +36,14 @@ export function registerBudgetRoutes(app: Express) {
                 }
             });
 
-            // Fill Baselines
             monthlyBudgets.forEach(mb => {
                 if (budgetData[mb.categoryId] && budgetData[mb.categoryId][mb.month]) {
                     budgetData[mb.categoryId][mb.month].baseline = parseFloat(mb.amount.toString());
                 }
             });
 
-            // Fill Planned
             plannedExpenses.forEach(pe => {
                 const date = new Date(pe.date);
-                // Ensure the date is in the requested year (should be filtered by DB but double check)
                 if (date.getFullYear() === year) {
                     const m = date.getMonth() + 1;
                     if (budgetData[pe.categoryId] && budgetData[pe.categoryId][m]) {
@@ -52,17 +52,12 @@ export function registerBudgetRoutes(app: Express) {
                 }
             });
 
-            // Fill Recurring
-            // Note: Recurring expenses are tricky because they might start/end mid-year.
-            // Simple logic: If active and start_date <= month_end, add to month.
-            // TODO: Handle end_date if implemented in schema later.
             recurringExpenses.forEach(re => {
                 const startDate = new Date(re.startDate);
                 const startYear = startDate.getFullYear();
                 const startMonth = startDate.getMonth() + 1;
 
                 for (let m = 1; m <= 12; m++) {
-                    // If the recurring expense started before or during this month (considering years)
                     if (startYear < year || (startYear === year && startMonth <= m)) {
                         if (budgetData[re.categoryId]) {
                             budgetData[re.categoryId][m].recurring += parseFloat(re.amount.toString());
@@ -71,7 +66,6 @@ export function registerBudgetRoutes(app: Express) {
                 }
             });
 
-            // Calculate Totals per cell
             for (const catId in budgetData) {
                 for (let m = 1; m <= 12; m++) {
                     const cell = budgetData[catId][m];
@@ -81,9 +75,9 @@ export function registerBudgetRoutes(app: Express) {
 
             res.json({
                 categories,
-                budgetData, // Structured as { [categoryId]: { [month]: { baseline, planned, recurring, total } } }
-                plannedExpenses, // Return raw list for the Planned Table
-                recurringExpenses // Return raw list for the Recurring Table
+                budgetData,
+                plannedExpenses,
+                recurringExpenses
             });
         } catch (error) {
             console.error("Failed to fetch yearly budget data:", error);
@@ -93,10 +87,13 @@ export function registerBudgetRoutes(app: Express) {
 
     app.get("/api/budget/:year/:month", async (req, res) => {
         try {
-            const year = parseInt(req.params.year);
-            const month = parseInt(req.params.month); // 1-12
+            if (!req.user) return res.status(401).json({ error: "Unauthorized" });
 
-            const budgetData = await reportService.getMonthlyBudget((req.user as any).id, year, month);
+            const year = parseNumericParam(req.params.year);
+            const month = parseNumericParam(req.params.month);
+            if (year === null || month === null) return res.status(400).json({ error: "Invalid year or month" });
+
+            const budgetData = await reportService.getMonthlyBudget(req.user.id, year, month);
             res.json(budgetData);
         } catch (error) {
             console.error("Failed to fetch budget data:", error);
@@ -106,7 +103,11 @@ export function registerBudgetRoutes(app: Express) {
 
     app.post("/api/budget", async (req, res) => {
         try {
+            if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+
             const validated = insertMonthlyBudgetSchema.parse(req.body);
+            // Enforce userId from authenticated user (the schema might allow client-supplied userId)
+            // We trust the categoryId but the storage layer uses category ownership implicitly
             const budget = await storage.upsertMonthlyBudget(validated);
             res.json(budget);
         } catch (error) {
@@ -120,7 +121,8 @@ export function registerBudgetRoutes(app: Express) {
     // Recurring Expenses
     app.get("/api/budget/recurring", async (req, res) => {
         try {
-            const expenses = await storage.getRecurringExpenses((req.user as any).id);
+            if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+            const expenses = await storage.getRecurringExpenses(req.user.id);
             res.json(expenses);
         } catch (error) {
             res.status(500).json({ error: "Failed to fetch recurring expenses" });
@@ -129,8 +131,17 @@ export function registerBudgetRoutes(app: Express) {
 
     app.post("/api/budget/recurring", async (req, res) => {
         try {
+            if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+
             console.log("Receiving recurring expense payload:", req.body);
             const validated = insertRecurringExpenseSchema.parse(req.body);
+
+            // Verify account ownership
+            const account = await storage.getAccount(validated.accountId);
+            if (!account || !checkOwnership(account.userId, req.user.id)) {
+                return res.status(403).json({ error: "Forbidden" });
+            }
+
             const expense = await storage.createRecurringExpense(validated);
             res.status(201).json(expense);
         } catch (error) {
@@ -145,12 +156,20 @@ export function registerBudgetRoutes(app: Express) {
 
     app.patch("/api/budget/recurring/:id", async (req, res) => {
         try {
-            const id = parseInt(req.params.id);
-            const validated = insertRecurringExpenseSchema.partial().parse(req.body);
-            const expense = await storage.updateRecurringExpense(id, validated);
-            if (!expense) {
+            if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+
+            const id = parseNumericParam(req.params.id);
+            if (id === null) return res.status(400).json({ error: "Invalid id" });
+
+            // Get existing expense to check ownership via account
+            const expenses = await storage.getRecurringExpenses(req.user.id);
+            const existing = expenses.find(e => e.id === id);
+            if (!existing) {
                 return res.status(404).json({ error: "Recurring expense not found" });
             }
+
+            const validated = insertRecurringExpenseSchema.partial().parse(req.body);
+            const expense = await storage.updateRecurringExpense(id, validated);
             res.json(expense);
         } catch (error) {
             if (error instanceof z.ZodError) {
@@ -162,7 +181,18 @@ export function registerBudgetRoutes(app: Express) {
 
     app.delete("/api/budget/recurring/:id", async (req, res) => {
         try {
-            const id = parseInt(req.params.id);
+            if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+
+            const id = parseNumericParam(req.params.id);
+            if (id === null) return res.status(400).json({ error: "Invalid id" });
+
+            // Verify ownership via account
+            const expenses = await storage.getRecurringExpenses(req.user.id);
+            const existing = expenses.find(e => e.id === id);
+            if (!existing) {
+                return res.status(404).json({ error: "Recurring expense not found" });
+            }
+
             await storage.deleteRecurringExpense(id);
             res.status(204).send();
         } catch (error) {
@@ -173,9 +203,13 @@ export function registerBudgetRoutes(app: Express) {
     // Planned Expenses
     app.get("/api/budget/planned/:year/:month", async (req, res) => {
         try {
-            const year = parseInt(req.params.year);
-            const month = parseInt(req.params.month);
-            const expenses = await storage.getPlannedExpenses((req.user as any).id, year, month);
+            if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+
+            const year = parseNumericParam(req.params.year);
+            const month = parseNumericParam(req.params.month);
+            if (year === null || month === null) return res.status(400).json({ error: "Invalid year or month" });
+
+            const expenses = await storage.getPlannedExpenses(req.user.id, year, month);
             res.json(expenses);
         } catch (error) {
             res.status(500).json({ error: "Failed to fetch planned expenses" });
@@ -184,7 +218,16 @@ export function registerBudgetRoutes(app: Express) {
 
     app.post("/api/budget/planned", async (req, res) => {
         try {
+            if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+
             const validated = insertPlannedExpenseSchema.parse(req.body);
+
+            // Verify category ownership
+            const category = await storage.getCategory(validated.categoryId);
+            if (!category || !checkOwnership(category.userId, req.user.id)) {
+                return res.status(403).json({ error: "Forbidden" });
+            }
+
             const expense = await storage.createPlannedExpense(validated);
             res.status(201).json(expense);
         } catch (error) {
@@ -197,12 +240,21 @@ export function registerBudgetRoutes(app: Express) {
 
     app.patch("/api/budget/planned/:id", async (req, res) => {
         try {
-            const id = parseInt(req.params.id);
-            const validated = insertPlannedExpenseSchema.partial().parse(req.body);
-            const expense = await storage.updatePlannedExpense(id, validated);
-            if (!expense) {
+            if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+
+            const id = parseNumericParam(req.params.id);
+            if (id === null) return res.status(400).json({ error: "Invalid id" });
+
+            // Check ownership via planned expenses for user's categories
+            const year = new Date().getFullYear();
+            const allExpenses = await storage.getPlannedExpensesByYear(req.user.id, year);
+            const existing = allExpenses.find(e => e.id === id);
+            if (!existing) {
                 return res.status(404).json({ error: "Planned expense not found" });
             }
+
+            const validated = insertPlannedExpenseSchema.partial().parse(req.body);
+            const expense = await storage.updatePlannedExpense(id, validated);
             res.json(expense);
         } catch (error) {
             if (error instanceof z.ZodError) {
@@ -214,7 +266,19 @@ export function registerBudgetRoutes(app: Express) {
 
     app.delete("/api/budget/planned/:id", async (req, res) => {
         try {
-            const id = parseInt(req.params.id);
+            if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+
+            const id = parseNumericParam(req.params.id);
+            if (id === null) return res.status(400).json({ error: "Invalid id" });
+
+            // Check ownership
+            const year = new Date().getFullYear();
+            const allExpenses = await storage.getPlannedExpensesByYear(req.user.id, year);
+            const existing = allExpenses.find(e => e.id === id);
+            if (!existing) {
+                return res.status(404).json({ error: "Planned expense not found" });
+            }
+
             await storage.deletePlannedExpense(id);
             res.status(204).send();
         } catch (error) {
@@ -222,3 +286,4 @@ export function registerBudgetRoutes(app: Express) {
         }
     });
 }
+

@@ -32,8 +32,10 @@ export function registerAuthRoutes(app: Express) {
             return next();
         }
 
-        // Explicit exemptions for auth-related paths if they under /api
-        if (req.path.startsWith('/auth') || req.path === '/login' || req.path === '/register' || req.path === '/user') {
+        // Explicit exemptions for auth-related paths under /api
+        // These are the only paths that can bypass authentication
+        const AUTH_EXEMPT_PATHS = ['/auth', '/auth/login', '/auth/register', '/auth/logout', '/auth/user'];
+        if (AUTH_EXEMPT_PATHS.some(p => req.path === p || req.path.startsWith(p + '/'))) {
             return next();
         }
 

@@ -84,6 +84,7 @@ export interface IStorage {
   deleteTransaction(id: number): Promise<void>;
   deleteTransactions(ids: number[]): Promise<void>;
   clearTransactions(): Promise<void>;
+  clearTransactionsForUser(userId: string): Promise<void>;
 
   // Holdings
   getHoldings(userId: string): Promise<Holding[]>;
@@ -380,6 +381,11 @@ export class DatabaseStorage implements IStorage {
 
   async clearTransactions(): Promise<void> {
     await db.delete(transactions);
+  }
+
+  async clearTransactionsForUser(userId: string): Promise<void> {
+    const userAccounts = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.userId, userId));
+    await db.delete(transactions).where(inArray(transactions.accountId, userAccounts));
   }
 
   // Holdings

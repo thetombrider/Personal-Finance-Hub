@@ -12,10 +12,15 @@ export function registerWebhookRoutes(app: Express) {
             console.log("Tally webhook received:", JSON.stringify(req.body, null, 2));
 
             // Optional signature verification (if TALLY_WEBHOOK_SECRET is set)
+            // NOTE: For proper HMAC verification, you should use req.rawBody (raw request body as string)
+            // instead of req.body (parsed JSON). This requires configuring express.json() with a verify callback:
+            // express.json({ verify: (req, res, buf) => { (req as any).rawBody = buf.toString('utf8'); } })
             const tallySecret = process.env.TALLY_WEBHOOK_SECRET;
             if (tallySecret) {
                 const signature = req.headers['tally-signature'] as string;
-                if (!tallyService.verifySignature(req.body, signature, tallySecret)) {
+                // Use rawBody if available for proper HMAC verification
+                const bodyForVerification = (req as any).rawBody || JSON.stringify(req.body);
+                if (!tallyService.verifySignature(bodyForVerification, signature, tallySecret)) {
                     console.warn("Tally webhook: Invalid or missing signature");
                     return res.status(401).json({ error: "Invalid or missing signature" });
                 }
@@ -49,7 +54,7 @@ export function registerWebhookRoutes(app: Express) {
                 method: "POST",
                 contentType: "application/json",
                 expectedFields: [
-                    "Data (or Date) - DD/MM/YYYY format",
+                    "Date (or Data) - DD/MM/YYYY format",
                     "Descrizione (or Description) - transaction description",
                     "Entrata (or Income) - income amount (European format: 1.234,56)",
                     "Uscita (or Expense) - expense amount (European format: 1.234,56)",
@@ -62,3 +67,4 @@ export function registerWebhookRoutes(app: Express) {
         });
     });
 }
+
