@@ -552,7 +552,7 @@ export default function ImportTransactions() {
 
       const rawType = (row[tradeMapping.type] || "").toString().toLowerCase().trim();
       let type: "buy" | "sell" = "buy";
-      if (rawType.match(/sell|vendita|vend|s|v|^-$|^uscita$|^debit$/)) type = "sell";
+      if (rawType.match(/^(sell|vend|s$|v$|-|uscita|debit)/i)) type = "sell";
 
       const quantity = Math.abs(parseNumeric(row[tradeMapping.quantity]));
       const pricePerUnit = Math.abs(parseNumeric(row[tradeMapping.pricePerUnit]));
@@ -929,7 +929,7 @@ export default function ImportTransactions() {
 
                           const rawType = (row[tradeMapping.type] || "").toString().toLowerCase().trim();
                           let type: "buy" | "sell" = "buy";
-                          if (rawType.match(/sell|vendita|vend|s|v|^-$|^uscita$|^debit$/)) type = "sell";
+                          if (rawType.match(/^(sell|vend|s$|v$|-|uscita|debit)/i)) type = "sell";
                           const quantity = Math.abs(parseNumeric(row[tradeMapping.quantity]));
                           const pricePerUnit = Math.abs(parseNumeric(row[tradeMapping.pricePerUnit]));
 
