@@ -401,7 +401,7 @@ export default function ImportTransactions() {
     return {
       date: parseDate(row[mapping.date]),
       amount: Math.abs(amount).toString(),
-      description: row[mapping.description] || "Imported Transaction",
+      description: (row[mapping.description] || "Imported Transaction").toString(),
       accountId: accountId || 0,
       categoryId: categoryId || 0,
       type,
@@ -537,7 +537,7 @@ export default function ImportTransactions() {
 
     const tradeRows = csvData.map(row => {
       let ticker = (row[tradeMapping.ticker] || "").toString().toUpperCase().trim();
-      let name = tradeMapping.name ? row[tradeMapping.name] || ticker : ticker;
+      let name = (tradeMapping.name ? row[tradeMapping.name] || ticker : ticker).toString();
 
       // If we have a holding_id and a holdings map, resolve it
       const holdingIdLower = tradeMapping.ticker && cleanHeader(tradeMapping.ticker).includes('holdingid')
