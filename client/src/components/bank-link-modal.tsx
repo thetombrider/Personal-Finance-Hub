@@ -59,7 +59,8 @@ export function BankLinkModal({ isOpen, onClose, initialInstitutionId }: BankLin
         setLoading(true);
         setSearchQuery(""); // Reset search on country change
         try {
-            const res = await apiRequest("POST", "/api/gocardless/institutions", { country: countryCode });
+            // Changed from POST /api/gocardless/institutions to GET /api/gocardless/banks
+            const res = await apiRequest("GET", `/api/gocardless/banks?country=${countryCode}`);
             if (!res.ok) {
                 throw new Error("Failed to fetch institutions");
             }
@@ -82,7 +83,8 @@ export function BankLinkModal({ isOpen, onClose, initialInstitutionId }: BankLin
             // Redirect URL for callback
             const redirect = `${window.location.origin}/bank-callback`;
 
-            const res = await apiRequest("POST", "/api/gocardless/requisition", {
+            // Changed from POST /api/gocardless/requisition to POST /api/gocardless/connect
+            const res = await apiRequest("POST", "/api/gocardless/connect", {
                 institutionId,
                 redirectUrl: redirect,
             });
