@@ -49,7 +49,7 @@ export default function Dashboard() {
     return formatCurrency(amount);
   };
 
-  const { portfolioSummary, isLoading: isPortfolioLoading } = usePortfolioStats();
+  const { portfolioSummary, trades, isLoading: isPortfolioLoading } = usePortfolioStats();
 
   const totalAccountBalance = accounts
     .reduce((sum, acc) => sum + acc.balance, 0);
@@ -163,6 +163,11 @@ export default function Dashboard() {
       new Date(a.date).getTime() - new Date(b.date).getTime()
     );
 
+    // Get all trades sorted by date
+    const sortedTrades = [...trades].sort((a, b) =>
+      new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+
     for (let i = months - 1; i >= 0; i--) {
       const date = subMonths(new Date(), i);
       const monthEnd = endOfMonth(date);
@@ -183,13 +188,31 @@ export default function Dashboard() {
         }
       });
 
+      // Add invested amount (Cost Basis)
+      // Buys are expenses, so they reduced the 'netWorth' (Cash) above.
+      // We add them back here as Assets.
+      let investedAmount = 0;
+      sortedTrades.forEach(t => {
+        const tDate = new Date(t.date); // trades have ISO string dates
+        if (tDate <= monthEnd) {
+          const amount = parseFloat(t.totalAmount);
+          if (t.type === 'buy') {
+            investedAmount += amount;
+          } else {
+            investedAmount -= amount;
+          }
+        }
+      });
+
+      netWorth += investedAmount;
+
       data.push({
         name: format(date, 'MMM yy'),
         netWorth
       });
     }
     return data;
-  }, [transactions, accounts, timeRange]);
+  }, [transactions, accounts, timeRange, trades]);
 
   // Category trend data (monthly totals for selected category)
   const selectedCategoryForTrend = categories.find(c => c.id === parseInt(categoryTrendId));
@@ -716,7 +739,12 @@ export default function Dashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle>Net Worth Evolution</CardTitle>
-                  <CardDescription>Your total wealth over time</CardDescription>
+                  <CardDescription>
+                    Your total wealth over time
+                    <span className="block text-xs text-muted-foreground mt-1 font-normal">
+                      * Historical investment value calculated at Cost Basis (Invested Capital)
+                    </span>
+                  </CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
                   <TrendingUp className="h-5 w-5 text-primary" />
