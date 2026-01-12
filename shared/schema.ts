@@ -216,6 +216,8 @@ export type InsertWebhook = z.infer<typeof insertWebhookSchema>;
 export type Webhook = typeof webhooks.$inferSelect;
 
 // Webhook request logs for debugging and auditing
+// Webhook request logs - intended for debugging but may contain PII
+// NOTE: Request/Response bodies are redacted for PII before storage, but treat this table as sensitive
 export const webhookLogs = pgTable("webhook_logs", {
   id: serial("id").primaryKey(),
   webhookId: varchar("webhook_id").notNull().references(() => webhooks.id, { onDelete: "cascade" }),

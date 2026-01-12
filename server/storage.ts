@@ -45,6 +45,40 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, sql, inArray, and } from "drizzle-orm";
+import crypto from "crypto";
+
+// Encryption setup for sensitive fields
+const ALGORITHM = 'aes-256-cbc';
+// Ensure a stable key derived from environment or default for dev
+// In production, APP_SECRET must be set and kept secure
+const SECRET_KEY = process.env.APP_SECRET || 'dev_secret_key_ensure_this_is_changed_in_prod';
+const key = crypto.createHash('sha256').update(String(SECRET_KEY)).digest().subarray(0, 32);
+
+function encrypt(text: string): string {
+  if (!text) return text;
+  const iv = crypto.randomBytes(16);
+  const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
+  let encrypted = cipher.update(text);
+  encrypted = Buffer.concat([encrypted, cipher.final()]);
+  return iv.toString('hex') + ':' + encrypted.toString('hex');
+}
+
+function decrypt(text: string): string {
+  if (!text) return text;
+  try {
+    const textParts = text.split(':');
+    const iv = Buffer.from(textParts.shift()!, 'hex');
+    const encryptedText = Buffer.from(textParts.join(':'), 'hex');
+    const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
+    let decrypted = decipher.update(encryptedText);
+    decrypted = Buffer.concat([decrypted, decipher.final()]);
+    return decrypted.toString();
+  } catch (e) {
+    // If decryption fails (e.g. invalid format or wrong key), return original text or empty
+    // This handles legacy unencrypted data if any exists during migration
+    return text;
+  }
+}
 
 export interface IStorage {
   // User operations
@@ -868,28 +902,65 @@ export class DatabaseStorage implements IStorage {
   // Webhooks
   async getWebhook(id: string): Promise<Webhook | undefined> {
     const result = await db.select().from(webhooks).where(eq(webhooks.id, id));
+    if (result[0]) {
+      // Decrypt secret on read
+      if (result[0].secret) {
+        result[0].secret = decrypt(result[0].secret);
+      }
+    }
     return result[0];
   }
 
   async getWebhooks(userId: string): Promise<Webhook[]> {
-    return await db.select().from(webhooks).where(eq(webhooks.userId, userId));
+    const results = await db.select().from(webhooks).where(eq(webhooks.userId, userId));
+    // Decrypt secrets on read
+    return results.map(w => {
+      if (w.secret) {
+        w.secret = decrypt(w.secret);
+      }
+      return w;
+    });
   }
 
   async createWebhook(webhook: InsertWebhook): Promise<Webhook> {
-    const [created] = await db.insert(webhooks).values(webhook).returning();
+    const data = { ...webhook };
+    // Encrypt secret on write
+    if (data.secret) {
+      data.secret = encrypt(data.secret);
+    }
+    const [created] = await db.insert(webhooks).values(data).returning();
+    // Decrypt for return value
+    if (created.secret) {
+      created.secret = decrypt(created.secret);
+    }
     return created;
   }
 
   async updateWebhook(id: string, webhook: Partial<InsertWebhook>): Promise<Webhook | undefined> {
+    const data = { ...webhook };
+    // Encrypt secret on write
+    if (data.secret) {
+      data.secret = encrypt(data.secret);
+    }
     const [updated] = await db.update(webhooks)
-      .set(webhook)
+      .set(data)
       .where(eq(webhooks.id, id))
       .returning();
+
+    // Decrypt for return value
+    if (updated && updated.secret) {
+      updated.secret = decrypt(updated.secret);
+    }
     return updated;
   }
 
   async deleteWebhook(id: string): Promise<void> {
-    await db.delete(webhooks).where(eq(webhooks.id, id));
+    await db.transaction(async (tx) => {
+      // First delete associated logs
+      await tx.delete(webhookLogs).where(eq(webhookLogs.webhookId, id));
+      // Then delete the webhook
+      await tx.delete(webhooks).where(eq(webhooks.id, id));
+    });
   }
 
   async updateWebhookLastUsed(id: string): Promise<void> {

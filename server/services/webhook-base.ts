@@ -104,7 +104,7 @@ export class WebhookService {
         // 2. Verify signature if secret is configured
         if (webhook.secret) {
             if (!signature || !this.verifySignature(rawBody, signature, webhook.secret)) {
-                await this.logRequest(webhookId, "invalid_signature", payload, null, "Invalid or missing signature", startTime);
+                this.logRequest(webhookId, "invalid_signature", payload, null, "Invalid or missing signature", startTime).catch(() => { });
                 return { status: 401, body: { error: "Invalid or missing signature" } };
             }
         }
@@ -112,14 +112,14 @@ export class WebhookService {
         // 3. Get the processor for this webhook type
         const processor = this.processors.get(webhook.type);
         if (!processor) {
-            await this.logRequest(webhookId, "error", payload, null, `No processor for type: ${webhook.type}`, startTime);
+            this.logRequest(webhookId, "error", payload, null, `No processor for type: ${webhook.type}`, startTime).catch(() => { });
             return { status: 400, body: { error: `Unsupported webhook type: ${webhook.type}` } };
         }
 
         // 4. Validate payload
         const validation = processor.validatePayload(payload);
         if (!validation.valid) {
-            await this.logRequest(webhookId, "error", payload, null, validation.error || "Invalid payload", startTime);
+            this.logRequest(webhookId, "error", payload, null, validation.error || "Invalid payload", startTime).catch(() => { });
             return { status: 400, body: { error: validation.error || "Invalid payload" } };
         }
 
@@ -134,18 +134,58 @@ export class WebhookService {
             const result = await processor.processPayload(payload, context);
 
             if (result.success) {
-                await this.logRequest(webhookId, "success", payload, result.data, null, startTime);
-                await this.storage.updateWebhookLastUsed(webhookId);
+                try {
+                    this.logRequest(webhookId, "success", payload, result.data, null, startTime).catch(() => { });
+                    this.storage.updateWebhookLastUsed(webhookId).catch(() => { });
+                } catch (e) {
+                    // Ignore errors in logging/stats to ensure response is sent
+                }
                 return { status: 201, body: { status: "ok", data: result.data } };
             } else {
-                await this.logRequest(webhookId, "error", payload, null, result.error || "Processing failed", startTime);
+                try {
+                    this.logRequest(webhookId, "error", payload, null, result.error || "Processing failed", startTime).catch(() => { });
+                } catch (e) {
+                    // Ignore logging errors
+                }
                 return { status: 400, body: { error: result.error } };
             }
         } catch (error: any) {
             const errorMessage = error.message || "Unknown error";
-            await this.logRequest(webhookId, "error", payload, null, errorMessage, startTime);
+            try {
+                this.logRequest(webhookId, "error", payload, null, errorMessage, startTime).catch(() => { });
+            } catch (e) {
+                // Ignore logging errors
+            }
             return { status: 500, body: { error: "Internal processing error" } };
         }
+    }
+
+    /**
+     * Redact sensitive PII from log data
+     */
+    private redactSensitiveData(data: any): any {
+        if (!data) return data;
+        if (typeof data === 'string') {
+            // Basic string masking for obvious secrets
+            // (Note: complete string analysis is expensive, mainly targeting object keys)
+            return data;
+        }
+        if (Array.isArray(data)) {
+            return data.map(item => this.redactSensitiveData(item));
+        }
+        if (typeof data === 'object') {
+            const redacted: any = {};
+            for (const key of Object.keys(data)) {
+                // Check for sensitive keys
+                if (/pass|secret|token|key|auth|email|phone|name|iban|card|cvv|ssn/i.test(key)) {
+                    redacted[key] = "***REDACTED***";
+                } else {
+                    redacted[key] = this.redactSensitiveData(data[key]);
+                }
+            }
+            return redacted;
+        }
+        return data;
     }
 
     /**
@@ -162,8 +202,8 @@ export class WebhookService {
         const log: InsertWebhookLog = {
             webhookId,
             status,
-            requestBody,
-            responseBody,
+            requestBody: this.redactSensitiveData(requestBody),
+            responseBody: this.redactSensitiveData(responseBody),
             errorMessage,
             processingTimeMs: Date.now() - startTime,
         };

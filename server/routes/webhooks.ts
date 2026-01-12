@@ -91,9 +91,14 @@ export function registerWebhookRoutes(app: Express) {
                 return res.status(403).json({ error: "Forbidden" });
             }
 
-            const validated = insertWebhookSchema.partial().parse(req.body);
+            const validated = insertWebhookSchema.partial().omit({ userId: true }).parse(req.body);
             const webhook = await storage.updateWebhook(req.params.id, validated);
-            res.json({ ...webhook, secret: webhook?.secret ? "********" : null });
+
+            if (!webhook) {
+                return res.status(404).json({ error: "Webhook not found" });
+            }
+
+            res.json({ ...webhook, secret: webhook.secret ? "********" : null });
         } catch (error) {
             if (error instanceof z.ZodError) {
                 return res.status(400).json({ error: error.errors });
@@ -135,7 +140,8 @@ export function registerWebhookRoutes(app: Express) {
                 return res.status(403).json({ error: "Forbidden" });
             }
 
-            const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
+            const parsedLimit = parseInt(req.query.limit as string);
+            const limit = Math.max(1, Math.min(isNaN(parsedLimit) ? 50 : parsedLimit, 100));
             const logs = await storage.getWebhookLogs(req.params.id, limit);
             res.json(logs);
         } catch (error) {
@@ -147,24 +153,29 @@ export function registerWebhookRoutes(app: Express) {
 
     // Main webhook receiver endpoint
     app.post("/api/webhooks/:id", async (req, res) => {
-        console.log(`Webhook received for ID: ${req.params.id}`);
+        try {
+            console.log(`Webhook received for ID: ${req.params.id}`);
 
-        // Get raw body for signature verification
-        const rawBody = (req as any).rawBody || JSON.stringify(req.body);
+            // Get raw body for signature verification
+            const rawBody = (req as any).rawBody || JSON.stringify(req.body);
 
-        // Get signature from headers (support multiple formats)
-        const signature = (req.headers['x-signature'] ||
-            req.headers['x-webhook-signature'] ||
-            req.headers['tally-signature']) as string | undefined;
+            // Get signature from headers (support multiple formats)
+            const signature = (req.headers['x-signature'] ||
+                req.headers['x-webhook-signature'] ||
+                req.headers['tally-signature']) as string | undefined;
 
-        const result = await webhookService.processWebhook(
-            req.params.id,
-            req.body,
-            rawBody,
-            signature
-        );
+            const result = await webhookService.processWebhook(
+                req.params.id,
+                req.body,
+                rawBody,
+                signature
+            );
 
-        res.status(result.status).json(result.body);
+            res.status(result.status).json(result.body);
+        } catch (error) {
+            console.error("Webhook receiver error:", error);
+            res.status(500).json({ error: "Internal server error" });
+        }
     });
 
     // ============ LEGACY TALLY ENDPOINT (Deprecated) ============

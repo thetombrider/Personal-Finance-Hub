@@ -96,8 +96,8 @@ export class TallyProcessor implements WebhookProcessor {
         const direction = getDropdownText(directionField);
 
         // Get amounts (Tally sends numbers directly for INPUT_NUMBER)
-        const incomeAmount = incomeAmountField?.value ? parseFloat(incomeAmountField.value) || 0 : 0;
-        const expenseAmount = expenseAmountField?.value ? parseFloat(expenseAmountField.value) || 0 : 0;
+        const incomeAmount = incomeAmountField?.value ? this.parseEuropeanNumber(incomeAmountField.value) : 0;
+        const expenseAmount = expenseAmountField?.value ? this.parseEuropeanNumber(expenseAmountField.value) : 0;
 
         // Determine amount and type based on direction or which amount field is filled
         let amount = 0;
@@ -144,22 +144,30 @@ export class TallyProcessor implements WebhookProcessor {
             };
         }
 
-        // Create the transaction
-        const transactionData: InsertTransaction = {
-            date: this.parseDate(dateValue),
-            description,
-            amount: amount.toFixed(2),
-            type,
-            accountId: account.id,
-            categoryId: category.id,
-        };
+        try {
+            // Create the transaction
+            const transactionData: InsertTransaction = {
+                date: this.parseDate(dateValue),
+                description,
+                amount: amount.toFixed(2),
+                type,
+                accountId: account.id,
+                categoryId: category.id,
+            };
 
-        const transaction = await context.storage.createTransaction(transactionData);
+            const transaction = await context.storage.createTransaction(transactionData);
 
-        return {
-            success: true,
-            data: transaction,
-        };
+            return {
+                success: true,
+                data: transaction,
+            };
+        } catch (error: any) {
+            const errorMessage = error.message || "Failed to create transaction";
+            return {
+                success: false,
+                error: errorMessage,
+            };
+        }
     }
 }
 
