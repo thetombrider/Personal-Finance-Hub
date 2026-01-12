@@ -18,6 +18,7 @@ import Budget from "@/pages/Budget";
 import Reports from "@/pages/Reports";
 import ManageAccounts from "@/pages/settings/ManageAccounts";
 import ManageCategories from "@/pages/settings/ManageCategories";
+import ManageWebhooks from "@/pages/settings/ManageWebhooks";
 import EmailReports from "@/pages/settings/EmailReports";
 import Settings from "@/pages/settings/Settings";
 import { FinanceProvider } from "@/context/FinanceContext";
@@ -58,6 +59,7 @@ function Router() {
         <Route path="/portfolio" component={Portfolio} />
         <Route path="/settings/accounts" component={ManageAccounts} />
         <Route path="/settings/categories" component={ManageCategories} />
+        <Route path="/settings/webhooks" component={ManageWebhooks} />
         <Route path="/settings/email-reports" component={EmailReports} />
         <Route path="/settings" component={Settings} />
         <Route path="/bank-callback" component={BankCallbackPage} />
