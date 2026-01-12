@@ -197,3 +197,36 @@ export const importStaging = pgTable("import_staging", {
 export const insertImportStagingSchema = createInsertSchema(importStaging).omit({ id: true });
 export type InsertImportStaging = z.infer<typeof insertImportStagingSchema>;
 export type ImportStaging = typeof importStaging.$inferSelect;
+
+// Webhook configurations - each user can have multiple webhooks
+export const webhooks = pgTable("webhooks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  type: varchar("type", { length: 50 }).notNull(), // "tally", "zapier", "custom", etc.
+  secret: varchar("secret"), // Optional HMAC secret for signature verification
+  config: jsonb("config"), // Type-specific configuration
+  active: boolean("active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  lastUsedAt: timestamp("last_used_at", { mode: "string" }),
+});
+
+export const insertWebhookSchema = createInsertSchema(webhooks).omit({ id: true, createdAt: true, lastUsedAt: true });
+export type InsertWebhook = z.infer<typeof insertWebhookSchema>;
+export type Webhook = typeof webhooks.$inferSelect;
+
+// Webhook request logs for debugging and auditing
+export const webhookLogs = pgTable("webhook_logs", {
+  id: serial("id").primaryKey(),
+  webhookId: varchar("webhook_id").notNull().references(() => webhooks.id, { onDelete: "cascade" }),
+  status: varchar("status", { length: 20 }).notNull(), // "success", "error", "invalid_signature"
+  requestBody: jsonb("request_body"),
+  responseBody: jsonb("response_body"),
+  errorMessage: text("error_message"),
+  processingTimeMs: integer("processing_time_ms"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertWebhookLogSchema = createInsertSchema(webhookLogs).omit({ id: true, createdAt: true });
+export type InsertWebhookLog = z.infer<typeof insertWebhookLogSchema>;
+export type WebhookLog = typeof webhookLogs.$inferSelect;

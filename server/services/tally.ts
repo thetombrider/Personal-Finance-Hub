@@ -1,23 +1,21 @@
-import crypto from "crypto";
-import { type IStorage } from "../storage";
-import { type InsertTransaction } from "@shared/schema";
+import { type WebhookProcessor, type WebhookContext, type WebhookResult } from "./webhook-base";
+import { type InsertTransaction, type Account, type Category } from "@shared/schema";
 
-export class TallyService {
-    private storage: IStorage;
-
-    constructor(storage: IStorage) {
-        this.storage = storage;
-    }
+/**
+ * Tally webhook processor - handles form submissions from Tally.so
+ */
+export class TallyProcessor implements WebhookProcessor {
+    type = "tally";
 
     // Helper to parse European number format (1.234,56 -> 1234.56)
-    parseEuropeanNumber(value: string): number {
+    private parseEuropeanNumber(value: string): number {
         if (!value) return 0;
         const cleaned = value.replace(/\./g, '').replace(',', '.');
         return parseFloat(cleaned) || 0;
     }
 
     // Helper to parse date in various formats
-    parseDate(dateStr: string): string {
+    private parseDate(dateStr: string): string {
         if (!dateStr) return new Date().toISOString().split('T')[0];
 
         // Try DD/MM/YYYY format
@@ -42,30 +40,18 @@ export class TallyService {
         return new Date().toISOString().split('T')[0];
     }
 
-    verifySignature(payload: any, signature: string, secret: string): boolean {
-        if (!signature || !secret) return false;
-        const expectedSignature = crypto
-            .createHmac('sha256', secret)
-            .update(JSON.stringify(payload))
-            .digest('base64');
-
-        const signatureBuffer = Buffer.from(signature);
-        const expectedBuffer = Buffer.from(expectedSignature);
-
-        if (signatureBuffer.length !== expectedBuffer.length) {
-            return false;
-        }
-
-        return crypto.timingSafeEqual(signatureBuffer, expectedBuffer);
-    }
-
-    async processWebhook(payload: any) {
-        // Tally sends data directly or wrapped in eventType for webhooks
+    validatePayload(payload: any): { valid: boolean; error?: string } {
         const fields = payload.data?.fields || [];
 
         if (fields.length === 0) {
-            throw new Error("No fields found in payload");
+            return { valid: false, error: "No fields found in payload" };
         }
+
+        return { valid: true };
+    }
+
+    async processPayload(payload: any, context: WebhookContext): Promise<WebhookResult> {
+        const fields = payload.data?.fields || [];
 
         // Helper to get field by label pattern
         const getField = (labelPattern: RegExp): any => {
@@ -126,38 +112,35 @@ export class TallyService {
         }
 
         if (!description || amount <= 0) {
-            throw {
-                message: "Invalid transaction data",
-                details: { description, amount, direction, incomeAmount, expenseAmount },
-                fields: fields.map((f: any) => ({ label: f.label, value: f.value }))
+            return {
+                success: false,
+                error: "Invalid transaction data: missing description or amount",
             };
         }
 
-        // Look up account by name
-        const accounts = await this.storage.getAllAccounts();
+        // Look up account by name for this user
+        const accounts = await context.storage.getAccounts(context.userId);
         const account = accounts.find(a =>
             a.name.toLowerCase() === accountName.toLowerCase()
         );
 
         if (!account) {
-            throw {
-                message: "Account not found",
-                accountName,
-                availableAccounts: accounts.map(a => a.name)
+            return {
+                success: false,
+                error: `Account not found: ${accountName}. Available: ${accounts.map(a => a.name).join(', ')}`,
             };
         }
 
-        // Look up category by name
-        const categories = await this.storage.getAllCategories();
+        // Look up category by name for this user
+        const categories = await context.storage.getCategories(context.userId);
         const category = categories.find(c =>
             c.name.toLowerCase() === categoryName.toLowerCase()
         );
 
         if (!category) {
-            throw {
-                message: "Category not found",
-                categoryName,
-                availableCategories: categories.map(c => c.name)
+            return {
+                success: false,
+                error: `Category not found: ${categoryName}. Available: ${categories.map(c => c.name).join(', ')}`,
             };
         }
 
@@ -168,9 +151,20 @@ export class TallyService {
             amount: amount.toFixed(2),
             type,
             accountId: account.id,
-            categoryId: category.id
+            categoryId: category.id,
         };
 
-        return await this.storage.createTransaction(transactionData);
+        const transaction = await context.storage.createTransaction(transactionData);
+
+        return {
+            success: true,
+            data: transaction,
+        };
     }
 }
+
+/**
+ * Legacy TallyService for backward compatibility
+ * @deprecated Use TallyProcessor with WebhookService instead
+ */
+export { TallyProcessor as TallyService };

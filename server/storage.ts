@@ -36,6 +36,12 @@ import {
   importStaging,
   type ImportStaging,
   type InsertImportStaging,
+  webhooks,
+  type Webhook,
+  type InsertWebhook,
+  webhookLogs,
+  type WebhookLog,
+  type InsertWebhookLog,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, sql, inArray, and } from "drizzle-orm";
@@ -141,6 +147,18 @@ export interface IStorage {
   createImportStaging(staging: InsertImportStaging): Promise<ImportStaging>;
   deleteImportStaging(id: number): Promise<void>;
   clearImportStaging(accountId: number): Promise<void>;
+
+  // Webhooks
+  getWebhook(id: string): Promise<Webhook | undefined>;
+  getWebhooks(userId: string): Promise<Webhook[]>;
+  createWebhook(webhook: InsertWebhook): Promise<Webhook>;
+  updateWebhook(id: string, webhook: Partial<InsertWebhook>): Promise<Webhook | undefined>;
+  deleteWebhook(id: string): Promise<void>;
+  updateWebhookLastUsed(id: string): Promise<void>;
+
+  // Webhook Logs
+  getWebhookLogs(webhookId: string, limit?: number): Promise<WebhookLog[]>;
+  createWebhookLog(log: InsertWebhookLog): Promise<WebhookLog>;
 
   // Data Management
   deleteUser(id: string): Promise<void>;
@@ -845,6 +863,53 @@ export class DatabaseStorage implements IStorage {
 
   async clearImportStaging(accountId: number): Promise<void> {
     await db.delete(importStaging).where(eq(importStaging.accountId, accountId));
+  }
+
+  // Webhooks
+  async getWebhook(id: string): Promise<Webhook | undefined> {
+    const result = await db.select().from(webhooks).where(eq(webhooks.id, id));
+    return result[0];
+  }
+
+  async getWebhooks(userId: string): Promise<Webhook[]> {
+    return await db.select().from(webhooks).where(eq(webhooks.userId, userId));
+  }
+
+  async createWebhook(webhook: InsertWebhook): Promise<Webhook> {
+    const [created] = await db.insert(webhooks).values(webhook).returning();
+    return created;
+  }
+
+  async updateWebhook(id: string, webhook: Partial<InsertWebhook>): Promise<Webhook | undefined> {
+    const [updated] = await db.update(webhooks)
+      .set(webhook)
+      .where(eq(webhooks.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteWebhook(id: string): Promise<void> {
+    await db.delete(webhooks).where(eq(webhooks.id, id));
+  }
+
+  async updateWebhookLastUsed(id: string): Promise<void> {
+    await db.update(webhooks)
+      .set({ lastUsedAt: new Date().toISOString() })
+      .where(eq(webhooks.id, id));
+  }
+
+  // Webhook Logs
+  async getWebhookLogs(webhookId: string, limit: number = 50): Promise<WebhookLog[]> {
+    return await db.select()
+      .from(webhookLogs)
+      .where(eq(webhookLogs.webhookId, webhookId))
+      .orderBy(sql`${webhookLogs.createdAt} DESC`)
+      .limit(limit);
+  }
+
+  async createWebhookLog(log: InsertWebhookLog): Promise<WebhookLog> {
+    const [created] = await db.insert(webhookLogs).values(log).returning();
+    return created;
   }
 
   // Data Management
