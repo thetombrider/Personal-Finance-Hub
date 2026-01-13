@@ -41,6 +41,7 @@ interface IncomeStatementResponse {
 interface BalanceSheetResponse {
     assets: {
         cash: number;
+        savings: number;
         investments: number;
         total: number;
     };
@@ -312,8 +313,12 @@ function BalanceSheetView() {
 
                             <div className="space-y-4">
                                 <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
-                                    <span className="font-medium">Liquidità (Cash)</span>
+                                    <span className="font-medium">Liquidità (Cash + Checking)</span>
                                     <span>{formatCurrency(data.assets.cash)}</span>
+                                </div>
+                                <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
+                                    <span className="font-medium">Risparmi (Savings)</span>
+                                    <span>{formatCurrency(data.assets.savings)}</span>
                                 </div>
                                 <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
                                     <span className="font-medium">Investimenti</span>

@@ -306,15 +306,11 @@ export class ReportService {
     ]);
 
     // Assets
-    // 1. Liquidità (Cash)
-    // Calculated as the sum of current balances for 'checking', 'savings', and 'cash' accounts.
-    // We fetch all transactions once to calculate current balances.
-
+    // 1. Liquidità (Cash) & Savings
+    // We separate 'checking' + 'cash' from 'savings'
     const allTransactions = await this.storage.getTransactions(userId);
-    let cashAssets = 0;
-
-    // We reuse logic similar to calculateAccountBalances but filter by specific types
-    // or we could use the generic helper and just pick the fields we want, but let's be explicit here to match user request.
+    let cashTotal = 0;   // Checking + Cash
+    let savingsTotal = 0; // Savings
 
     for (const account of accounts) {
       if (account.type === 'checking' || account.type === 'savings' || account.type === 'cash') {
@@ -324,7 +320,13 @@ export class ReportService {
           return sum + (t.type === 'income' ? val : -val);
         }, 0);
         const currentBalance = parseFloat(account.startingBalance.toString()) + txSum;
-        cashAssets += currentBalance;
+
+        if (account.type === 'savings') {
+          savingsTotal += currentBalance;
+        } else {
+          // checking or cash
+          cashTotal += currentBalance;
+        }
       }
     }
 
@@ -349,7 +351,7 @@ export class ReportService {
       }
     }
 
-    const totalAssets = cashAssets + investmentsValue;
+    const totalAssets = cashTotal + savingsTotal + investmentsValue;
 
     // Liabilities
     // Credit cards logic
@@ -372,7 +374,8 @@ export class ReportService {
 
     return {
       assets: {
-        cash: cashAssets,
+        cash: cashTotal,
+        savings: savingsTotal,
         investments: investmentsValue,
         total: totalAssets
       },
