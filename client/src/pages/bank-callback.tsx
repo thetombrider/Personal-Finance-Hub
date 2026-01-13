@@ -1,13 +1,107 @@
+import { useEffect, useState } from "react";
+import { useLocation } from "wouter";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2, AlertCircle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useQuery } from "@tanstack/react-query";
+import { type Account } from "@shared/schema";
 import { Progress } from "@/components/ui/progress";
 
-// ... existing imports ...
-
 export default function BankCallbackPage() {
-    // ... existing state ...
+    const [, setLocation] = useLocation();
+    const { toast } = useToast();
+    const [loading, setLoading] = useState(true);
+    const [bankAccounts, setBankAccounts] = useState<any[]>([]);
+    const [mappings, setMappings] = useState<Record<string, string>>({}); // bankAccountId -> localAccountId (or "new")
+    const [processing, setProcessing] = useState(false);
+    const [bankConnectionId, setBankConnectionId] = useState<number | null>(null);
     const [progress, setProgress] = useState(0);
     const [statusMessage, setStatusMessage] = useState("");
 
-    // ... existing useEffect ...
+    // Fetch local accounts
+    const { data: localAccounts } = useQuery<Account[]>({
+        queryKey: ["/api/accounts"],
+    });
+
+    useEffect(() => {
+        // Extract requisition_id from URL
+        const params = new URLSearchParams(window.location.search);
+        let requisitionId = params.get("requisition_id");
+        const error = params.get("error");
+        const details = params.get("details");
+
+        if (error) {
+            let title = "Bank Connection Failed";
+            let description = details || error;
+
+            if (error === "InstitutionTimeoutError") {
+                title = "Connection Timed Out";
+                description = "The bank took too long to respond. This is common with some banks. Please try connecting again.";
+            }
+
+            toast({
+                title,
+                description,
+                variant: "destructive",
+            });
+            setLoading(false);
+            return;
+        }
+
+        // Fallback to session storage if not in URL
+        if (!requisitionId) {
+            requisitionId = sessionStorage.getItem("gocardless_requisition_id");
+        }
+
+        if (!requisitionId) {
+            toast({
+                title: "Error",
+                description: "Missing requisition ID.",
+                variant: "destructive",
+            });
+            setLoading(false);
+            return;
+        }
+
+        completeRequisition(requisitionId);
+    }, []);
+
+    const completeRequisition = async (requisitionId: string) => {
+        try {
+            // Increase timeout to 120s for bank callbacks which can be slow
+            const res = await apiRequest("POST", "/api/gocardless/callback", { requisitionId }, { timeout: 120000 });
+
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({}));
+                throw new Error(errorData.error || "Failed to complete requisition");
+            }
+
+            const data = await res.json();
+            // Data is now { accounts: [...], bankConnectionId: 123 }
+            const accounts = data.accounts || []; // Fallback if old API format
+            const connectionId = data.bankConnectionId;
+
+            setBankAccounts(accounts);
+            if (connectionId) setBankConnectionId(connectionId);
+
+            // Default mappings: "new"
+            const newMappings: Record<string, string> = {};
+            accounts.forEach((acc: any) => newMappings[acc.id] = "new");
+            setMappings(newMappings);
+
+        } catch (error: any) {
+            toast({
+                title: "Connection Failed",
+                description: error.message || "Could not retrieve bank accounts.",
+                variant: "destructive",
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleSave = async () => {
         setProcessing(true);
@@ -96,7 +190,7 @@ export default function BankCallbackPage() {
                 description: "Bank accounts linked and synced successfully.",
             });
             queryClient.invalidateQueries({ queryKey: ["/api/accounts"] });
-            navigate("/accounts"); // Changed setLocation to navigate
+            setLocation("/accounts");
         } catch (error) {
             console.error(error);
             toast({
@@ -108,7 +202,6 @@ export default function BankCallbackPage() {
         }
     };
 
-    // ... loading and empty checks ...
     if (loading) {
         return (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
@@ -138,7 +231,7 @@ export default function BankCallbackPage() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="flex justify-end pt-4">
-                        <Button onClick={() => navigate("/accounts")}>Go to Accounts</Button>
+                        <Button onClick={() => setLocation("/accounts")}>Go to Accounts</Button>
                     </CardContent>
                 </Card>
             </div>
@@ -147,7 +240,6 @@ export default function BankCallbackPage() {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
-            {/* ... Existing Card ... */}
             <Card className="w-full max-w-lg mx-4 shadow-lg animate-in fade-in zoom-in-50 duration-300">
                 <CardHeader>
                     <CardTitle>Link Accounts</CardTitle>
