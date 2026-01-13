@@ -48,7 +48,65 @@ const webhookSchema = z.object({
 
 type WebhookFormValues = z.infer<typeof webhookSchema>;
 
+function LogDetailsDialog({ log, open, onOpenChange }: { log: WebhookLog | null, open: boolean, onOpenChange: (open: boolean) => void }) {
+    if (!log) return null;
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                    <DialogTitle>Dettagli Log #{log.id}</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <h4 className="font-semibold mb-1">Data</h4>
+                            <p className="text-sm">{format(new Date(log.createdAt), "dd/MM/yyyy HH:mm:ss")}</p>
+                        </div>
+                        <div>
+                            <h4 className="font-semibold mb-1">Stato</h4>
+                            <Badge variant={log.status === "success" ? "secondary" : "destructive"} className={log.status === "success" ? "bg-green-100 text-green-800" : ""}>
+                                {log.status}
+                            </Badge>
+                        </div>
+                        <div>
+                            <h4 className="font-semibold mb-1">Durata</h4>
+                            <p className="text-sm">{log.processingTimeMs}ms</p>
+                        </div>
+                    </div>
+
+                    {log.errorMessage && (
+                        <div>
+                            <h4 className="font-semibold mb-1">Errore</h4>
+                            <pre className="bg-destructive/10 text-destructive p-3 rounded-md text-xs overflow-x-auto whitespace-pre-wrap">
+                                {log.errorMessage}
+                            </pre>
+                        </div>
+                    )}
+
+                    <div>
+                        <h4 className="font-semibold mb-1">Request Body</h4>
+                        <pre className="bg-muted p-3 rounded-md text-xs overflow-x-auto font-mono">
+                            {log.requestBody ? JSON.stringify(log.requestBody, null, 2) : "Nessun dato"}
+                        </pre>
+                    </div>
+
+                    {log.responseBody && (
+                        <div>
+                            <h4 className="font-semibold mb-1">Response Body</h4>
+                            <pre className="bg-muted p-3 rounded-md text-xs overflow-x-auto font-mono">
+                                {JSON.stringify(log.responseBody, null, 2)}
+                            </pre>
+                        </div>
+                    )}
+                </div>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 function WebhookLogsDialog({ webhookId, webhookName, open, onOpenChange }: { webhookId: string | null, webhookName: string, open: boolean, onOpenChange: (open: boolean) => void }) {
+    const [selectedLog, setSelectedLog] = useState<WebhookLog | null>(null);
     const { data: logs = [] } = useQuery<WebhookLog[]>({
         queryKey: [`/api/webhooks/${webhookId}/logs`],
         enabled: !!webhookId && open,
@@ -69,47 +127,59 @@ function WebhookLogsDialog({ webhookId, webhookName, open, onOpenChange }: { web
     );
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-                <DialogHeader>
-                    <DialogTitle>Log Webhook: {webhookName}</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Data</TableHead>
-                                <TableHead>Stato</TableHead>
-                                <TableHead>Durata</TableHead>
-                                <TableHead>Dettagli</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {logs.length === 0 ? (
+        <>
+            <Dialog open={open} onOpenChange={onOpenChange}>
+                <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>Log Webhook: {webhookName}</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <Table>
+                            <TableHeader>
                                 <TableRow>
-                                    <TableCell colSpan={4} className="text-center text-muted-foreground">Nessun log trovato</TableCell>
+                                    <TableHead>Data</TableHead>
+                                    <TableHead>Stato</TableHead>
+                                    <TableHead>Durata</TableHead>
+                                    <TableHead>Dettagli</TableHead>
                                 </TableRow>
-                            ) : (
-                                logs.map((log) => (
-                                    <TableRow key={log.id}>
-                                        <TableCell>{format(new Date(log.createdAt), "dd/MM/yyyy HH:mm:ss")}</TableCell>
-                                        <TableCell>
-                                            <Badge variant={log.status === "success" ? "secondary" : "destructive"} className={log.status === "success" ? "bg-green-100 text-green-800" : ""}>
-                                                {log.status}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell>{log.processingTimeMs}ms</TableCell>
-                                        <TableCell className="max-w-[300px] truncate text-xs font-mono">
-                                            {log.errorMessage || JSON.stringify(log.requestBody)?.substring(0, 50) + "..."}
-                                        </TableCell>
+                            </TableHeader>
+                            <TableBody>
+                                {logs.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={4} className="text-center text-muted-foreground">Nessun log trovato</TableCell>
                                     </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
-            </DialogContent>
-        </Dialog>
+                                ) : (
+                                    logs.map((log) => (
+                                        <TableRow key={log.id}>
+                                            <TableCell>{format(new Date(log.createdAt), "dd/MM/yyyy HH:mm:ss")}</TableCell>
+                                            <TableCell>
+                                                <Badge variant={log.status === "success" ? "secondary" : "destructive"} className={log.status === "success" ? "bg-green-100 text-green-800" : ""}>
+                                                    {log.status}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell>{log.processingTimeMs}ms</TableCell>
+                                            <TableCell
+                                                className="max-w-[300px] truncate text-xs font-mono cursor-pointer hover:bg-muted/50 transition-colors"
+                                                onClick={() => setSelectedLog(log)}
+                                                title="Clicca per vedere i dettagli"
+                                            >
+                                                {log.errorMessage || JSON.stringify(log.requestBody)?.substring(0, 50) + "..."}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            <LogDetailsDialog
+                log={selectedLog}
+                open={!!selectedLog}
+                onOpenChange={(open) => !open && setSelectedLog(null)}
+            />
+        </>
     );
 }
 
