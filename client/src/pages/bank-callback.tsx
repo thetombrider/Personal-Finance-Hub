@@ -61,7 +61,7 @@ export default function BankCallbackPage() {
 
     const completeRequisition = async (requisitionId: string) => {
         try {
-            const res = await apiRequest("POST", "/api/gocardless/requisition/complete", { requisitionId });
+            const res = await apiRequest("POST", "/api/gocardless/callback", { requisitionId });
 
             if (!res.ok) {
                 const errorData = await res.json().catch(() => ({}));
