@@ -8,9 +8,14 @@ export class TallyProcessor implements WebhookProcessor {
     type = "tally";
 
     // Helper to parse European number format (1.234,56 -> 1234.56)
-    private parseEuropeanNumber(value: string): number {
-        if (!value) return 0;
-        const cleaned = value.replace(/\./g, '').replace(',', '.');
+    private parseEuropeanNumber(value: string | number): number {
+        if (value === null || value === undefined) return 0;
+        if (typeof value === 'number') return value;
+
+        const stringValue = String(value);
+        if (!stringValue) return 0;
+
+        const cleaned = stringValue.replace(/\./g, '').replace(',', '.');
         return parseFloat(cleaned) || 0;
     }
 
