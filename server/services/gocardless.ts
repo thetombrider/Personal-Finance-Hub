@@ -127,63 +127,62 @@ class GoCardlessService {
 
     // Called when user returns from bank
     async handleCallback(requisitionId: string) {
+        console.time(`[GoCardless] handleCallback:${requisitionId}`);
         await this.ensureToken();
 
-        return await this.executeWithRetry(async () => {
-            // 1. Get requisition status
-            const requisitionData = await this.client.requisition.getRequisitionById(requisitionId);
+        try {
+            return await this.executeWithRetry(async () => {
+                // 1. Get requisition status
+                console.timeLog(`[GoCardless] handleCallback:${requisitionId}`, "Fetching requisition status...");
+                const requisitionData = await this.client.requisition.getRequisitionById(requisitionId);
+                console.timeLog(`[GoCardless] handleCallback:${requisitionId}`, "Requisition status fetched");
 
-            // 2. Update DB
-            const connection = await storage.getBankConnectionByRequisitionId(requisitionId);
-            if (!connection) {
-                throw new Error("Connection not found for requisition: " + requisitionId);
-            }
-
-            // Always update the status in the DB
-            await storage.updateBankConnection(connection.id, { status: requisitionData.status });
-
-            // debug: check actual agreement validity
-            if (requisitionData.agreement) {
-                try {
-                    const agreementData = await this.client.agreement.getAgreement(requisitionData.agreement);
-
-                } catch (e) {
-                    console.error("[GoCardless] Failed to fetch agreement details:", e);
+                // 2. Update DB
+                const connection = await storage.getBankConnectionByRequisitionId(requisitionId);
+                if (!connection) {
+                    throw new Error("Connection not found for requisition: " + requisitionId);
                 }
-            }
 
-            if (requisitionData.status === "LN") { // Linked
-                // Fetch details for each account to return useful info (name, owner, etc)
-                const accountIds = requisitionData.accounts;
-                const accountsWithDetails = await Promise.all(accountIds.map(async (id: string) => {
-                    try {
-                        const details = await this.client.account(id).getDetails();
-                        // Struct: { account: { resourceId, iban, currency, name, product, ... } }
-                        return {
-                            id,
-                            name: details.account.name || details.account.product || "Bank Account",
-                            iban: details.account.iban,
-                            currency: details.account.currency,
-                            ownerName: details.account.ownerName
-                        };
-                    } catch (e) {
-                        console.error(`Failed to fetch details for account ${id}`, e);
-                        return { id, name: `Bank Account (${id.substring(0, 8)}...)` };
-                    }
-                }));
+                // Always update the status in the DB
+                await storage.updateBankConnection(connection.id, { status: requisitionData.status });
 
-                return {
-                    accounts: accountsWithDetails,
-                    bankConnectionId: connection.id
-                };
-            } else {
-                // Throw a specific error object or message that the route can interpret
-                const error = new Error(`Bank connection not completed. Status: ${requisitionData.status}`);
-                (error as any).status = 400; // Hint for the route handler
-                (error as any).code = requisitionData.status;
-                throw error;
-            }
-        });
+                if (requisitionData.status === "LN") { // Linked
+                    // Fetch details for each account to return useful info (name, owner, etc)
+                    console.timeLog(`[GoCardless] handleCallback:${requisitionId}`, "Fetching account details...");
+                    const accountIds = requisitionData.accounts;
+                    const accountsWithDetails = await Promise.all(accountIds.map(async (id: string) => {
+                        try {
+                            const details = await this.client.account(id).getDetails();
+                            // Struct: { account: { resourceId, iban, currency, name, product, ... } }
+                            return {
+                                id,
+                                name: details.account.name || details.account.product || "Bank Account",
+                                iban: details.account.iban,
+                                currency: details.account.currency,
+                                ownerName: details.account.ownerName
+                            };
+                        } catch (e) {
+                            console.error(`Failed to fetch details for account ${id}`, e);
+                            return { id, name: `Bank Account (${id.substring(0, 8)}...)` };
+                        }
+                    }));
+                    console.timeLog(`[GoCardless] handleCallback:${requisitionId}`, "Account details fetched");
+
+                    return {
+                        accounts: accountsWithDetails,
+                        bankConnectionId: connection.id
+                    };
+                } else {
+                    // Throw a specific error object or message that the route can interpret
+                    const error = new Error(`Bank connection not completed. Status: ${requisitionData.status}`);
+                    (error as any).status = 400; // Hint for the route handler
+                    (error as any).code = requisitionData.status;
+                    throw error;
+                }
+            });
+        } finally {
+            console.timeEnd(`[GoCardless] handleCallback:${requisitionId}`);
+        }
     }
 
     async getRequisitionStatus(requisitionId: string) {

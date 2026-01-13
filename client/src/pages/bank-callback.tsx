@@ -96,7 +96,7 @@ export default function BankCallbackPage() {
                 description: "Bank accounts linked and synced successfully.",
             });
             queryClient.invalidateQueries({ queryKey: ["/api/accounts"] });
-            setLocation("/accounts");
+            navigate("/accounts"); // Changed setLocation to navigate
         } catch (error) {
             console.error(error);
             toast({
@@ -109,6 +109,41 @@ export default function BankCallbackPage() {
     };
 
     // ... loading and empty checks ...
+    if (loading) {
+        return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
+                <Card className="w-full max-w-lg mx-4 shadow-lg animate-in fade-in zoom-in-50 duration-300">
+                    <CardHeader>
+                        <CardTitle>Loading Bank Accounts</CardTitle>
+                        <CardDescription>
+                            Please wait while we fetch your bank account details.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex justify-center items-center h-32">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    }
+
+    if (!bankAccounts || bankAccounts.length === 0) {
+        return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
+                <Card className="w-full max-w-lg mx-4 shadow-lg animate-in fade-in zoom-in-50 duration-300">
+                    <CardHeader>
+                        <CardTitle>No Accounts Found</CardTitle>
+                        <CardDescription>
+                            We couldn't find any accounts from your bank. Please try connecting again.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex justify-end pt-4">
+                        <Button onClick={() => navigate("/accounts")}>Go to Accounts</Button>
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    }
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
