@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Layout from "@/components/Layout";
 import { TallyGuideDialog } from "@/components/settings/TallyGuideDialog";
+import { GenericJSONGuideDialog } from "@/components/settings/GenericJSONGuideDialog";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
@@ -189,6 +190,7 @@ function WebhookLogsDialog({ webhookId, webhookName, open, onOpenChange }: { web
 export default function ManageWebhooks() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isGuideOpen, setIsGuideOpen] = useState(false);
+    const [isGenericGuideOpen, setIsGenericGuideOpen] = useState(false);
     const [editingWebhook, setEditingWebhook] = useState<Webhook | null>(null);
     const [viewingLogsId, setViewingLogsId] = useState<string | null>(null);
     const [showSecret, setShowSecret] = useState<Record<string, boolean>>({});
@@ -445,6 +447,11 @@ export default function ManageWebhooks() {
                                                             <HelpCircle className="h-4 w-4 text-blue-500" />
                                                         </Button>
                                                     )}
+                                                    {webhook.type === 'generic' && (
+                                                        <Button variant="ghost" size="icon" onClick={() => setIsGenericGuideOpen(true)} title="Guida Configurazione JSON">
+                                                            <HelpCircle className="h-4 w-4 text-emerald-500" />
+                                                        </Button>
+                                                    )}
                                                     <Button variant="ghost" size="icon" onClick={() => setViewingLogsId(webhook.id)} title="Logs">
                                                         <ScrollText className="h-4 w-4" />
                                                     </Button>
@@ -475,6 +482,11 @@ export default function ManageWebhooks() {
             <TallyGuideDialog
                 open={isGuideOpen}
                 onOpenChange={setIsGuideOpen}
+            />
+
+            <GenericJSONGuideDialog
+                open={isGenericGuideOpen}
+                onOpenChange={setIsGenericGuideOpen}
             />
         </Layout>
     );
