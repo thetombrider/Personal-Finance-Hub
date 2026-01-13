@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { storage } from "../storage";
 import { WebhookService } from "../services/webhook-base";
 import { TallyProcessor } from "../services/tally";
+import { GenericWebhookProcessor } from "../services/generic-webhook";
 import { insertWebhookSchema } from "@shared/schema";
 import { z } from "zod";
 import "./types";
@@ -9,6 +10,7 @@ import "./types";
 // Initialize webhook service with processors
 const webhookService = new WebhookService(storage);
 webhookService.registerProcessor(new TallyProcessor());
+webhookService.registerProcessor(new GenericWebhookProcessor());
 
 export function registerWebhookRoutes(app: Express) {
     // ============ WEBHOOK CRUD (Authenticated) ============
@@ -60,7 +62,7 @@ export function registerWebhookRoutes(app: Express) {
             if (!webhookService.getProcessor(validated.type)) {
                 return res.status(400).json({
                     error: `Unsupported webhook type: ${validated.type}`,
-                    supportedTypes: ["tally"]
+                    supportedTypes: ["tally", "generic"]
                 });
             }
 
@@ -205,21 +207,37 @@ export function registerWebhookRoutes(app: Express) {
         const accounts = await storage.getAccounts(webhook.userId);
         const categories = await storage.getCategories(webhook.userId);
 
+        let instructions: any = {
+            method: "POST",
+            contentType: "application/json"
+        };
+
+        if (webhook.type === 'tally') {
+            instructions.expectedFields = [
+                "Date (or Data) - DD/MM/YYYY format",
+                "Descrizione (or Description) - transaction description",
+                "Importo Entrata - income amount",
+                "Importo Uscita - expense amount",
+                "Conto (or Account) - account name",
+                "Categoria (or Category) - category name"
+            ];
+        } else if (webhook.type === 'generic') {
+            instructions.expectedJson = {
+                date: "YYYY-MM-DD",
+                amount: 123.45,
+                type: "income | expense",
+                description: "Transaction description",
+                account: "Account Name",
+                category: "Category Name"
+            };
+        }
+
         res.json({
             status: webhook.active ? "active" : "disabled",
             type: webhook.type,
             lastUsed: webhook.lastUsedAt,
             instructions: {
-                method: "POST",
-                contentType: "application/json",
-                expectedFields: [
-                    "Date (or Data) - DD/MM/YYYY format",
-                    "Descrizione (or Description) - transaction description",
-                    "Importo Entrata - income amount",
-                    "Importo Uscita - expense amount",
-                    "Conto (or Account) - account name",
-                    "Categoria (or Category) - category name"
-                ],
+                ...instructions,
                 availableAccounts: accounts.map(a => a.name),
                 availableCategories: categories.map(c => ({ name: c.name, type: c.type }))
             }
