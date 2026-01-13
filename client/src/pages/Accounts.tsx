@@ -86,7 +86,7 @@ export default function Accounts() {
   const handleSync = async (accountId: number) => {
     setSyncing(accountId);
     try {
-      const res = await apiRequest("POST", "/api/gocardless/sync", { accountId });
+      const res = await apiRequest("POST", `/api/gocardless/sync/${accountId}`);
       const data = await res.json();
       toast({
         title: "Sync Complete",
