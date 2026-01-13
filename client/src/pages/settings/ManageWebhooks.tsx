@@ -1,8 +1,9 @@
 import { useState } from "react";
 import Layout from "@/components/Layout";
+import { TallyGuideDialog } from "@/components/settings/TallyGuideDialog";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -16,7 +17,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
-import { Plus, Trash2, Edit2, Activity, ScrollText, Copy, Check, Eye, EyeOff } from "lucide-react";
+import { Plus, Trash2, Edit2, ScrollText, Copy, Check, Eye, EyeOff, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Types
@@ -183,8 +184,11 @@ function WebhookLogsDialog({ webhookId, webhookName, open, onOpenChange }: { web
     );
 }
 
+
+
 export default function ManageWebhooks() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [isGuideOpen, setIsGuideOpen] = useState(false);
     const [editingWebhook, setEditingWebhook] = useState<Webhook | null>(null);
     const [viewingLogsId, setViewingLogsId] = useState<string | null>(null);
     const [showSecret, setShowSecret] = useState<Record<string, boolean>>({});
@@ -434,6 +438,11 @@ export default function ManageWebhooks() {
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex items-center justify-end gap-1">
+                                                    {webhook.type === 'tally' && (
+                                                        <Button variant="ghost" size="icon" onClick={() => setIsGuideOpen(true)} title="Guida Configurazione">
+                                                            <HelpCircle className="h-4 w-4 text-blue-500" />
+                                                        </Button>
+                                                    )}
                                                     <Button variant="ghost" size="icon" onClick={() => setViewingLogsId(webhook.id)} title="Logs">
                                                         <ScrollText className="h-4 w-4" />
                                                     </Button>
@@ -459,6 +468,11 @@ export default function ManageWebhooks() {
                 webhookName={webhooks.find(w => w.id === viewingLogsId)?.name || ""}
                 open={!!viewingLogsId}
                 onOpenChange={(open) => !open && setViewingLogsId(null)}
+            />
+
+            <TallyGuideDialog
+                open={isGuideOpen}
+                onOpenChange={setIsGuideOpen}
             />
         </Layout>
     );
