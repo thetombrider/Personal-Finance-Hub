@@ -133,7 +133,7 @@ export function registerBudgetRoutes(app: Express) {
         try {
             if (!req.user) return res.status(401).json({ error: "Unauthorized" });
 
-            console.log("Receiving recurring expense payload:", req.body);
+
             const validated = insertRecurringExpenseSchema.parse(req.body);
 
             // Verify account ownership

@@ -146,7 +146,7 @@ class GoCardlessService {
             if (requisitionData.agreement) {
                 try {
                     const agreementData = await this.client.agreement.getAgreement(requisitionData.agreement);
-                    console.log("[GoCardless] Agreement Details:", JSON.stringify(agreementData, null, 2));
+
                 } catch (e) {
                     console.error("[GoCardless] Failed to fetch agreement details:", e);
                 }

@@ -200,5 +200,53 @@ export function registerGoCardlessRoutes(app: Express) {
             res.status(500).json({ error: error.message || "Failed to renew connection" });
         }
     });
+
+    app.post("/api/gocardless/accounts/link", async (req, res) => {
+        try {
+            if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+
+            const schema = z.object({
+                accountId: z.number(),
+                gocardlessAccountId: z.string(),
+                bankConnectionId: z.number().optional(),
+            });
+
+            const { accountId, gocardlessAccountId, bankConnectionId } = schema.parse(req.body);
+
+            // Verify ownership of the local account
+            const account = await storage.getAccount(accountId);
+            if (!account) {
+                return res.status(404).json({ error: "Account not found" });
+            }
+            if (!checkOwnership(account.userId, req.user.id)) {
+                return res.status(403).json({ error: "Forbidden" });
+            }
+
+            // Update the account with the GoCardless details
+            const updated = await storage.updateAccount(accountId, {
+                gocardlessAccountId,
+                bankConnectionId,
+            });
+
+            // Initial sync
+            try {
+                // We don't await this to keep the UI snappy? 
+                // Actually, for "Link" it's better to wait so we can show "Success" confidently.
+                await gocardlessService.syncTransactions(req.user.id, accountId);
+                await gocardlessService.syncBalances(accountId);
+            } catch (syncError) {
+                console.error("Initial sync failed after linking:", syncError);
+                // We still return success because the LINK happened, just sync failed (maybe temporary)
+            }
+
+            res.json(updated);
+        } catch (error: any) {
+            console.error("Error linking account:", error);
+            if (error instanceof z.ZodError) {
+                return res.status(400).json({ error: error.errors });
+            }
+            res.status(500).json({ error: "Failed to link account" });
+        }
+    });
 }
 
