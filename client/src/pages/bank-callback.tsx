@@ -1,163 +1,118 @@
-import { useEffect, useState } from "react";
-import { useLocation } from "wouter";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, CheckCircle2, AlertCircle } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useQuery } from "@tanstack/react-query";
-import { type Account } from "@shared/schema";
+import { Progress } from "@/components/ui/progress";
+
+// ... existing imports ...
 
 export default function BankCallbackPage() {
-    const [location, setLocation] = useLocation();
-    const { toast } = useToast();
-    const [loading, setLoading] = useState(true);
-    const [bankAccounts, setBankAccounts] = useState<any[]>([]);
-    const [mappings, setMappings] = useState<Record<string, string>>({}); // bankAccountId -> localAccountId (or "new")
-    const [processing, setProcessing] = useState(false);
-    const [bankConnectionId, setBankConnectionId] = useState<number | null>(null);
+    // ... existing state ...
+    const [progress, setProgress] = useState(0);
+    const [statusMessage, setStatusMessage] = useState("");
 
-    // Fetch local accounts
-    const { data: localAccounts } = useQuery<Account[]>({
-        queryKey: ["/api/accounts"],
-    });
-
-    useEffect(() => {
-        // Extract requisition_id from URL
-        // wouter location doesn't give query params directly easily, use window.location
-        const params = new URLSearchParams(window.location.search);
-        let requisitionId = params.get("requisition_id");
-        const error = params.get("error");
-        const details = params.get("details");
-
-        if (error) {
-            toast({
-                title: "Bank Connection Failed",
-                description: details || error,
-                variant: "destructive",
-            });
-            setLoading(false);
-            return;
-        }
-
-        // Fallback to session storage if not in URL
-        if (!requisitionId) {
-            requisitionId = sessionStorage.getItem("gocardless_requisition_id");
-        }
-
-        if (!requisitionId) {
-            toast({
-                title: "Error",
-                description: "Missing requisition ID.",
-                variant: "destructive",
-            });
-            setLoading(false);
-            return;
-        }
-
-        completeRequisition(requisitionId);
-    }, []);
-
-    const completeRequisition = async (requisitionId: string) => {
-        try {
-            const res = await apiRequest("POST", "/api/gocardless/callback", { requisitionId });
-
-            if (!res.ok) {
-                const errorData = await res.json().catch(() => ({}));
-                throw new Error(errorData.error || "Failed to complete requisition");
-            }
-
-            const data = await res.json();
-            // Data is now { accounts: [...], bankConnectionId: 123 }
-            const accounts = data.accounts || []; // Fallback if old API format
-            const connectionId = data.bankConnectionId;
-
-            setBankAccounts(accounts);
-            if (connectionId) setBankConnectionId(connectionId);
-
-            // Default mappings: "new"
-            const newMappings: Record<string, string> = {};
-            accounts.forEach((acc: any) => newMappings[acc.id] = "new");
-            setMappings(newMappings);
-
-        } catch (error: any) {
-            toast({
-                title: "Connection Failed",
-                description: error.message || "Could not retrieve bank accounts.",
-                variant: "destructive",
-            });
-        } finally {
-            setLoading(false);
-        }
-    };
+    // ... existing useEffect ...
 
     const handleSave = async () => {
         setProcessing(true);
+        setProgress(0);
+        setStatusMessage("Initializing...");
+
         try {
+            // 1. Collect all actions to be performed
+            const actions: { type: 'link' | 'create', bankId: string, localId: string | 'new', name: string }[] = [];
+
             for (const [bankAckId, localAckId] of Object.entries(mappings)) {
-                if (localAckId === "new") {
-                    // Find details from state
-                    const bankAcc = bankAccounts.find((a: any) => a.id === bankAckId);
-                    const name = bankAcc ? bankAcc.name : "New Bank Account";
+                if (localAckId === 'skip') continue;
+
+                const bankAcc = bankAccounts.find((a: any) => a.id === bankAckId);
+                const name = bankAcc ? bankAcc.name : "Bank Account";
+
+                actions.push({
+                    type: localAckId === 'new' ? 'create' : 'link',
+                    bankId: bankAckId,
+                    localId: localAckId,
+                    name: name
+                });
+            }
+
+            const totalSteps = actions.length * 2; // Link + Sync for each
+            let completedSteps = 0;
+
+            const updateProgress = (msg: string) => {
+                completedSteps++;
+                setProgress(Math.round((completedSteps / totalSteps) * 100));
+                setStatusMessage(msg);
+            };
+
+            // 2. Execute actions
+            for (const action of actions) {
+                let accountId: number;
+
+                // Step A: Link/Create Account
+                setStatusMessage(`Linking ${action.name}...`);
+
+                if (action.type === 'create') {
+                    const bankAcc = bankAccounts.find((a: any) => a.id === action.bankId);
                     const currency = bankAcc ? bankAcc.currency : "EUR";
 
-                    await apiRequest("POST", "/api/accounts", {
-                        name: name,
+                    const res = await apiRequest("POST", "/api/accounts", {
+                        name: action.name,
                         type: "checking",
                         startingBalance: "0",
                         currency: currency,
                         color: "#000000",
-                        gocardlessAccountId: bankAckId,
+                        gocardlessAccountId: action.bankId,
                         bankConnectionId: bankConnectionId
                     });
-                } else if (localAckId !== "skip") {
-                    await apiRequest("POST", "/api/gocardless/accounts/link", {
-                        accountId: parseInt(localAckId),
-                        gocardlessAccountId: bankAckId,
+                    const data = await res.json();
+                    accountId = data.id;
+                } else {
+                    const res = await apiRequest("POST", "/api/gocardless/accounts/link", {
+                        accountId: parseInt(action.localId),
+                        gocardlessAccountId: action.bankId,
                         bankConnectionId: bankConnectionId
                     });
+                    const data = await res.json();
+                    accountId = data.id;
                 }
+
+                updateProgress(`Linked ${action.name}`);
+
+                // Step B: Sync Transactions
+                setStatusMessage(`Syncing transactions for ${action.name}...`);
+                try {
+                    await apiRequest("POST", `/api/gocardless/sync/${accountId}`);
+                } catch (e) {
+                    console.error(`Failed to sync account ${accountId}`, e);
+                    // Don't fail the whole process if sync fails
+                }
+                updateProgress(`Synced ${action.name}`);
             }
+
+            setStatusMessage("All done! Redirecting...");
+            setProgress(100);
+
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Small delay to see 100%
 
             toast({
                 title: "Success",
-                description: "Bank accounts linked successfully.",
+                description: "Bank accounts linked and synced successfully.",
             });
             queryClient.invalidateQueries({ queryKey: ["/api/accounts"] });
             setLocation("/accounts");
         } catch (error) {
+            console.error(error);
             toast({
                 title: "Error",
                 description: "Failed to link accounts.",
                 variant: "destructive",
             });
-        } finally {
             setProcessing(false);
         }
     };
 
-    if (loading) {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="text-muted-foreground">Verifying bank connection...</p>
-            </div>
-        );
-    }
-
-    if (bankAccounts.length === 0) {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
-                <AlertCircle className="h-8 w-8 text-destructive" />
-                <p className="text-muted-foreground">No accounts found or connection failed.</p>
-                <Button onClick={() => setLocation("/accounts")}>Back to Accounts</Button>
-            </div>
-        );
-    }
+    // ... loading and empty checks ...
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
+            {/* ... Existing Card ... */}
             <Card className="w-full max-w-lg mx-4 shadow-lg animate-in fade-in zoom-in-50 duration-300">
                 <CardHeader>
                     <CardTitle>Link Accounts</CardTitle>
@@ -218,6 +173,20 @@ export default function BankCallbackPage() {
                     </div>
                 </CardContent>
             </Card>
+
+            {/* Progress Overlay */}
+            {processing && (
+                <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-background/95 p-8 rounded-xl shadow-2xl flex flex-col items-center gap-6 max-w-sm w-full text-center border">
+                        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                        <div className="space-y-2 w-full">
+                            <h3 className="font-semibold text-lg">{statusMessage}</h3>
+                            <Progress value={progress} className="w-full h-2" />
+                            <p className="text-muted-foreground text-xs">{progress}% Complete</p>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

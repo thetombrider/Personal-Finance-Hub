@@ -228,16 +228,9 @@ export function registerGoCardlessRoutes(app: Express) {
                 bankConnectionId,
             });
 
-            // Initial sync
-            try {
-                // We don't await this to keep the UI snappy? 
-                // Actually, for "Link" it's better to wait so we can show "Success" confidently.
-                await gocardlessService.syncTransactions(req.user.id, accountId);
-                await gocardlessService.syncBalances(accountId);
-            } catch (syncError) {
-                console.error("Initial sync failed after linking:", syncError);
-                // We still return success because the LINK happened, just sync failed (maybe temporary)
-            }
+            // Note: Initial sync is now triggered by the client to show progress
+
+            res.json(updated);
 
             res.json(updated);
         } catch (error: any) {
