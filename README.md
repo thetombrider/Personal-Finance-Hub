@@ -7,19 +7,22 @@ FinTrack is a comprehensive personal finance management application designed to 
 - **📊 Dashboard**: Get a high-level overview of your net worth, recent activity, and financial trends.
 - **💰 Account Management**: Track various types of accounts including Checking, Savings, Credit Cards, and Investments.
 - **📝 Transactions**: Record income and expenses, categorize them, and import transactions via CSV.
-- **📉 Budgeting**: Set monthly budgets for different categories and monitor your spending in real-time.
+- **📉 Budgeting**: Advanced budgeting system with semester views, baseline (expected) monthly budgets, and tracking of recurring and planned expenses.
 - **📈 Portfolio**: Manage your stock holdings, track performance, and view detailed metrics.
-- **📊 Reports**: Access detailed weekly reports and financial insights.
-- **⚙️ Settings**: Customize categories, manage application preferences, and update user profile.
+- **📊 Reports**: Access detailed weekly reports, balance sheets, and income statements with granular breakdowns.
+- **⚙️ Settings**: Customize categories (including monthly budget targets), manage application preferences, and update user profile.
 - **🔐 Authentication**: Secure login with support for OIDC providers.
 - **🏦 Bank Sync**: Connect to 2,000+ banks (including PayPal) via GoCardless to automatically sync transactions and balances to a Staging Area for review.
-- **📥 Smart Import**: Advanced CSV importer for Transactions, Trades, and Holdings with automated column mapping
+- **📥 Smart Import**: Advanced CSV importer for Transactions, Trades, and Holdings with automated column mapping.
 - **📧 Weekly Reports**: Automated email summaries with financial insights and market data sent via Resend.
-- **🔗 Tally Integration**: Webhook support for logging expenses on-the-go via Tally forms.
+- **🔗 Webhooks & Integrations**: 
+    - **Tally.so Integration**: Log expenses directly from Tally forms.
+    - **Generic Webhooks**: Receive standard JSON payloads from services like n8n, Make, or Zapier.
+    - **Management UI**: Create, manage, and view logs for all your webhooks directly in the settings.
 
 ## Tech Stack
 
-- **Frontend**: React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui, Recharts.
+- **Frontend**: React 19, TypeScript, Vite, Tailwind CSS, shadcn/ui, Recharts.
 - **Backend**: Express.js, Node.js, Passport.js, GoCardless (Nordigen), Resend.
 - **Database**: PostgreSQL, Drizzle ORM.
 - **Architecture**: RESTful API with React Query for state management.
@@ -38,7 +41,6 @@ The application requires certain environment variables to be set. You can define
 |----------|-------------|
 | `DATABASE_URL` | Connection string for PostgreSQL (e.g., `postgres://user:pass@host:5432/db`) |
 | `ALPHA_VANTAGE_API_KEY` | API Key for stock market data (get one from Alpha Vantage) |
-| `TALLY_WEBHOOK_SECRET` | (Optional) Secret for Tally webhook integration |
 | `DISABLE_SIGNUP` | Set to `true` to disable new user registrations |
 | `SSO_ONLY` | Set to `true` to disable local user registration and login|
 | `OIDC_ISSUER_URL` | (Optional) OIDC Issuer URL |

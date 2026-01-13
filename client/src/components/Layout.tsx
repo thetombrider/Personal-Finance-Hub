@@ -26,7 +26,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     { href: "/settings/categories", label: "Gestione Categorie" },
     { href: "/settings/webhooks", label: "Gestione Webhook" },
     { href: "/settings/email-reports", label: "Report Email" },
-    { href: "/settings", label: "Impostazioni" },
+    { href: "/settings", label: "Impostazioni Utente" },
   ];
 
   const NavContent = () => (
