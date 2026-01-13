@@ -231,8 +231,6 @@ export function registerGoCardlessRoutes(app: Express) {
             // Note: Initial sync is now triggered by the client to show progress
 
             res.json(updated);
-
-            res.json(updated);
         } catch (error: any) {
             console.error("Error linking account:", error);
             if (error instanceof z.ZodError) {
