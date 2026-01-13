@@ -43,7 +43,7 @@ type WebhookLog = {
 
 const webhookSchema = z.object({
     name: z.string().min(2, "Il nome è obbligatorio"),
-    type: z.enum(["tally"]),
+    type: z.enum(["tally", "generic"]),
     active: z.boolean().default(true),
 });
 
@@ -332,10 +332,11 @@ export default function ManageWebhooks() {
                                                 </FormControl>
                                                 <SelectContent>
                                                     <SelectItem value="tally">Tally.so Form</SelectItem>
+                                                    <SelectItem value="generic">Generic JSON</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                             <FormDescription>
-                                                Attualmente supportiamo solo moduli Tally.so
+                                                Supportiamo moduli Tally.so e payload JSON generici
                                             </FormDescription>
                                             <FormMessage />
                                         </FormItem>
@@ -403,6 +404,7 @@ export default function ManageWebhooks() {
                                             <TableCell className="font-medium">
                                                 <div className="flex items-center gap-2">
                                                     {webhook.type === 'tally' && <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded">TALLY</span>}
+                                                    {webhook.type === 'generic' && <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">JSON</span>}
                                                     {webhook.name}
                                                 </div>
                                             </TableCell>
