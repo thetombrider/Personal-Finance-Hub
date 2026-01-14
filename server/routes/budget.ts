@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { storage } from "../storage";
-import { ReportService } from "../services/reportService";
+import { ReportService } from "../services/reports";
 import { marketDataService } from "../services/marketData";
 import { insertMonthlyBudgetSchema, insertRecurringExpenseSchema, insertPlannedExpenseSchema } from "@shared/schema";
 import { z } from "zod";

@@ -1,5 +1,5 @@
 import type { Express } from "express";
-import { ReportService } from "../services/reportService";
+import { ReportService } from "../services/reports";
 import { storage } from "../storage";
 import { marketDataService } from "../services/marketData";
 import { sendEmail } from "../resend";

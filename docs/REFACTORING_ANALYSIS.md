@@ -16,7 +16,7 @@ The codebase has grown organically and exhibits several architectural concerns:
 
 ---
 
-## Area 1: Dashboard Component Extraction (Priority: HIGH)
+## Area 1: Dashboard Component Extraction (Priority: HIGH) --> DONE
 
 **Current:** `Dashboard.tsx` is 1199 lines with 14+ useMemo calculations, 6 KPI cards, 3 chart sections.
 
@@ -71,15 +71,7 @@ The codebase has grown organically and exhibits several architectural concerns:
 
 ---
 
-## Area 7: Route Consolidation (Priority: LOW)
-
-**Current:** 17 route files with some minimal content.
-
-**Recommended:** Consolidate to ~10 domain-focused route files.
-
----
-
-## Area 8: Type Safety Improvements (Priority: LOW-MEDIUM)
+## Area 7: Type Safety Improvements (Priority: LOW-MEDIUM)
 
 **Recommended:**
 - Create shared error types
