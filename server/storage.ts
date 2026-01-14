@@ -1,3 +1,10 @@
+/**
+ * Storage Facade
+ * This file implements the IStorage interface by delegating to domain-specific repositories.
+ * The repositories contain the actual database logic, while this facade maintains
+ * backwards compatibility with existing code that uses IStorage.
+ */
+
 import {
   type Account,
   type InsertAccount,
@@ -11,6 +18,22 @@ import {
   type InsertTrade,
   type User,
   type UpsertUser,
+  type MonthlyBudget,
+  type InsertMonthlyBudget,
+  type RecurringExpense,
+  type InsertRecurringExpense,
+  type RecurringExpenseCheck,
+  type InsertRecurringExpenseCheck,
+  type PlannedExpense,
+  type InsertPlannedExpense,
+  type BankConnection,
+  type InsertBankConnection,
+  type ImportStaging,
+  type InsertImportStaging,
+  type Webhook,
+  type InsertWebhook,
+  type WebhookLog,
+  type InsertWebhookLog,
   accounts,
   categories,
   transactions,
@@ -18,67 +41,30 @@ import {
   trades,
   users,
   monthlyBudgets,
-  type MonthlyBudget,
-  type InsertMonthlyBudget,
   recurringExpenses,
-  type RecurringExpense,
-  type InsertRecurringExpense,
-  insertRecurringExpenseSchema,
   recurringExpenseChecks,
-  type RecurringExpenseCheck,
-  type InsertRecurringExpenseCheck,
   plannedExpenses,
-  type PlannedExpense,
-  type InsertPlannedExpense,
   bankConnections,
-  type BankConnection,
-  type InsertBankConnection,
   importStaging,
-  type ImportStaging,
-  type InsertImportStaging,
-  webhooks,
-  type Webhook,
-  type InsertWebhook,
-  webhookLogs,
-  type WebhookLog,
-  type InsertWebhookLog,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, sql, inArray, and } from "drizzle-orm";
-import crypto from "crypto";
+import { eq, inArray } from "drizzle-orm";
 
-// Encryption setup for sensitive fields
-const ALGORITHM = 'aes-256-cbc';
-// Ensure a stable key derived from environment or default for dev
-// In production, APP_SECRET must be set and kept secure
-const SECRET_KEY = process.env.APP_SECRET || 'dev_secret_key_ensure_this_is_changed_in_prod';
-const key = crypto.createHash('sha256').update(String(SECRET_KEY)).digest().subarray(0, 32);
-
-function encrypt(text: string): string {
-  if (!text) return text;
-  const iv = crypto.randomBytes(16);
-  const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
-  let encrypted = cipher.update(text);
-  encrypted = Buffer.concat([encrypted, cipher.final()]);
-  return iv.toString('hex') + ':' + encrypted.toString('hex');
-}
-
-function decrypt(text: string): string {
-  if (!text) return text;
-  try {
-    const textParts = text.split(':');
-    const iv = Buffer.from(textParts.shift()!, 'hex');
-    const encryptedText = Buffer.from(textParts.join(':'), 'hex');
-    const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
-    let decrypted = decipher.update(encryptedText);
-    decrypted = Buffer.concat([decrypted, decipher.final()]);
-    return decrypted.toString();
-  } catch (e) {
-    // If decryption fails (e.g. invalid format or wrong key), return original text or empty
-    // This handles legacy unencrypted data if any exists during migration
-    return text;
-  }
-}
+// Import repositories
+import {
+  UserRepository,
+  AccountRepository,
+  CategoryRepository,
+  TransactionRepository,
+  HoldingRepository,
+  TradeRepository,
+  BudgetRepository,
+  RecurringExpenseRepository,
+  PlannedExpenseRepository,
+  BankConnectionRepository,
+  ImportStagingRepository,
+  WebhookRepository,
+} from "./repositories";
 
 export interface IStorage {
   // User operations
@@ -128,7 +114,6 @@ export interface IStorage {
 
   // Holdings
   getHoldings(userId: string): Promise<Holding[]>;
-  getHolding(id: number): Promise<Holding | undefined>;
   getHolding(id: number): Promise<Holding | undefined>;
   getHoldingByTicker(ticker: string, userId: string): Promise<Holding | undefined>;
   getGlobalHoldingByTicker(ticker: string): Promise<Holding | undefined>;
@@ -190,8 +175,6 @@ export interface IStorage {
   updateWebhook(id: string, webhook: Partial<InsertWebhook>): Promise<Webhook | undefined>;
   deleteWebhook(id: string): Promise<void>;
   updateWebhookLastUsed(id: string): Promise<void>;
-
-  // Webhook Logs
   getWebhookLogs(webhookId: string, limit?: number): Promise<WebhookLog[]>;
   createWebhookLog(log: InsertWebhookLog): Promise<WebhookLog>;
 
@@ -200,797 +183,133 @@ export interface IStorage {
   exportUserData(userId: string): Promise<any>;
 }
 
+/**
+ * DatabaseStorage implements IStorage by delegating to domain-specific repositories.
+ * Complex cross-domain operations (deleteUser, exportUserData) remain in this class.
+ */
 export class DatabaseStorage implements IStorage {
-  // User operations
-  async getUser(id: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user;
-  }
+  // Repository instances
+  private userRepo = new UserRepository();
+  private accountRepo = new AccountRepository();
+  private categoryRepo = new CategoryRepository();
+  private transactionRepo = new TransactionRepository();
+  private holdingRepo = new HoldingRepository();
+  private tradeRepo = new TradeRepository();
+  private budgetRepo = new BudgetRepository();
+  private recurringExpenseRepo = new RecurringExpenseRepository();
+  private plannedExpenseRepo = new PlannedExpenseRepository();
+  private bankConnectionRepo = new BankConnectionRepository();
+  private importStagingRepo = new ImportStagingRepository();
+  private webhookRepo = new WebhookRepository();
+
+  // User operations - delegate to UserRepository
+  getUser = (id: string) => this.userRepo.getUser(id);
+  getUserByUsername = (username: string) => this.userRepo.getUserByUsername(username);
+  getUserByEmail = (email: string) => this.userRepo.getUserByEmail(email);
+  getUserByOidcId = (oidcId: string) => this.userRepo.getUserByOidcId(oidcId);
+  createUser = (user: UpsertUser) => this.userRepo.createUser(user);
+  updateUser = (id: string, user: Partial<UpsertUser>) => this.userRepo.updateUser(id, user);
+
+  // Account operations - delegate to AccountRepository
+  getAccounts = (userId: string) => this.accountRepo.getAccounts(userId);
+  getAccount = (id: number) => this.accountRepo.getAccount(id);
+  createAccount = (account: InsertAccount) => this.accountRepo.createAccount(account);
+  createAccounts = (accountsData: InsertAccount[]) => this.accountRepo.createAccounts(accountsData);
+  updateAccount = (id: number, account: Partial<InsertAccount>) => this.accountRepo.updateAccount(id, account);
+  deleteAccount = (id: number) => this.accountRepo.deleteAccount(id);
+  getAllAccounts = () => this.accountRepo.getAllAccounts();
+
+  // Category operations - delegate to CategoryRepository
+  getCategories = (userId: string) => this.categoryRepo.getCategories(userId);
+  getCategory = (id: number) => this.categoryRepo.getCategory(id);
+  createCategory = (category: InsertCategory) => this.categoryRepo.createCategory(category);
+  createCategories = (categoriesData: InsertCategory[]) => this.categoryRepo.createCategories(categoriesData);
+  updateCategory = (id: number, category: Partial<InsertCategory>) => this.categoryRepo.updateCategory(id, category);
+  deleteCategory = (id: number) => this.categoryRepo.deleteCategory(id);
+  getAllCategories = () => this.categoryRepo.getAllCategories();
+
+  // Transaction operations - delegate to TransactionRepository
+  getTransactions = (userId: string) => this.transactionRepo.getTransactions(userId);
+  getTransaction = (id: number) => this.transactionRepo.getTransaction(id);
+  createTransaction = (transaction: InsertTransaction) => this.transactionRepo.createTransaction(transaction);
+  createTransactions = (txs: InsertTransaction[]) => this.transactionRepo.createTransactions(txs);
+  createTransfer = (data: { date: string; amount: string; description: string; fromAccountId: number; toAccountId: number; categoryId: number }) => this.transactionRepo.createTransfer(data);
+  updateTransaction = (id: number, transaction: Partial<InsertTransaction>) => this.transactionRepo.updateTransaction(id, transaction);
+  deleteTransaction = (id: number) => this.transactionRepo.deleteTransaction(id);
+  deleteTransactions = (ids: number[]) => this.transactionRepo.deleteTransactions(ids);
+  clearTransactions = () => this.transactionRepo.clearTransactions();
+  clearTransactionsForUser = (userId: string) => this.transactionRepo.clearTransactionsForUser(userId);
+
+  // Holding operations - delegate to HoldingRepository
+  getHoldings = (userId: string) => this.holdingRepo.getHoldings(userId);
+  getHolding = (id: number) => this.holdingRepo.getHolding(id);
+  getHoldingByTicker = (ticker: string, userId: string) => this.holdingRepo.getHoldingByTicker(ticker, userId);
+  getGlobalHoldingByTicker = (ticker: string) => this.holdingRepo.getGlobalHoldingByTicker(ticker);
+  createHolding = (holding: InsertHolding) => this.holdingRepo.createHolding(holding);
+  updateHolding = (id: number, holding: Partial<InsertHolding>) => this.holdingRepo.updateHolding(id, holding);
+  deleteHolding = (id: number) => this.holdingRepo.deleteHolding(id);
+
+  // Trade operations - delegate to TradeRepository
+  getTrades = (userId: string) => this.tradeRepo.getTrades(userId);
+  getTradesByHolding = (holdingId: number) => this.tradeRepo.getTradesByHolding(holdingId);
+  getTrade = (id: number) => this.tradeRepo.getTrade(id);
+  createTrade = (trade: InsertTrade) => this.tradeRepo.createTrade(trade);
+  createTrades = (tradesData: InsertTrade[]) => this.tradeRepo.createTrades(tradesData);
+  updateTrade = (id: number, trade: Partial<InsertTrade>) => this.tradeRepo.updateTrade(id, trade);
+  deleteTrade = (id: number) => this.tradeRepo.deleteTrade(id);
+  deleteTrades = (ids: number[]) => this.tradeRepo.deleteTrades(ids);
+
+  // Budget operations - delegate to BudgetRepository
+  getMonthlyBudgets = (userId: string, year: number, month: number) => this.budgetRepo.getMonthlyBudgets(userId, year, month);
+  getMonthlyBudgetsByYear = (userId: string, year: number) => this.budgetRepo.getMonthlyBudgetsByYear(userId, year);
+  upsertMonthlyBudget = (budget: InsertMonthlyBudget) => this.budgetRepo.upsertMonthlyBudget(budget);
+
+  // Recurring Expense operations - delegate to RecurringExpenseRepository
+  getRecurringExpenses = (userId: string) => this.recurringExpenseRepo.getRecurringExpenses(userId);
+  getActiveRecurringExpenses = (userId: string) => this.recurringExpenseRepo.getActiveRecurringExpenses(userId);
+  createRecurringExpense = (expense: InsertRecurringExpense) => this.recurringExpenseRepo.createRecurringExpense(expense);
+  updateRecurringExpense = (id: number, expense: Partial<InsertRecurringExpense>) => this.recurringExpenseRepo.updateRecurringExpense(id, expense);
+  deleteRecurringExpense = (id: number) => this.recurringExpenseRepo.deleteRecurringExpense(id);
+  upsertRecurringExpenseCheck = (check: InsertRecurringExpenseCheck) => this.recurringExpenseRepo.upsertRecurringExpenseCheck(check);
+  getRecurringExpenseChecks = (userId: string, year: number, month: number) => this.recurringExpenseRepo.getRecurringExpenseChecks(userId, year, month);
+  getAllRecurringExpenseChecks = (userId: string) => this.recurringExpenseRepo.getAllRecurringExpenseChecks(userId);
+
+  // Planned Expense operations - delegate to PlannedExpenseRepository
+  getPlannedExpenses = (userId: string, year: number, month: number) => this.plannedExpenseRepo.getPlannedExpenses(userId, year, month);
+  getPlannedExpensesByYear = (userId: string, year: number) => this.plannedExpenseRepo.getPlannedExpensesByYear(userId, year);
+  createPlannedExpense = (expense: InsertPlannedExpense) => this.plannedExpenseRepo.createPlannedExpense(expense);
+  updatePlannedExpense = (id: number, expense: Partial<InsertPlannedExpense>) => this.plannedExpenseRepo.updatePlannedExpense(id, expense);
+  deletePlannedExpense = (id: number) => this.plannedExpenseRepo.deletePlannedExpense(id);
+
+  // Bank Connection operations - delegate to BankConnectionRepository
+  getBankConnections = (userId: string) => this.bankConnectionRepo.getBankConnections(userId);
+  getBankConnectionByRequisitionId = (requisitionId: string) => this.bankConnectionRepo.getBankConnectionByRequisitionId(requisitionId);
+  createBankConnection = (connection: InsertBankConnection) => this.bankConnectionRepo.createBankConnection(connection);
+  updateBankConnection = (id: number, connection: Partial<InsertBankConnection>) => this.bankConnectionRepo.updateBankConnection(id, connection);
+  deleteBankConnection = (id: number) => this.bankConnectionRepo.deleteBankConnection(id);
+
+  // Import Staging operations - delegate to ImportStagingRepository
+  getImportStaging = (userId: string, accountId?: number) => this.importStagingRepo.getImportStaging(userId, accountId);
+  getImportStagingByTransactionId = (gcId: string) => this.importStagingRepo.getImportStagingByTransactionId(gcId);
+  createImportStaging = (staging: InsertImportStaging) => this.importStagingRepo.createImportStaging(staging);
+  deleteImportStaging = (id: number) => this.importStagingRepo.deleteImportStaging(id);
+  clearImportStaging = (accountId: number) => this.importStagingRepo.clearImportStaging(accountId);
+  updateImportStagingStatus = (id: number, status: string) => this.importStagingRepo.updateImportStagingStatus(id, status);
+
+  // Webhook operations - delegate to WebhookRepository
+  getWebhook = (id: string) => this.webhookRepo.getWebhook(id);
+  getWebhooks = (userId: string) => this.webhookRepo.getWebhooks(userId);
+  createWebhook = (webhook: InsertWebhook) => this.webhookRepo.createWebhook(webhook);
+  updateWebhook = (id: string, webhook: Partial<InsertWebhook>) => this.webhookRepo.updateWebhook(id, webhook);
+  deleteWebhook = (id: string) => this.webhookRepo.deleteWebhook(id);
+  updateWebhookLastUsed = (id: string) => this.webhookRepo.updateWebhookLastUsed(id);
+  getWebhookLogs = (webhookId: string, limit?: number) => this.webhookRepo.getWebhookLogs(webhookId, limit);
+  createWebhookLog = (log: InsertWebhookLog) => this.webhookRepo.createWebhookLog(log);
+
+  // Complex cross-domain operations remain in this facade
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
-    return user;
-  }
-
-  async getUserByEmail(email: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.email, email));
-    return user;
-  }
-
-  async getUserByOidcId(oidcId: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.oidcId, oidcId));
-    return user;
-  }
-
-  async createUser(userData: UpsertUser): Promise<User> {
-    const [user] = await db.insert(users).values(userData).returning();
-    return user;
-  }
-
-  async updateUser(id: string, userData: Partial<UpsertUser>): Promise<User | undefined> {
-    const [user] = await db.update(users).set(userData).where(eq(users.id, id)).returning();
-    return user;
-  }
-
-
-  // Accounts
-  async getAccounts(userId: string): Promise<Account[]> {
-    return await db.select().from(accounts).where(eq(accounts.userId, userId));
-  }
-
-  async getAccount(id: number): Promise<Account | undefined> {
-    const result = await db.select().from(accounts).where(eq(accounts.id, id));
-    return result[0];
-  }
-
-  async createAccount(account: InsertAccount): Promise<Account> {
-    const result = await db.insert(accounts).values(account).returning();
-    return result[0];
-  }
-
-  async createAccounts(accountsData: InsertAccount[]): Promise<Account[]> {
-    if (accountsData.length === 0) return [];
-    const result = await db.insert(accounts).values(accountsData).returning();
-    return result;
-  }
-
-  async updateAccount(id: number, account: Partial<InsertAccount>): Promise<Account | undefined> {
-    const result = await db.update(accounts).set(account).where(eq(accounts.id, id)).returning();
-    return result[0];
-  }
-
-  async deleteAccount(id: number): Promise<void> {
-    await db.delete(accounts).where(eq(accounts.id, id));
-  }
-
-  async getAllAccounts(): Promise<Account[]> {
-    return await db.select().from(accounts);
-  }
-
-  // Categories
-  async getCategories(userId: string): Promise<Category[]> {
-    return await db.select().from(categories).where(eq(categories.userId, userId));
-  }
-
-  async getCategory(id: number): Promise<Category | undefined> {
-    const result = await db.select().from(categories).where(eq(categories.id, id));
-    return result[0];
-  }
-
-  async createCategory(category: InsertCategory): Promise<Category> {
-    const result = await db.insert(categories).values(category).returning();
-    return result[0];
-  }
-
-  async createCategories(categoriesData: InsertCategory[]): Promise<Category[]> {
-    if (categoriesData.length === 0) return [];
-    const result = await db.insert(categories).values(categoriesData).returning();
-    return result;
-  }
-
-  async updateCategory(id: number, category: Partial<InsertCategory>): Promise<Category | undefined> {
-    const result = await db.update(categories).set(category).where(eq(categories.id, id)).returning();
-    return result[0];
-  }
-
-  async deleteCategory(id: number): Promise<void> {
-    await db.delete(categories).where(eq(categories.id, id));
-  }
-
-  async getAllCategories(): Promise<Category[]> {
-    return await db.select().from(categories);
-  }
-
-  // Transactions
-  async getTransactions(userId: string): Promise<Transaction[]> {
-    const userAccounts = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.userId, userId));
-    return await db.select().from(transactions).where(inArray(transactions.accountId, userAccounts));
-  }
-
-  async getTransaction(id: number): Promise<Transaction | undefined> {
-    const result = await db.select().from(transactions).where(eq(transactions.id, id));
-    return result[0];
-  }
-
-  async createTransaction(transaction: InsertTransaction): Promise<Transaction> {
-    const result = await db.insert(transactions).values(transaction).returning();
-    return result[0];
-  }
-
-  async createTransactions(txs: InsertTransaction[]): Promise<Transaction[]> {
-    if (txs.length === 0) return [];
-
-    // 1. Get unique accounts involved
-    const accountIds = [...new Set(txs.map(t => t.accountId))];
-
-    // 2. Fetch existing transactions for these accounts to check duplicates
-    // Optimization: We could filter by date range if inputs are sorted/ranged, 
-    // but for now fetching all for these accounts is safer and usually fast enough for personal finance scale.
-    const existing = await db.select()
-      .from(transactions)
-      .where(inArray(transactions.accountId, accountIds));
-
-    // 3. Filter out duplicates
-    // Match criteria: Same Account, Date, Amount (exact), and Description (normalized?)
-    const toInsert = txs.filter(newTx => {
-      const isDuplicate = existing.some(existingTx => {
-        if (existingTx.accountId !== newTx.accountId) return false;
-
-        // Date compare (assuming string format YYYY-MM-DDT...)
-        const d1 = new Date(existingTx.date).getTime();
-        const d2 = new Date(newTx.date).getTime();
-        if (Math.abs(d1 - d2) > 86400000) return false; // allow 1 day drift? Or exact? 
-        // Let's stick to EXACT date string for CSV imports usually match exactly what they exported.
-        // Actually, db stores as ISO string. newTx comes as string. 
-        // Ideally strict equality on date string if formats align. 
-        // Let's parse to ensure safety.
-        if (new Date(existingTx.date).toISOString().split('T')[0] !== new Date(newTx.date).toISOString().split('T')[0]) return false;
-
-        // Amount compare
-        if (Math.abs(parseFloat(existingTx.amount) - parseFloat(newTx.amount.toString())) > 0.001) return false;
-
-        // Description compare (exact match for now, maybe case insensitive?)
-        if (existingTx.description.toLowerCase().trim() !== newTx.description.toLowerCase().trim()) return false;
-
-        return true;
-      });
-      return !isDuplicate;
-    });
-
-    if (toInsert.length === 0) return [];
-
-    const result = await db.insert(transactions).values(toInsert).returning();
-    return result;
-  }
-
-  async createTransfer(data: {
-    date: string;
-    amount: string;
-    description: string;
-    fromAccountId: number;
-    toAccountId: number;
-    categoryId: number;
-  }): Promise<{ fromTransaction: Transaction; toTransaction: Transaction }> {
-    return await db.transaction(async (tx) => {
-      const [fromTransaction] = await tx.insert(transactions).values({
-        date: data.date,
-        amount: data.amount,
-        description: data.description,
-        accountId: data.fromAccountId,
-        categoryId: data.categoryId,
-        type: "expense",
-      }).returning();
-
-      const [toTransaction] = await tx.insert(transactions).values({
-        date: data.date,
-        amount: data.amount,
-        description: data.description,
-        accountId: data.toAccountId,
-        categoryId: data.categoryId,
-        type: "income",
-        linkedTransactionId: fromTransaction.id,
-      }).returning();
-
-      await tx.update(transactions)
-        .set({ linkedTransactionId: toTransaction.id })
-        .where(eq(transactions.id, fromTransaction.id));
-
-      fromTransaction.linkedTransactionId = toTransaction.id;
-
-      return { fromTransaction, toTransaction };
-    });
-  }
-
-  async updateTransaction(id: number, transaction: Partial<InsertTransaction>): Promise<Transaction | undefined> {
-    const result = await db.update(transactions).set(transaction).where(eq(transactions.id, id)).returning();
-    return result[0];
-  }
-
-  async deleteTransaction(id: number): Promise<void> {
-    await db.transaction(async (tx) => {
-      // Unlink any trades that reference this transaction
-      await tx.update(trades)
-        .set({ transactionId: null })
-        .where(eq(trades.transactionId, id));
-
-      // Delete the transaction
-      await tx.delete(transactions).where(eq(transactions.id, id));
-    });
-  }
-
-  async deleteTransactions(ids: number[]): Promise<void> {
-    if (ids.length === 0) return;
-
-    await db.transaction(async (tx) => {
-      // Unlink any trades that reference these transactions
-      await tx.update(trades)
-        .set({ transactionId: null })
-        .where(inArray(trades.transactionId, ids));
-
-      // Delete the transactions
-      await tx.delete(transactions).where(inArray(transactions.id, ids));
-    });
-  }
-
-  async clearTransactions(): Promise<void> {
-    await db.delete(transactions);
-  }
-
-  async clearTransactionsForUser(userId: string): Promise<void> {
-    const userAccounts = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.userId, userId));
-    await db.delete(transactions).where(inArray(transactions.accountId, userAccounts));
-  }
-
-  // Holdings
-  async getHoldings(userId: string): Promise<Holding[]> {
-    return await db.select().from(holdings).where(eq(holdings.userId, userId));
-  }
-
-  async getHolding(id: number): Promise<Holding | undefined> {
-    const result = await db.select().from(holdings).where(eq(holdings.id, id));
-    return result[0];
-  }
-
-  async getHoldingByTicker(ticker: string, userId: string): Promise<Holding | undefined> {
-    const result = await db.select().from(holdings).where(and(eq(holdings.ticker, ticker.toUpperCase()), eq(holdings.userId, userId)));
-    return result[0];
-  }
-
-  async getGlobalHoldingByTicker(ticker: string): Promise<Holding | undefined> {
-    const result = await db.select().from(holdings).where(eq(holdings.ticker, ticker.toUpperCase())).limit(1);
-    return result[0];
-  }
-
-  async createHolding(holding: InsertHolding): Promise<Holding> {
-    const result = await db.insert(holdings).values({
-      ...holding,
-      ticker: holding.ticker.toUpperCase()
-    }).returning();
-    return result[0];
-  }
-
-  async updateHolding(id: number, holding: Partial<InsertHolding>): Promise<Holding | undefined> {
-    const updateData = holding.ticker
-      ? { ...holding, ticker: holding.ticker.toUpperCase() }
-      : holding;
-    const result = await db.update(holdings).set(updateData).where(eq(holdings.id, id)).returning();
-    return result[0];
-  }
-
-  async deleteHolding(id: number): Promise<void> {
-    await db.delete(holdings).where(eq(holdings.id, id));
-  }
-
-  // Trades
-  async getTrades(userId: string): Promise<Trade[]> {
-    const userHoldings = db.select({ id: holdings.id }).from(holdings).where(eq(holdings.userId, userId));
-    return await db.select().from(trades).where(inArray(trades.holdingId, userHoldings));
-  }
-
-  async getTradesByHolding(holdingId: number): Promise<Trade[]> {
-    return await db.select().from(trades).where(eq(trades.holdingId, holdingId));
-  }
-
-  async getTrade(id: number): Promise<Trade | undefined> {
-    const result = await db.select().from(trades).where(eq(trades.id, id));
-    return result[0];
-  }
-
-  async createTrade(trade: InsertTrade): Promise<Trade> {
-    return await db.transaction(async (tx) => {
-      let transactionId: number | undefined;
-      // If we have an account ID, creating a linked transaction
-      if (trade.accountId) {
-        // Get userId from holding to ensure we pick/create the right category for THIS user
-        const holding = await tx.select().from(holdings).where(eq(holdings.id, trade.holdingId)).limit(1);
-        const userId = holding[0]?.userId;
-
-        if (userId) {
-          // Find category for transaction (lookup by specific name "Investimenti")
-          const cats = await tx.select().from(categories).where(and(eq(categories.name, 'Investimenti'), eq(categories.userId, userId))).limit(1);
-          let categoryId = cats[0]?.id;
-
-          // If no "Investimenti" category exists for this user, create one
-          if (!categoryId) {
-            const [newCat] = await tx.insert(categories).values({
-              name: "Investimenti",
-              type: "expense",
-              color: "#0ea5e9", // Sky blue
-              icon: "TrendingUp",
-              userId: userId
-            }).returning();
-            categoryId = newCat.id;
-          }
-
-          if (categoryId) {
-            // Determine transaction details
-            const holdingTicker = holding[0]?.ticker || 'Unknown';
-            const description = `${trade.type === 'buy' ? 'Buy' : 'Sell'} ${parseFloat(trade.quantity.toString()).toFixed(4)} ${holdingTicker} @ ${parseFloat(trade.pricePerUnit.toString()).toFixed(2)}`;
-            const type = trade.type === 'buy' ? 'expense' : 'income';
-
-            // Create transaction
-            const [newTx] = await tx.insert(transactions).values({
-              date: trade.date,
-              amount: trade.totalAmount.toString(),
-              description: description,
-              accountId: trade.accountId,
-              categoryId: categoryId,
-              type: type
-            }).returning();
-            transactionId = newTx.id;
-          }
-        }
-      }
-
-      const [newTrade] = await tx.insert(trades).values({ ...trade, transactionId }).returning();
-      return newTrade;
-    });
-  }
-
-  async createTrades(tradesData: InsertTrade[]): Promise<Trade[]> {
-    const results: Trade[] = [];
-    for (const trade of tradesData) {
-      results.push(await this.createTrade(trade));
-    }
-    return results;
-  }
-
-  async updateTrade(id: number, trade: Partial<InsertTrade>): Promise<Trade | undefined> {
-    return await db.transaction(async (tx) => {
-      console.log(`[updateTrade] Updating trade ${id} with data:`, trade);
-      // Get existing trade first to see if we need to update/create linked transaction
-      const existingTrades = await tx.select().from(trades).where(eq(trades.id, id));
-      if (existingTrades.length === 0) return undefined;
-      const existingTrade = existingTrades[0];
-
-      let transactionId = existingTrade.transactionId;
-      const accountId = trade.accountId !== undefined ? trade.accountId : existingTrade.accountId;
-
-      if (accountId) {
-        // Get userId from holding (needed for category lookup/creation)
-        const holdingId = trade.holdingId || existingTrade.holdingId;
-        const holding = await tx.select().from(holdings).where(eq(holdings.id, holdingId)).limit(1);
-        const userId = holding[0]?.userId;
-        const ticker = holding[0]?.ticker || 'Unknown';
-
-        if (userId) {
-          // Find category for transaction (lookup by specific name "Investimenti")
-          const cats = await tx.select().from(categories).where(and(eq(categories.name, 'Investimenti'), eq(categories.userId, userId))).limit(1);
-          let categoryId = cats[0]?.id;
-
-          // If no "Investimenti" category exists for this user, create one
-          if (!categoryId) {
-            const [newCat] = await tx.insert(categories).values({
-              name: "Investimenti",
-              type: "expense",
-              color: "#0ea5e9", // Sky blue
-              icon: "TrendingUp",
-              userId: userId
-            }).returning();
-            categoryId = newCat.id;
-          } if (categoryId) {
-            // Determine transaction details
-            // Merge existing trade data with updates to calculate final values
-            const finalType = trade.type || existingTrade.type;
-            // Use new date if provided, valid, and not empty; otherwise fallback to existing
-            const finalDate = (trade.date !== undefined && trade.date !== null && trade.date !== "")
-              ? trade.date
-              : existingTrade.date;
-
-            console.log(`[updateTrade] Transaction Date Logic: Input='${trade.date}', Existing='${existingTrade.date}', Final='${finalDate}'`);
-
-            const finalQty = trade.quantity !== undefined ? parseFloat(trade.quantity.toString()) : parseFloat(existingTrade.quantity.toString());
-            const finalPrice = trade.pricePerUnit !== undefined ? parseFloat(trade.pricePerUnit.toString()) : parseFloat(existingTrade.pricePerUnit.toString());
-            const finalFees = trade.fees !== undefined ? parseFloat(trade.fees.toString()) : parseFloat(existingTrade.fees.toString());
-
-            // Recalculate total amount if not provided explicitly
-            const finalTotalAmount = trade.totalAmount !== undefined ? trade.totalAmount.toString() : existingTrade.totalAmount.toString();
-
-            const description = `${finalType === 'buy' ? 'Buy' : 'Sell'} ${finalQty.toFixed(4)} ${ticker} @ ${finalPrice.toFixed(2)}`;
-            const type = finalType === 'buy' ? 'expense' : 'income';
-
-            if (transactionId) {
-              // Update existing transaction
-              await tx.update(transactions).set({
-                date: finalDate,
-                amount: finalTotalAmount,
-                description: description,
-                accountId: accountId,
-                categoryId: categoryId,
-                type: type
-              }).where(eq(transactions.id, transactionId));
-            } else {
-              // Create new transaction
-              const [newTx] = await tx.insert(transactions).values({
-                date: finalDate,
-                amount: finalTotalAmount,
-                description: description,
-                accountId: accountId,
-                categoryId: categoryId,
-                type: type
-              }).returning();
-              transactionId = newTx.id;
-            }
-          }
-        }
-      } else {
-        // If accountId is specifically set to null (if that were allowed) or we are removing it...
-        // But trade.accountId comes as number | null.
-        // If it is explicitly nullify, we might want to delete the transaction?
-        // Current schema has accountId as optional.
-        // If user unlinks account, we should probably delete the transaction?
-        if (trade.accountId === null && transactionId) {
-          await tx.delete(transactions).where(eq(transactions.id, transactionId));
-          transactionId = null; // Remove link
-        }
-      }
-
-      const [updatedTrade] = await tx.update(trades).set({ ...trade, transactionId }).where(eq(trades.id, id)).returning();
-      return updatedTrade;
-    });
-  }
-
-  async deleteTrade(id: number): Promise<void> {
-    await db.transaction(async (tx) => {
-      const trade = await tx.select().from(trades).where(eq(trades.id, id)).limit(1);
-      if (trade.length === 0) return;
-
-      const transactionId = trade[0].transactionId;
-
-      // Delete trade first (child) to satisfy FK constraint
-      await tx.delete(trades).where(eq(trades.id, id));
-
-      // Then delete associated transaction (parent)
-      if (transactionId) {
-        await tx.delete(transactions).where(eq(transactions.id, transactionId));
-      }
-    });
-  }
-
-  async deleteTrades(ids: number[]): Promise<void> {
-    if (ids.length === 0) return;
-
-    await db.transaction(async (tx) => {
-      const tradesToDelete = await tx.select().from(trades).where(inArray(trades.id, ids));
-      const transactionIds = tradesToDelete.map(t => t.transactionId).filter(id => id !== null) as number[];
-
-      // Delete trades first (children)
-      await tx.delete(trades).where(inArray(trades.id, ids));
-
-      // Then delete associated transactions (parents)
-      if (transactionIds.length > 0) {
-        await tx.delete(transactions).where(inArray(transactions.id, transactionIds));
-      }
-    });
-  }
-
-  // Monthly Budgets
-  async getMonthlyBudgets(userId: string, year: number, month: number): Promise<MonthlyBudget[]> {
-    const userCategories = db.select({ id: categories.id }).from(categories).where(eq(categories.userId, userId));
-    return await db.select()
-      .from(monthlyBudgets)
-      .where(and(
-        eq(monthlyBudgets.year, year),
-        eq(monthlyBudgets.month, month),
-        inArray(monthlyBudgets.categoryId, userCategories)
-      ));
-  }
-
-  async getMonthlyBudgetsByYear(userId: string, year: number): Promise<MonthlyBudget[]> {
-    const userCategories = db.select({ id: categories.id }).from(categories).where(eq(categories.userId, userId));
-    return await db.select()
-      .from(monthlyBudgets)
-      .where(and(
-        eq(monthlyBudgets.year, year),
-        inArray(monthlyBudgets.categoryId, userCategories)
-      ));
-  }
-
-  async upsertMonthlyBudget(budget: InsertMonthlyBudget): Promise<MonthlyBudget> {
-    const existing = await db.select()
-      .from(monthlyBudgets)
-      .where(and(
-        eq(monthlyBudgets.categoryId, budget.categoryId),
-        eq(monthlyBudgets.year, budget.year),
-        eq(monthlyBudgets.month, budget.month)
-      ));
-
-    if (existing.length > 0) {
-      const [updated] = await db.update(monthlyBudgets)
-        .set({ amount: budget.amount })
-        .where(eq(monthlyBudgets.id, existing[0].id))
-        .returning();
-      return updated;
-    }
-
-    const [created] = await db.insert(monthlyBudgets).values(budget).returning();
-    return created;
-  }
-
-  // Recurring Expenses
-  async getRecurringExpenses(userId: string): Promise<RecurringExpense[]> {
-    const userAccounts = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.userId, userId));
-    return await db.select().from(recurringExpenses).where(inArray(recurringExpenses.accountId, userAccounts));
-  }
-
-  async getActiveRecurringExpenses(userId: string): Promise<RecurringExpense[]> {
-    const userAccounts = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.userId, userId));
-    return await db.select().from(recurringExpenses).where(and(
-      eq(recurringExpenses.active, true),
-      inArray(recurringExpenses.accountId, userAccounts)
-    ));
-  }
-
-  async createRecurringExpense(expense: InsertRecurringExpense): Promise<RecurringExpense> {
-    const [created] = await db.insert(recurringExpenses).values(expense).returning();
-    return created;
-  }
-
-  async updateRecurringExpense(id: number, expense: Partial<InsertRecurringExpense>): Promise<RecurringExpense | undefined> {
-    const [updated] = await db.update(recurringExpenses)
-      .set(expense)
-      .where(eq(recurringExpenses.id, id))
-      .returning();
-    return updated;
-  }
-
-  async deleteRecurringExpense(id: number): Promise<void> {
-    await db.delete(recurringExpenses).where(eq(recurringExpenses.id, id));
-  }
-
-  async upsertRecurringExpenseCheck(check: InsertRecurringExpenseCheck): Promise<void> {
-    // Check if exists
-    const existing = await db.select().from(recurringExpenseChecks).where(and(
-      eq(recurringExpenseChecks.recurringExpenseId, check.recurringExpenseId),
-      eq(recurringExpenseChecks.month, check.month),
-      eq(recurringExpenseChecks.year, check.year)
-    ));
-
-    if (existing.length > 0) {
-      await db.update(recurringExpenseChecks)
-        .set(check)
-        .where(eq(recurringExpenseChecks.id, existing[0].id));
-    } else {
-      await db.insert(recurringExpenseChecks).values(check);
-    }
-  }
-
-  async getRecurringExpenseChecks(userId: string, year: number, month: number): Promise<RecurringExpenseCheck[]> {
-    const userAccounts = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.userId, userId));
-    const userExpenses = db.select({ id: recurringExpenses.id }).from(recurringExpenses).where(inArray(recurringExpenses.accountId, userAccounts));
-    return await db.select().from(recurringExpenseChecks).where(and(
-      eq(recurringExpenseChecks.year, year),
-      eq(recurringExpenseChecks.month, month),
-      inArray(recurringExpenseChecks.recurringExpenseId, userExpenses)
-    ));
-  }
-
-  async getAllRecurringExpenseChecks(userId: string): Promise<RecurringExpenseCheck[]> {
-    const userAccounts = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.userId, userId));
-    const userExpenses = db.select({ id: recurringExpenses.id }).from(recurringExpenses).where(inArray(recurringExpenses.accountId, userAccounts));
-    return await db.select().from(recurringExpenseChecks).where(inArray(recurringExpenseChecks.recurringExpenseId, userExpenses));
-  }
-
-  // Planned Expenses
-  async getPlannedExpensesByYear(userId: string, year: number): Promise<PlannedExpense[]> {
-    const startDate = `${year}-01-01`;
-    const endDate = `${year + 1}-01-01`;
-    const userCategories = db.select({ id: categories.id }).from(categories).where(eq(categories.userId, userId));
-
-    return await db.select()
-      .from(plannedExpenses)
-      .where(and(
-        sql`${plannedExpenses.date} >= ${startDate}`,
-        sql`${plannedExpenses.date} < ${endDate}`,
-        inArray(plannedExpenses.categoryId, userCategories)
-      ));
-  }
-
-  async getPlannedExpenses(userId: string, year: number, month: number): Promise<PlannedExpense[]> {
-    // We need to filter by date range for the month
-    const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
-    // Calculate end date (start of next month)
-    const nextMonth = month === 12 ? 1 : month + 1;
-    const nextYear = month === 12 ? year + 1 : year;
-    const endDate = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`;
-    const userCategories = db.select({ id: categories.id }).from(categories).where(eq(categories.userId, userId));
-
-    return await db.select()
-      .from(plannedExpenses)
-      .where(and(
-        sql`${plannedExpenses.date} >= ${startDate}`,
-        sql`${plannedExpenses.date} < ${endDate}`,
-        inArray(plannedExpenses.categoryId, userCategories)
-      ));
-  }
-
-  async createPlannedExpense(expense: InsertPlannedExpense): Promise<PlannedExpense> {
-    const [created] = await db.insert(plannedExpenses).values(expense).returning();
-    return created;
-  }
-
-  async updatePlannedExpense(id: number, expense: Partial<InsertPlannedExpense>): Promise<PlannedExpense | undefined> {
-    const [updated] = await db.update(plannedExpenses)
-      .set(expense)
-      .where(eq(plannedExpenses.id, id))
-      .returning();
-    return updated;
-  }
-
-  async deletePlannedExpense(id: number): Promise<void> {
-    await db.delete(plannedExpenses).where(eq(plannedExpenses.id, id));
-  }
-
-  // Bank Connections
-  async getBankConnections(userId: string): Promise<BankConnection[]> {
-    return await db.select().from(bankConnections).where(eq(bankConnections.userId, userId));
-  }
-
-  async getBankConnectionByRequisitionId(requisitionId: string): Promise<BankConnection | undefined> {
-    const result = await db.select().from(bankConnections).where(eq(bankConnections.requisitionId, requisitionId));
-    return result[0];
-  }
-
-  async createBankConnection(connection: InsertBankConnection): Promise<BankConnection> {
-    const [created] = await db.insert(bankConnections).values(connection).returning();
-    return created;
-  }
-
-  async updateBankConnection(id: number, connection: Partial<InsertBankConnection>): Promise<BankConnection | undefined> {
-    const [updated] = await db.update(bankConnections)
-      .set(connection)
-      .where(eq(bankConnections.id, id))
-      .returning();
-    return updated;
-  }
-
-  async deleteBankConnection(id: number): Promise<void> {
-    await db.delete(bankConnections).where(eq(bankConnections.id, id));
-  }
-
-  // Import Staging
-  async getImportStaging(userId: string, accountId?: number): Promise<ImportStaging[]> {
-    const userAccounts = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.userId, userId));
-
-    if (accountId) {
-      // additional check to ensure accountId belongs to user
-      return await db.select().from(importStaging).where(and(
-        eq(importStaging.accountId, accountId),
-        inArray(importStaging.accountId, userAccounts)
-      ));
-    }
-    return await db.select().from(importStaging).where(inArray(importStaging.accountId, userAccounts));
-  }
-
-  async getImportStagingByTransactionId(gcId: string): Promise<ImportStaging | undefined> {
-    const result = await db.select().from(importStaging).where(eq(importStaging.externalId, gcId));
-    return result[0];
-  }
-
-  async createImportStaging(staging: InsertImportStaging): Promise<ImportStaging> {
-    const [created] = await db.insert(importStaging).values(staging).returning();
-    return created;
-  }
-
-  async deleteImportStaging(id: number): Promise<void> {
-    await db.delete(importStaging).where(eq(importStaging.id, id));
-  }
-
-  async clearImportStaging(accountId: number): Promise<void> {
-    await db.delete(importStaging).where(eq(importStaging.accountId, accountId));
-  }
-
-  async updateImportStagingStatus(id: number, status: string): Promise<void> {
-    await db.update(importStaging).set({ status }).where(eq(importStaging.id, id));
-  }
-
-  // Webhooks
-  async getWebhook(id: string): Promise<Webhook | undefined> {
-    const result = await db.select().from(webhooks).where(eq(webhooks.id, id));
-    if (result[0]) {
-      // Decrypt secret on read
-      if (result[0].secret) {
-        result[0].secret = decrypt(result[0].secret);
-      }
-    }
-    return result[0];
-  }
-
-  async getWebhooks(userId: string): Promise<Webhook[]> {
-    const results = await db.select().from(webhooks).where(eq(webhooks.userId, userId));
-    // Decrypt secrets on read
-    return results.map(w => {
-      if (w.secret) {
-        w.secret = decrypt(w.secret);
-      }
-      return w;
-    });
-  }
-
-  async createWebhook(webhook: InsertWebhook): Promise<Webhook> {
-    const data = { ...webhook };
-    // Encrypt secret on write
-    if (data.secret) {
-      data.secret = encrypt(data.secret);
-    }
-    const [created] = await db.insert(webhooks).values(data).returning();
-    // Decrypt for return value
-    if (created.secret) {
-      created.secret = decrypt(created.secret);
-    }
-    return created;
-  }
-
-  async updateWebhook(id: string, webhook: Partial<InsertWebhook>): Promise<Webhook | undefined> {
-    const data = { ...webhook };
-    // Encrypt secret on write
-    if (data.secret) {
-      data.secret = encrypt(data.secret);
-    }
-    const [updated] = await db.update(webhooks)
-      .set(data)
-      .where(eq(webhooks.id, id))
-      .returning();
-
-    // Decrypt for return value
-    if (updated && updated.secret) {
-      updated.secret = decrypt(updated.secret);
-    }
-    return updated;
-  }
-
-  async deleteWebhook(id: string): Promise<void> {
-    await db.transaction(async (tx) => {
-      // First delete associated logs
-      await tx.delete(webhookLogs).where(eq(webhookLogs.webhookId, id));
-      // Then delete the webhook
-      await tx.delete(webhooks).where(eq(webhooks.id, id));
-    });
-  }
-
-  async updateWebhookLastUsed(id: string): Promise<void> {
-    await db.update(webhooks)
-      .set({ lastUsedAt: new Date().toISOString() })
-      .where(eq(webhooks.id, id));
-  }
-
-  // Webhook Logs
-  async getWebhookLogs(webhookId: string, limit: number = 50): Promise<WebhookLog[]> {
-    return await db.select()
-      .from(webhookLogs)
-      .where(eq(webhookLogs.webhookId, webhookId))
-      .orderBy(sql`${webhookLogs.createdAt} DESC`)
-      .limit(limit);
-  }
-
-  async createWebhookLog(log: InsertWebhookLog): Promise<WebhookLog> {
-    const [created] = await db.insert(webhookLogs).values(log).returning();
-    return created;
-  }
-
-  // Data Management
   async deleteUser(id: string): Promise<void> {
-    // 1. Get user's resources to query child tables
+    // Get user's resources to query child tables
     const userAccounts = await this.getAccounts(id);
     const userAccountIds = userAccounts.map(a => a.id);
     const userCategories = await this.getCategories(id);
@@ -998,7 +317,7 @@ export class DatabaseStorage implements IStorage {
     const userHoldings = await this.getHoldings(id);
     const userHoldingIds = userHoldings.map(h => h.id);
 
-    // 2. Delete deepest children first
+    // Delete deepest children first
 
     // Trades (linked to Holdings)
     if (userHoldingIds.length > 0) {
@@ -1028,28 +347,17 @@ export class DatabaseStorage implements IStorage {
       await db.delete(plannedExpenses).where(inArray(plannedExpenses.categoryId, userCategoryIds));
     }
 
-    // 3. Delete middle layer
-    // Holdings
+    // Delete middle layer
     await db.delete(holdings).where(eq(holdings.userId, id));
-
-    // Bank Connections
     await db.delete(bankConnections).where(eq(bankConnections.userId, id));
-
-    // Accounts
     await db.delete(accounts).where(eq(accounts.userId, id));
-
-    // Categories
     await db.delete(categories).where(eq(categories.userId, id));
 
-    // 4. Delete User
+    // Delete User
     await db.delete(users).where(eq(users.id, id));
   }
 
   async exportUserData(userId: string): Promise<any> {
-    // Fetch all data for the user
-    // We can use existing getters but some might filter too much or join.
-    // Raw selects are safer for full dump.
-
     const _accounts = await this.getAccounts(userId);
     const _categories = await this.getCategories(userId);
     const _transactions = await this.getTransactions(userId);
@@ -1058,15 +366,12 @@ export class DatabaseStorage implements IStorage {
     const _bankConnections = await this.getBankConnections(userId);
     const _recurringExpenses = await this.getRecurringExpenses(userId);
 
-    // Check tables not covered by simple getters or where we want raw data
-    // Monthly Budgets - getMonthlyBudgetsByYear needs a year. We want ALL.
-    // We need to implement a "getAll" private or inline query.
-
+    // Monthly Budgets - need all, not just one year
     const userCategories = db.select({ id: categories.id }).from(categories).where(eq(categories.userId, userId));
     const _monthlyBudgets = await db.select().from(monthlyBudgets).where(inArray(monthlyBudgets.categoryId, userCategories));
     const _plannedExpenses = await db.select().from(plannedExpenses).where(inArray(plannedExpenses.categoryId, userCategories));
 
-    // Recurring Expense Checks - tricky, linked to recurring expenses
+    // Recurring Expense Checks
     const userAccounts = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.userId, userId));
     const userRecurringExpenses = db.select({ id: recurringExpenses.id }).from(recurringExpenses).where(inArray(recurringExpenses.accountId, userAccounts));
     const _recurringExpenseChecks = await db.select().from(recurringExpenseChecks).where(inArray(recurringExpenseChecks.recurringExpenseId, userRecurringExpenses));
