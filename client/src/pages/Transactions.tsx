@@ -86,6 +86,7 @@ export default function Transactions() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterAccountId, setFilterAccountId] = useState<string>('all');
   const [filterCategoryId, setFilterCategoryId] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
   const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
 
@@ -136,6 +137,14 @@ export default function Transactions() {
         return false;
       }
 
+      // Status filter
+      if (filterStatus === 'bank' && !t.externalId) {
+        return false;
+      }
+      if (filterStatus === 'recurring' && !matchedTransactions.has(t.id)) {
+        return false;
+      }
+
       // Date range filter
       const transactionDate = new Date(t.date);
       if (dateFrom && transactionDate < dateFrom) {
@@ -151,7 +160,7 @@ export default function Transactions() {
 
       return true;
     });
-  }, [transactions, searchQuery, filterAccountId, filterCategoryId, dateFrom, dateTo]);
+  }, [transactions, searchQuery, filterAccountId, filterCategoryId, filterStatus, dateFrom, dateTo, matchedTransactions]);
 
   const sortedTransactions = useMemo(() => {
     const sorted = [...filteredTransactions].sort((a, b) => {
@@ -187,12 +196,13 @@ export default function Transactions() {
     setSearchQuery('');
     setFilterAccountId('all');
     setFilterCategoryId('all');
+    setFilterStatus('all');
     setDateFrom(undefined);
     setDateTo(undefined);
     setCurrentPage(1);
   };
 
-  const hasActiveFilters = searchQuery || filterAccountId !== 'all' || filterCategoryId !== 'all' || dateFrom || dateTo;
+  const hasActiveFilters = searchQuery || filterAccountId !== 'all' || filterCategoryId !== 'all' || filterStatus !== 'all' || dateFrom || dateTo;
 
   const totalPages = Math.ceil(sortedTransactions.length / ITEMS_PER_PAGE);
 
@@ -823,6 +833,21 @@ export default function Transactions() {
                   {categories.map(cat => (
                     <SelectItem key={cat.id} value={cat.id.toString()}>{cat.name}</SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Status Filter */}
+            <div className="w-[180px]">
+              <Label className="text-sm font-medium mb-1.5 block">Stato</Label>
+              <Select value={filterStatus} onValueChange={(v) => { setFilterStatus(v); setCurrentPage(1); }}>
+                <SelectTrigger data-testid="select-filter-status">
+                  <SelectValue placeholder="Tutti" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tutti</SelectItem>
+                  <SelectItem value="bank">Riconciliati banca</SelectItem>
+                  <SelectItem value="recurring">Spese ricorrenti</SelectItem>
                 </SelectContent>
               </Select>
             </div>
