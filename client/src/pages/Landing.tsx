@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Wallet, PieChart, TrendingUp, CreditCard, ShieldCheck } from "lucide-react";
+import { Wallet, PieChart, TrendingUp, CreditCard, ShieldCheck, LayoutDashboard, Landmark, FileSpreadsheet, BarChart3, Mail, Webhook, Settings } from "lucide-react";
 
 export default function Landing() {
   return (
@@ -48,9 +48,14 @@ export default function Landing() {
           <h2 className="text-3xl font-bold text-center mb-12 font-heading">Everything you need to manage your wealth</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             <FeatureCard
-              icon={<TrendingUp className="h-10 w-10 text-primary" />}
+              icon={<LayoutDashboard className="h-10 w-10 text-primary" />}
               title="Dashboard"
               description="Get a high-level overview of your net worth, recent activity, and financial trends."
+            />
+            <FeatureCard
+              icon={<Landmark className="h-10 w-10 text-primary" />}
+              title="Bank Sync"
+              description="Connect to 2,000+ banks via GoCardless to automatically sync transactions and balances."
             />
             <FeatureCard
               icon={<Wallet className="h-10 w-10 text-primary" />}
@@ -63,14 +68,39 @@ export default function Landing() {
               description="Record income and expenses, categorize them, and import transactions via CSV."
             />
             <FeatureCard
+              icon={<FileSpreadsheet className="h-10 w-10 text-primary" />}
+              title="Smart Import"
+              description="Advanced CSV importer for Transactions, Trades, and Holdings with automated column mapping."
+            />
+            <FeatureCard
               icon={<PieChart className="h-10 w-10 text-primary" />}
               title="Budgeting"
-              description="Set monthly budgets for different categories and monitor your spending in real-time."
+              description="Advanced budgeting system with semester views, baseline budgets, and recurring expense tracking."
             />
             <FeatureCard
               icon={<TrendingUp className="h-10 w-10 text-primary" />}
               title="Portfolio"
               description="Manage your stock holdings, track performance, and view detailed metrics."
+            />
+            <FeatureCard
+              icon={<BarChart3 className="h-10 w-10 text-primary" />}
+              title="Reports"
+              description="Access detailed weekly reports, balance sheets, and income statements with granular breakdowns."
+            />
+            <FeatureCard
+              icon={<Mail className="h-10 w-10 text-primary" />}
+              title="Weekly Reports"
+              description="Automated email summaries with financial insights and market data sent via Resend."
+            />
+            <FeatureCard
+              icon={<Webhook className="h-10 w-10 text-primary" />}
+              title="Webhooks & Integrations"
+              description="Integrate with Tally.so, generic JSON webhooks, and manage them via UI."
+            />
+            <FeatureCard
+              icon={<Settings className="h-10 w-10 text-primary" />}
+              title="Settings"
+              description="Customize categories, manage preferences, and update user profile."
             />
             <FeatureCard
               icon={<ShieldCheck className="h-10 w-10 text-primary" />}
