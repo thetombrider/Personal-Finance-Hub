@@ -65,7 +65,7 @@ export function WealthDistributionChart({ data, privacyMode, formatCurrency }: W
                         </ResponsiveContainer>
                     ) : (
                         <div className="h-full flex items-center justify-center text-muted-foreground">
-                            Nessun conto disponibile
+                            No accounts available
                         </div>
                     )}
                 </div>
