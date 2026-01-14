@@ -26,6 +26,12 @@ export function registerBudgetRoutes(app: Express) {
                 storage.getActiveRecurringExpenses(req.user.id)
             ]);
 
+            // Filter recurring expenses to exclude those starting in future years
+            const filteredRecurringExpenses = recurringExpenses.filter(e => {
+                const startYear = new Date(e.startDate).getFullYear();
+                return startYear <= year;
+            });
+
             // Initialize response structure
             const budgetData: Record<number, Record<number, { baseline: number; planned: number; recurring: number; total: number }>> = {};
 
@@ -77,7 +83,7 @@ export function registerBudgetRoutes(app: Express) {
                 categories,
                 budgetData,
                 plannedExpenses,
-                recurringExpenses
+                recurringExpenses: filteredRecurringExpenses
             });
         } catch (error) {
             console.error("Failed to fetch yearly budget data:", error);
