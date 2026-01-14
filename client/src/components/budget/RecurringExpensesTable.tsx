@@ -71,7 +71,7 @@ export function RecurringExpensesTable({
                                     <TableHead>Frequency</TableHead>
                                     <TableHead>Start Date</TableHead>
                                     <TableHead>Status</TableHead>
-                                    <TableHead className="text-right">Azioni</TableHead>
+                                    <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>

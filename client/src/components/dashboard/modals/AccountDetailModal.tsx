@@ -50,7 +50,7 @@ export function AccountDetailModal({
                 </DialogHeader>
                 <div className="mt-4 flex-1 overflow-y-auto">
                     {filteredAccounts.length === 0 ? (
-                        <p className="text-muted-foreground text-center py-4">No accounts available</p>
+                        <p className="text-muted-foreground text-center py-4">Nessun conto disponibile</p>
                     ) : (
                         <>
                             <div className={detailModal === 'total' ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pr-2" : "space-y-3"}>

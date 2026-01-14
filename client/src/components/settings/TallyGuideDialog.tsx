@@ -23,14 +23,14 @@ export function TallyGuideDialog({ open, onOpenChange }: { open: boolean, onOpen
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="w-[150px]">Campo</TableHead>
+                                    <TableHead className="w-[150px]">Field</TableHead>
                                     <TableHead>Label (accepted names)</TableHead>
                                     <TableHead>Format / Note</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 <TableRow>
-                                    <TableCell className="font-medium">Data</TableCell>
+                                    <TableCell className="font-medium">Date</TableCell>
                                     <TableCell><code className="bg-slate-100 px-1 rounded text-xs">date</code></TableCell>
                                     <TableCell className="text-sm text-muted-foreground">DD/MM/YYYY or YYYY-MM-DD</TableCell>
                                 </TableRow>
@@ -40,7 +40,6 @@ export function TallyGuideDialog({ open, onOpenChange }: { open: boolean, onOpen
                                         <div className="flex flex-col gap-1">
                                             <code className="bg-slate-100 px-1 rounded text-xs w-fit">description</code>
                                             <code className="bg-slate-100 px-1 rounded text-xs w-fit">subject</code>
-                                            <code className="bg-slate-100 px-1 rounded text-xs w-fit">description</code>
                                         </div>
                                     </TableCell>
                                     <TableCell className="text-sm text-muted-foreground">Text field</TableCell>
@@ -59,7 +58,7 @@ export function TallyGuideDialog({ open, onOpenChange }: { open: boolean, onOpen
                                     <TableCell className="font-medium">Income Amount</TableCell>
                                     <TableCell><code className="bg-slate-100 px-1 rounded text-xs">income_amount</code></TableCell>
                                     <TableCell className="text-sm text-muted-foreground">
-                                        Supporta formato EU (1.234,56) e US (1234.56).
+                                        Supports EU format (1.234,56) and US format (1234.56).
                                         Use if you want separate fields for income/expense.
                                     </TableCell>
                                 </TableRow>

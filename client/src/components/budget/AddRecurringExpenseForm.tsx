@@ -84,7 +84,7 @@ export function AddRecurringExpenseForm({ onSuccess, categories, accounts, initi
         <div className="space-y-4 pt-4">
             <div className="space-y-2">
                 <Label>Expense Name</Label>
-                <Input value={name} onChange={e => setName(e.target.value)} placeholder="Es. Netflix" />
+                <Input value={name} onChange={e => setName(e.target.value)} placeholder="E.g. Netflix" />
             </div>
 
             <div className="space-y-2">
