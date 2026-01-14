@@ -22,7 +22,7 @@ export function registerBudgetRoutes(app: Express) {
             const [categories, monthlyBudgets, plannedExpenses, recurringExpenses] = await Promise.all([
                 storage.getCategories(req.user.id),
                 storage.getMonthlyBudgetsByYear(req.user.id, year),
-                storage.getAllPlannedExpenses(req.user.id),
+                storage.getPlannedExpensesByYear(req.user.id, year),
                 storage.getActiveRecurringExpenses(req.user.id)
             ]);
 
