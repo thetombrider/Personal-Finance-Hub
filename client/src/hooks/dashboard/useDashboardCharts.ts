@@ -394,7 +394,7 @@ export function useDashboardCharts({
                     base: stats.value,
                     gain: stats.gain,
                     loss: stats.loss,
-                    totalDisplay: name === 'Investimenti' && portfolioSummary ? portfolioSummary.totalCurrentValue : (stats.value + (stats.loss > 0 ? 0 : 0))
+                    totalDisplay: name === 'Investimenti' && portfolioSummary ? portfolioSummary.totalCurrentValue : stats.value
                 };
             })
             .filter(item => item.base > 0 || item.gain > 0 || item.loss > 0)

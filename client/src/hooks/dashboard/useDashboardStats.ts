@@ -11,9 +11,10 @@ interface UseDashboardStatsProps {
     accounts: Account[];
     transactions: Transaction[];
     portfolioSummary: PortfolioSummary | undefined;
+    currentDate?: Date;
 }
 
-export function useDashboardStats({ accounts, transactions, portfolioSummary }: UseDashboardStatsProps) {
+export function useDashboardStats({ accounts, transactions, portfolioSummary, currentDate = new Date() }: UseDashboardStatsProps) {
 
     const totalAccountBalance = useMemo(() =>
         accounts.reduce((sum, acc) => sum + Number(acc.balance), 0),
@@ -47,8 +48,8 @@ export function useDashboardStats({ accounts, transactions, portfolioSummary }: 
         const creditAccounts = accounts.filter(acc => acc.type === 'credit');
         if (creditAccounts.length === 0) return null;
 
-        const currentMonthStart = startOfMonth(new Date());
-        const currentMonthEnd = endOfMonth(new Date());
+        const currentMonthStart = startOfMonth(currentDate);
+        const currentMonthEnd = endOfMonth(currentDate);
 
         let totalSpent = 0;
         let totalLimit = 0;
@@ -75,7 +76,7 @@ export function useDashboardStats({ accounts, transactions, portfolioSummary }: 
             limit: totalLimit,
             percentage: totalLimit > 0 ? (totalSpent / totalLimit) * 100 : 0
         };
-    }, [accounts, transactions]);
+    }, [accounts, transactions, currentDate]);
 
     return {
         totalBalance,

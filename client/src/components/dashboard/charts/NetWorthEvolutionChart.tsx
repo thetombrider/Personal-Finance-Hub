@@ -51,7 +51,7 @@ export function NetWorthEvolutionChart({ data, totalBalance, privacyMode, format
                                 fontSize={12}
                                 tickLine={false}
                                 axisLine={false}
-                                tickFormatter={(value) => privacyMode ? "•••" : `€${(value / 1000).toFixed(0)}k`}
+                                tickFormatter={(value) => privacyMode ? "•••" : formatCurrency(value)}
                                 domain={['auto', 'auto']}
                             />
                             <Tooltip

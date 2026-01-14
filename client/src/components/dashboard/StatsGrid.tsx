@@ -113,13 +113,13 @@ export function StatsGrid({
                             <div className="text-lg font-bold font-heading text-violet-600 dark:text-violet-400 truncate" title={displayCurrency(portfolioSummary?.totalInvested || 0)}>
                                 {displayCurrency(portfolioSummary?.totalInvested || 0)}
                             </div>
-                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Investito</p>
+                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Invested</p>
                         </div>
                         <div>
                             <div className="text-lg font-bold font-heading text-violet-500 dark:text-violet-300 truncate" title={displayCurrency(portfolioSummary?.totalCurrentValue || 0)}>
                                 {displayCurrency(portfolioSummary?.totalCurrentValue || 0)}
                             </div>
-                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Attuale</p>
+                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Current</p>
                         </div>
                     </div>
                 </CardContent>
@@ -156,7 +156,7 @@ export function StatsGrid({
 
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Carte di Credito</CardTitle>
+                    <CardTitle className="text-sm font-medium">Credit Cards</CardTitle>
                     <div className="h-8 w-8 rounded-full bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center shrink-0">
                         <CreditCard className="h-4 w-4 text-rose-600 dark:text-rose-400" />
                     </div>
@@ -168,7 +168,7 @@ export function StatsGrid({
                     {creditUsageThisMonth && creditUsageThisMonth.limit > 0 ? (
                         <div className="mt-2 space-y-1">
                             <div className="flex justify-between text-xs text-muted-foreground">
-                                <span>Speso</span>
+                                <span>Spent</span>
                                 <span className="truncate ml-2">{displayCurrency(creditUsageThisMonth.spent)}</span>
                             </div>
                             <Progress
@@ -176,11 +176,11 @@ export function StatsGrid({
                                 className={creditUsageThisMonth.percentage > 80 ? "bg-rose-200" : ""}
                             />
                             <div className="text-[10px] text-right text-muted-foreground">
-                                di {displayCurrency(creditUsageThisMonth.limit)}
+                                of {displayCurrency(creditUsageThisMonth.limit)}
                             </div>
                         </div>
                     ) : (
-                        <p className="text-xs text-muted-foreground mt-1">Debito totale</p>
+                        <p className="text-xs text-muted-foreground mt-1">Total Debt</p>
                     )}
                 </CardContent>
             </Card>

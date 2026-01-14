@@ -16,7 +16,7 @@ export function BudgetComparisonChart({ data, privacyMode, type }: BudgetCompari
         : "Monthly comparison of budgeted vs actual spending";
 
     const actualColor = isIncome ? "#10b981" : "#ef4444";
-    const actualLabel = isIncome ? "Entrate Reali" : "Spese Reali";
+    const actualLabel = isIncome ? "Actual Income" : "Actual Expenses";
     const gradientId = isIncome ? "colorActualIncome" : "colorActualExpense";
 
     return (

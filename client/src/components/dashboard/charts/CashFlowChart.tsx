@@ -30,11 +30,11 @@ export function CashFlowChart({ data, privacyMode, formatCurrency }: CashFlowCha
                                 </linearGradient>
                             </defs>
                             <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                            <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => privacyMode ? "•••" : `€${value.toFixed(2)}`} />
+                            <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => privacyMode ? "•••" : formatCurrency(value)} />
                             <Tooltip
                                 formatter={(value: number, name: string) => {
-                                    const formattedValue = privacyMode ? "•••••" : `€${value.toFixed(2)}`;
-                                    const label = name === 'income' ? 'Entrate' : 'Uscite';
+                                    const formattedValue = privacyMode ? "•••••" : formatCurrency(value);
+                                    const label = name === 'income' ? 'Income' : 'Expenses';
                                     return [formattedValue, label];
                                 }}
                                 contentStyle={{ backgroundColor: 'var(--color-card)', borderRadius: '8px', border: '1px solid var(--color-border)' }}
