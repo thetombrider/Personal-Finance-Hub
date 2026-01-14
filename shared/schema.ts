@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, decimal, timestamp, serial, integer, index, jsonb, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, decimal, timestamp, serial, integer, index, jsonb, boolean, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -117,7 +117,10 @@ export const monthlyBudgets = pgTable("monthly_budgets", {
   year: integer("year").notNull(),
   month: integer("month").notNull(), // 1-12
   amount: decimal("amount", { precision: 12, scale: 2 }).notNull().default("0"),
-});
+}, (table) => ({
+  // Unique constraint for onConflictDoUpdate in upsertMonthlyBudget
+  uniqueCategoryYearMonth: uniqueIndex("idx_monthly_budgets_unique").on(table.categoryId, table.year, table.month),
+}));
 
 export const insertMonthlyBudgetSchema = createInsertSchema(monthlyBudgets).omit({ id: true });
 export type InsertMonthlyBudget = z.infer<typeof insertMonthlyBudgetSchema>;
@@ -150,7 +153,10 @@ export const recurringExpenseChecks = pgTable("recurring_expense_checks", {
   transactionId: integer("transaction_id").references(() => transactions.id, { onDelete: "set null" }),
   matchedDate: timestamp("matched_date", { mode: "string" }),
   matchedAmount: decimal("matched_amount", { precision: 12, scale: 2 }),
-});
+}, (table) => ({
+  // Unique constraint for atomic upsert in upsertRecurringExpenseCheck
+  uniqueExpenseMonthYear: uniqueIndex("idx_recurring_expense_checks_unique").on(table.recurringExpenseId, table.month, table.year),
+}));
 
 export const insertRecurringExpenseCheckSchema = createInsertSchema(recurringExpenseChecks).omit({ id: true });
 export type InsertRecurringExpenseCheck = z.infer<typeof insertRecurringExpenseCheckSchema>;

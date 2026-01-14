@@ -114,12 +114,12 @@ export interface IStorage {
 
   // Holdings
   getHoldings(userId: string): Promise<Holding[]>;
-  getHolding(id: number): Promise<Holding | undefined>;
+  getHolding(id: number, userId: string): Promise<Holding | undefined>;
   getHoldingByTicker(ticker: string, userId: string): Promise<Holding | undefined>;
   getGlobalHoldingByTicker(ticker: string): Promise<Holding | undefined>;
   createHolding(holding: InsertHolding): Promise<Holding>;
-  updateHolding(id: number, holding: Partial<InsertHolding>): Promise<Holding | undefined>;
-  deleteHolding(id: number): Promise<void>;
+  updateHolding(id: number, userId: string, holding: Partial<InsertHolding>): Promise<Holding | undefined>;
+  deleteHolding(id: number, userId: string): Promise<void>;
 
   // Trades
   getTrades(userId: string): Promise<Trade[]>;
@@ -134,15 +134,15 @@ export interface IStorage {
   // Monthly Budgets
   getMonthlyBudgets(userId: string, year: number, month: number): Promise<MonthlyBudget[]>;
   getMonthlyBudgetsByYear(userId: string, year: number): Promise<MonthlyBudget[]>;
-  upsertMonthlyBudget(budget: InsertMonthlyBudget): Promise<MonthlyBudget>;
+  upsertMonthlyBudget(userId: string, budget: InsertMonthlyBudget): Promise<MonthlyBudget>;
 
   // Recurring Expenses
   getRecurringExpenses(userId: string): Promise<RecurringExpense[]>;
   getActiveRecurringExpenses(userId: string): Promise<RecurringExpense[]>;
   createRecurringExpense(expense: InsertRecurringExpense): Promise<RecurringExpense>;
-  updateRecurringExpense(id: number, expense: Partial<InsertRecurringExpense>): Promise<RecurringExpense | undefined>;
-  deleteRecurringExpense(id: number): Promise<void>;
-  upsertRecurringExpenseCheck(check: InsertRecurringExpenseCheck): Promise<void>;
+  updateRecurringExpense(id: number, userId: string, expense: Partial<InsertRecurringExpense>): Promise<RecurringExpense | undefined>;
+  deleteRecurringExpense(id: number, userId: string): Promise<boolean>;
+  upsertRecurringExpenseCheck(check: InsertRecurringExpenseCheck, userId: string): Promise<void>;
   getRecurringExpenseChecks(userId: string, year: number, month: number): Promise<RecurringExpenseCheck[]>;
   getAllRecurringExpenseChecks(userId: string): Promise<RecurringExpenseCheck[]>;
 
@@ -150,8 +150,8 @@ export interface IStorage {
   getPlannedExpenses(userId: string, year: number, month: number): Promise<PlannedExpense[]>;
   getPlannedExpensesByYear(userId: string, year: number): Promise<PlannedExpense[]>;
   createPlannedExpense(expense: InsertPlannedExpense): Promise<PlannedExpense>;
-  updatePlannedExpense(id: number, expense: Partial<InsertPlannedExpense>): Promise<PlannedExpense | undefined>;
-  deletePlannedExpense(id: number): Promise<void>;
+  updatePlannedExpense(id: number, userId: string, expense: Partial<InsertPlannedExpense>): Promise<PlannedExpense | undefined>;
+  deletePlannedExpense(id: number, userId: string): Promise<boolean>;
 
   // Bank Connections
   getBankConnections(userId: string): Promise<BankConnection[]>;
@@ -162,11 +162,11 @@ export interface IStorage {
 
   // Import Staging
   getImportStaging(userId: string, accountId?: number): Promise<ImportStaging[]>;
-  getImportStagingByTransactionId(gcId: string): Promise<ImportStaging | undefined>;
+  getImportStagingByTransactionId(gcId: string, userId: string): Promise<ImportStaging | undefined>;
   createImportStaging(staging: InsertImportStaging): Promise<ImportStaging>;
-  deleteImportStaging(id: number): Promise<void>;
-  clearImportStaging(accountId: number): Promise<void>;
-  updateImportStagingStatus(id: number, status: string): Promise<void>;
+  deleteImportStaging(id: number, userId: string): Promise<void>;
+  clearImportStaging(accountId: number, userId: string): Promise<void>;
+  updateImportStagingStatus(id: number, userId: string, status: string): Promise<void>;
 
   // Webhooks
   getWebhook(id: string): Promise<Webhook | undefined>;
@@ -242,12 +242,12 @@ export class DatabaseStorage implements IStorage {
 
   // Holding operations - delegate to HoldingRepository
   getHoldings = (userId: string) => this.holdingRepo.getHoldings(userId);
-  getHolding = (id: number) => this.holdingRepo.getHolding(id);
+  getHolding = (id: number, userId: string) => this.holdingRepo.getHolding(id, userId);
   getHoldingByTicker = (ticker: string, userId: string) => this.holdingRepo.getHoldingByTicker(ticker, userId);
   getGlobalHoldingByTicker = (ticker: string) => this.holdingRepo.getGlobalHoldingByTicker(ticker);
   createHolding = (holding: InsertHolding) => this.holdingRepo.createHolding(holding);
-  updateHolding = (id: number, holding: Partial<InsertHolding>) => this.holdingRepo.updateHolding(id, holding);
-  deleteHolding = (id: number) => this.holdingRepo.deleteHolding(id);
+  updateHolding = (id: number, userId: string, holding: Partial<InsertHolding>) => this.holdingRepo.updateHolding(id, userId, holding);
+  deleteHolding = (id: number, userId: string) => this.holdingRepo.deleteHolding(id, userId);
 
   // Trade operations - delegate to TradeRepository
   getTrades = (userId: string) => this.tradeRepo.getTrades(userId);
@@ -262,15 +262,15 @@ export class DatabaseStorage implements IStorage {
   // Budget operations - delegate to BudgetRepository
   getMonthlyBudgets = (userId: string, year: number, month: number) => this.budgetRepo.getMonthlyBudgets(userId, year, month);
   getMonthlyBudgetsByYear = (userId: string, year: number) => this.budgetRepo.getMonthlyBudgetsByYear(userId, year);
-  upsertMonthlyBudget = (budget: InsertMonthlyBudget) => this.budgetRepo.upsertMonthlyBudget(budget);
+  upsertMonthlyBudget = (userId: string, budget: InsertMonthlyBudget) => this.budgetRepo.upsertMonthlyBudget(userId, budget);
 
   // Recurring Expense operations - delegate to RecurringExpenseRepository
   getRecurringExpenses = (userId: string) => this.recurringExpenseRepo.getRecurringExpenses(userId);
   getActiveRecurringExpenses = (userId: string) => this.recurringExpenseRepo.getActiveRecurringExpenses(userId);
   createRecurringExpense = (expense: InsertRecurringExpense) => this.recurringExpenseRepo.createRecurringExpense(expense);
-  updateRecurringExpense = (id: number, expense: Partial<InsertRecurringExpense>) => this.recurringExpenseRepo.updateRecurringExpense(id, expense);
-  deleteRecurringExpense = (id: number) => this.recurringExpenseRepo.deleteRecurringExpense(id);
-  upsertRecurringExpenseCheck = (check: InsertRecurringExpenseCheck) => this.recurringExpenseRepo.upsertRecurringExpenseCheck(check);
+  updateRecurringExpense = (id: number, userId: string, expense: Partial<InsertRecurringExpense>) => this.recurringExpenseRepo.updateRecurringExpense(id, userId, expense);
+  deleteRecurringExpense = (id: number, userId: string) => this.recurringExpenseRepo.deleteRecurringExpense(id, userId);
+  upsertRecurringExpenseCheck = (check: InsertRecurringExpenseCheck, userId: string) => this.recurringExpenseRepo.upsertRecurringExpenseCheck(check, userId);
   getRecurringExpenseChecks = (userId: string, year: number, month: number) => this.recurringExpenseRepo.getRecurringExpenseChecks(userId, year, month);
   getAllRecurringExpenseChecks = (userId: string) => this.recurringExpenseRepo.getAllRecurringExpenseChecks(userId);
 
@@ -278,8 +278,8 @@ export class DatabaseStorage implements IStorage {
   getPlannedExpenses = (userId: string, year: number, month: number) => this.plannedExpenseRepo.getPlannedExpenses(userId, year, month);
   getPlannedExpensesByYear = (userId: string, year: number) => this.plannedExpenseRepo.getPlannedExpensesByYear(userId, year);
   createPlannedExpense = (expense: InsertPlannedExpense) => this.plannedExpenseRepo.createPlannedExpense(expense);
-  updatePlannedExpense = (id: number, expense: Partial<InsertPlannedExpense>) => this.plannedExpenseRepo.updatePlannedExpense(id, expense);
-  deletePlannedExpense = (id: number) => this.plannedExpenseRepo.deletePlannedExpense(id);
+  updatePlannedExpense = (id: number, userId: string, expense: Partial<InsertPlannedExpense>) => this.plannedExpenseRepo.updatePlannedExpense(id, userId, expense);
+  deletePlannedExpense = (id: number, userId: string) => this.plannedExpenseRepo.deletePlannedExpense(id, userId);
 
   // Bank Connection operations - delegate to BankConnectionRepository
   getBankConnections = (userId: string) => this.bankConnectionRepo.getBankConnections(userId);
@@ -290,11 +290,11 @@ export class DatabaseStorage implements IStorage {
 
   // Import Staging operations - delegate to ImportStagingRepository
   getImportStaging = (userId: string, accountId?: number) => this.importStagingRepo.getImportStaging(userId, accountId);
-  getImportStagingByTransactionId = (gcId: string) => this.importStagingRepo.getImportStagingByTransactionId(gcId);
+  getImportStagingByTransactionId = (gcId: string, userId: string) => this.importStagingRepo.getImportStagingByTransactionId(gcId, userId);
   createImportStaging = (staging: InsertImportStaging) => this.importStagingRepo.createImportStaging(staging);
-  deleteImportStaging = (id: number) => this.importStagingRepo.deleteImportStaging(id);
-  clearImportStaging = (accountId: number) => this.importStagingRepo.clearImportStaging(accountId);
-  updateImportStagingStatus = (id: number, status: string) => this.importStagingRepo.updateImportStagingStatus(id, status);
+  deleteImportStaging = (id: number, userId: string) => this.importStagingRepo.deleteImportStaging(id, userId);
+  clearImportStaging = (accountId: number, userId: string) => this.importStagingRepo.clearImportStaging(accountId, userId);
+  updateImportStagingStatus = (id: number, userId: string, status: string) => this.importStagingRepo.updateImportStagingStatus(id, userId, status);
 
   // Webhook operations - delegate to WebhookRepository
   getWebhook = (id: string) => this.webhookRepo.getWebhook(id);

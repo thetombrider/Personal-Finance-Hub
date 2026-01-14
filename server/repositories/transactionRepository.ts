@@ -3,7 +3,7 @@
  * Handles transaction operations including transfers and bulk imports with deduplication.
  */
 
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, and, gte, lte, sql } from "drizzle-orm";
 import { db } from "./base";
 import {
     type Transaction,
@@ -22,6 +22,16 @@ export interface TransferData {
     categoryId: number;
 }
 
+/**
+ * Generate a dedupe key for a transaction
+ */
+function generateDedupeKey(accountId: number, date: string | Date, amount: string | number, description: string): string {
+    const isoDate = new Date(date).toISOString().split('T')[0];
+    const roundedAmount = Math.round(parseFloat(amount.toString()) * 100); // Round to cents
+    const normalizedDesc = description.toLowerCase().trim();
+    return `${accountId}|${isoDate}|${roundedAmount}|${normalizedDesc}`;
+}
+
 export class TransactionRepository {
     async getTransactions(userId: string): Promise<Transaction[]> {
         const userAccounts = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.userId, userId));
@@ -38,27 +48,46 @@ export class TransactionRepository {
         return result[0];
     }
 
+    /**
+     * Bulk create transactions with optimized deduplication.
+     * Uses date windowing and hash-based O(n) lookups instead of O(n×m) nested loops.
+     */
     async createTransactions(txs: InsertTransaction[]): Promise<Transaction[]> {
         if (txs.length === 0) return [];
 
         // Get unique accounts involved
         const accountIds = Array.from(new Set(txs.map(t => t.accountId)));
 
-        // Fetch existing transactions to check for duplicates
+        // Calculate date window from incoming transactions (±30 days buffer)
+        const incomingDates = txs.map(t => new Date(t.date));
+        const minDate = new Date(Math.min(...incomingDates.map(d => d.getTime())));
+        const maxDate = new Date(Math.max(...incomingDates.map(d => d.getTime())));
+        minDate.setDate(minDate.getDate() - 30);
+        maxDate.setDate(maxDate.getDate() + 30);
+
+        const minDateStr = minDate.toISOString().split('T')[0];
+        const maxDateStr = maxDate.toISOString().split('T')[0];
+
+        // Fetch only transactions within date window for relevant accounts
         const existing = await db.select()
             .from(transactions)
-            .where(inArray(transactions.accountId, accountIds));
+            .where(and(
+                inArray(transactions.accountId, accountIds),
+                sql`DATE(${transactions.date}) >= ${minDateStr}`,
+                sql`DATE(${transactions.date}) <= ${maxDateStr}`
+            ));
 
-        // Filter out duplicates
+        // Build a Set of existing keys for O(1) lookup
+        const existingKeys = new Set<string>();
+        for (const existingTx of existing) {
+            const key = generateDedupeKey(existingTx.accountId, existingTx.date, existingTx.amount, existingTx.description);
+            existingKeys.add(key);
+        }
+
+        // Filter out duplicates using O(n) hash lookups
         const toInsert = txs.filter(newTx => {
-            const isDuplicate = existing.some(existingTx => {
-                if (existingTx.accountId !== newTx.accountId) return false;
-                if (new Date(existingTx.date).toISOString().split('T')[0] !== new Date(newTx.date).toISOString().split('T')[0]) return false;
-                if (Math.abs(parseFloat(existingTx.amount) - parseFloat(newTx.amount.toString())) > 0.001) return false;
-                if (existingTx.description.toLowerCase().trim() !== newTx.description.toLowerCase().trim()) return false;
-                return true;
-            });
-            return !isDuplicate;
+            const key = generateDedupeKey(newTx.accountId, newTx.date, newTx.amount.toString(), newTx.description);
+            return !existingKeys.has(key);
         });
 
         if (toInsert.length === 0) return [];
@@ -103,6 +132,9 @@ export class TransactionRepository {
         return result[0];
     }
 
+    /**
+     * Delete a single transaction, unlinking trades and paired transfer transactions.
+     */
     async deleteTransaction(id: number): Promise<void> {
         await db.transaction(async (tx) => {
             // Unlink any trades that reference this transaction
@@ -110,28 +142,86 @@ export class TransactionRepository {
                 .set({ transactionId: null })
                 .where(eq(trades.transactionId, id));
 
+            // Unlink any paired transfer transaction (clear linkedTransactionId)
+            await tx.update(transactions)
+                .set({ linkedTransactionId: null })
+                .where(eq(transactions.linkedTransactionId, id));
+
             await tx.delete(transactions).where(eq(transactions.id, id));
         });
     }
 
+    /**
+     * Bulk delete transactions, unlinking trades and paired transfers first.
+     */
     async deleteTransactions(ids: number[]): Promise<void> {
         if (ids.length === 0) return;
 
         await db.transaction(async (tx) => {
+            // Unlink trades referencing these transactions
             await tx.update(trades)
                 .set({ transactionId: null })
                 .where(inArray(trades.transactionId, ids));
+
+            // Unlink any paired transfer transactions (clear linkedTransactionId)
+            await tx.update(transactions)
+                .set({ linkedTransactionId: null })
+                .where(inArray(transactions.linkedTransactionId, ids));
 
             await tx.delete(transactions).where(inArray(transactions.id, ids));
         });
     }
 
+    /**
+     * Clear all transactions with proper unlinking of trades in an atomic operation.
+     */
     async clearTransactions(): Promise<void> {
-        await db.delete(transactions);
+        await db.transaction(async (tx) => {
+            // First unlink all trades from transactions
+            await tx.update(trades)
+                .set({ transactionId: null })
+                .where(sql`${trades.transactionId} IS NOT NULL`);
+
+            // Then delete all transactions
+            await tx.delete(transactions);
+        });
     }
 
+    /**
+     * Clear transactions for a specific user, unlinking trades first.
+     */
     async clearTransactionsForUser(userId: string): Promise<void> {
-        const userAccounts = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.userId, userId));
-        await db.delete(transactions).where(inArray(transactions.accountId, userAccounts));
+        await db.transaction(async (tx) => {
+            // Get user's account IDs
+            const userAccountIds = await tx.select({ id: accounts.id })
+                .from(accounts)
+                .where(eq(accounts.userId, userId));
+
+            if (userAccountIds.length === 0) return;
+
+            const accountIdList = userAccountIds.map(a => a.id);
+
+            // Get IDs of transactions to be deleted
+            const userTransactionIds = await tx.select({ id: transactions.id })
+                .from(transactions)
+                .where(inArray(transactions.accountId, accountIdList));
+
+            if (userTransactionIds.length === 0) return;
+
+            const txIdList = userTransactionIds.map(t => t.id);
+
+            // Unlink trades referencing these transactions
+            await tx.update(trades)
+                .set({ transactionId: null })
+                .where(inArray(trades.transactionId, txIdList));
+
+            // Unlink any paired transfer transactions
+            await tx.update(transactions)
+                .set({ linkedTransactionId: null })
+                .where(inArray(transactions.linkedTransactionId, txIdList));
+
+            // Delete the transactions
+            await tx.delete(transactions).where(inArray(transactions.id, txIdList));
+        });
     }
 }

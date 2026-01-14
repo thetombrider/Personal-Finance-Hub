@@ -34,24 +34,40 @@ export class BudgetRepository {
             ));
     }
 
-    async upsertMonthlyBudget(budget: InsertMonthlyBudget): Promise<MonthlyBudget> {
-        const existing = await db.select()
-            .from(monthlyBudgets)
+    /**
+     * Upsert a monthly budget with ownership validation.
+     * @param userId - The user making the request (for authorization)
+     * @param budget - The budget data to upsert
+     * @throws Error if category doesn't exist or doesn't belong to user
+     */
+    async upsertMonthlyBudget(userId: string, budget: InsertMonthlyBudget): Promise<MonthlyBudget> {
+        // Verify category ownership before proceeding
+        const category = await db.select()
+            .from(categories)
             .where(and(
-                eq(monthlyBudgets.categoryId, budget.categoryId),
-                eq(monthlyBudgets.year, budget.year),
-                eq(monthlyBudgets.month, budget.month)
-            ));
+                eq(categories.id, budget.categoryId),
+                eq(categories.userId, userId)
+            ))
+            .limit(1);
 
-        if (existing.length > 0) {
-            const [updated] = await db.update(monthlyBudgets)
-                .set({ amount: budget.amount })
-                .where(eq(monthlyBudgets.id, existing[0].id))
-                .returning();
-            return updated;
+        if (category.length === 0) {
+            throw new Error(`Authorization failed: Category ${budget.categoryId} not found or does not belong to user`);
         }
 
-        const [created] = await db.insert(monthlyBudgets).values(budget).returning();
-        return created;
+        // Atomic upsert using onConflictDoUpdate
+        // Requires unique constraint on (categoryId, year, month)
+        const result = await db.insert(monthlyBudgets)
+            .values(budget)
+            .onConflictDoUpdate({
+                target: [monthlyBudgets.categoryId, monthlyBudgets.year, monthlyBudgets.month],
+                set: { amount: budget.amount }
+            })
+            .returning();
+
+        if (result.length === 0) {
+            throw new Error('Failed to upsert monthly budget: no result returned');
+        }
+
+        return result[0];
     }
 }

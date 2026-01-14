@@ -34,7 +34,30 @@ export class RecurringExpenseRepository {
         return created;
     }
 
-    async updateRecurringExpense(id: number, expense: Partial<InsertRecurringExpense>): Promise<RecurringExpense | undefined> {
+    /**
+     * Update a recurring expense with ownership verification via account.
+     * @param id - The expense ID
+     * @param userId - The user ID for ownership check
+     * @param expense - The fields to update
+     * @returns The updated expense if found and owned by user, undefined otherwise
+     */
+    async updateRecurringExpense(id: number, userId: string, expense: Partial<InsertRecurringExpense>): Promise<RecurringExpense | undefined> {
+        // Get user's accounts for ownership check
+        const userAccounts = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.userId, userId));
+
+        // Verify ownership before update
+        const existing = await db.select()
+            .from(recurringExpenses)
+            .where(and(
+                eq(recurringExpenses.id, id),
+                inArray(recurringExpenses.accountId, userAccounts)
+            ))
+            .limit(1);
+
+        if (existing.length === 0) {
+            return undefined; // Not found or not owned
+        }
+
         const [updated] = await db.update(recurringExpenses)
             .set(expense)
             .where(eq(recurringExpenses.id, id))
@@ -42,24 +65,68 @@ export class RecurringExpenseRepository {
         return updated;
     }
 
-    async deleteRecurringExpense(id: number): Promise<void> {
+    /**
+     * Delete a recurring expense with ownership verification via account.
+     * @param id - The expense ID
+     * @param userId - The user ID for ownership check
+     * @returns true if deleted, false if not found or not owned
+     */
+    async deleteRecurringExpense(id: number, userId: string): Promise<boolean> {
+        // Get user's accounts for ownership check
+        const userAccounts = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.userId, userId));
+
+        // Verify ownership before delete
+        const existing = await db.select()
+            .from(recurringExpenses)
+            .where(and(
+                eq(recurringExpenses.id, id),
+                inArray(recurringExpenses.accountId, userAccounts)
+            ))
+            .limit(1);
+
+        if (existing.length === 0) {
+            return false; // Not found or not owned
+        }
+
         await db.delete(recurringExpenses).where(eq(recurringExpenses.id, id));
+        return true;
     }
 
-    async upsertRecurringExpenseCheck(check: InsertRecurringExpenseCheck): Promise<void> {
-        const existing = await db.select().from(recurringExpenseChecks).where(and(
-            eq(recurringExpenseChecks.recurringExpenseId, check.recurringExpenseId),
-            eq(recurringExpenseChecks.month, check.month),
-            eq(recurringExpenseChecks.year, check.year)
-        ));
+    /**
+     * Upsert a recurring expense check with authorization.
+     * Uses atomic onConflictDoUpdate to avoid TOCTOU race conditions.
+     * @param check - The check data
+     * @param userId - The user ID for ownership verification
+     * @throws Error if recurring expense not owned by user
+     */
+    async upsertRecurringExpenseCheck(check: InsertRecurringExpenseCheck, userId: string): Promise<void> {
+        // Verify ownership of the recurring expense via account
+        const userAccounts = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.userId, userId));
+        const ownedExpense = await db.select({ id: recurringExpenses.id })
+            .from(recurringExpenses)
+            .where(and(
+                eq(recurringExpenses.id, check.recurringExpenseId),
+                inArray(recurringExpenses.accountId, userAccounts)
+            ))
+            .limit(1);
 
-        if (existing.length > 0) {
-            await db.update(recurringExpenseChecks)
-                .set(check)
-                .where(eq(recurringExpenseChecks.id, existing[0].id));
-        } else {
-            await db.insert(recurringExpenseChecks).values(check);
+        if (ownedExpense.length === 0) {
+            throw new Error(`Authorization failed: Recurring expense ${check.recurringExpenseId} not found or does not belong to user`);
         }
+
+        // Atomic upsert using onConflictDoUpdate
+        // Requires unique constraint on (recurringExpenseId, month, year)
+        await db.insert(recurringExpenseChecks)
+            .values(check)
+            .onConflictDoUpdate({
+                target: [recurringExpenseChecks.recurringExpenseId, recurringExpenseChecks.month, recurringExpenseChecks.year],
+                set: {
+                    status: check.status,
+                    transactionId: check.transactionId,
+                    matchedDate: check.matchedDate,
+                    matchedAmount: check.matchedAmount
+                }
+            });
     }
 
     async getRecurringExpenseChecks(userId: string, year: number, month: number): Promise<RecurringExpenseCheck[]> {

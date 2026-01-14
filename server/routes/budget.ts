@@ -106,9 +106,8 @@ export function registerBudgetRoutes(app: Express) {
             if (!req.user) return res.status(401).json({ error: "Unauthorized" });
 
             const validated = insertMonthlyBudgetSchema.parse(req.body);
-            // Enforce userId from authenticated user (the schema might allow client-supplied userId)
-            // We trust the categoryId but the storage layer uses category ownership implicitly
-            const budget = await storage.upsertMonthlyBudget(validated);
+            // Authorization: upsertMonthlyBudget validates category ownership
+            const budget = await storage.upsertMonthlyBudget(req.user.id, validated);
             res.json(budget);
         } catch (error) {
             if (error instanceof z.ZodError) {
@@ -161,15 +160,12 @@ export function registerBudgetRoutes(app: Express) {
             const id = parseNumericParam(req.params.id);
             if (id === null) return res.status(400).json({ error: "Invalid id" });
 
-            // Get existing expense to check ownership via account
-            const expenses = await storage.getRecurringExpenses(req.user.id);
-            const existing = expenses.find(e => e.id === id);
-            if (!existing) {
+            const validated = insertRecurringExpenseSchema.partial().parse(req.body);
+            // Ownership check built into updateRecurringExpense
+            const expense = await storage.updateRecurringExpense(id, req.user.id, validated);
+            if (!expense) {
                 return res.status(404).json({ error: "Recurring expense not found" });
             }
-
-            const validated = insertRecurringExpenseSchema.partial().parse(req.body);
-            const expense = await storage.updateRecurringExpense(id, validated);
             res.json(expense);
         } catch (error) {
             if (error instanceof z.ZodError) {
@@ -186,14 +182,11 @@ export function registerBudgetRoutes(app: Express) {
             const id = parseNumericParam(req.params.id);
             if (id === null) return res.status(400).json({ error: "Invalid id" });
 
-            // Verify ownership via account
-            const expenses = await storage.getRecurringExpenses(req.user.id);
-            const existing = expenses.find(e => e.id === id);
-            if (!existing) {
+            // Ownership check built into deleteRecurringExpense
+            const deleted = await storage.deleteRecurringExpense(id, req.user.id);
+            if (!deleted) {
                 return res.status(404).json({ error: "Recurring expense not found" });
             }
-
-            await storage.deleteRecurringExpense(id);
             res.status(204).send();
         } catch (error) {
             res.status(500).json({ error: "Failed to delete recurring expense" });
@@ -245,16 +238,12 @@ export function registerBudgetRoutes(app: Express) {
             const id = parseNumericParam(req.params.id);
             if (id === null) return res.status(400).json({ error: "Invalid id" });
 
-            // Check ownership via planned expenses for user's categories
-            const year = new Date().getFullYear();
-            const allExpenses = await storage.getPlannedExpensesByYear(req.user.id, year);
-            const existing = allExpenses.find(e => e.id === id);
-            if (!existing) {
+            const validated = insertPlannedExpenseSchema.partial().parse(req.body);
+            // Ownership check built into updatePlannedExpense
+            const expense = await storage.updatePlannedExpense(id, req.user.id, validated);
+            if (!expense) {
                 return res.status(404).json({ error: "Planned expense not found" });
             }
-
-            const validated = insertPlannedExpenseSchema.partial().parse(req.body);
-            const expense = await storage.updatePlannedExpense(id, validated);
             res.json(expense);
         } catch (error) {
             if (error instanceof z.ZodError) {
@@ -271,15 +260,11 @@ export function registerBudgetRoutes(app: Express) {
             const id = parseNumericParam(req.params.id);
             if (id === null) return res.status(400).json({ error: "Invalid id" });
 
-            // Check ownership
-            const year = new Date().getFullYear();
-            const allExpenses = await storage.getPlannedExpensesByYear(req.user.id, year);
-            const existing = allExpenses.find(e => e.id === id);
-            if (!existing) {
+            // Ownership check built into deletePlannedExpense
+            const deleted = await storage.deletePlannedExpense(id, req.user.id);
+            if (!deleted) {
                 return res.status(404).json({ error: "Planned expense not found" });
             }
-
-            await storage.deletePlannedExpense(id);
             res.status(204).send();
         } catch (error) {
             res.status(500).json({ error: "Failed to delete planned expense" });

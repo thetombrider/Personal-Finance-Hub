@@ -33,7 +33,7 @@ export class ReconciliationService {
             console.log(`Processing ${activeExpenses.length} active recurring expenses against ${relevantTransactions.length} transactions`);
 
             for (const expense of activeExpenses) {
-                await this.checkExpense(expense, year, month, relevantTransactions);
+                await this.checkExpense(expense, year, month, relevantTransactions, userId);
             }
         } catch (error) {
             console.error("Error in checkRecurringExpenses:", error);
@@ -41,7 +41,7 @@ export class ReconciliationService {
         }
     }
 
-    private async checkExpense(expense: RecurringExpense, year: number, month: number, transactions: Transaction[]) {
+    private async checkExpense(expense: RecurringExpense, year: number, month: number, transactions: Transaction[], userId: string) {
         try {
             // 1. Calculate expected date with safe handling for short months
             // If dayOfMonth is 31 but month is Feb (28/29 days), use last day of month
@@ -131,7 +131,7 @@ export class ReconciliationService {
                 }
             }
 
-            // 5. Upsert check result
+            // 5. Upsert check result with authorization
             await storage.upsertRecurringExpenseCheck({
                 recurringExpenseId: expense.id,
                 month,
@@ -140,7 +140,7 @@ export class ReconciliationService {
                 transactionId: matchedTx ? matchedTx.id : null,
                 matchedDate: matchedTx ? matchedTx.date : null,
                 matchedAmount: matchedTx ? matchedTx.amount : null
-            });
+            }, userId);
 
         } catch (error) {
             console.error(`Failed to check expense ${expense.id} (${expense.name}):`, error);

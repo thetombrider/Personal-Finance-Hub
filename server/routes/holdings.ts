@@ -25,13 +25,10 @@ export function registerHoldingRoutes(app: Express) {
             const id = parseNumericParam(req.params.id);
             if (id === null) return res.status(400).json({ error: "Invalid id" });
 
-            const holding = await storage.getHolding(id);
+            // Ownership check built into getHolding
+            const holding = await storage.getHolding(id, req.user.id);
             if (!holding) {
                 return res.status(404).json({ error: "Holding not found" });
-            }
-
-            if (!checkOwnership(holding.userId, req.user.id)) {
-                return res.status(403).json({ error: "Forbidden" });
             }
 
             res.json(holding);
@@ -65,18 +62,17 @@ export function registerHoldingRoutes(app: Express) {
             const id = parseNumericParam(req.params.id);
             if (id === null) return res.status(400).json({ error: "Invalid id" });
 
-            const existing = await storage.getHolding(id);
+            // Ownership check built into getHolding
+            const existing = await storage.getHolding(id, req.user.id);
             if (!existing) {
                 return res.status(404).json({ error: "Holding not found" });
-            }
-            if (!checkOwnership(existing.userId, req.user.id)) {
-                return res.status(403).json({ error: "Forbidden" });
             }
 
             const { userId: _, ...bodyWithoutUserId } = req.body;
             const validated = insertHoldingSchema.partial().parse(bodyWithoutUserId);
 
-            const holding = await storage.updateHolding(id, validated);
+            // Ownership check built into updateHolding
+            const holding = await storage.updateHolding(id, req.user.id, validated);
             res.json(holding);
         } catch (error) {
             if (error instanceof z.ZodError) {
@@ -93,17 +89,13 @@ export function registerHoldingRoutes(app: Express) {
             const id = parseNumericParam(req.params.id);
             if (id === null) return res.status(400).json({ error: "Invalid id" });
 
-            const existing = await storage.getHolding(id);
-            if (!existing) {
+            // Ownership check built into deleteHolding - throws if not owned
+            await storage.deleteHolding(id, req.user.id);
+            res.status(204).send();
+        } catch (error: any) {
+            if (error.message?.includes('Authorization failed')) {
                 return res.status(404).json({ error: "Holding not found" });
             }
-            if (!checkOwnership(existing.userId, req.user.id)) {
-                return res.status(403).json({ error: "Forbidden" });
-            }
-
-            await storage.deleteHolding(id);
-            res.status(204).send();
-        } catch (error) {
             res.status(500).json({ error: "Failed to delete holding" });
         }
     });

@@ -92,7 +92,7 @@ export function registerTransactionRoutes(app: Express) {
             });
 
             // 3. Update staging status
-            await storage.updateImportStagingStatus(id, "reconciled");
+            await storage.updateImportStagingStatus(id, req.user.id, "reconciled");
 
             res.status(201).json(transaction);
         } catch (error) {
@@ -115,7 +115,7 @@ export function registerTransactionRoutes(app: Express) {
                 return res.status(404).json({ error: "Staged transaction not found" });
             }
 
-            await storage.updateImportStagingStatus(id, "dismissed");
+            await storage.updateImportStagingStatus(id, req.user.id, "dismissed");
             res.status(204).send();
         } catch (error) {
             res.status(500).json({ error: "Failed to delete staged transaction" });

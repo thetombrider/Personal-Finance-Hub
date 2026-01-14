@@ -25,13 +25,10 @@ export function registerTradeRoutes(app: Express) {
             const holdingId = parseNumericParam(req.params.holdingId);
             if (holdingId === null) return res.status(400).json({ error: "Invalid holdingId" });
 
-            // Verify holding ownership
-            const holding = await storage.getHolding(holdingId);
+            // Ownership check built into getHolding
+            const holding = await storage.getHolding(holdingId, req.user.id);
             if (!holding) {
                 return res.status(404).json({ error: "Holding not found" });
-            }
-            if (!checkOwnership(holding.userId, req.user.id)) {
-                return res.status(403).json({ error: "Forbidden" });
             }
 
             const trades = await storage.getTradesByHolding(holdingId);
@@ -53,9 +50,9 @@ export function registerTradeRoutes(app: Express) {
                 return res.status(404).json({ error: "Trade not found" });
             }
 
-            // Check ownership via holding
-            const holding = await storage.getHolding(trade.holdingId);
-            if (!holding || !checkOwnership(holding.userId, req.user.id)) {
+            // Check ownership via holding (with ownership check built in)
+            const holding = await storage.getHolding(trade.holdingId, req.user.id);
+            if (!holding) {
                 return res.status(403).json({ error: "Forbidden" });
             }
 
@@ -71,13 +68,10 @@ export function registerTradeRoutes(app: Express) {
 
             const validated = insertTradeSchema.parse(req.body);
 
-            // Verify holding belongs to user
-            const holding = await storage.getHolding(validated.holdingId);
+            // Ownership check built into getHolding
+            const holding = await storage.getHolding(validated.holdingId, req.user.id);
             if (!holding) {
-                return res.status(400).json({ error: "Holding not found" });
-            }
-            if (!checkOwnership(holding.userId, req.user.id)) {
-                return res.status(403).json({ error: "Forbidden" });
+                return res.status(400).json({ error: "Holding not found or not owned by user" });
             }
 
             const trade = await storage.createTrade(validated);
@@ -101,11 +95,11 @@ export function registerTradeRoutes(app: Express) {
 
             const validatedTrades = tradesData.map(t => insertTradeSchema.parse(t));
 
-            // Verify all holdings belong to user
+            // Verify all holdings belong to user (ownership check built into getHolding)
             const holdingIds = Array.from(new Set(validatedTrades.map(t => t.holdingId)));
             for (const holdingId of holdingIds) {
-                const holding = await storage.getHolding(holdingId);
-                if (!holding || !checkOwnership(holding.userId, req.user.id)) {
+                const holding = await storage.getHolding(holdingId, req.user.id);
+                if (!holding) {
                     return res.status(403).json({ error: "Forbidden: One or more holdings not owned by user" });
                 }
             }
@@ -133,9 +127,9 @@ export function registerTradeRoutes(app: Express) {
                 return res.status(404).json({ error: "Trade not found" });
             }
 
-            // Check ownership via holding
-            const holding = await storage.getHolding(existing.holdingId);
-            if (!holding || !checkOwnership(holding.userId, req.user.id)) {
+            // Check ownership via holding (ownership check built in)
+            const holding = await storage.getHolding(existing.holdingId, req.user.id);
+            if (!holding) {
                 return res.status(403).json({ error: "Forbidden" });
             }
 
@@ -161,9 +155,9 @@ export function registerTradeRoutes(app: Express) {
             if (!existing) {
                 return res.status(404).json({ error: "Trade not found" });
             }
-
-            const holding = await storage.getHolding(existing.holdingId);
-            if (!holding || !checkOwnership(holding.userId, req.user.id)) {
+            // Ownership check built into getHolding
+            const holding = await storage.getHolding(existing.holdingId, req.user.id);
+            if (!holding) {
                 return res.status(403).json({ error: "Forbidden" });
             }
 
@@ -180,12 +174,12 @@ export function registerTradeRoutes(app: Express) {
 
             const { ids } = z.object({ ids: z.array(z.number()) }).parse(req.body);
 
-            // Verify ownership of all trades
+            // Verify ownership of all trades (ownership check built into getHolding)
             for (const id of ids) {
                 const trade = await storage.getTrade(id);
                 if (!trade) continue; // Skip non-existent, they won't be deleted anyway
-                const holding = await storage.getHolding(trade.holdingId);
-                if (!holding || !checkOwnership(holding.userId, req.user.id)) {
+                const holding = await storage.getHolding(trade.holdingId, req.user.id);
+                if (!holding) {
                     return res.status(403).json({ error: "Forbidden: Cannot delete trades you don't own" });
                 }
             }
