@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { format, subMonths, parseISO } from "date-fns";
-import { it } from "date-fns/locale";
+// import { it } from "date-fns/locale";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useFinance } from "@/context/FinanceContext";
 import Layout from "@/components/Layout";
@@ -23,7 +23,7 @@ export default function Categories() {
       list.push({
         date,
         key: format(date, 'yyyy-MM'),
-        label: format(date, 'MMM', { locale: it })
+        label: format(date, 'MMM')
       });
     }
     return list;
@@ -99,15 +99,15 @@ export default function Categories() {
       <div className="flex flex-col gap-6 h-[calc(100vh-6rem)] md:h-[calc(100vh-4rem)]">
         <div>
           <h1 className="text-3xl font-heading font-bold text-foreground">Categories</h1>
-          <p className="text-muted-foreground">Analisi del flusso per categoria</p>
+          <p className="text-muted-foreground">Category flow analysis</p>
         </div>
 
         <Card className="flex-1 flex flex-col min-h-0">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-lg">Flusso per Categoria</CardTitle>
-                <CardDescription>Riepilogo mensile entrate/uscite nette per ogni categoria</CardDescription>
+                <CardTitle className="text-lg">Category Flow</CardTitle>
+                <CardDescription>Monthly summary of net income/expense for each category</CardDescription>
               </div>
               <div className="flex items-center gap-2">
                 <div className="flex items-center border rounded-md mr-2">
@@ -123,7 +123,7 @@ export default function Categories() {
                   <span className="text-sm px-2 font-medium min-w-[80px] text-center">
                     {visibleMonths.length > 0
                       ? `${visibleMonths[0].label} - ${visibleMonths[visibleMonths.length - 1].label}`
-                      : 'Nessun dato'}
+                      : 'No data'}
                   </span>
                   <Button
                     variant="ghost"
@@ -141,9 +141,9 @@ export default function Categories() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="6">Ultimi 6 mesi</SelectItem>
-                    <SelectItem value="12">Ultimi 12 mesi</SelectItem>
-                    <SelectItem value="24">Ultimi 24 mesi</SelectItem>
+                    <SelectItem value="6">Last 6 months</SelectItem>
+                    <SelectItem value="12">Last 12 months</SelectItem>
+                    <SelectItem value="24">Last 24 months</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -155,11 +155,11 @@ export default function Categories() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="sticky left-0 bg-card z-10 w-[20%] min-w-[150px]">Categoria</TableHead>
+                      <TableHead className="sticky left-0 bg-card z-10 w-[20%] min-w-[150px]">Category</TableHead>
                       {visibleMonths.map(m => (
                         <TableHead key={m.key} className="text-center w-[10%] min-w-[80px] text-xs sm:text-sm p-1 capitalize">{m.label}</TableHead>
                       ))}
-                      <TableHead className="text-center w-[10%] min-w-[100px] font-semibold p-1">Totale Periodo</TableHead>
+                      <TableHead className="text-center w-[10%] min-w-[100px] font-semibold p-1">Period Total</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -185,7 +185,7 @@ export default function Categories() {
                       );
                     })}
                     <TableRow className="bg-muted/50 font-semibold">
-                      <TableCell className="sticky left-0 bg-muted/50 z-10">Totale</TableCell>
+                      <TableCell className="sticky left-0 bg-muted/50 z-10">Total</TableCell>
                       {visibleMonths.map(m => {
                         const monthTotal = Object.values(categoryMonthlyData).reduce((sum, cat) => sum + (cat[m.key] || 0), 0);
                         return (

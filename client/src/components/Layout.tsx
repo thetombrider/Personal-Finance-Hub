@@ -22,11 +22,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   ];
 
   const settingsItems = [
-    { href: "/settings/accounts", label: "Gestione Conti" },
-    { href: "/settings/categories", label: "Gestione Categorie" },
-    { href: "/settings/webhooks", label: "Gestione Webhook" },
-    { href: "/settings/email-reports", label: "Report Email" },
-    { href: "/settings", label: "Impostazioni Utente" },
+    { href: "/settings/accounts", label: "Account Management" },
+    { href: "/settings/categories", label: "Category Management" },
+    { href: "/settings/webhooks", label: "Webhook Management" },
+    { href: "/settings/email-reports", label: "Email Reports" },
+    { href: "/settings", label: "User Settings" },
   ];
 
   const NavContent = () => (

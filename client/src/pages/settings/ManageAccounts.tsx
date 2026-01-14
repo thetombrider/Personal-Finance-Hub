@@ -103,25 +103,25 @@ export default function ManageAccounts() {
   };
 
   const handleDelete = async (id: number) => {
-    if (confirm("Sei sicuro di voler eliminare questo conto?")) {
+    if (confirm("Are you sure you want to delete this account?")) {
       await deleteAccount(id);
     }
   };
 
   const handleUnlink = async (accountId: number) => {
-    if (!confirm("Vuoi scollegare questo conto dalla banca? Le transazioni non verranno più importate automaticamente.")) return;
+    if (!confirm("Do you want to unlink this account from the bank? Transactions will no longer be imported automatically.")) return;
     try {
       await apiRequest("PATCH", `/api/accounts/${accountId}`, { gocardlessAccountId: null, bankConnectionId: null });
       await queryClient.invalidateQueries({ queryKey: ["accounts"] });
       toast({
-        title: "Conto scollegato",
-        description: "Il collegamento con la banca è stato rimosso.",
+        title: "Account unlinked",
+        description: "The connection with the bank has been removed.",
       });
     } catch (error) {
       toast({
         variant: "destructive",
-        title: "Errore",
-        description: "Impossibile scollegare il conto.",
+        title: "Error",
+        description: "Unable to unlink the account.",
       });
     }
   };
@@ -178,7 +178,7 @@ export default function ManageAccounts() {
     if (connection.status === "LN") {
       if (expiredISO) {
         return {
-          label: "Scaduta",
+          label: "Expired",
           variant: "destructive" as const,
           color: "bg-red-100 text-red-800",
           isExpired: true,
@@ -187,7 +187,7 @@ export default function ManageAccounts() {
         };
       }
       return {
-        label: "Attiva",
+        label: "Active",
         variant: "secondary" as const,
         color: "bg-green-100 text-green-800",
         isExpired: false,
@@ -195,10 +195,10 @@ export default function ManageAccounts() {
         institutionId: connection.institutionId
       };
     } else if (connection.status === "INIT" || connection.status === "CR") {
-      return { label: "In Attesa", variant: "outline" as const, color: "text-yellow-600 bg-yellow-50", institutionId: connection.institutionId };
+      return { label: "Pending", variant: "outline" as const, color: "text-yellow-600 bg-yellow-50", institutionId: connection.institutionId };
     }
 
-    return { label: "Errore", variant: "destructive" as const, color: "text-red-600", institutionId: connection.institutionId };
+    return { label: "Error", variant: "destructive" as const, color: "text-red-600", institutionId: connection.institutionId };
   };
 
   if (isFinanceLoading) {
@@ -216,14 +216,14 @@ export default function ManageAccounts() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-heading font-bold text-foreground">Gestione Conti</h1>
-            <p className="text-muted-foreground">Monitora i tuoi conti e le connessioni bancarie in un unico posto</p>
+            <h1 className="text-3xl font-heading font-bold text-foreground">Manage Accounts</h1>
+            <p className="text-muted-foreground">Monitor your accounts and bank connections in one place</p>
           </div>
 
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setIsLinkModalOpen(true)}>
               <Landmark className="mr-2 h-4 w-4" />
-              Connetti Banca
+              Connect Bank
             </Button>
 
             <Dialog open={isDialogOpen} onOpenChange={(open) => {
@@ -242,13 +242,13 @@ export default function ManageAccounts() {
             }}>
               <DialogTrigger asChild>
                 <Button className="gap-2" data-testid="button-add-account">
-                  <Plus size={16} /> Aggiungi Conto Manuale
+                  <Plus size={16} /> Add Manual Account
                 </Button>
               </DialogTrigger>
 
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>{editingId ? "Modifica Conto" : "Nuovo Conto"}</DialogTitle>
+                  <DialogTitle>{editingId ? "Edit Account" : "New Account"}</DialogTitle>
                 </DialogHeader>
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -267,9 +267,9 @@ export default function ManageAccounts() {
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Nome Conto</FormLabel>
+                          <FormLabel>Account Name</FormLabel>
                           <FormControl>
-                            <Input placeholder="es. Conto Principale" {...field} data-testid="input-name" />
+                            <Input placeholder="e.g. Main Account" {...field} data-testid="input-name" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -281,19 +281,19 @@ export default function ManageAccounts() {
                         name="type"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Tipo</FormLabel>
+                            <FormLabel>Type</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
                                 <SelectTrigger data-testid="select-type">
-                                  <SelectValue placeholder="Seleziona tipo" />
+                                  <SelectValue placeholder="Select type" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="checking">Conto Corrente</SelectItem>
-                                <SelectItem value="savings">Risparmio</SelectItem>
-                                <SelectItem value="credit">Carta di Credito</SelectItem>
-                                <SelectItem value="investment">Investimenti</SelectItem>
-                                <SelectItem value="cash">Contanti</SelectItem>
+                                <SelectItem value="checking">Checking</SelectItem>
+                                <SelectItem value="savings">Savings</SelectItem>
+                                <SelectItem value="credit">Credit Card</SelectItem>
+                                <SelectItem value="investment">Investment</SelectItem>
+                                <SelectItem value="cash">Cash</SelectItem>
                               </SelectContent>
                             </Select>
                             <FormMessage />
@@ -305,12 +305,12 @@ export default function ManageAccounts() {
                         name="startingBalance"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{watchedType === "credit" ? "Debito Iniziale" : "Saldo Iniziale"}</FormLabel>
+                            <FormLabel>{watchedType === "credit" ? "Starting Debt" : "Starting Balance"}</FormLabel>
                             <FormControl>
                               <Input type="number" step="0.01" {...field} data-testid="input-starting-balance" />
                             </FormControl>
                             {watchedType === "credit" && (
-                              <p className="text-xs text-muted-foreground">Usa valori negativi per indicare il debito</p>
+                              <p className="text-xs text-muted-foreground">Use negative values to indicate debt</p>
                             )}
                             <FormMessage />
                           </FormItem>
@@ -323,11 +323,11 @@ export default function ManageAccounts() {
                         name="creditLimit"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Limite Credito (Plafond)</FormLabel>
+                            <FormLabel>Credit Limit</FormLabel>
                             <FormControl>
-                              <Input type="number" step="0.01" placeholder="es. 1500" {...field} data-testid="input-credit-limit" />
+                              <Input type="number" step="0.01" placeholder="e.g. 1500" {...field} data-testid="input-credit-limit" />
                             </FormControl>
-                            <p className="text-xs text-muted-foreground">Il massimo che puoi spendere al mese con questa carta</p>
+                            <p className="text-xs text-muted-foreground">The maximum you can spend per month with this card</p>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -338,7 +338,7 @@ export default function ManageAccounts() {
                       name="color"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Colore</FormLabel>
+                          <FormLabel>Color</FormLabel>
                           <div className="flex items-center gap-2">
                             <FormControl>
                               <Input type="color" className="w-12 h-9 p-1" {...field} data-testid="input-color" />
@@ -350,7 +350,7 @@ export default function ManageAccounts() {
                       )}
                     />
                     <DialogFooter>
-                      <Button type="submit" data-testid="button-submit-account">{editingId ? "Salva Modifiche" : "Crea Conto"}</Button>
+                      <Button type="submit" data-testid="button-submit-account">{editingId ? "Save Changes" : "Create Account"}</Button>
                     </DialogFooter>
                   </form>
                 </Form>
@@ -361,18 +361,18 @@ export default function ManageAccounts() {
 
         <Card>
           <CardHeader>
-            <CardTitle>I Tuoi Conti</CardTitle>
-            <CardDescription>Gestisci tutti i tuoi conti e le sincronizzazioni bancarie.</CardDescription>
+            <CardTitle>Your Accounts</CardTitle>
+            <CardDescription>Manage all your accounts and bank synchronizations.</CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[300px]">Conto</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Saldo Attuale</TableHead>
-                  <TableHead>Stato Connessione</TableHead>
-                  <TableHead className="text-right">Azioni</TableHead>
+                  <TableHead className="w-[300px]">Account</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Current Balance</TableHead>
+                  <TableHead>Connection Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -411,16 +411,16 @@ export default function ManageAccounts() {
                         {status ? (
                           <div className="flex flex-col gap-1 items-start">
                             <Badge variant={status.variant} className={cn("gap-1 pointer-events-none", status.color)}>
-                              {status.label === "Attiva" && <CheckCircle2 className="h-3 w-3" />}
+                              {status.label === "Active" && <CheckCircle2 className="h-3 w-3" />}
                               {(status.isExpired) && <AlertCircle className="h-3 w-3" />}
                               {status.label}
                             </Badge>
-                            {status.label === "Attiva" && status.days !== undefined && (
-                              <span className="text-xs text-muted-foreground">{status.days} giorni rimanenti</span>
+                            {status.label === "Active" && status.days !== undefined && (
+                              <span className="text-xs text-muted-foreground">{status.days} days remaining</span>
                             )}
                           </div>
                         ) : (
-                          <Badge variant="secondary" className="bg-slate-100 text-slate-500 hover:bg-slate-100">Manuale</Badge>
+                          <Badge variant="secondary" className="bg-slate-100 text-slate-500 hover:bg-slate-100">Manual</Badge>
                         )}
                       </TableCell>
                       <TableCell className="text-right">
@@ -436,7 +436,7 @@ export default function ManageAccounts() {
                               className="text-indigo-600 border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 h-8"
                             >
                               <RefreshCw className="mr-2 h-3.5 w-3.5" />
-                              Rinnova
+                              Renew
                             </Button>
                           )}
 
@@ -445,7 +445,7 @@ export default function ManageAccounts() {
                             size="icon"
                             onClick={() => handleEdit(account)}
                             className="h-8 w-8 text-muted-foreground hover:text-primary"
-                            title="Modifica"
+                            title="Edit"
                           >
                             <Edit2 className="h-4 w-4" />
                           </Button>
@@ -456,7 +456,7 @@ export default function ManageAccounts() {
                               size="icon"
                               onClick={() => handleUnlink(account.id)}
                               className="h-8 w-8 text-orange-400 hover:text-orange-600 hover:bg-orange-50"
-                              title="Scollega Banca"
+                              title="Unlink Bank"
                             >
                               <Unlink className="h-4 w-4" />
                             </Button>
@@ -467,7 +467,7 @@ export default function ManageAccounts() {
                             size="icon"
                             onClick={() => handleDelete(account.id)}
                             className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                            title="Elimina"
+                            title="Delete"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>

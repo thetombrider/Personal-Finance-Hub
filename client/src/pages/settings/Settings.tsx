@@ -39,8 +39,8 @@ import {
 const formSchema = z.object({
     firstName: z.string().optional(),
     lastName: z.string().optional(),
-    email: z.string().email("Email non valida").optional().or(z.literal("")),
-    username: z.string().min(3, "Lo username deve essere di almeno 3 caratteri"),
+    email: z.string().email("Invalid email").optional().or(z.literal("")),
+    username: z.string().min(3, "Username must be at least 3 characters"),
     password: z.string().optional(),
     confirmPassword: z.string().optional(),
 }).refine((data) => {
@@ -49,7 +49,7 @@ const formSchema = z.object({
     }
     return true;
 }, {
-    message: "Le password non coincidono",
+    message: "Passwords do not match",
     path: ["confirmPassword"],
 });
 
@@ -105,8 +105,8 @@ export default function Settings() {
             await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
 
             toast({
-                title: "Impostazioni aggiornate",
-                description: "Le tue credenziali sono state aggiornate con successo.",
+                title: "Settings updated",
+                description: "Your credentials have been updated successfully.",
             });
 
             form.reset({
@@ -120,8 +120,8 @@ export default function Settings() {
         } catch (error: any) {
             toast({
                 variant: "destructive",
-                title: "Errore",
-                description: error.message || "Si è verificato un errore durante l'aggiornamento.",
+                title: "Error",
+                description: error.message || "An error occurred during update.",
             });
         } finally {
             setIsLoading(false);
@@ -132,9 +132,9 @@ export default function Settings() {
         <Layout>
             <div className="space-y-6">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Impostazioni Utente</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">User Settings</h1>
                     <p className="text-muted-foreground">
-                        Gestisci le tue credenziali di accesso e i tuoi dati personali.
+                        Manage your access credentials and personal data.
                     </p>
                 </div>
 
@@ -142,9 +142,9 @@ export default function Settings() {
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                         <Card>
                             <CardHeader>
-                                <CardTitle>Dati Personali</CardTitle>
+                                <CardTitle>Personal Information</CardTitle>
                                 <CardDescription>
-                                    Gestisci le tue informazioni personali.
+                                    Manage your personal information.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
@@ -154,9 +154,9 @@ export default function Settings() {
                                         name="firstName"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Nome</FormLabel>
+                                                <FormLabel>First Name</FormLabel>
                                                 <FormControl>
-                                                    <Input {...field} placeholder="Il tuo nome" />
+                                                    <Input {...field} placeholder="Your first name" />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
@@ -167,9 +167,9 @@ export default function Settings() {
                                         name="lastName"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Cognome</FormLabel>
+                                                <FormLabel>Last Name</FormLabel>
                                                 <FormControl>
-                                                    <Input {...field} placeholder="Il tuo cognome" />
+                                                    <Input {...field} placeholder="Your last name" />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
@@ -183,7 +183,7 @@ export default function Settings() {
                                         <FormItem>
                                             <FormLabel>Email</FormLabel>
                                             <FormControl>
-                                                <Input {...field} type="email" placeholder="latua@email.com" />
+                                                <Input {...field} type="email" placeholder="your@email.com" />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -194,9 +194,9 @@ export default function Settings() {
 
                         <Card>
                             <CardHeader>
-                                <CardTitle>Credenziali</CardTitle>
+                                <CardTitle>Credentials</CardTitle>
                                 <CardDescription>
-                                    Aggiorna il tuo nome utente e la password.
+                                    Update your username and password.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
@@ -220,7 +220,7 @@ export default function Settings() {
                                         name="password"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Nuova Password (opzionale)</FormLabel>
+                                                <FormLabel>New Password (optional)</FormLabel>
                                                 <FormControl>
                                                     <Input type="password" {...field} />
                                                 </FormControl>
@@ -234,7 +234,7 @@ export default function Settings() {
                                         name="confirmPassword"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Conferma Password</FormLabel>
+                                                <FormLabel>Confirm Password</FormLabel>
                                                 <FormControl>
                                                     <Input type="password" {...field} />
                                                 </FormControl>
@@ -251,7 +251,7 @@ export default function Settings() {
                                 <CardHeader>
                                     <CardTitle>Single Sign-On (SSO)</CardTitle>
                                     <CardDescription>
-                                        Gestisci l'accesso tramite provider esterno (es. Replit).
+                                        Manage access via external provider (e.g. Replit).
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
@@ -259,9 +259,9 @@ export default function Settings() {
                                         <div className="flex items-center gap-2 p-4 bg-muted/50 rounded-lg border">
                                             <CheckCircle2 className="h-5 w-5 text-green-500" />
                                             <div className="flex-1">
-                                                <p className="font-medium">Account Collegato</p>
+                                                <p className="font-medium">Account Linked</p>
                                                 <p className="text-sm text-muted-foreground">
-                                                    Il tuo account è collegato correttamente al provider SSO.
+                                                    Your account is successfully linked to the SSO provider.
                                                 </p>
                                             </div>
                                         </div>
@@ -270,9 +270,9 @@ export default function Settings() {
                                             <div className="flex items-center gap-2 p-4 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
                                                 <AlertCircle className="h-5 w-5 text-yellow-600" />
                                                 <div className="flex-1">
-                                                    <p className="font-medium text-yellow-700">Nessun account collegato</p>
+                                                    <p className="font-medium text-yellow-700">No account linked</p>
                                                     <p className="text-sm text-yellow-600/80">
-                                                        Collega il tuo account per accedere senza password.
+                                                        Link your account to log in without a password.
                                                     </p>
                                                 </div>
                                             </div>
@@ -281,7 +281,7 @@ export default function Settings() {
                                                 variant="outline"
                                                 onClick={() => window.location.href = "/api/auth/oidc"}
                                             >
-                                                Collega Account SSO
+                                                Link SSO Account
                                             </Button>
                                         </div>
                                     )}
@@ -291,17 +291,17 @@ export default function Settings() {
 
                         <Card>
                             <CardHeader>
-                                <CardTitle>Gestione Dati</CardTitle>
+                                <CardTitle>Data Management</CardTitle>
                                 <CardDescription>
-                                    Esporta i tuoi dati o cancella definitivamente il tuo account.
+                                    Export your data or permanently delete your account.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg bg-background">
                                     <div>
-                                        <h4 className="font-medium">Esporta Dati</h4>
+                                        <h4 className="font-medium">Export Data</h4>
                                         <p className="text-sm text-muted-foreground">
-                                            Scarica un file Excel con tutti i tuoi dati personali.
+                                            Download an Excel file with all your personal data.
                                         </p>
                                     </div>
                                     <Button
@@ -310,34 +310,34 @@ export default function Settings() {
                                         onClick={() => window.open("/api/export-data", "_blank")}
                                     >
                                         <Download className="mr-2 h-4 w-4" />
-                                        Esporta Excel
+                                        Export Excel
                                     </Button>
                                 </div>
 
                                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg bg-destructive/5 border-destructive/20">
                                     <div>
-                                        <h4 className="font-medium text-destructive">Cancella Account</h4>
+                                        <h4 className="font-medium text-destructive">Delete Account</h4>
                                         <p className="text-sm text-destructive/80">
-                                            Questa azione è irreversibile. Tutti i tuoi dati verranno persi.
+                                            This action is irreversible. All your data will be lost.
                                         </p>
                                     </div>
                                     <AlertDialog>
                                         <AlertDialogTrigger asChild>
                                             <Button type="button" variant="destructive">
                                                 <Trash2 className="mr-2 h-4 w-4" />
-                                                Cancella Account
+                                                Delete Account
                                             </Button>
                                         </AlertDialogTrigger>
                                         <AlertDialogContent>
                                             <AlertDialogHeader>
-                                                <AlertDialogTitle>Sei assolutamente sicuro?</AlertDialogTitle>
+                                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                                                 <AlertDialogDescription>
-                                                    Questa azione non può essere annullata. Cancellerà permanentemente il tuo
-                                                    account e rimuoverà tutti i tuoi dati dai nostri server.
+                                                    This action cannot be undone. It will permanently delete your
+                                                    account and remove all your data from our servers.
                                                 </AlertDialogDescription>
                                             </AlertDialogHeader>
                                             <AlertDialogFooter>
-                                                <AlertDialogCancel>Annulla</AlertDialogCancel>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
                                                 <AlertDialogAction
                                                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                                     onClick={async () => {
@@ -347,13 +347,13 @@ export default function Settings() {
                                                         } catch (error) {
                                                             toast({
                                                                 variant: "destructive",
-                                                                title: "Errore",
-                                                                description: "Si è verificato un errore durante la cancellazione dell'account.",
+                                                                title: "Error",
+                                                                description: "An error occurred while deleting the account.",
                                                             });
                                                         }
                                                     }}
                                                 >
-                                                    Cancella Definitivamente
+                                                    Delete Permanently
                                                 </AlertDialogAction>
                                             </AlertDialogFooter>
                                         </AlertDialogContent>
@@ -364,7 +364,7 @@ export default function Settings() {
 
                         <div className="flex justify-end">
                             <Button type="submit" disabled={isLoading} size="lg">
-                                {isLoading ? "Salvataggio..." : "Salva Tutte le Modifiche"}
+                                {isLoading ? "Saving..." : "Save All Changes"}
                             </Button>
                         </div>
                     </form>

@@ -684,9 +684,9 @@ export default function ImportTransactions() {
           setReferenceCsvData(null);
         }} className="w-full">
           <TabsList className="w-max">
-            <TabsTrigger value="transactions" className="gap-2"><CreditCard className="h-4 w-4" /> Transazioni</TabsTrigger>
-            <TabsTrigger value="accounts" className="gap-2"><Wallet className="h-4 w-4" /> Conti</TabsTrigger>
-            <TabsTrigger value="categories" className="gap-2"><Tag className="h-4 w-4" /> Categorie</TabsTrigger>
+            <TabsTrigger value="transactions" className="gap-2"><CreditCard className="h-4 w-4" /> Transactions</TabsTrigger>
+            <TabsTrigger value="accounts" className="gap-2"><Wallet className="h-4 w-4" /> Accounts</TabsTrigger>
+            <TabsTrigger value="categories" className="gap-2"><Tag className="h-4 w-4" /> Categories</TabsTrigger>
             <TabsTrigger value="trades" className="gap-2"><TrendingUp className="h-4 w-4" /> Portfolio: Trades</TabsTrigger>
 
           </TabsList>

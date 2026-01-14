@@ -76,7 +76,7 @@ export function DashboardHeader({
                     size="icon"
                     onClick={() => setPrivacyMode(!privacyMode)}
                     data-testid="button-privacy-toggle"
-                    title={privacyMode ? "Mostra importi" : "Nascondi importi"}
+                    title={privacyMode ? "Show amounts" : "Hide amounts"}
                 >
                     {privacyMode ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>

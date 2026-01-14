@@ -105,8 +105,8 @@ export default function ManageCategories() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-heading font-bold text-foreground">Gestione Categorie</h1>
-            <p className="text-muted-foreground">Aggiungi, modifica o elimina le categorie</p>
+            <h1 className="text-3xl font-heading font-bold text-foreground">Category Management</h1>
+            <p className="text-muted-foreground">Add, edit or delete categories</p>
           </div>
 
           <Dialog open={isDialogOpen} onOpenChange={(open) => {
@@ -117,12 +117,12 @@ export default function ManageCategories() {
           }}>
             <DialogTrigger asChild>
               <Button className="gap-2" data-testid="button-add-category">
-                <Plus size={16} /> Aggiungi Categoria
+                <Plus size={16} /> Add Category
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Nuova Categoria</DialogTitle>
+                <DialogTitle>New Category</DialogTitle>
               </DialogHeader>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -131,9 +131,9 @@ export default function ManageCategories() {
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Nome</FormLabel>
+                        <FormLabel>Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="es. Alimentari" {...field} data-testid="input-name" />
+                          <Input placeholder="e.g. Groceries" {...field} data-testid="input-name" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -145,7 +145,7 @@ export default function ManageCategories() {
                       name="type"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Tipo</FormLabel>
+                          <FormLabel>Type</FormLabel>
                           <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger data-testid="select-type">
@@ -153,8 +153,8 @@ export default function ManageCategories() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="income">Entrata</SelectItem>
-                              <SelectItem value="expense">Uscita</SelectItem>
+                              <SelectItem value="income">Income</SelectItem>
+                              <SelectItem value="expense">Expense</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -166,7 +166,7 @@ export default function ManageCategories() {
                       name="color"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Colore</FormLabel>
+                          <FormLabel>Color</FormLabel>
                           <div className="flex items-center gap-2">
                             <FormControl>
                               <Input type="color" className="w-12 h-9 p-1" {...field} data-testid="input-color" />
@@ -180,7 +180,7 @@ export default function ManageCategories() {
                   </div>
 
                   <DialogFooter>
-                    <Button type="submit" data-testid="button-submit-category">Crea Categoria</Button>
+                    <Button type="submit" data-testid="button-submit-category">Create Category</Button>
                   </DialogFooter>
                 </form>
               </Form>
@@ -190,17 +190,17 @@ export default function ManageCategories() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Le Tue Categorie</CardTitle>
-            <CardDescription>Gestisci le tue categorie di spesa e entrata.</CardDescription>
+            <CardTitle>Your Categories</CardTitle>
+            <CardDescription>Manage your expense and income categories.</CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Colore</TableHead>
-                  <TableHead className="w-[100px] text-right">Azioni</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Color</TableHead>
+                  <TableHead className="w-[100px] text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -239,13 +239,13 @@ export default function ManageCategories() {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="income">Entrata</SelectItem>
-                              <SelectItem value="expense">Uscita</SelectItem>
+                              <SelectItem value="income">Income</SelectItem>
+                              <SelectItem value="expense">Expense</SelectItem>
                             </SelectContent>
                           </Select>
                         ) : (
                           <Badge variant={category.type === 'income' ? 'default' : 'secondary'} className={category.type === 'income' ? 'bg-emerald-500 hover:bg-emerald-600' : ''}>
-                            {category.type === 'income' ? 'Entrata' : 'Uscita'}
+                            {category.type === 'income' ? 'Income' : 'Expense'}
                           </Badge>
                         )}
                       </TableCell>

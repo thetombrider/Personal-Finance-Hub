@@ -87,12 +87,12 @@ export default function Portfolio() {
     mutationFn: api.createTrade,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["trades"] });
-      toast({ title: "Acquisto registrato", description: "L'operazione è stata salvata con successo." });
+      toast({ title: "Purchase registered", description: "The transaction was saved successfully." });
       resetTradeForm();
       setIsAddTradeOpen(false);
     },
     onError: () => {
-      toast({ title: "Errore", description: "Impossibile salvare l'operazione.", variant: "destructive" });
+      toast({ title: "Error", description: "Could not save transaction.", variant: "destructive" });
     },
   });
 
@@ -100,7 +100,7 @@ export default function Portfolio() {
     mutationFn: api.deleteTrade,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["trades"] });
-      toast({ title: "Operazione eliminata" });
+      toast({ title: "Transaction deleted" });
       setTradeToDelete(null);
     },
   });
@@ -109,7 +109,7 @@ export default function Portfolio() {
     mutationFn: api.deleteTradesBulk,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["trades"] });
-      toast({ title: "Operazioni eliminate" });
+      toast({ title: "Transactions deleted" });
       setSelectedTradeIds(new Set());
     },
   });
@@ -119,11 +119,11 @@ export default function Portfolio() {
       api.updateTrade(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["trades"] });
-      toast({ title: "Operazione modificata", description: "Le modifiche sono state salvate." });
+      toast({ title: "Transaction updated", description: "Changes saved." });
       setEditingTrade(null);
     },
     onError: () => {
-      toast({ title: "Errore", description: "Impossibile modificare l'operazione.", variant: "destructive" });
+      toast({ title: "Error", description: "Could not update transaction.", variant: "destructive" });
     },
   });
 
@@ -132,7 +132,7 @@ export default function Portfolio() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["holdings"] });
       queryClient.invalidateQueries({ queryKey: ["trades"] });
-      toast({ title: "Titolo eliminato" });
+      toast({ title: "Holding deleted" });
     },
   });
 
@@ -195,15 +195,15 @@ export default function Portfolio() {
     const fees = parseFloat(editForm.fees) || 0;
 
     if (isNaN(quantity) || quantity <= 0) {
-      toast({ title: "Errore", description: "Inserisci una quantità valida.", variant: "destructive" });
+      toast({ title: "Error", description: "Please enter a valid quantity.", variant: "destructive" });
       return;
     }
     if (isNaN(pricePerUnit) || pricePerUnit <= 0) {
-      toast({ title: "Errore", description: "Inserisci un prezzo valido.", variant: "destructive" });
+      toast({ title: "Error", description: "Please enter a valid price.", variant: "destructive" });
       return;
     }
     if (isNaN(fees) || fees < 0) {
-      toast({ title: "Errore", description: "Inserisci commissioni valide.", variant: "destructive" });
+      toast({ title: "Error", description: "Please enter valid fees.", variant: "destructive" });
       return;
     }
 
@@ -234,7 +234,7 @@ export default function Portfolio() {
       const results = await api.searchStocks(searchQuery);
       setSearchResults(results);
     } catch (error: any) {
-      toast({ title: "Errore ricerca", description: error.message, variant: "destructive" });
+      toast({ title: "Search Error", description: error.message, variant: "destructive" });
     } finally {
       setIsSearching(false);
     }
@@ -250,7 +250,7 @@ export default function Portfolio() {
       setCurrentQuote(quote);
       setTradeForm(prev => ({ ...prev, pricePerUnit: quote.price.toFixed(4) }));
     } catch (error: any) {
-      toast({ title: "Errore", description: error.message, variant: "destructive" });
+      toast({ title: "Error", description: error.message, variant: "destructive" });
     } finally {
       setIsLoadingQuote(false);
     }
@@ -262,7 +262,7 @@ export default function Portfolio() {
     const name = isManual ? (manualName.trim() || manualTicker.trim().toUpperCase()) : selectedStock?.name;
 
     if (!ticker || !tradeForm.quantity || !tradeForm.pricePerUnit || !tradeForm.accountId) {
-      toast({ title: "Dati mancanti", description: "Compila tutti i campi obbligatori.", variant: "destructive" });
+      toast({ title: "Missing Data", description: "Please fill in all required fields.", variant: "destructive" });
       return;
     }
 
@@ -300,15 +300,15 @@ export default function Portfolio() {
 
   const exportTradesToCSV = () => {
     if (trades.length === 0) {
-      toast({ title: "Nessun trade da esportare", variant: "destructive" });
+      toast({ title: "No trades to export", variant: "destructive" });
       return;
     }
 
-    const csvHeader = "Data,Tipo,Ticker,Nome,Quantità,Prezzo Unitario,Commissioni,Totale,Conto\n";
+    const csvHeader = "Date,Type,Ticker,Name,Quantity,Unit Price,Fees,Total,Account\n";
     const csvRows = trades.map(trade => {
       const holding = holdings.find(h => h.id === trade.holdingId);
       const date = format(parseISO(trade.date), "yyyy-MM-dd");
-      const type = trade.type === "buy" ? "Acquisto" : "Vendita";
+      const type = trade.type === "buy" ? "Buy" : "Sell";
       const ticker = holding?.ticker || "";
       const name = (holding?.name || "").replace(/,/g, " ");
       const quantity = parseFloat(trade.quantity).toFixed(4);
@@ -332,7 +332,7 @@ export default function Portfolio() {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    toast({ title: "Export completato", description: `${trades.length} operazioni esportate` });
+    toast({ title: "Export completed", description: `${trades.length} transactions exported` });
   };
 
 
@@ -382,7 +382,7 @@ export default function Portfolio() {
   };
 
   const handleBulkDeleteTrades = async () => {
-    if (confirm(`Sei sicuro di voler eliminare ${selectedTradeIds.size} operazioni?`)) {
+    if (confirm(`Are you sure you want to delete ${selectedTradeIds.size} transactions?`)) {
       await deleteTradesBulkMutation.mutateAsync(Array.from(selectedTradeIds));
     }
   };
@@ -407,8 +407,8 @@ export default function Portfolio() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight" data-testid="text-page-title">Portfolio Investimenti</h1>
-            <p className="text-muted-foreground">Monitora i tuoi investimenti</p>
+            <h1 className="text-3xl font-bold tracking-tight" data-testid="text-page-title">Investment Portfolio</h1>
+            <p className="text-muted-foreground">Track your investments</p>
           </div>
           <div className="flex gap-2">
             <Button
@@ -424,24 +424,24 @@ export default function Portfolio() {
               <DialogTrigger asChild>
                 <Button data-testid="button-add-trade">
                   <Plus className="mr-2 h-4 w-4" />
-                  Nuovo Acquisto
+                  New Buy
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
-                  <DialogTitle>Registra Operazione</DialogTitle>
+                  <DialogTitle>Register Transaction</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                   <Tabs value={entryMode} onValueChange={(v) => setEntryMode(v as "search" | "manual")}>
                     <TabsList className="grid w-full grid-cols-2">
-                      <TabsTrigger value="manual" data-testid="tab-manual-entry">Inserimento Manuale</TabsTrigger>
-                      <TabsTrigger value="search" data-testid="tab-search-entry">Cerca Online</TabsTrigger>
+                      <TabsTrigger value="manual" data-testid="tab-manual-entry">Manual Entry</TabsTrigger>
+                      <TabsTrigger value="search" data-testid="tab-search-entry">Search Online</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="manual" className="space-y-4 mt-4">
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2 relative">
-                          <Label>Ticker / Simbolo *</Label>
+                          <Label>Ticker / Symbol *</Label>
                           <Input
                             placeholder="Es. SWDA.LON, VWCE.DEX"
                             value={manualTicker}
@@ -452,7 +452,7 @@ export default function Portfolio() {
                           />
                           {showHoldingsDropdown && holdings.length > 0 && (
                             <div className="absolute z-50 top-full left-0 right-0 mt-1 border rounded-md bg-popover shadow-md max-h-40 overflow-y-auto">
-                              <div className="p-2 text-xs text-muted-foreground border-b">Titoli in portafoglio:</div>
+                              <div className="p-2 text-xs text-muted-foreground border-b">Holdings in portfolio:</div>
                               {holdings.map((h) => (
                                 <button
                                   key={h.id}
@@ -471,7 +471,7 @@ export default function Portfolio() {
                           )}
                         </div>
                         <div className="space-y-2">
-                          <Label>Nome (opzionale)</Label>
+                          <Label>Name (optional)</Label>
                           <Input
                             placeholder="Es. iShares MSCI World"
                             value={manualName}
@@ -485,7 +485,7 @@ export default function Portfolio() {
 
                     <TabsContent value="search" className="space-y-4 mt-4">
                       <div className="space-y-2 relative">
-                        <Label>Cerca Titolo</Label>
+                        <Label>Search Holding</Label>
                         <div className="flex gap-2">
                           <Input
                             placeholder="Es. VWCE, IWDA, AAPL..."
@@ -502,7 +502,7 @@ export default function Portfolio() {
                         </div>
                         {showHoldingsDropdown && holdings.length > 0 && !selectedStock && searchResults.length === 0 && (
                           <div className="absolute z-50 top-full left-0 right-0 mt-1 border rounded-md bg-popover shadow-md max-h-40 overflow-y-auto">
-                            <div className="p-2 text-xs text-muted-foreground border-b">Titoli in portafoglio:</div>
+                            <div className="p-2 text-xs text-muted-foreground border-b">Holdings in portfolio:</div>
                             {holdings.map((h) => (
                               <button
                                 key={h.id}
@@ -567,13 +567,13 @@ export default function Portfolio() {
                   {(entryMode === "manual" || selectedStock) && (
                     <>
                       <div className="space-y-2">
-                        <Label>Conto di Investimento</Label>
+                        <Label>Investment Account</Label>
                         <Select
                           value={tradeForm.accountId}
                           onValueChange={(v) => setTradeForm(prev => ({ ...prev, accountId: v }))}
                         >
                           <SelectTrigger data-testid="select-trade-account">
-                            <SelectValue placeholder="Seleziona conto..." />
+                            <SelectValue placeholder="Select account..." />
                           </SelectTrigger>
                           <SelectContent>
                             {investmentAccounts.map((account: Account) => (
@@ -586,19 +586,19 @@ export default function Portfolio() {
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label>Tipo Operazione</Label>
+                          <Label>Transaction Type</Label>
                           <Select value={tradeForm.type} onValueChange={(v: "buy" | "sell") => setTradeForm(prev => ({ ...prev, type: v }))}>
                             <SelectTrigger data-testid="select-trade-type">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="buy">Acquisto</SelectItem>
-                              <SelectItem value="sell">Vendita</SelectItem>
+                              <SelectItem value="buy">Buy</SelectItem>
+                              <SelectItem value="sell">Sell</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
                         <div className="space-y-2">
-                          <Label>Data</Label>
+                          <Label>Date</Label>
                           <Input
                             type="date"
                             value={tradeForm.date}
@@ -610,7 +610,7 @@ export default function Portfolio() {
 
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label>Quantità</Label>
+                          <Label>Quantity</Label>
                           <Input
                             type="number"
                             step="0.00000001"
@@ -621,7 +621,7 @@ export default function Portfolio() {
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label>Prezzo per Unità (EUR)</Label>
+                          <Label>Price per Unit (EUR)</Label>
                           <Input
                             type="number"
                             step="0.0001"
@@ -634,7 +634,7 @@ export default function Portfolio() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label>Commissioni</Label>
+                        <Label>Fees</Label>
                         <Input
                           type="number"
                           step="0.01"
@@ -647,7 +647,7 @@ export default function Portfolio() {
                       {tradeForm.quantity && tradeForm.pricePerUnit && (
                         <div className="p-3 bg-muted rounded-lg">
                           <div className="flex justify-between">
-                            <span>Totale Operazione:</span>
+                            <span>Transaction Total:</span>
                             <span className="font-bold">
                               {formatCurrency(
                                 tradeForm.type === "buy"
@@ -663,7 +663,7 @@ export default function Portfolio() {
                 </div>
                 <DialogFooter>
                   <DialogClose asChild>
-                    <Button variant="outline">Annulla</Button>
+                    <Button variant="outline">Cancel</Button>
                   </DialogClose>
                   <Button
                     onClick={handleSubmitTrade}
@@ -676,7 +676,7 @@ export default function Portfolio() {
                     }
                     data-testid="button-submit-trade"
                   >
-                    {createTradeMutation.isPending ? "Salvataggio..." : "Salva Operazione"}
+                    {createTradeMutation.isPending ? "Saving..." : "Save Transaction"}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -687,7 +687,7 @@ export default function Portfolio() {
         <div className="grid gap-4 md:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Totale Investito</CardTitle>
+              <CardTitle className="text-sm font-medium">Total Invested</CardTitle>
               <PiggyBank className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -695,14 +695,14 @@ export default function Portfolio() {
                 {formatCurrency(portfolioSummary.totalInvested)}
               </div>
               <p className="text-xs text-muted-foreground">
-                {portfolioSummary.holdingsCount} titoli in portafoglio
+                {portfolioSummary.holdingsCount} holdings in portfolio
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Valore Attuale</CardTitle>
+              <CardTitle className="text-sm font-medium">Current Value</CardTitle>
               <Wallet className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -713,7 +713,7 @@ export default function Portfolio() {
                 }
               </div>
               <p className="text-xs text-muted-foreground">
-                {portfolioSummary.holdingsWithValue}/{portfolioSummary.holdingsCount} con prezzo aggiornato
+                {portfolioSummary.holdingsWithValue}/{portfolioSummary.holdingsCount} with updated price
               </p>
             </CardContent>
           </Card>
@@ -740,7 +740,7 @@ export default function Portfolio() {
               <p className={`text-xs ${portfolioSummary.totalGainLoss >= 0 ? "text-green-600" : "text-red-600"}`}>
                 {portfolioSummary.holdingsWithValue > 0
                   ? `${portfolioSummary.totalGainLossPercent >= 0 ? "+" : ""}${portfolioSummary.totalGainLossPercent.toFixed(2)}%`
-                  : "Aggiorna i prezzi"
+                  : "Refresh prices"
                 }
               </p>
             </CardContent>
@@ -766,7 +766,7 @@ export default function Portfolio() {
                 }
               </div>
               <p className="text-xs text-muted-foreground">
-                Rendimento totale
+                Total return
               </p>
             </CardContent>
           </Card>
@@ -774,33 +774,33 @@ export default function Portfolio() {
 
         <Tabs defaultValue="holdings" className="space-y-4">
           <TabsList>
-            <TabsTrigger value="holdings" data-testid="tab-holdings">Titoli</TabsTrigger>
-            <TabsTrigger value="trades" data-testid="tab-trades">Storico Operazioni</TabsTrigger>
+            <TabsTrigger value="holdings" data-testid="tab-holdings">Holdings</TabsTrigger>
+            <TabsTrigger value="trades" data-testid="tab-trades">Transaction History</TabsTrigger>
           </TabsList>
 
           <TabsContent value="holdings">
             <Card>
               <CardHeader>
-                <CardTitle>I tuoi Titoli</CardTitle>
-                <CardDescription>Panoramica dei titoli in portafoglio con prezzo medio di carico e valore attuale</CardDescription>
+                <CardTitle>Your Holdings</CardTitle>
+                <CardDescription>Overview of portfolio holdings with average purchase price and current value</CardDescription>
               </CardHeader>
               <CardContent>
                 {holdingsWithStats.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <PiggyBank className="mx-auto h-12 w-12 mb-4 opacity-50" />
-                    <p>Nessun titolo in portafoglio</p>
-                    <p className="text-sm">Inizia aggiungendo il tuo primo acquisto</p>
+                    <p>No holdings in portfolio</p>
+                    <p className="text-sm">Start by adding your first purchase</p>
                   </div>
                 ) : (
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Titolo</TableHead>
-                        <TableHead className="text-right">Quantità</TableHead>
-                        <TableHead className="text-right">PMC</TableHead>
-                        <TableHead className="text-right">Prezzo Attuale</TableHead>
-                        <TableHead className="text-right">Investito</TableHead>
-                        <TableHead className="text-right">Valore Attuale</TableHead>
+                        <TableHead>Holding</TableHead>
+                        <TableHead className="text-right">Quantity</TableHead>
+                        <TableHead className="text-right">Avg Price</TableHead>
+                        <TableHead className="text-right">Current Price</TableHead>
+                        <TableHead className="text-right">Invested</TableHead>
+                        <TableHead className="text-right">Current Value</TableHead>
                         <TableHead className="text-right">Gain/Loss</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -871,21 +871,21 @@ export default function Portfolio() {
               <CardHeader>
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
-                    <CardTitle>Storico Operazioni</CardTitle>
-                    <CardDescription>Tutte le operazioni di acquisto e vendita registrate</CardDescription>
+                    <CardTitle>Transaction History</CardTitle>
+                    <CardDescription>All registered buy and sell transactions</CardDescription>
                   </div>
                   <div className="flex items-center gap-2">
                     {selectedTradeIds.size > 0 && (
                       <Button variant="destructive" size="sm" onClick={handleBulkDeleteTrades}>
-                        <Trash2 className="h-4 w-4 mr-2" /> Elimina ({selectedTradeIds.size})
+                        <Trash2 className="h-4 w-4 mr-2" /> Delete ({selectedTradeIds.size})
                       </Button>
                     )}
                     <Select value={tradesHoldingFilter} onValueChange={setTradesHoldingFilter}>
                       <SelectTrigger className="w-[200px]" data-testid="select-trades-holding-filter">
-                        <SelectValue placeholder="Tutti i titoli" />
+                        <SelectValue placeholder="All Holdings" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">Tutti i titoli</SelectItem>
+                        <SelectItem value="all">All Holdings</SelectItem>
                         {holdings.map(h => (
                           <SelectItem key={h.id} value={h.id.toString()}>{h.ticker} - {h.name}</SelectItem>
                         ))}
@@ -899,7 +899,7 @@ export default function Portfolio() {
                       data-testid="button-export-trades"
                     >
                       <Download className="h-4 w-4 mr-2" />
-                      Esporta CSV
+                      Export CSV
                     </Button>
                   </div>
                 </div>
@@ -907,7 +907,7 @@ export default function Portfolio() {
               <CardContent>
                 {filteredTrades.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
-                    <p>Nessuna operazione registrata</p>
+                    <p>No transactions registered</p>
                   </div>
                 ) : (
                   <Table>
@@ -920,13 +920,13 @@ export default function Portfolio() {
                             aria-label="Select all"
                           />
                         </TableHead>
-                        <TableHead>Data</TableHead>
-                        <TableHead>Tipo</TableHead>
-                        <TableHead>Titolo</TableHead>
-                        <TableHead className="text-right">Quantità</TableHead>
-                        <TableHead className="text-right">Prezzo</TableHead>
-                        <TableHead className="text-right">Commissioni</TableHead>
-                        <TableHead className="text-right">Totale</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Holding</TableHead>
+                        <TableHead className="text-right">Quantity</TableHead>
+                        <TableHead className="text-right">Price</TableHead>
+                        <TableHead className="text-right">Fees</TableHead>
+                        <TableHead className="text-right">Total</TableHead>
                         <TableHead></TableHead>
                       </TableRow>
                     </TableHeader>
@@ -946,7 +946,7 @@ export default function Portfolio() {
                           </TableCell>
                           <TableCell>
                             <Badge variant={trade.type === "buy" ? "default" : "secondary"}>
-                              {trade.type === "buy" ? "Acquisto" : "Vendita"}
+                              {trade.type === "buy" ? "Buy" : "Sell"}
                             </Badge>
                           </TableCell>
                           <TableCell>
@@ -1003,7 +1003,7 @@ export default function Portfolio() {
       <Dialog open={!!editingTrade} onOpenChange={(open) => !open && setEditingTrade(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Modifica Operazione</DialogTitle>
+            <DialogTitle>Edit Transaction</DialogTitle>
           </DialogHeader>
           {editingTrade && (
             <div className="space-y-4">
@@ -1013,13 +1013,13 @@ export default function Portfolio() {
               </div>
 
               <div className="space-y-2">
-                <Label>Conto di Investimento</Label>
+                <Label>Investment Account</Label>
                 <Select
                   value={editForm.accountId}
                   onValueChange={(v) => setEditForm(prev => ({ ...prev, accountId: v }))}
                 >
                   <SelectTrigger data-testid="select-edit-trade-account">
-                    <SelectValue placeholder="Seleziona conto..." />
+                    <SelectValue placeholder="Select account..." />
                   </SelectTrigger>
                   <SelectContent>
                     {investmentAccounts.map((account: Account) => (
@@ -1033,7 +1033,7 @@ export default function Portfolio() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Tipo Operazione</Label>
+                  <Label>Transaction Type</Label>
                   <Select
                     value={editForm.type}
                     onValueChange={(value: "buy" | "sell") => setEditForm(prev => ({ ...prev, type: value }))}
@@ -1042,14 +1042,14 @@ export default function Portfolio() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="buy">Acquisto</SelectItem>
-                      <SelectItem value="sell">Vendita</SelectItem>
+                      <SelectItem value="buy">Buy</SelectItem>
+                      <SelectItem value="sell">Sell</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Data</Label>
+                  <Label>Date</Label>
                   <Input
                     type="date"
                     value={editForm.date}
@@ -1061,7 +1061,7 @@ export default function Portfolio() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Quantità</Label>
+                  <Label>Quantity</Label>
                   <Input
                     type="number"
                     step="0.00000001"
@@ -1072,7 +1072,7 @@ export default function Portfolio() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Prezzo per Unità (EUR)</Label>
+                  <Label>Price per Unit (EUR)</Label>
                   <Input
                     type="number"
                     step="0.0001"
@@ -1084,7 +1084,7 @@ export default function Portfolio() {
               </div>
 
               <div className="space-y-2">
-                <Label>Commissioni (EUR)</Label>
+                <Label>Fees</Label>
                 <Input
                   type="number"
                   step="0.01"
@@ -1097,7 +1097,7 @@ export default function Portfolio() {
               {editForm.quantity && editForm.pricePerUnit && (
                 <div className="p-3 bg-muted rounded-lg">
                   <div className="flex justify-between">
-                    <span>Totale Operazione:</span>
+                    <span>Transaction Total:</span>
                     <span className="font-bold">
                       {formatCurrency(
                         editForm.type === "buy"
@@ -1112,14 +1112,14 @@ export default function Portfolio() {
           )}
           <DialogFooter>
             <DialogClose asChild>
-              <Button variant="outline">Annulla</Button>
+              <Button variant="outline">Cancel</Button>
             </DialogClose>
             <Button
               onClick={handleUpdateTrade}
               disabled={!editForm.quantity || !editForm.pricePerUnit || updateTradeMutation.isPending}
               data-testid="button-save-edit"
             >
-              {updateTradeMutation.isPending ? "Salvataggio..." : "Salva Modifiche"}
+              {updateTradeMutation.isPending ? "Saving..." : "Save Changes"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1128,31 +1128,31 @@ export default function Portfolio() {
       <AlertDialog open={!!tradeToDelete} onOpenChange={(open) => !open && setTradeToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Conferma Eliminazione</AlertDialogTitle>
+            <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
             <AlertDialogDescription>
-              Sei sicuro di voler eliminare questa operazione?
+              Are you sure you want to delete this transaction?
               {tradeToDelete && (
                 <div className="mt-3 p-3 bg-muted rounded-lg text-foreground">
                   <p className="font-medium">{tradeToDelete.holding?.ticker}</p>
                   <p className="text-sm">
-                    {tradeToDelete.type === "buy" ? "Acquisto" : "Vendita"} di {parseFloat(tradeToDelete.quantity).toFixed(4)} unità
-                    a {new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(parseFloat(tradeToDelete.pricePerUnit))}
+                    {tradeToDelete.type === "buy" ? "Buy" : "Sell"} of {parseFloat(tradeToDelete.quantity).toFixed(4)} units
+                    at {new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(parseFloat(tradeToDelete.pricePerUnit))}
                   </p>
                   <p className="text-sm font-medium mt-1">
-                    Totale: {new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(parseFloat(tradeToDelete.totalAmount))}
+                    Total: {new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(parseFloat(tradeToDelete.totalAmount))}
                   </p>
                 </div>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annulla</AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => tradeToDelete && deleteTradeMutation.mutate(tradeToDelete.id)}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               data-testid="button-confirm-delete"
             >
-              Elimina
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

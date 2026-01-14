@@ -43,7 +43,7 @@ type WebhookLog = {
 };
 
 const webhookSchema = z.object({
-    name: z.string().min(2, "Il nome è obbligatorio"),
+    name: z.string().min(2, "Name is required"),
     type: z.enum(["tally", "generic"]),
     active: z.boolean().default(true),
 });
@@ -57,29 +57,29 @@ function LogDetailsDialog({ log, open, onOpenChange }: { log: WebhookLog | null,
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Dettagli Log #{log.id}</DialogTitle>
+                    <DialogTitle>Log Details #{log.id}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <h4 className="font-semibold mb-1">Data</h4>
+                            <h4 className="font-semibold mb-1">Date</h4>
                             <p className="text-sm">{format(new Date(log.createdAt), "dd/MM/yyyy HH:mm:ss")}</p>
                         </div>
                         <div>
-                            <h4 className="font-semibold mb-1">Stato</h4>
+                            <h4 className="font-semibold mb-1">Status</h4>
                             <Badge variant={log.status === "success" ? "secondary" : "destructive"} className={log.status === "success" ? "bg-green-100 text-green-800" : ""}>
                                 {log.status}
                             </Badge>
                         </div>
                         <div>
-                            <h4 className="font-semibold mb-1">Durata</h4>
+                            <h4 className="font-semibold mb-1">Duration</h4>
                             <p className="text-sm">{log.processingTimeMs}ms</p>
                         </div>
                     </div>
 
                     {log.errorMessage && (
                         <div>
-                            <h4 className="font-semibold mb-1">Errore</h4>
+                            <h4 className="font-semibold mb-1">Error</h4>
                             <pre className="bg-destructive/10 text-destructive p-3 rounded-md text-xs overflow-x-auto whitespace-pre-wrap">
                                 {log.errorMessage}
                             </pre>
@@ -89,7 +89,7 @@ function LogDetailsDialog({ log, open, onOpenChange }: { log: WebhookLog | null,
                     <div>
                         <h4 className="font-semibold mb-1">Request Body</h4>
                         <pre className="bg-muted p-3 rounded-md text-xs overflow-x-auto font-mono">
-                            {log.requestBody ? JSON.stringify(log.requestBody, null, 2) : "Nessun dato"}
+                            {log.requestBody ? JSON.stringify(log.requestBody, null, 2) : "No data"}
                         </pre>
                     </div>
 
@@ -139,16 +139,16 @@ function WebhookLogsDialog({ webhookId, webhookName, open, onOpenChange }: { web
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Data</TableHead>
-                                    <TableHead>Stato</TableHead>
-                                    <TableHead>Durata</TableHead>
-                                    <TableHead>Dettagli</TableHead>
+                                    <TableHead>Date</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead>Duration</TableHead>
+                                    <TableHead>Details</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {logs.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={4} className="text-center text-muted-foreground">Nessun log trovato</TableCell>
+                                        <TableCell colSpan={4} className="text-center text-muted-foreground">No logs found</TableCell>
                                     </TableRow>
                                 ) : (
                                     logs.map((log) => (
@@ -163,7 +163,7 @@ function WebhookLogsDialog({ webhookId, webhookName, open, onOpenChange }: { web
                                             <TableCell
                                                 className="max-w-[300px] truncate text-xs font-mono cursor-pointer hover:bg-muted/50 transition-colors"
                                                 onClick={() => setSelectedLog(log)}
-                                                title="Clicca per vedere i dettagli"
+                                                title="Click to see details"
                                             >
                                                 {log.errorMessage || JSON.stringify(log.requestBody)?.substring(0, 50) + "..."}
                                             </TableCell>
@@ -216,10 +216,10 @@ export default function ManageWebhooks() {
             queryClient.invalidateQueries({ queryKey: ["/api/webhooks"] });
             setIsDialogOpen(false);
             form.reset();
-            toast({ title: "Webhook creato", description: "Il webhook è stato creato con successo." });
+            toast({ title: "Webhook created", description: "Webhook created successfully." });
         },
         onError: (error: any) => {
-            toast({ variant: "destructive", title: "Errore", description: error.message });
+            toast({ variant: "destructive", title: "Error", description: error.message });
         }
     });
 
@@ -231,10 +231,10 @@ export default function ManageWebhooks() {
             setIsDialogOpen(false);
             setEditingWebhook(null);
             form.reset();
-            toast({ title: "Webhook aggiornato" });
+            toast({ title: "Webhook updated" });
         },
         onError: (error: any) => {
-            toast({ variant: "destructive", title: "Errore", description: error.message });
+            toast({ variant: "destructive", title: "Error", description: error.message });
         }
     });
 
@@ -242,10 +242,10 @@ export default function ManageWebhooks() {
         mutationFn: (id: string) => apiRequest("DELETE", `/api/webhooks/${id}`),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["/api/webhooks"] });
-            toast({ title: "Webhook eliminato" });
+            toast({ title: "Webhook deleted" });
         },
         onError: (error: any) => {
-            toast({ variant: "destructive", title: "Errore", description: error.message });
+            toast({ variant: "destructive", title: "Error", description: error.message });
         }
     });
 
@@ -268,14 +268,14 @@ export default function ManageWebhooks() {
     };
 
     const handleDelete = (id: string) => {
-        if (confirm("Sei sicuro di voler eliminare questo webhook? I log associati verranno eliminati.")) {
+        if (confirm("Are you sure you want to delete this webhook? Associated logs will be deleted.")) {
             deleteMutation.mutate(id);
         }
     };
 
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text);
-        toast({ title: "Copiato negli appunti" });
+        toast({ title: "Copied to clipboard" });
     };
 
     const toggleSecret = (id: string) => {
@@ -291,18 +291,18 @@ export default function ManageWebhooks() {
             <div className="space-y-6">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-3xl font-heading font-bold text-foreground">Gestione Webhook</h1>
-                        <p className="text-muted-foreground">Collega servizi esterni come Tally.so per importare transazioni automaticamente.</p>
+                        <h1 className="text-3xl font-heading font-bold text-foreground">Webhook Management</h1>
+                        <p className="text-muted-foreground">Connect external services like Tally.so to automatically import transactions.</p>
                     </div>
                     <Button onClick={() => { setEditingWebhook(null); form.reset(); setIsDialogOpen(true); }}>
-                        <Plus className="mr-2 h-4 w-4" /> Nuovo Webhook
+                        <Plus className="mr-2 h-4 w-4" /> New Webhook
                     </Button>
                 </div>
 
                 <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) setEditingWebhook(null); }}>
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>{editingWebhook ? "Modifica Webhook" : "Nuovo Webhook"}</DialogTitle>
+                            <DialogTitle>{editingWebhook ? "Edit Webhook" : "New Webhook"}</DialogTitle>
                         </DialogHeader>
                         <Form {...form}>
                             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -311,9 +311,9 @@ export default function ManageWebhooks() {
                                     name="name"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Nome</FormLabel>
+                                            <FormLabel>Name</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="es. Tally Spese" {...field} />
+                                                <Input placeholder="e.g. Tally Expenses" {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -325,11 +325,11 @@ export default function ManageWebhooks() {
                                     name="type"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Tipo Integrazione</FormLabel>
+                                            <FormLabel>Integration Type</FormLabel>
                                             <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!!editingWebhook}>
                                                 <FormControl>
                                                     <SelectTrigger>
-                                                        <SelectValue placeholder="Seleziona tipo" />
+                                                        <SelectValue placeholder="Select type" />
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
@@ -338,7 +338,7 @@ export default function ManageWebhooks() {
                                                 </SelectContent>
                                             </Select>
                                             <FormDescription>
-                                                Supportiamo moduli Tally.so e payload JSON generici
+                                                We support Tally.so forms and generic JSON payloads
                                             </FormDescription>
                                             <FormMessage />
                                         </FormItem>
@@ -351,9 +351,9 @@ export default function ManageWebhooks() {
                                     render={({ field }) => (
                                         <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                                             <div className="space-y-0.5">
-                                                <FormLabel className="text-base">Attivo</FormLabel>
+                                                <FormLabel className="text-base">Active</FormLabel>
                                                 <FormDescription>
-                                                    Abilita o disabilita questo webhook
+                                                    Enable or disable this webhook
                                                 </FormDescription>
                                             </div>
                                             <FormControl>
@@ -367,7 +367,7 @@ export default function ManageWebhooks() {
                                 />
 
                                 <DialogFooter>
-                                    <Button type="submit">{editingWebhook ? "Salva" : "Crea"}</Button>
+                                    <Button type="submit">{editingWebhook ? "Save" : "Create"}</Button>
                                 </DialogFooter>
                             </form>
                         </Form>
@@ -376,28 +376,28 @@ export default function ManageWebhooks() {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>I Tuoi Webhook</CardTitle>
+                        <CardTitle>Your Webhooks</CardTitle>
                         <CardDescription>
-                            Configura gli URL nel servizio esterno per iniziare a ricevere dati.
+                            Configure URLs in the external service to start receiving data.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="p-0">
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Nome</TableHead>
-                                    <TableHead>URL Endpoint</TableHead>
-                                    <TableHead>Segreto (Firma)</TableHead>
-                                    <TableHead>Stato</TableHead>
-                                    <TableHead>Ultimo Utilizzo</TableHead>
-                                    <TableHead className="text-right">Azioni</TableHead>
+                                    <TableHead>Name</TableHead>
+                                    <TableHead>Endpoint URL</TableHead>
+                                    <TableHead>Secret (Signature)</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead>Last Used</TableHead>
+                                    <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {webhooks.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                                            Nessun webhook configurato. Creane uno per iniziare.
+                                            No webhooks configured. Create one to start.
                                         </TableCell>
                                     </TableRow>
                                 ) : (
@@ -423,7 +423,7 @@ export default function ManageWebhooks() {
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-xs font-mono text-muted-foreground">
-                                                        {webhook.secret ? (showSecret[webhook.id] ? webhook.secret : "••••••••") : "Nessuno"}
+                                                        {webhook.secret ? (showSecret[webhook.id] ? webhook.secret : "••••••••") : "None"}
                                                     </span>
                                                     {webhook.secret && (
                                                         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => toggleSecret(webhook.id)}>
@@ -434,31 +434,31 @@ export default function ManageWebhooks() {
                                             </TableCell>
                                             <TableCell>
                                                 <Badge variant={webhook.active ? "secondary" : "outline"} className={webhook.active ? "bg-green-100 text-green-800" : "text-slate-500"}>
-                                                    {webhook.active ? "Attivo" : "Inattivo"}
+                                                    {webhook.active ? "Active" : "Inactive"}
                                                 </Badge>
                                             </TableCell>
                                             <TableCell className="text-xs text-muted-foreground">
-                                                {webhook.lastUsedAt ? format(new Date(webhook.lastUsedAt), "dd/MM/yyyy HH:mm") : "Mai"}
+                                                {webhook.lastUsedAt ? format(new Date(webhook.lastUsedAt), "dd/MM/yyyy HH:mm") : "Never"}
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex items-center justify-end gap-1">
                                                     {webhook.type === 'tally' && (
-                                                        <Button variant="ghost" size="icon" onClick={() => setIsGuideOpen(true)} title="Guida Configurazione">
+                                                        <Button variant="ghost" size="icon" onClick={() => setIsGuideOpen(true)} title="Configuration Guide">
                                                             <HelpCircle className="h-4 w-4 text-blue-500" />
                                                         </Button>
                                                     )}
                                                     {webhook.type === 'generic' && (
-                                                        <Button variant="ghost" size="icon" onClick={() => setIsGenericGuideOpen(true)} title="Guida Configurazione JSON">
+                                                        <Button variant="ghost" size="icon" onClick={() => setIsGenericGuideOpen(true)} title="JSON Configuration Guide">
                                                             <HelpCircle className="h-4 w-4 text-emerald-500" />
                                                         </Button>
                                                     )}
                                                     <Button variant="ghost" size="icon" onClick={() => setViewingLogsId(webhook.id)} title="Logs">
                                                         <ScrollText className="h-4 w-4" />
                                                     </Button>
-                                                    <Button variant="ghost" size="icon" onClick={() => handleEdit(webhook)} title="Modifica">
+                                                    <Button variant="ghost" size="icon" onClick={() => handleEdit(webhook)} title="Edit">
                                                         <Edit2 className="h-4 w-4" />
                                                     </Button>
-                                                    <Button variant="ghost" size="icon" onClick={() => handleDelete(webhook.id)} className="text-red-500 hover:text-red-700 hover:bg-red-50" title="Elimina">
+                                                    <Button variant="ghost" size="icon" onClick={() => handleDelete(webhook.id)} className="text-red-500 hover:text-red-700 hover:bg-red-50" title="Delete">
                                                         <Trash2 className="h-4 w-4" />
                                                     </Button>
                                                 </div>

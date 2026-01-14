@@ -72,7 +72,7 @@ export default function Budget() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['budget', currentYear] });
-            toast({ title: "Budget aggiornato", description: "Il budget baseline è stato salvato." });
+            toast({ title: "Budget updated", description: "Baseline budget saved." });
         }
     });
 
@@ -83,7 +83,7 @@ export default function Budget() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['budget'] });
-            toast({ title: "Spesa ricorrente eliminata" });
+            toast({ title: "Recurring expense deleted" });
         }
     });
 
@@ -94,7 +94,7 @@ export default function Budget() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['budget', currentYear] });
-            toast({ title: "Spesa pianificata eliminata" });
+            toast({ title: "Planned expense deleted" });
         }
     });
 
@@ -139,8 +139,8 @@ export default function Budget() {
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-3xl font-heading font-bold text-foreground">Gestione Budget</h1>
-                        <p className="text-muted-foreground">Pianifica le spese annuali per categoria</p>
+                        <h1 className="text-3xl font-heading font-bold text-foreground">Budget Management</h1>
+                        <p className="text-muted-foreground">Plan annual expenses by category</p>
                     </div>
                     <div className="flex items-center gap-4">
                         {/* Semester Toggle */}
@@ -151,7 +151,7 @@ export default function Budget() {
                                 className="text-xs"
                                 onClick={() => setViewHalf('first')}
                             >
-                                Gen - Giu
+                                Jan - Jun
                             </Button>
                             <Button
                                 variant={viewHalf === 'second' ? 'secondary' : 'ghost'}
@@ -159,7 +159,7 @@ export default function Budget() {
                                 className="text-xs"
                                 onClick={() => setViewHalf('second')}
                             >
-                                Lug - Dic
+                                Jul - Dec
                             </Button>
                         </div>
                         <div className="flex items-center gap-4 bg-card p-2 rounded-lg border shadow-sm">
@@ -230,10 +230,10 @@ export default function Budget() {
                     <DialogContent>
                         <DialogHeader>
                             <DialogTitle>
-                                {editingRecurring ? "Modifica Spesa Ricorrente" : "Nuova Spesa Ricorrente"}
+                                {editingRecurring ? "Edit Recurring Expense" : "New Recurring Expense"}
                             </DialogTitle>
                             <DialogDescription>
-                                Inserisci i dettagli per la spesa ricorrente che desideri tracciare.
+                                Enter details for the recurring expense you want to track.
                             </DialogDescription>
                         </DialogHeader>
                         <AddRecurringExpenseForm
@@ -252,10 +252,10 @@ export default function Budget() {
                     <DialogContent>
                         <DialogHeader>
                             <DialogTitle>
-                                {editingPlanned ? "Modifica Spesa Pianificata" : "Nuova Spesa Pianificata"}
+                                {editingPlanned ? "Edit Planned Expense" : "New Planned Expense"}
                             </DialogTitle>
                             <DialogDescription>
-                                Pianifica una spesa futura una tantum per il tuo budget annuale.
+                                Plan a one-time future expense for your annual budget.
                             </DialogDescription>
                         </DialogHeader>
                         <AddPlannedExpenseForm

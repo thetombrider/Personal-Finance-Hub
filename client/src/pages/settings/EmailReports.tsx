@@ -33,16 +33,16 @@ export default function EmailReports() {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Errore nell'invio");
+        throw new Error(error.error || "Error sending report");
       }
 
       toast({
-        title: "Report inviato!",
-        description: `Il report settimanale è stato inviato a ${email}`,
+        title: "Report sent!",
+        description: `Weekly report sent to ${email}`,
       });
     } catch (error: any) {
       toast({
-        title: "Errore",
+        title: "Error",
         description: error.message,
         variant: "destructive"
       });
@@ -59,8 +59,8 @@ export default function EmailReports() {
       setShowPreview(true);
     } catch (error) {
       toast({
-        title: "Errore",
-        description: "Impossibile caricare l'anteprima",
+        title: "Error",
+        description: "Unable to load preview",
         variant: "destructive"
       });
     }
@@ -70,34 +70,34 @@ export default function EmailReports() {
     <Layout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-heading font-bold text-foreground">Report Email</h1>
-          <p className="text-muted-foreground">Gestisci i report automatici via email</p>
+          <h1 className="text-2xl font-heading font-bold text-foreground">Email Reports</h1>
+          <p className="text-muted-foreground">Manage automatic email reports</p>
         </div>
 
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Mail className="h-5 w-5" />
-              Report Settimanale
+              Weekly Report
             </CardTitle>
             <CardDescription>
-              Ricevi ogni domenica mattina un riepilogo delle tue spese settimanali
+              Receive a summary of your weekly expenses every Sunday morning
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg text-green-700 dark:text-green-300">
               <CheckCircle2 className="h-5 w-5" />
-              <span className="text-sm font-medium">Report automatico attivo - invio ogni domenica alle 9:00</span>
+              <span className="text-sm font-medium">Automatic report active - sent every Sunday at 9:00 AM</span>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Indirizzo Email</Label>
+              <Label htmlFor="email">Email Address</Label>
               <Input
                 id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="email@esempio.com"
+                placeholder="email@example.com"
                 data-testid="input-report-email"
               />
             </div>
@@ -109,9 +109,9 @@ export default function EmailReports() {
                 data-testid="button-send-report"
               >
                 {isSending ? (
-                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Invio in corso...</>
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Sending...</>
                 ) : (
-                  <><Send className="h-4 w-4 mr-2" /> Invia Report Ora</>
+                  <><Send className="h-4 w-4 mr-2" /> Send Report Now</>
                 )}
               </Button>
               <Button
@@ -119,7 +119,7 @@ export default function EmailReports() {
                 onClick={loadPreview}
                 data-testid="button-preview-report"
               >
-                <Eye className="h-4 w-4 mr-2" /> Anteprima
+                <Eye className="h-4 w-4 mr-2" /> Preview
               </Button>
             </div>
           </CardContent>
@@ -128,7 +128,7 @@ export default function EmailReports() {
         {showPreview && (
           <Card>
             <CardHeader>
-              <CardTitle>Anteprima Report</CardTitle>
+              <CardTitle>Report Preview</CardTitle>
             </CardHeader>
             <CardContent>
               <div

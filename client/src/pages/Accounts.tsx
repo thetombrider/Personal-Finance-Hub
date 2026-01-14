@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { format, subMonths, parseISO } from "date-fns";
-import { it } from "date-fns/locale";
+// import { it } from "date-fns/locale";
 import { ChevronLeft, ChevronRight, Landmark, RefreshCw } from "lucide-react";
 import { useFinance } from "@/context/FinanceContext";
 import Layout from "@/components/Layout";
@@ -30,7 +30,7 @@ export default function Accounts() {
       list.push({
         date,
         key: format(date, 'yyyy-MM'),
-        label: format(date, 'MMM', { locale: it })
+        label: format(date, 'MMM')
       });
     }
     return list;
@@ -106,10 +106,10 @@ export default function Accounts() {
       const isRateLimit = error.message?.includes("429") || error.message?.includes("Rate limit") || (error as any).status === 429;
 
       toast({
-        title: isRateLimit ? "Limite Raggiunto" : "Sync Failed",
+        title: isRateLimit ? "Limit Reached" : "Sync Failed",
         description: isRateLimit
-          ? "Troppe richieste verso la banca. Riprova più tardi."
-          : "Impossibile sincronizzare le transazioni.",
+          ? "Too many requests to the bank. Please try again later."
+          : "Unable to sync transactions.",
         variant: "destructive",
       });
     } finally {
@@ -133,7 +133,7 @@ export default function Accounts() {
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-3xl font-heading font-bold text-foreground">Accounts</h1>
-            <p className="text-muted-foreground">Analisi del flusso per conto</p>
+            <p className="text-muted-foreground">Account flow analysis</p>
           </div>
         </div>
 
@@ -141,8 +141,8 @@ export default function Accounts() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-lg">Flusso per Conto</CardTitle>
-                <CardDescription>Riepilogo mensile entrate/uscite nette per ogni conto</CardDescription>
+                <CardTitle className="text-lg">Account Flow</CardTitle>
+                <CardDescription>Monthly summary of net income/expense for each account</CardDescription>
               </div>
               <div className="flex items-center gap-2">
                 <div className="flex items-center border rounded-md mr-2">
@@ -158,7 +158,7 @@ export default function Accounts() {
                   <span className="text-sm px-2 font-medium min-w-[80px] text-center">
                     {visibleMonths.length > 0
                       ? `${visibleMonths[0].label} - ${visibleMonths[visibleMonths.length - 1].label} `
-                      : 'Nessun dato'}
+                      : 'No data'}
                   </span>
                   <Button
                     variant="ghost"
@@ -176,9 +176,9 @@ export default function Accounts() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="6">Ultimi 6 mesi</SelectItem>
-                    <SelectItem value="12">Ultimi 12 mesi</SelectItem>
-                    <SelectItem value="24">Ultimi 24 mesi</SelectItem>
+                    <SelectItem value="6">Last 6 months</SelectItem>
+                    <SelectItem value="12">Last 12 months</SelectItem>
+                    <SelectItem value="24">Last 24 months</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -190,11 +190,11 @@ export default function Accounts() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="sticky left-0 bg-card z-10 w-[20%] min-w-[150px]">Conto</TableHead>
+                      <TableHead className="sticky left-0 bg-card z-10 w-[20%] min-w-[150px]">Account</TableHead>
                       {visibleMonths.map(m => (
                         <TableHead key={m.key} className="text-center w-[10%] min-w-[80px] text-xs sm:text-sm p-1 capitalize">{m.label}</TableHead>
                       ))}
-                      <TableHead className="text-center w-[10%] min-w-[100px] font-semibold p-1">Totale Periodo</TableHead>
+                      <TableHead className="text-center w-[10%] min-w-[100px] font-semibold p-1">Period Total</TableHead>
                       <TableHead className="text-center w-[100px]">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -251,7 +251,7 @@ export default function Accounts() {
                       );
                     })}
                     <TableRow className="bg-muted/50 font-semibold">
-                      <TableCell className="sticky left-0 bg-muted/50 z-10">Totale</TableCell>
+                      <TableCell className="sticky left-0 bg-muted/50 z-10">Total</TableCell>
                       {visibleMonths.map(m => {
                         const monthTotal = Object.values(accountMonthlyData).reduce((sum, acc) => sum + (acc[m.key] || 0), 0);
                         return (

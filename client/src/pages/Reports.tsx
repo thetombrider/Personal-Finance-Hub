@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { it } from "date-fns/locale";
+// import { it } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -72,14 +72,14 @@ export default function Reports() {
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Reports</h1>
                     <p className="text-muted-foreground mt-2">
-                        Analisi finanziaria dettagliata e stato patrimoniale.
+                        Detailed financial analysis and balance sheet.
                     </p>
                 </div>
 
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6 flex flex-col flex-1 min-h-0">
                     <TabsList>
-                        <TabsTrigger value="income-statement">Conto Economico</TabsTrigger>
-                        <TabsTrigger value="balance-sheet">Stato Patrimoniale</TabsTrigger>
+                        <TabsTrigger value="income-statement">Income Statement</TabsTrigger>
+                        <TabsTrigger value="balance-sheet">Balance Sheet</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="income-statement" className="space-y-6 flex-1 overflow-auto min-h-0 pr-4">
@@ -109,10 +109,10 @@ function IncomeStatementView() {
     });
 
     const months = [
-        { value: 0, label: "Tutto l'anno" },
+        { value: 0, label: "Full Year" },
         ...Array.from({ length: 12 }, (_, i) => ({
             value: i + 1,
-            label: format(new Date(year, i), "MMMM", { locale: it }).charAt(0).toUpperCase() + format(new Date(year, i), "MMMM", { locale: it }).slice(1)
+            label: format(new Date(year, i), "MMMM").charAt(0).toUpperCase() + format(new Date(year, i), "MMMM").slice(1)
         }))
     ];
     const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
@@ -122,7 +122,7 @@ function IncomeStatementView() {
     }
 
     if (error) {
-        return <div className="text-red-500 p-4 border border-red-200 rounded-md bg-red-50">Errore nel caricamento del report.</div>;
+        return <div className="text-red-500 p-4 border border-red-200 rounded-md bg-red-50">Error loading report.</div>;
     }
 
     if (!data) return null;
@@ -132,11 +132,11 @@ function IncomeStatementView() {
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                     <div className="space-y-1">
-                        <CardTitle>{month === 0 ? "Conto Economico Annuale" : "Conto Economico Mensile"}</CardTitle>
+                        <CardTitle>{month === 0 ? "Annual Income Statement" : "Monthly Income Statement"}</CardTitle>
                         <CardDescription>
                             {month === 0
-                                ? "Confronto tra reale e budget per l'anno selezionato"
-                                : "Confronto tra reale e budget per il mese selezionato"}
+                                ? "Comparison between actual and budget for the selected year"
+                                : "Comparison between actual and budget for the selected month"}
                         </CardDescription>
                     </div>
                     <div className="flex gap-2">
@@ -167,31 +167,31 @@ function IncomeStatementView() {
                 <CardContent>
                     <div className="rounded-md border">
                         <div className="grid grid-cols-12 gap-4 p-4 border-b bg-muted/50 font-medium text-sm">
-                            <div className="col-span-4">Categoria</div>
-                            <div className="col-span-2 text-right">Reale</div>
+                            <div className="col-span-4">Category</div>
+                            <div className="col-span-2 text-right">Actual</div>
                             <div className="col-span-2 text-right">Budget</div>
-                            <div className="col-span-2 text-right">Differenza</div>
-                            <div className="col-span-2 text-right">Stato</div>
+                            <div className="col-span-2 text-right">Difference</div>
+                            <div className="col-span-2 text-right">Status</div>
                         </div>
 
                         <div className="divide-y">
                             {/* Income Section */}
-                            <div className="p-4 bg-green-50/30 font-semibold text-green-700">Entrate</div>
+                            <div className="p-4 bg-green-50/30 font-semibold text-green-700">Income</div>
                             {data.items.filter(i => i.isIncome).map((item) => (
                                 <IncomeStatementRow key={item.category.id} item={item} />
                             ))}
-                            <SummaryRow label="Totale Entrate" summary={data.summary.income} isIncome />
+                            <SummaryRow label="Total Income" summary={data.summary.income} isIncome />
 
                             {/* Expenses Section */}
-                            <div className="p-4 bg-red-50/30 font-semibold text-red-700 mt-4 border-t">Uscite</div>
+                            <div className="p-4 bg-red-50/30 font-semibold text-red-700 mt-4 border-t">Expenses</div>
                             {data.items.filter(i => !i.isIncome).map((item) => (
                                 <IncomeStatementRow key={item.category.id} item={item} />
                             ))}
-                            <SummaryRow label="Totale Uscite" summary={data.summary.expenses} />
+                            <SummaryRow label="Total Expenses" summary={data.summary.expenses} />
 
                             {/* Net Result */}
                             <div className="grid grid-cols-12 gap-4 p-4 bg-muted/50 font-bold border-t mt-4">
-                                <div className="col-span-4">Risultato Netto</div>
+                                <div className="col-span-4">Net Result</div>
                                 <div className={cn("col-span-2 text-right", data.summary.netResult.actual >= 0 ? "text-green-600" : "text-red-600")}>
                                     {formatCurrency(data.summary.netResult.actual)}
                                 </div>
@@ -291,7 +291,7 @@ function BalanceSheetView() {
     }
 
     if (error) {
-        return <div className="text-red-500 p-4 border border-red-200 rounded-md bg-red-50">Errore nel caricamento dello stato patrimoniale.</div>;
+        return <div className="text-red-500 p-4 border border-red-200 rounded-md bg-red-50">Error loading balance sheet.</div>;
     }
 
     if (!data) return null;
@@ -300,33 +300,33 @@ function BalanceSheetView() {
         <div className="space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle>Stato Patrimoniale</CardTitle>
-                    <CardDescription>Situazione attuale Assets vs Liabilities</CardDescription>
+                    <CardTitle>Balance Sheet</CardTitle>
+                    <CardDescription>Current situation Assets vs Liabilities</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="grid md:grid-cols-2 gap-8">
                         {/* Assets side */}
                         <div className="space-y-6">
                             <div className="flex items-center justify-between border-b pb-2">
-                                <h3 className="text-lg font-semibold text-green-700">Attività (Assets)</h3>
+                                <h3 className="text-lg font-semibold text-green-700">Assets</h3>
                             </div>
 
                             <div className="space-y-4">
                                 <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
-                                    <span className="font-medium">Liquidità (Cash + Checking)</span>
+                                    <span className="font-medium">Liquidity (Cash + Checking)</span>
                                     <span>{formatCurrency(data.assets.cash)}</span>
                                 </div>
                                 <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
-                                    <span className="font-medium">Risparmi (Savings)</span>
+                                    <span className="font-medium">Savings</span>
                                     <span>{formatCurrency(data.assets.savings)}</span>
                                 </div>
                                 <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
-                                    <span className="font-medium">Investimenti</span>
+                                    <span className="font-medium">Investments</span>
                                     <span>{formatCurrency(data.assets.investments)}</span>
                                 </div>
                                 <Separator />
                                 <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg font-bold text-lg text-green-800">
-                                    <span>Totale Attività</span>
+                                    <span>Total Assets</span>
                                     <span>{formatCurrency(data.assets.total)}</span>
                                 </div>
                             </div>
@@ -335,30 +335,30 @@ function BalanceSheetView() {
                         {/* Liabilities & Equity side */}
                         <div className="space-y-6">
                             <div className="flex items-center justify-between border-b pb-2">
-                                <h3 className="text-lg font-semibold text-red-700">Passività & Patrimonio Netto</h3>
+                                <h3 className="text-lg font-semibold text-red-700">Liabilities & Net Worth</h3>
                             </div>
 
                             <div className="space-y-4">
                                 <div className="space-y-2">
-                                    <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Passività (Liabilities)</h4>
+                                    <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Liabilities</h4>
                                     <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
-                                        <span className="font-medium">Carte di Credito</span>
+                                        <span className="font-medium">Credit Cards</span>
                                         <span>{formatCurrency(data.liabilities.creditCards)}</span>
                                     </div>
                                     <div className="flex justify-between items-center p-3 bg-red-50 rounded-lg font-bold text-red-800">
-                                        <span>Totale Passività</span>
+                                        <span>Total Liabilities</span>
                                         <span>{formatCurrency(data.liabilities.total)}</span>
                                     </div>
                                 </div>
 
                                 <div className="space-y-2 pt-4">
-                                    <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Patrimonio Netto (Equity)</h4>
+                                    <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Net Worth (Equity)</h4>
                                     <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg font-bold text-blue-800 text-lg">
-                                        <span>Patrimonio Netto</span>
+                                        <span>Net Worth</span>
                                         <span>{formatCurrency(data.equity.netWorth)}</span>
                                     </div>
                                     <p className="text-xs text-muted-foreground text-center pt-1">
-                                        (Attività - Passività)
+                                        (Assets - Liabilities)
                                     </p>
                                 </div>
                             </div>

@@ -249,7 +249,7 @@ export default function Transactions() {
 
   const onTransferSubmit = async (data: TransferFormValues) => {
     if (!transferCategory) {
-      alert("Categoria 'Trasferimenti' non trovata. Creala prima nelle impostazioni.");
+      alert("Category 'Transfers' not found. Please create it first in settings.");
       return;
     }
 
@@ -593,12 +593,12 @@ export default function Transactions() {
             }}>
               <DialogTrigger asChild>
                 <Button variant="outline" className="gap-2" data-testid="button-add-transfer">
-                  <ArrowLeftRight size={16} /> Trasferimento
+                  <ArrowLeftRight size={16} /> Transfer
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
-                  <DialogTitle>Nuovo Trasferimento</DialogTitle>
+                  <DialogTitle>New Transfer</DialogTitle>
                 </DialogHeader>
                 <Form {...transferForm}>
                   <form onSubmit={transferForm.handleSubmit(onTransferSubmit)} className="space-y-4">
@@ -607,7 +607,7 @@ export default function Transactions() {
                       name="amount"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Importo</FormLabel>
+                          <FormLabel>Amount</FormLabel>
                           <FormControl>
                             <Input type="number" step="0.01" {...field} data-testid="input-transfer-amount" />
                           </FormControl>
@@ -621,9 +621,9 @@ export default function Transactions() {
                       name="description"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Descrizione</FormLabel>
+                          <FormLabel>Description</FormLabel>
                           <FormControl>
-                            <Input placeholder="es. Pagamento carta di credito" {...field} data-testid="input-transfer-description" />
+                            <Input placeholder="e.g. Credit Card Payment" {...field} data-testid="input-transfer-description" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -636,11 +636,11 @@ export default function Transactions() {
                         name="fromAccountId"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Da conto</FormLabel>
+                            <FormLabel>From Account</FormLabel>
                             <Select onValueChange={(v) => field.onChange(parseInt(v))} value={field.value?.toString()}>
                               <FormControl>
                                 <SelectTrigger data-testid="select-from-account">
-                                  <SelectValue placeholder="Seleziona conto" />
+                                  <SelectValue placeholder="Select Account" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent className="max-h-[200px]">
@@ -658,11 +658,11 @@ export default function Transactions() {
                         name="toAccountId"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>A conto</FormLabel>
+                            <FormLabel>To Account</FormLabel>
                             <Select onValueChange={(v) => field.onChange(parseInt(v))} value={field.value?.toString()}>
                               <FormControl>
                                 <SelectTrigger data-testid="select-to-account">
-                                  <SelectValue placeholder="Seleziona conto" />
+                                  <SelectValue placeholder="Select Account" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent className="max-h-[200px]">
@@ -682,7 +682,7 @@ export default function Transactions() {
                       name="date"
                       render={({ field }) => (
                         <FormItem className="flex flex-col">
-                          <FormLabel>Data</FormLabel>
+                          <FormLabel>Date</FormLabel>
                           <Popover>
                             <PopoverTrigger asChild>
                               <FormControl>
@@ -697,7 +697,7 @@ export default function Transactions() {
                                   {field.value ? (
                                     format(field.value, "PPP")
                                   ) : (
-                                    <span>Seleziona data</span>
+                                    <span>Select date</span>
                                   )}
                                   <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                 </Button>
@@ -721,7 +721,7 @@ export default function Transactions() {
                     />
 
                     <DialogFooter>
-                      <Button type="submit" data-testid="button-submit-transfer">Crea Trasferimento</Button>
+                      <Button type="submit" data-testid="button-submit-transfer">Create Transfer</Button>
                     </DialogFooter>
                   </form>
                 </Form>
@@ -735,12 +735,12 @@ export default function Transactions() {
           <div className="flex flex-wrap gap-4 items-end">
             {/* Search */}
             <div className="flex-1 min-w-[200px]">
-              <Label htmlFor="search" className="text-sm font-medium mb-1.5 block">Cerca</Label>
+              <Label htmlFor="search" className="text-sm font-medium mb-1.5 block">Search</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="search"
-                  placeholder="Cerca nella descrizione..."
+                  placeholder="Search description..."
                   value={searchQuery}
                   onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
                   className="pl-9"
@@ -751,7 +751,7 @@ export default function Transactions() {
 
             {/* Date From */}
             <div className="w-[160px]">
-              <Label className="text-sm font-medium mb-1.5 block">Da</Label>
+              <Label className="text-sm font-medium mb-1.5 block">From</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -763,7 +763,7 @@ export default function Transactions() {
                     data-testid="button-date-from"
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dateFrom ? format(dateFrom, "dd/MM/yyyy") : "Seleziona"}
+                    {dateFrom ? format(dateFrom, "dd/MM/yyyy") : "Select"}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -779,7 +779,7 @@ export default function Transactions() {
 
             {/* Date To */}
             <div className="w-[160px]">
-              <Label className="text-sm font-medium mb-1.5 block">A</Label>
+              <Label className="text-sm font-medium mb-1.5 block">To</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -791,7 +791,7 @@ export default function Transactions() {
                     data-testid="button-date-to"
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dateTo ? format(dateTo, "dd/MM/yyyy") : "Seleziona"}
+                    {dateTo ? format(dateTo, "dd/MM/yyyy") : "Select"}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -807,13 +807,13 @@ export default function Transactions() {
 
             {/* Account Filter */}
             <div className="w-[180px]">
-              <Label className="text-sm font-medium mb-1.5 block">Conto</Label>
+              <Label className="text-sm font-medium mb-1.5 block">Account</Label>
               <Select value={filterAccountId} onValueChange={(v) => { setFilterAccountId(v); setCurrentPage(1); }}>
                 <SelectTrigger data-testid="select-filter-account">
-                  <SelectValue placeholder="Tutti i conti" />
+                  <SelectValue placeholder="All Accounts" />
                 </SelectTrigger>
                 <SelectContent className="max-h-[200px]">
-                  <SelectItem value="all">Tutti i conti</SelectItem>
+                  <SelectItem value="all">All Accounts</SelectItem>
                   {accounts.map(acc => (
                     <SelectItem key={acc.id} value={acc.id.toString()}>{acc.name}</SelectItem>
                   ))}
@@ -823,13 +823,13 @@ export default function Transactions() {
 
             {/* Category Filter */}
             <div className="w-[180px]">
-              <Label className="text-sm font-medium mb-1.5 block">Categoria</Label>
+              <Label className="text-sm font-medium mb-1.5 block">Category</Label>
               <Select value={filterCategoryId} onValueChange={(v) => { setFilterCategoryId(v); setCurrentPage(1); }}>
                 <SelectTrigger data-testid="select-filter-category">
-                  <SelectValue placeholder="Tutte le categorie" />
+                  <SelectValue placeholder="All Categories" />
                 </SelectTrigger>
                 <SelectContent className="max-h-[200px]">
-                  <SelectItem value="all">Tutte le categorie</SelectItem>
+                  <SelectItem value="all">All Categories</SelectItem>
                   {categories.map(cat => (
                     <SelectItem key={cat.id} value={cat.id.toString()}>{cat.name}</SelectItem>
                   ))}
@@ -839,15 +839,15 @@ export default function Transactions() {
 
             {/* Status Filter */}
             <div className="w-[180px]">
-              <Label className="text-sm font-medium mb-1.5 block">Stato</Label>
+              <Label className="text-sm font-medium mb-1.5 block">Status</Label>
               <Select value={filterStatus} onValueChange={(v) => { setFilterStatus(v); setCurrentPage(1); }}>
                 <SelectTrigger data-testid="select-filter-status">
-                  <SelectValue placeholder="Tutti" />
+                  <SelectValue placeholder="All" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tutti</SelectItem>
-                  <SelectItem value="bank">Riconciliati banca</SelectItem>
-                  <SelectItem value="recurring">Spese ricorrenti</SelectItem>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="bank">Bank Reconciled</SelectItem>
+                  <SelectItem value="recurring">Recurring Expenses</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -856,14 +856,14 @@ export default function Transactions() {
             {hasActiveFilters && (
               <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1" data-testid="button-clear-filters">
                 <X size={14} />
-                Pulisci filtri
+                Clear Filters
               </Button>
             )}
           </div>
 
           {hasActiveFilters && (
             <div className="mt-3 text-sm text-muted-foreground">
-              {filteredTransactions.length} transazioni trovate su {transactions.length} totali
+              {filteredTransactions.length} transactions found of {transactions.length} total
             </div>
           )}
         </Card>
@@ -889,7 +889,7 @@ export default function Transactions() {
                           onClick={toggleAllFiltered}
                           data-testid="button-select-all-filtered"
                         >
-                          Tutte ({sortedTransactions.length})
+                          All ({sortedTransactions.length})
                         </Button>
                       )}
                     </div>
@@ -979,7 +979,7 @@ export default function Transactions() {
                                     <Landmark size={14} className="text-blue-500/70" />
                                   </TooltipTrigger>
                                   <TooltipContent>
-                                    <p>Transazione riconciliata con la banca</p>
+                                    <p>Transaction reconciled with bank</p>
                                   </TooltipContent>
                                 </Tooltip>
                               </TooltipProvider>
@@ -991,7 +991,7 @@ export default function Transactions() {
                                     <CheckCircle2 size={14} className="text-green-500/70" />
                                   </TooltipTrigger>
                                   <TooltipContent>
-                                    <p>Riconciliata con spesa ricorrente</p>
+                                    <p>Reconciled with recurring expense</p>
                                   </TooltipContent>
                                 </Tooltip>
                               </TooltipProvider>
