@@ -22,7 +22,7 @@ export function registerBudgetRoutes(app: Express) {
             const [categories, monthlyBudgets, plannedExpenses, recurringExpenses] = await Promise.all([
                 storage.getCategories(req.user.id),
                 storage.getMonthlyBudgetsByYear(req.user.id, year),
-                storage.getPlannedExpensesByYear(req.user.id, year),
+                storage.getAllPlannedExpenses(req.user.id),
                 storage.getActiveRecurringExpenses(req.user.id)
             ]);
 
@@ -113,6 +113,10 @@ export function registerBudgetRoutes(app: Express) {
             if (error instanceof z.ZodError) {
                 return res.status(400).json({ error: error.errors });
             }
+            if (error instanceof Error && error.message.startsWith('Authorization failed')) {
+                return res.status(403).json({ error: error.message });
+            }
+            console.error("Failed to save monthly budget:", error);
             res.status(500).json({ error: "Failed to save monthly budget" });
         }
     });

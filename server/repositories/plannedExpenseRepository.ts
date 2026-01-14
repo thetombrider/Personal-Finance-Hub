@@ -44,6 +44,14 @@ export class PlannedExpenseRepository {
             ));
     }
 
+    async getAllPlannedExpenses(userId: string): Promise<PlannedExpense[]> {
+        const userCategories = db.select({ id: categories.id }).from(categories).where(eq(categories.userId, userId));
+
+        return await db.select()
+            .from(plannedExpenses)
+            .where(inArray(plannedExpenses.categoryId, userCategories));
+    }
+
     /**
      * Create a planned expense.
      * @throws Error if insert fails to return a result

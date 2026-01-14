@@ -77,7 +77,7 @@ export function PlannedExpensesTable({
                                 {expenses.map((expense) => (
                                     <TableRow key={expense.id}>
                                         <TableCell className="capitalize">
-                                            {format(new Date(expense.date), "MMMM yyyy", { locale: it })}
+                                            {format(new Date(expense.date), "dd MMMM yyyy", { locale: it })}
                                         </TableCell>
                                         <TableCell className="font-medium">{expense.name}</TableCell>
                                         <TableCell>

@@ -16,7 +16,7 @@ import { RecurringExpensesTable } from "@/components/budget/RecurringExpensesTab
 import { PlannedExpensesTable } from "@/components/budget/PlannedExpensesTable";
 import { AddRecurringExpenseForm } from "@/components/budget/AddRecurringExpenseForm";
 import { AddPlannedExpenseForm } from "@/components/budget/AddPlannedExpenseForm";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useFinance } from "@/context/FinanceContext";
 import { RecurringExpensesMonitoring } from "@/components/budget/RecurringExpensesMonitoring";
 
@@ -232,6 +232,9 @@ export default function Budget() {
                             <DialogTitle>
                                 {editingRecurring ? "Modifica Spesa Ricorrente" : "Nuova Spesa Ricorrente"}
                             </DialogTitle>
+                            <DialogDescription>
+                                Inserisci i dettagli per la spesa ricorrente che desideri tracciare.
+                            </DialogDescription>
                         </DialogHeader>
                         <AddRecurringExpenseForm
                             onSuccess={() => {
@@ -251,6 +254,9 @@ export default function Budget() {
                             <DialogTitle>
                                 {editingPlanned ? "Modifica Spesa Pianificata" : "Nuova Spesa Pianificata"}
                             </DialogTitle>
+                            <DialogDescription>
+                                Pianifica una spesa futura una tantum per il tuo budget annuale.
+                            </DialogDescription>
                         </DialogHeader>
                         <AddPlannedExpenseForm
                             onSuccess={() => {

@@ -149,6 +149,7 @@ export interface IStorage {
   // Planned Expenses
   getPlannedExpenses(userId: string, year: number, month: number): Promise<PlannedExpense[]>;
   getPlannedExpensesByYear(userId: string, year: number): Promise<PlannedExpense[]>;
+  getAllPlannedExpenses(userId: string): Promise<PlannedExpense[]>;
   createPlannedExpense(expense: InsertPlannedExpense): Promise<PlannedExpense>;
   updatePlannedExpense(id: number, userId: string, expense: Partial<InsertPlannedExpense>): Promise<PlannedExpense | undefined>;
   deletePlannedExpense(id: number, userId: string): Promise<boolean>;
@@ -277,6 +278,7 @@ export class DatabaseStorage implements IStorage {
   // Planned Expense operations - delegate to PlannedExpenseRepository
   getPlannedExpenses = (userId: string, year: number, month: number) => this.plannedExpenseRepo.getPlannedExpenses(userId, year, month);
   getPlannedExpensesByYear = (userId: string, year: number) => this.plannedExpenseRepo.getPlannedExpensesByYear(userId, year);
+  getAllPlannedExpenses = (userId: string) => this.plannedExpenseRepo.getAllPlannedExpenses(userId);
   createPlannedExpense = (expense: InsertPlannedExpense) => this.plannedExpenseRepo.createPlannedExpense(expense);
   updatePlannedExpense = (id: number, userId: string, expense: Partial<InsertPlannedExpense>) => this.plannedExpenseRepo.updatePlannedExpense(id, userId, expense);
   deletePlannedExpense = (id: number, userId: string) => this.plannedExpenseRepo.deletePlannedExpense(id, userId);

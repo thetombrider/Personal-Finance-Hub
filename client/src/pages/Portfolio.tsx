@@ -539,24 +539,7 @@ export default function Portfolio() {
                         )}
                       </div>
 
-                      <div className="space-y-2">
-                        <Label>Conto di Investimento</Label>
-                        <Select
-                          value={tradeForm.accountId}
-                          onValueChange={(v) => setTradeForm(prev => ({ ...prev, accountId: v }))}
-                        >
-                          <SelectTrigger data-testid="select-trade-account">
-                            <SelectValue placeholder="Seleziona conto..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {investmentAccounts.map((account: Account) => (
-                              <SelectItem key={account.id} value={account.id.toString()}>
-                                {account.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
+
 
                       {selectedStock && (
                         <div className="p-3 bg-accent rounded-lg">
@@ -583,6 +566,24 @@ export default function Portfolio() {
 
                   {(entryMode === "manual" || selectedStock) && (
                     <>
+                      <div className="space-y-2">
+                        <Label>Conto di Investimento</Label>
+                        <Select
+                          value={tradeForm.accountId}
+                          onValueChange={(v) => setTradeForm(prev => ({ ...prev, accountId: v }))}
+                        >
+                          <SelectTrigger data-testid="select-trade-account">
+                            <SelectValue placeholder="Seleziona conto..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {investmentAccounts.map((account: Account) => (
+                              <SelectItem key={account.id} value={account.id.toString()}>
+                                {account.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label>Tipo Operazione</Label>
