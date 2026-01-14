@@ -95,6 +95,7 @@ export interface IStorage {
 
   // Transactions
   getTransactions(userId: string): Promise<Transaction[]>;
+  getTransactionsByDateRange(userId: string, startDate: Date, endDate: Date): Promise<Transaction[]>;
   getTransaction(id: number): Promise<Transaction | undefined>;
   createTransaction(transaction: InsertTransaction): Promise<Transaction>;
   createTransactions(transactions: InsertTransaction[]): Promise<Transaction[]>;
@@ -231,6 +232,7 @@ export class DatabaseStorage implements IStorage {
 
   // Transaction operations - delegate to TransactionRepository
   getTransactions = (userId: string) => this.transactionRepo.getTransactions(userId);
+  getTransactionsByDateRange = (userId: string, startDate: Date, endDate: Date) => this.transactionRepo.getTransactionsByDateRange(userId, startDate, endDate);
   getTransaction = (id: number) => this.transactionRepo.getTransaction(id);
   createTransaction = (transaction: InsertTransaction) => this.transactionRepo.createTransaction(transaction);
   createTransactions = (txs: InsertTransaction[]) => this.transactionRepo.createTransactions(txs);

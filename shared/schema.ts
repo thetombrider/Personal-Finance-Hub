@@ -135,6 +135,7 @@ export const recurringExpenses = pgTable("recurring_expenses", {
   interval: varchar("interval", { length: 20 }).notNull().default("monthly"),
   dayOfMonth: integer("day_of_month").notNull(),
   startDate: timestamp("start_date", { mode: "string" }).notNull(),
+  endDate: timestamp("end_date", { mode: "string" }),
   lastGenerated: timestamp("last_generated", { mode: "string" }),
   active: boolean("active").notNull().default(true),
   matchPattern: text("match_pattern"),

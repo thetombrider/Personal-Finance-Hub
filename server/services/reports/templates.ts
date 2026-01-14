@@ -2,15 +2,26 @@
 import { WeeklyReportData } from "./types";
 
 export function formatEur(n: number) {
-    return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(n);
+  return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(n);
 }
 
 export function formatPercent(n: number) {
-    return (n >= 0 ? '+' : '') + n.toFixed(2) + '%';
+  return (n >= 0 ? '+' : '') + n.toFixed(2) + '%';
+}
+
+
+export function escapeHtml(str: string): string {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
 
 export function generateWeeklyReportHtml(data: WeeklyReportData): string {
-    return `
+  return `
 <!DOCTYPE html>
 <html>
 <head>
@@ -62,7 +73,7 @@ export function generateWeeklyReportHtml(data: WeeklyReportData): string {
 <body>
   <div class="container">
     <h1>📊 Report Settimanale</h1>
-    <p class="subtitle">${data.startDate} - ${data.endDate}</p>
+    <p class="subtitle">${escapeHtml(data.startDate)} - ${escapeHtml(data.endDate)}</p>
     
     <div class="balance-card">
       <div class="balance-label">Saldo Totale Conti</div>
@@ -83,9 +94,9 @@ export function generateWeeklyReportHtml(data: WeeklyReportData): string {
       <tbody>
         ${data.top5Expenses.map(e => `
           <tr>
-            <td class="desc">${e.description}</td>
-            <td class="meta">${e.accountName}</td>
-            <td class="meta">${e.categoryName}</td>
+            <td class="desc">${escapeHtml(e.description)}</td>
+            <td class="meta">${escapeHtml(e.accountName)}</td>
+            <td class="meta">${escapeHtml(e.categoryName)}</td>
             <td class="amount">${formatEur(e.amount)}</td>
           </tr>
         `).join('')}
@@ -114,14 +125,14 @@ export function generateWeeklyReportHtml(data: WeeklyReportData): string {
     <h3>🏷️ Top 5 Categorie Spese</h3>
     <div class="category-list">
       ${data.sortedCategories.length > 0
-            ? data.sortedCategories.map(([name, amount]) => `
+      ? data.sortedCategories.map(([name, amount]) => `
           <div class="category-item">
-            <span class="category-name">${name}</span>
+            <span class="category-name">${escapeHtml(name)}</span>
             <span class="category-amount">${formatEur(amount)}</span>
           </div>
         `).join('')
-            : '<p style="color: #999; text-align: center;">Nessuna spesa questa settimana</p>'
-        }
+      : '<p style="color: #999; text-align: center;">Nessuna spesa questa settimana</p>'
+    }
     </div>
     
     ${data.portfolioData.length > 0 ? `
@@ -141,7 +152,7 @@ export function generateWeeklyReportHtml(data: WeeklyReportData): string {
         <tbody>
           ${data.portfolioData.map(p => `
             <tr>
-              <td class="ticker">${p.ticker}</td>
+              <td class="ticker">${escapeHtml(p.ticker)}</td>
               <td class="number">${formatEur(p.totalInvested)}</td>
               <td class="number">${formatEur(p.currentValue)}</td>
               <td class="number ${p.gainLoss >= 0 ? 'gain' : 'loss'}">${p.gainLoss >= 0 ? '+' : ''}${formatEur(p.gainLoss)} (${formatPercent(p.gainLossPercent)})</td>
@@ -160,7 +171,7 @@ export function generateWeeklyReportHtml(data: WeeklyReportData): string {
     </div>
     ` : ''}
     
-    ${data.creditCardData.transactions.length > 0 ? `
+    ${data.creditCardData && data.creditCardData.transactions && data.creditCardData.transactions.length > 0 ? `
     <div class="credit-card-section">
       <div class="credit-card-header">
         <span class="credit-card-title">💳 Spese Carta di Credito</span>
@@ -178,9 +189,9 @@ export function generateWeeklyReportHtml(data: WeeklyReportData): string {
         <tbody>
           ${data.creditCardData.transactions.map(t => `
             <tr>
-              <td class="meta">${t.date}</td>
-              <td class="desc">${t.description}${data.creditCardData.showAccountName ? ` <span class="meta">(${t.accountName})</span>` : ''}</td>
-              <td class="meta">${t.categoryName}</td>
+              <td class="meta">${escapeHtml(t.date)}</td>
+              <td class="desc">${escapeHtml(t.description)}${data.creditCardData && data.creditCardData.showAccountName ? ` <span class="meta">(${escapeHtml(t.accountName)})</span>` : ''}</td>
+              <td class="meta">${escapeHtml(t.categoryName)}</td>
               <td class="amount">${formatEur(t.amount)}</td>
             </tr>
           `).join('')}

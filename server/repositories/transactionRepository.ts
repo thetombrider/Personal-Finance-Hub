@@ -38,6 +38,20 @@ export class TransactionRepository {
         return await db.select().from(transactions).where(inArray(transactions.accountId, userAccounts));
     }
 
+    async getTransactionsByDateRange(userId: string, startDate: Date, endDate: Date): Promise<Transaction[]> {
+        const userAccounts = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.userId, userId));
+        const startDateStr = startDate.toISOString().split('T')[0] + ' 00:00:00';
+        const endDateStr = endDate.toISOString().split('T')[0] + ' 23:59:59';
+
+        return await db.select()
+            .from(transactions)
+            .where(and(
+                inArray(transactions.accountId, userAccounts),
+                gte(transactions.date, startDateStr),
+                lte(transactions.date, endDateStr)
+            ));
+    }
+
     async getTransaction(id: number): Promise<Transaction | undefined> {
         const result = await db.select().from(transactions).where(eq(transactions.id, id));
         return result[0];

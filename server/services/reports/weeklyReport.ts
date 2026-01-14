@@ -106,8 +106,17 @@ export async function getWeeklyReportData(storage: IStorage, marketDataService: 
                 totalQuantity += qty;
                 totalCost += amount + fees;
             } else {
+                const prevQuantity = totalQuantity;
+                const avgCostPerShare = prevQuantity > 0 ? totalCost / prevQuantity : 0;
+
+                totalCost -= avgCostPerShare * qty;
                 totalQuantity -= qty;
-                totalCost -= amount - fees;
+
+                // Clamp to zero if we sold everything (or more, which shouldn't happen)
+                if (totalQuantity <= 0.000001) {
+                    totalQuantity = 0;
+                    totalCost = 0;
+                }
             }
         }
 

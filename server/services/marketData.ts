@@ -256,7 +256,7 @@ export class MarketDataService {
                 // Persist to DB
                 try {
                     const holding = await storage.getGlobalHoldingByTicker(upperSymbol);
-                    if (holding) {
+                    if (holding && holding.userId) {
                         await storage.updateHolding(holding.id, holding.userId, {
                             currentPrice: price.toFixed(4),
                             lastPriceUpdate: new Date().toISOString()

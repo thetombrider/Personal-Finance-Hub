@@ -11,13 +11,23 @@ export async function getMonthlyBudget(storage: IStorage, userId: string, year: 
 
     // Filter recurring expenses to only those valid for this month/year
     const validRecurringExpenses = recurringExpenses.filter(re => {
-        const start = new Date(re.startDate);
-        const startYear = start.getFullYear();
-        const startMonth = start.getMonth() + 1; // 1-indexed
+        const startDate = new Date(re.startDate);
+        const startYear = startDate.getFullYear();
+        const startMonth = startDate.getMonth() + 1; // 1-indexed
 
-        if (startYear < year) return true;
-        if (startYear === year && startMonth <= month) return true;
-        return false;
+        // Check if it hasn't started yet
+        if (startYear > year || (startYear === year && startMonth > month)) return false;
+
+        // Check if it has already ended
+        if (re.endDate) {
+            const endDate = new Date(re.endDate);
+            const endYear = endDate.getFullYear();
+            const endMonth = endDate.getMonth() + 1;
+
+            if (endYear < year || (endYear === year && endMonth < month)) return false;
+        }
+
+        return true;
     });
 
     return categories.map(category => {
@@ -62,8 +72,6 @@ export async function getYearlyBudgetTotal(storage: IStorage, userId: string, ye
         const plannedTotal = categoryPlanned.reduce((sum, p) => sum + parseFloat(p.amount.toString()), 0);
 
         // 3. Recurring Expenses sum
-        // We need to calculate how many months each recurring expense applies to in this year.
-        // Logic: Iterate months 1-12. If active, add amount.
         let recurringTotal = 0;
         const categoryRecurring = recurringExpenses.filter(r => r.categoryId === category.id);
 
@@ -72,18 +80,25 @@ export async function getYearlyBudgetTotal(storage: IStorage, userId: string, ye
             const startYear = startDate.getFullYear();
             const startMonth = startDate.getMonth() + 1;
 
-            // If startYear < year, it applies to all 12 months (assuming no end date for now)
-            // If startYear == year, it applies from startMonth to 12.
-            // If startYear > year, it applies to 0 months.
-
-            let monthsActive = 0;
-            if (startYear < year) {
-                monthsActive = 12;
-            } else if (startYear === year) {
-                monthsActive = 13 - startMonth;
-                if (monthsActive < 0) monthsActive = 0;
+            // Determine effective start month within the year
+            let effectiveStartMonth = 1;
+            if (startYear === year) {
+                effectiveStartMonth = startMonth;
+            } else if (startYear > year) {
+                return; // Not active this year
             }
 
+            // Determine effective end month within the year
+            let effectiveEndMonth = 12;
+            if (re.endDate) {
+                const endDate = new Date(re.endDate);
+                const endYear = endDate.getFullYear();
+                const endMonth = endDate.getMonth() + 1;
+                if (endYear < year) return; // Already ended
+                if (endYear === year) effectiveEndMonth = endMonth;
+            }
+
+            const monthsActive = Math.max(0, effectiveEndMonth - effectiveStartMonth + 1);
             recurringTotal += parseFloat(re.amount.toString()) * monthsActive;
         });
 
@@ -113,13 +128,8 @@ export async function getMonthlyIncomeStatement(storage: IStorage, userId: strin
             : getMonthlyBudget(storage, userId, year, month)
     ]);
 
-    const transactions = await storage.getTransactions(userId);
-
-    // Filter transactions for the month
-    const monthTransactions = transactions.filter(t => {
-        const tDate = new Date(t.date);
-        return tDate >= startDate && tDate <= endDate;
-    });
+    // Use optimized date-range fetch
+    const monthTransactions = await storage.getTransactionsByDateRange(userId, startDate, endDate);
 
     const report = categories
         .filter(c => c.name.toLowerCase() !== 'trasferimenti')
@@ -144,11 +154,6 @@ export async function getMonthlyIncomeStatement(storage: IStorage, userId: strin
             const budget = budgetItem ? budgetItem.total : 0;
             const isIncome = category.type === 'income';
 
-            // Difference:
-            // isIncome ? Actual - Budget : Budget - Actual?
-            // Original logic was always Actual - Budget.
-            // Let's stick to user request: "Actual" column is what we are fixing.
-            // Difference logic remains: Actual - Budget.
             const difference = actual - budget;
 
             return {
