@@ -3,7 +3,7 @@
  * Import all repositories from this file.
  */
 
-export { encrypt, decrypt, db } from "./base";
+export { encrypt, decrypt, db, NotFoundError } from "./base";
 
 export { UserRepository } from "./userRepository";
 export { AccountRepository } from "./accountRepository";

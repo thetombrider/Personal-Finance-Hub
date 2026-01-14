@@ -71,7 +71,7 @@ export function registerTradeRoutes(app: Express) {
             // Ownership check built into getHolding
             const holding = await storage.getHolding(validated.holdingId, req.user.id);
             if (!holding) {
-                return res.status(400).json({ error: "Holding not found or not owned by user" });
+                return res.status(403).json({ error: "Holding not found or not owned by user" });
             }
 
             const trade = await storage.createTrade(validated);

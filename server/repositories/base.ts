@@ -71,13 +71,23 @@ export function decrypt(text: string): string {
         const errorMessage = e instanceof Error ? e.message : 'Unknown error';
         console.error('[decrypt] Decryption failed for encrypted input (length: %d): %s', text.length, errorMessage);
 
-        // In production, throw to avoid leaking encrypted data
+        // Always throw on failure to prevent silent data corruption or masked errors
         if (isProduction) {
             throw new Error('Decryption failed');
+        } else {
+            // In development/test, provide more context for debugging
+            throw new Error(`Decryption failed: ${errorMessage}`);
         }
+    }
+}
 
-        // In development, return empty string as safe sentinel
-        return '';
+/**
+ * Error thrown when a requested resource is not found.
+ */
+export class NotFoundError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = 'NotFoundError';
     }
 }
 

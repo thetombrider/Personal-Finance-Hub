@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { storage } from "../storage";
+import { NotFoundError } from "../repositories/base";
 import { insertHoldingSchema } from "@shared/schema";
 import { z } from "zod";
 import { parseNumericParam, checkOwnership } from "./middleware";
@@ -93,11 +94,10 @@ export function registerHoldingRoutes(app: Express) {
             await storage.deleteHolding(id, req.user.id);
             res.status(204).send();
         } catch (error: any) {
-            if (error.message?.includes('Authorization failed')) {
+            if (error instanceof NotFoundError) {
                 return res.status(404).json({ error: "Holding not found" });
             }
             res.status(500).json({ error: "Failed to delete holding" });
         }
     });
 }
-

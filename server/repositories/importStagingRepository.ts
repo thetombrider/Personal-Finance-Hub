@@ -56,15 +56,15 @@ export class ImportStagingRepository {
      */
     async deleteImportStaging(id: number, userId: string): Promise<void> {
         const userAccounts = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.userId, userId));
-        const existing = await db.select().from(importStaging).where(
-            and(eq(importStaging.id, id), inArray(importStaging.accountId, userAccounts))
-        );
 
-        if (existing.length === 0) {
+        // Atomic delete with ownership check
+        const result = await db.delete(importStaging).where(
+            and(eq(importStaging.id, id), inArray(importStaging.accountId, userAccounts))
+        ).returning();
+
+        if (result.length === 0) {
             throw new Error(`Authorization failed: Import staging ${id} not found or does not belong to user`);
         }
-
-        await db.delete(importStaging).where(eq(importStaging.id, id));
     }
 
     /**
@@ -95,14 +95,15 @@ export class ImportStagingRepository {
      */
     async updateImportStagingStatus(id: number, userId: string, status: string): Promise<void> {
         const userAccounts = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.userId, userId));
-        const existing = await db.select().from(importStaging).where(
-            and(eq(importStaging.id, id), inArray(importStaging.accountId, userAccounts))
-        );
 
-        if (existing.length === 0) {
+        // Atomic update with ownership check
+        const result = await db.update(importStaging)
+            .set({ status })
+            .where(and(eq(importStaging.id, id), inArray(importStaging.accountId, userAccounts)))
+            .returning();
+
+        if (result.length === 0) {
             throw new Error(`Authorization failed: Import staging ${id} not found or does not belong to user`);
         }
-
-        await db.update(importStaging).set({ status }).where(eq(importStaging.id, id));
     }
 }

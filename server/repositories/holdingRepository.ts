@@ -4,7 +4,7 @@
  */
 
 import { eq, and } from "drizzle-orm";
-import { db } from "./base";
+import { db, NotFoundError } from "./base";
 import {
     type Holding,
     type InsertHolding,
@@ -74,11 +74,12 @@ export class HoldingRepository {
      * @throws Error if holding not found or not owned by user
      */
     async deleteHolding(id: number, userId: string): Promise<void> {
-        // Verify ownership before delete
+        // Verify ownership before delete (keep for consistent error messaging)
         const existing = await this.getHolding(id, userId);
         if (!existing) {
-            throw new Error(`Authorization failed: Holding ${id} not found or does not belong to user`);
+            throw new NotFoundError(`Authorization failed: Holding ${id} not found or does not belong to user`);
         }
-        await db.delete(holdings).where(eq(holdings.id, id));
+        // Atomic delete with ownership check
+        await db.delete(holdings).where(and(eq(holdings.id, id), eq(holdings.userId, userId)));
     }
 }

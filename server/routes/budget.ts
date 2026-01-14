@@ -161,6 +161,20 @@ export function registerBudgetRoutes(app: Express) {
             if (id === null) return res.status(400).json({ error: "Invalid id" });
 
             const validated = insertRecurringExpenseSchema.partial().parse(req.body);
+
+            // Verify ownership of new relations if updated
+            if (validated.accountId) {
+                const account = await storage.getAccount(validated.accountId);
+                if (!account || !checkOwnership(account.userId, req.user.id)) {
+                    return res.status(403).json({ error: "Forbidden: Account ownership verification failed" });
+                }
+            }
+            if (validated.categoryId) {
+                const category = await storage.getCategory(validated.categoryId);
+                if (!category || !checkOwnership(category.userId, req.user.id)) {
+                    return res.status(403).json({ error: "Forbidden: Category ownership verification failed" });
+                }
+            }
             // Ownership check built into updateRecurringExpense
             const expense = await storage.updateRecurringExpense(id, req.user.id, validated);
             if (!expense) {
@@ -239,6 +253,14 @@ export function registerBudgetRoutes(app: Express) {
             if (id === null) return res.status(400).json({ error: "Invalid id" });
 
             const validated = insertPlannedExpenseSchema.partial().parse(req.body);
+
+            // Verify ownership of new category if updated
+            if (validated.categoryId) {
+                const category = await storage.getCategory(validated.categoryId);
+                if (!category || !checkOwnership(category.userId, req.user.id)) {
+                    return res.status(403).json({ error: "Forbidden: Category ownership verification failed" });
+                }
+            }
             // Ownership check built into updatePlannedExpense
             const expense = await storage.updatePlannedExpense(id, req.user.id, validated);
             if (!expense) {
