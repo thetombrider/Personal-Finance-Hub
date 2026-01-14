@@ -33,16 +33,16 @@ export function CategoryTrendChart({
             <CardHeader>
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                        <CardTitle>Andamento Categoria</CardTitle>
+                        <CardTitle>Category Trend</CardTitle>
                         <CardDescription>
                             {selectedCategoryForTrend
-                                ? `Totale mensile ${selectedCategoryForTrend.type === 'income' ? 'entrate' : 'spese'}: ${selectedCategoryForTrend.name}`
-                                : 'Seleziona una categoria per vedere il trend'}
+                                ? `Monthly total ${selectedCategoryForTrend.type === 'income' ? 'income' : 'expenses'}: ${selectedCategoryForTrend.name}`
+                                : 'Select a category to see the trend'}
                         </CardDescription>
                     </div>
                     <Select value={categoryTrendId} onValueChange={setCategoryTrendId}>
                         <SelectTrigger className="w-[200px]" data-testid="select-category-trend">
-                            <SelectValue placeholder="Seleziona categoria" />
+                            <SelectValue placeholder="Select category" />
                         </SelectTrigger>
                         <SelectContent>
                             {categories.filter(c => c.name.toLowerCase() !== 'trasferimenti').map(cat => (
@@ -99,7 +99,7 @@ export function CategoryTrendChart({
                         </ResponsiveContainer>
                     ) : (
                         <div className="h-full flex items-center justify-center text-muted-foreground">
-                            {categoryTrendId ? 'Nessun dato disponibile' : 'Seleziona una categoria per vedere l\'andamento'}
+                            {categoryTrendId ? 'No data available' : 'Select a category to see the trend'}
                         </div>
                     )}
                 </div>

@@ -128,19 +128,19 @@ export function BankLinkModal({ isOpen, onClose, initialInstitutionId }: BankLin
             <DialogContent className="max-w-fit w-auto gap-6 min-w-[400px]">
                 <DialogHeader>
                     <DialogTitle>
-                        {initialInstitutionId ? "Rinnovo Connessione" : "Collega Conto Bancario"}
+                        {initialInstitutionId ? "Renew Connection" : "Connect Bank Account"}
                     </DialogTitle>
                     <DialogDescription>
                         {initialInstitutionId
-                            ? "Reindirizzamento alla tua banca per il rinnovo del consenso..."
-                            : "Seleziona la tua banca per connettere il conto via GoCardless."}
+                            ? "Redirecting to your bank for connection renewal..."
+                            : "Select your bank to connect your account via GoCardless."}
                     </DialogDescription>
                 </DialogHeader>
 
                 {initialInstitutionId ? (
                     <div className="h-[200px] flex flex-col items-center justify-center space-y-4">
                         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                        <p className="text-sm text-muted-foreground">In attesa della banca...</p>
+                        <p className="text-sm text-muted-foreground">Waiting for the bank...</p>
                     </div>
                 ) : (
                     <div className="grid gap-6 py-2">
@@ -162,11 +162,11 @@ export function BankLinkModal({ isOpen, onClose, initialInstitutionId }: BankLin
                             </div>
 
                             <div className="grid w-full sm:w-2/3 gap-1.5">
-                                <span className="text-sm font-medium">Cerca Banca</span>
+                                <span className="text-sm font-medium">Search Bank</span>
                                 <div className="relative">
                                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                                     <Input
-                                        placeholder="Cerca per nome..."
+                                        placeholder="Search by name..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                         className="pl-9"
@@ -205,12 +205,12 @@ export function BankLinkModal({ isOpen, onClose, initialInstitutionId }: BankLin
                                         ))}
                                         {filteredInstitutions.length === 0 && institutions.length > 0 && (
                                             <div className="col-span-full text-center py-12 text-muted-foreground text-sm">
-                                                Nessuna banca trovata per "{searchQuery}"
+                                                No banks found for "{searchQuery}"
                                             </div>
                                         )}
                                         {institutions.length === 0 && (
                                             <div className="col-span-full text-center py-12 text-muted-foreground text-sm">
-                                                Nessuna banca trovata.
+                                                No banks found.
                                             </div>
                                         )}
                                     </div>
@@ -222,7 +222,7 @@ export function BankLinkModal({ isOpen, onClose, initialInstitutionId }: BankLin
 
                 <DialogFooter>
                     <Button variant="ghost" onClick={onClose} disabled={connecting && !!initialInstitutionId}>
-                        Annulla
+                        Cancel
                     </Button>
                 </DialogFooter>
             </DialogContent>

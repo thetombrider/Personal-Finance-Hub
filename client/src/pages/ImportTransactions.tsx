@@ -232,8 +232,8 @@ export default function ImportTransactions() {
         if (lower.includes('type') || lower.includes('tipo')) currentMapping.type = field;
         if (lower.includes('account') || lower.includes('conto')) currentMapping.account = field;
         if (lower.includes('category') || lower.includes('categoria')) currentMapping.category = field;
-        if (lower.includes('entrata') || lower.includes('income') || lower.includes('credit')) { currentMapping.incomeAmount = field; foundIncome = true; }
-        if (lower.includes('uscita') || lower.includes('expense') || lower.includes('debit')) { currentMapping.expenseAmount = field; foundExpense = true; }
+        if (lower.includes('income') || lower.includes('entrata')) { currentMapping.incomeAmount = field; foundIncome = true; }
+        if (lower.includes('expense') || lower.includes('uscita')) { currentMapping.expenseAmount = field; foundExpense = true; }
         if ((lower.includes('amount') || lower.includes('importo') || lower.includes('value')) && !currentMapping.amount) currentMapping.amount = field;
       });
 

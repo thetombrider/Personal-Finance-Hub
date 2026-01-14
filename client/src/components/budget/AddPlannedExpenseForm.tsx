@@ -49,18 +49,18 @@ export function AddPlannedExpenseForm({ onSuccess, categories, year, initialData
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['budget', year] });
-            toast({ title: isEditing ? "Spesa aggiornata" : "Spesa pianificata aggiunta" });
+            toast({ title: isEditing ? "Planned expense updated" : "Planned expense added" });
             onSuccess();
         },
         onError: (error) => {
             console.error("Mutation error:", error);
-            toast({ title: "Errore", description: error.message || "Impossibile salvare la spesa.", variant: "destructive" });
+            toast({ title: "Error", description: error.message || "Unable to save planned expense.", variant: "destructive" });
         }
     });
 
     const handleSubmit = () => {
         if (!name || !amount || !categoryId || !date) {
-            toast({ title: "Errore", description: "Compila tutti i campi obbligatori.", variant: "destructive" });
+            toast({ title: "Error", description: "Fill in all required fields.", variant: "destructive" });
             return;
         }
 
@@ -98,10 +98,10 @@ export function AddPlannedExpenseForm({ onSuccess, categories, year, initialData
             </div>
 
             <div className="space-y-2">
-                <Label>Categoria</Label>
+                <Label>Category</Label>
                 <Select value={categoryId} onValueChange={setCategoryId}>
                     <SelectTrigger>
-                        <SelectValue placeholder="Seleziona categoria" />
+                        <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent className="max-h-[200px]">
                         {categories.map(cat => (
@@ -118,7 +118,7 @@ export function AddPlannedExpenseForm({ onSuccess, categories, year, initialData
 
             <Button onClick={handleSubmit} className="w-full" disabled={mutation.isPending}>
                 {mutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isEditing ? "Salva Modifiche" : "Aggiungi"}
+                {isEditing ? "Save Changes" : "Add"}
             </Button>
         </div>
     );

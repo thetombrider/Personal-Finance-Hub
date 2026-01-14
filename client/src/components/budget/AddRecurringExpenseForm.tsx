@@ -52,18 +52,18 @@ export function AddRecurringExpenseForm({ onSuccess, categories, accounts, initi
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['budget'] });
-            toast({ title: isEditing ? "Spesa aggiornata" : "Spesa ricorrente aggiunta" });
+            toast({ title: isEditing ? "Expense updated" : "Recurring expense added" });
             onSuccess();
         },
         onError: (error) => {
             console.error("Mutation error:", error);
-            toast({ title: "Errore", description: error.message || "Impossibile salvare la spesa ricorrente.", variant: "destructive" });
+            toast({ title: "Error", description: error.message || "Unable to save the recurring expense.", variant: "destructive" });
         }
     });
 
     const handleSubmit = () => {
         if (!name || !amount || !categoryId || !accountId || !startDate) {
-            toast({ title: "Errore", description: "Compila tutti i campi obbligatori.", variant: "destructive" });
+            toast({ title: "Error", description: "Fill in all required fields.", variant: "destructive" });
             return;
         }
 
@@ -83,36 +83,36 @@ export function AddRecurringExpenseForm({ onSuccess, categories, accounts, initi
     return (
         <div className="space-y-4 pt-4">
             <div className="space-y-2">
-                <Label>Nome Spesa</Label>
+                <Label>Expense Name</Label>
                 <Input value={name} onChange={e => setName(e.target.value)} placeholder="Es. Netflix" />
             </div>
 
             <div className="space-y-2">
-                <Label>Pattern di Riconciliazione (Opzionale)</Label>
+                <Label>Reconciliation Pattern (Optional)</Label>
                 <Input
                     value={matchPattern}
                     onChange={e => setMatchPattern(e.target.value)}
-                    placeholder="Testo da cercare nella transazione (es. 'Netflix')"
+                    placeholder="Text to search in the transaction (e.g. 'Netflix')"
                 />
-                <p className="text-xs text-muted-foreground">Lascia vuoto per usare il nome della spesa.</p>
+                <p className="text-xs text-muted-foreground">Leave empty to use the expense name.</p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label>Importo (€)</Label>
+                    <Label>Amount (€)</Label>
                     <Input type="number" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00" />
                 </div>
                 <div className="space-y-2">
-                    <Label>Data Inizio</Label>
+                    <Label>Start Date</Label>
                     <Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
                 </div>
             </div>
 
             <div className="space-y-2">
-                <Label>Categoria</Label>
+                <Label>Category</Label>
                 <Select value={categoryId} onValueChange={setCategoryId}>
                     <SelectTrigger>
-                        <SelectValue placeholder="Seleziona categoria" />
+                        <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent className="max-h-[200px]">
                         {categories.map(cat => (
@@ -128,10 +128,10 @@ export function AddRecurringExpenseForm({ onSuccess, categories, accounts, initi
             </div>
 
             <div className="space-y-2">
-                <Label>Conto di Addebito</Label>
+                <Label>Debit Account</Label>
                 <Select value={accountId} onValueChange={setAccountId}>
                     <SelectTrigger>
-                        <SelectValue placeholder="Seleziona conto" />
+                        <SelectValue placeholder="Select account" />
                     </SelectTrigger>
                     <SelectContent className="max-h-[200px]">
                         {accounts.map(acc => (

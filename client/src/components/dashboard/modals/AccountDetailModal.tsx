@@ -50,7 +50,7 @@ export function AccountDetailModal({
                 </DialogHeader>
                 <div className="mt-4 flex-1 overflow-y-auto">
                     {filteredAccounts.length === 0 ? (
-                        <p className="text-muted-foreground text-center py-4">Nessun conto disponibile</p>
+                        <p className="text-muted-foreground text-center py-4">No accounts available</p>
                     ) : (
                         <>
                             <div className={detailModal === 'total' ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pr-2" : "space-y-3"}>
@@ -93,10 +93,6 @@ export function AccountDetailModal({
                                     </div>
                                 ))}
                             </div>
-                            <div className="border-t pt-3 mt-3 flex justify-between items-center">
-                                <span className="font-medium">Totale</span>
-                                <span className="text-xl font-bold">{formatCurrency(total)}</span>
-                            </div>
                             {detailModal === 'investments' && (
                                 <Button
                                     className="w-full mt-4"
@@ -118,6 +114,6 @@ export function AccountDetailModal({
                     </Button>
                 </DialogFooter>
             </DialogContent>
-        </Dialog>
+        </Dialog >
     );
 }

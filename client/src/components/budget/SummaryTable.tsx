@@ -18,8 +18,8 @@ interface SummaryTableProps {
 
 export function SummaryTable({ categories, budgetData, monthRange }: SummaryTableProps) {
     const allMonths = [
-        "Gen", "Feb", "Mar", "Apr", "Mag", "Giu",
-        "Lug", "Ago", "Set", "Ott", "Nov", "Dic"
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
     ];
 
     const visibleMonths = allMonths.slice(monthRange[0], monthRange[1]);
@@ -44,26 +44,26 @@ export function SummaryTable({ categories, budgetData, monthRange }: SummaryTabl
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Riepilogo Budget Annuale</CardTitle>
+                <CardTitle>Annual Budget</CardTitle>
             </CardHeader>
             <CardContent>
                 <div className="rounded-md border w-full">
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="w-[15%] font-bold">Categoria</TableHead>
+                                <TableHead className="w-[15%] font-bold">Category</TableHead>
                                 {visibleMonths.map((month) => (
                                     <TableHead key={month} className="text-right w-auto md:w-[10%] p-2">
                                         {month}
                                     </TableHead>
                                 ))}
-                                <TableHead className="text-right font-bold w-[15%] p-2">Totale Anno</TableHead>
+                                <TableHead className="text-right font-bold w-[15%] p-2">Yearly Total</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {/* INCOME SECTION */}
                             <TableRow className="bg-muted/30">
-                                <TableCell colSpan={visibleMonths.length + 2} className="font-bold py-2">ENTRATE</TableCell>
+                                <TableCell colSpan={visibleMonths.length + 2} className="font-bold py-2">Income</TableCell>
                             </TableRow>
                             {categories.filter(c => c.type === 'income').map((category) => (
                                 <TableRow key={category.id}>
@@ -92,7 +92,7 @@ export function SummaryTable({ categories, budgetData, monthRange }: SummaryTabl
                                 </TableRow>
                             ))}
                             <TableRow className="bg-green-50/50 font-bold border-t-2 border-green-100">
-                                <TableCell className="text-green-700">TOTALE ENTRATE</TableCell>
+                                <TableCell className="text-green-700">Total Income</TableCell>
                                 {visibleMonths.map((_, index) => {
                                     const monthDataIndex = startMonthIndex + index + 1;
                                     return (
@@ -136,7 +136,7 @@ export function SummaryTable({ categories, budgetData, monthRange }: SummaryTabl
                                 </TableRow>
                             ))}
                             <TableRow className="bg-red-50/50 font-bold border-t-2 border-red-100">
-                                <TableCell className="text-red-700">TOTALE USCITE</TableCell>
+                                <TableCell className="text-red-700">Total Expenses</TableCell>
                                 {visibleMonths.map((_, index) => {
                                     const monthDataIndex = startMonthIndex + index + 1;
                                     return (
@@ -152,7 +152,7 @@ export function SummaryTable({ categories, budgetData, monthRange }: SummaryTabl
 
                             {/* NET ROW */}
                             <TableRow className="bg-muted/80 font-bold border-t-4 border-double">
-                                <TableCell>BILANCIO PREVISTO</TableCell>
+                                <TableCell>Expected Balance</TableCell>
                                 {visibleMonths.map((_, index) => {
                                     const monthDataIndex = startMonthIndex + index + 1;
                                     const income = categories.filter(c => c.type === 'income').reduce((sum, cat) => sum + (budgetData[cat.id]?.[monthDataIndex]?.total || 0), 0);

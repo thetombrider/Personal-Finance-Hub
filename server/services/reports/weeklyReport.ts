@@ -42,7 +42,7 @@ export async function getWeeklyReportData(storage: IStorage, marketDataService: 
 
     // Calculate actual balance
     const balances = await calculateAccountBalances(accounts, transactions);
-    const totalBalance = balances.assets + balances.liabilities;
+
 
     // Credit Cards
     const creditCardAccounts = accounts.filter(a => a.type === 'credit');
@@ -150,7 +150,7 @@ export async function getWeeklyReportData(storage: IStorage, marketDataService: 
     return {
         startDate: oneWeekAgo.toLocaleDateString('it-IT', { day: 'numeric', month: 'long' }),
         endDate: now.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' }),
-        totalBalance,
+        netWorth: (balances.assets - balances.liabilities) + portfolioTotalValue,
         totalIncome,
         totalExpense,
         balanceChange: totalIncome - totalExpense,

@@ -76,8 +76,8 @@ export function generateWeeklyReportHtml(data: WeeklyReportData): string {
     <p class="subtitle">${escapeHtml(data.startDate)} - ${escapeHtml(data.endDate)}</p>
     
     <div class="balance-card">
-      <div class="balance-label">Saldo Totale Conti</div>
-      <div class="balance-value">${formatEur(data.totalBalance)}</div>
+      <div class="balance-label">Patrimonio Netto</div>
+      <div class="balance-value">${formatEur(data.netWorth)}</div>
     </div>
     
     ${data.top5Expenses.length > 0 ? `
@@ -85,10 +85,10 @@ export function generateWeeklyReportHtml(data: WeeklyReportData): string {
     <table class="expense-table">
       <thead>
         <tr>
-          <th>Descrizione</th>
-          <th>Conto</th>
-          <th>Categoria</th>
-          <th style="text-align: right;">Importo</th>
+          <th>Description</th>
+          <th>Account</th>
+          <th>Category</th>
+          <th style="text-align: right;">Amount</th>
         </tr>
       </thead>
       <tbody>

@@ -96,9 +96,9 @@ export function BaselineTable({ categories, budgetData, onUpdateBaseline, monthR
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Baseline Mensili</CardTitle>
+                <CardTitle>Monthly Baseline</CardTitle>
                 <p className="text-sm text-muted-foreground">
-                    Imposta il budget base per ogni categoria. Premi invio o clicca fuori per salvare.
+                    Set the monthly baseline for each category. Press enter or click outside to save.
                 </p>
             </CardHeader>
             <CardContent>
@@ -106,7 +106,7 @@ export function BaselineTable({ categories, budgetData, onUpdateBaseline, monthR
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="w-[15%]">Categoria</TableHead>
+                                <TableHead className="w-[15%]">Category</TableHead>
                                 {visibleMonths.map((month) => (
                                     <TableHead key={month} className="text-right w-auto md:w-[12%] p-2">
                                         {month}
@@ -117,7 +117,7 @@ export function BaselineTable({ categories, budgetData, onUpdateBaseline, monthR
                         <TableBody>
                             {/* INCOME SECTION */}
                             <TableRow className="bg-muted/30">
-                                <TableCell colSpan={visibleMonths.length + 1} className="font-bold py-2">ENTRATE</TableCell>
+                                <TableCell colSpan={visibleMonths.length + 1} className="font-bold py-2">Income</TableCell>
                             </TableRow>
                             {categories.filter(c => c.type === 'income').map((category) => (
                                 <TableRow key={category.id}>

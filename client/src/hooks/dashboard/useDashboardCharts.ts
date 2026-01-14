@@ -337,11 +337,11 @@ export function useDashboardCharts({
     const netWorthByTypeData = useMemo(() => {
         const typeMap = new Map<string, { value: number; gain: number; loss: number; invested: number }>();
         const typeLabels: Record<string, string> = {
-            'checking': 'Conto Corrente',
-            'savings': 'Risparmi',
-            'credit': 'Credito',
-            'investment': 'Investimenti',
-            'cash': 'Contanti'
+            'checking': 'Checking',
+            'savings': 'Savings',
+            'credit': 'Credit',
+            'investment': 'Investments',
+            'cash': 'Cash'
         };
 
         // Initialize map
@@ -394,7 +394,7 @@ export function useDashboardCharts({
                     base: stats.value,
                     gain: stats.gain,
                     loss: stats.loss,
-                    totalDisplay: name === 'Investimenti' && portfolioSummary ? portfolioSummary.totalCurrentValue : stats.value
+                    totalDisplay: name === 'Investments' && portfolioSummary ? portfolioSummary.totalCurrentValue : stats.value
                 };
             })
             .filter(item => item.base > 0 || item.gain > 0 || item.loss > 0)

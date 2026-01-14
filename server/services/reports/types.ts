@@ -2,7 +2,7 @@
 export interface WeeklyReportData {
     startDate: string;
     endDate: string;
-    totalBalance: number;
+    netWorth: number;
     totalIncome: number;
     totalExpense: number;
     balanceChange: number;

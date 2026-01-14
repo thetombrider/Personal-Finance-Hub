@@ -49,28 +49,28 @@ export function PlannedExpensesTable({
     return (
         <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-lg">Spese Pianificate (Extra)</CardTitle>
+                <CardTitle className="text-lg">Planned Expenses (Extra)</CardTitle>
                 <Button onClick={onAdd} size="sm">
                     <Plus className="w-4 h-4 mr-2" />
-                    Aggiungi
+                    Add
                 </Button>
             </CardHeader>
             <CardContent>
                 {expenses.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
                         <CalendarClock className="w-8 h-8 mx-auto mb-2 opacity-20" />
-                        <p>Nessuna spesa extra pianificata.</p>
+                        <p>No extra planned expenses.</p>
                     </div>
                 ) : (
                     <div className="rounded-md border w-full">
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Data</TableHead>
-                                    <TableHead>Nome</TableHead>
-                                    <TableHead>Categoria</TableHead>
-                                    <TableHead className="text-right">Importo</TableHead>
-                                    <TableHead className="text-right">Azioni</TableHead>
+                                    <TableHead>Date</TableHead>
+                                    <TableHead>Name</TableHead>
+                                    <TableHead>Category</TableHead>
+                                    <TableHead className="text-right">Amount</TableHead>
+                                    <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>

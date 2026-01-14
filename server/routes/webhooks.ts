@@ -214,12 +214,12 @@ export function registerWebhookRoutes(app: Express) {
 
         if (webhook.type === 'tally') {
             instructions.expectedFields = [
-                "Date (or Data) - DD/MM/YYYY format",
-                "Descrizione (or Description) - transaction description",
-                "Importo Entrata - income amount",
-                "Importo Uscita - expense amount",
-                "Conto (or Account) - account name",
-                "Categoria (or Category) - category name"
+                "Date - DD/MM/YYYY format",
+                "Description - transaction description",
+                "Income Amount - income amount",
+                "Expense Amount - expense amount",
+                "Account - account name",
+                "Category - category name"
             ];
         } else if (webhook.type === 'generic') {
             instructions.expectedJson = {

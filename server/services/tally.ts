@@ -85,12 +85,12 @@ export class TallyProcessor implements WebhookProcessor {
         };
 
         // Extract fields
-        const dateField = getField(/^data$/i);
-        const descriptionField = getField(/^(causale|descrizione|description)$/i);
-        const categoryField = getField(/^categoria$/i);
-        const accountField = getField(/^conto$/i);
-        const directionField = getField(/^direzione$/i);
-        const incomeAmountField = getField(/^importo\s*entrata$/i);
+        const dateField = getField(/^date$/i);
+        const descriptionField = getField(/^(description)$/i);
+        const categoryField = getField(/^category$/i);
+        const accountField = getField(/^account$/i);
+        const directionField = getField(/^direction$/i);
+        const incomeAmountField = getField(/^income_amount$/i);
         const expenseAmountField = getField(/^importo\s*uscita$/i);
 
         // Get values

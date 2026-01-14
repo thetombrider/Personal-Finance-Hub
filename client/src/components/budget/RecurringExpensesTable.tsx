@@ -48,29 +48,29 @@ export function RecurringExpensesTable({
     return (
         <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-lg">Spese Ricorrenti</CardTitle>
+                <CardTitle className="text-lg">Recurring Expenses</CardTitle>
                 <Button onClick={onAdd} size="sm">
                     <Plus className="w-4 h-4 mr-2" />
-                    Aggiungi
+                    Add
                 </Button>
             </CardHeader>
             <CardContent>
                 {expenses.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
                         <RefreshCw className="w-8 h-8 mx-auto mb-2 opacity-20" />
-                        <p>Nessuna spesa ricorrente impostata.</p>
+                        <p>No recurring expenses set.</p>
                     </div>
                 ) : (
                     <div className="rounded-md border w-full">
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Nome</TableHead>
-                                    <TableHead>Categoria</TableHead>
-                                    <TableHead className="text-right">Importo</TableHead>
-                                    <TableHead>Frequenza</TableHead>
-                                    <TableHead>Inizio</TableHead>
-                                    <TableHead>Stato</TableHead>
+                                    <TableHead>Name</TableHead>
+                                    <TableHead>Category</TableHead>
+                                    <TableHead className="text-right">Amount</TableHead>
+                                    <TableHead>Frequency</TableHead>
+                                    <TableHead>Start Date</TableHead>
+                                    <TableHead>Status</TableHead>
                                     <TableHead className="text-right">Azioni</TableHead>
                                 </TableRow>
                             </TableHeader>
