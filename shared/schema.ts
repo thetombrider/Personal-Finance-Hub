@@ -192,6 +192,7 @@ export const importStaging = pgTable("import_staging", {
   externalId: varchar("external_id").unique(),
   suggestedCategoryId: integer("suggested_category_id"),
   rawData: jsonb("raw_data"),
+  status: text("status").notNull().default("pending"), // pending, reconciled, dismissed
 });
 
 export const insertImportStagingSchema = createInsertSchema(importStaging).omit({ id: true });

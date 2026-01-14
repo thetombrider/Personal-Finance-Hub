@@ -181,6 +181,7 @@ export interface IStorage {
   createImportStaging(staging: InsertImportStaging): Promise<ImportStaging>;
   deleteImportStaging(id: number): Promise<void>;
   clearImportStaging(accountId: number): Promise<void>;
+  updateImportStagingStatus(id: number, status: string): Promise<void>;
 
   // Webhooks
   getWebhook(id: string): Promise<Webhook | undefined>;
@@ -897,6 +898,10 @@ export class DatabaseStorage implements IStorage {
 
   async clearImportStaging(accountId: number): Promise<void> {
     await db.delete(importStaging).where(eq(importStaging.accountId, accountId));
+  }
+
+  async updateImportStagingStatus(id: number, status: string): Promise<void> {
+    await db.update(importStaging).set({ status }).where(eq(importStaging.id, id));
   }
 
   // Webhooks

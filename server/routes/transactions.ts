@@ -34,7 +34,8 @@ export function registerTransactionRoutes(app: Express) {
             }
 
             const staged = await storage.getImportStaging(req.user.id, accountId);
-            res.json(staged);
+            const pending = staged.filter(s => s.status === 'pending');
+            res.json(pending);
         } catch (error) {
             res.status(500).json({ error: "Failed to fetch staged transactions" });
         }
@@ -90,8 +91,8 @@ export function registerTransactionRoutes(app: Express) {
                 externalId: staged.externalId,
             });
 
-            // 3. Delete from staging
-            await storage.deleteImportStaging(id);
+            // 3. Update staging status
+            await storage.updateImportStagingStatus(id, "reconciled");
 
             res.status(201).json(transaction);
         } catch (error) {
@@ -114,7 +115,7 @@ export function registerTransactionRoutes(app: Express) {
                 return res.status(404).json({ error: "Staged transaction not found" });
             }
 
-            await storage.deleteImportStaging(id);
+            await storage.updateImportStagingStatus(id, "dismissed");
             res.status(204).send();
         } catch (error) {
             res.status(500).json({ error: "Failed to delete staged transaction" });
