@@ -79,7 +79,8 @@ export default function Dashboard() {
     currentYearBudget,
     previousYearBudget,
     nextYearBudget,
-    currentYear
+    currentYear,
+    totalBalance: stats.totalBalance
   });
 
   return (

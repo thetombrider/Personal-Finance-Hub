@@ -17,6 +17,7 @@ interface UseDashboardChartsProps {
     previousYearBudget: any;
     nextYearBudget: any;
     currentYear: number;
+    totalBalance: number;
 }
 
 export function useDashboardCharts({
@@ -32,7 +33,8 @@ export function useDashboardCharts({
     currentYearBudget,
     previousYearBudget,
     nextYearBudget,
-    currentYear
+    currentYear,
+    totalBalance
 }: UseDashboardChartsProps) {
 
     // Find transfer category to exclude from income/expense calculations
@@ -414,10 +416,9 @@ export function useDashboardCharts({
         const today = new Date();
         const firstOfCurrentMonth = startOfMonth(today);
 
-        // Calculate starting balance at the beginning of the CURRENT month
-        // current balance - current month income + current month expenses
-        const currentBalance = accounts.reduce((sum, acc) => sum + Number(acc.balance), 0);
-        let accumulatedNetWorth = currentBalance - globalMonthlyStats.income + globalMonthlyStats.expense;
+        // Calculate starting balance using totalBalance (which includes investment market value)
+        // Reset to start of month by reversing current month's flow
+        let accumulatedNetWorth = totalBalance - globalMonthlyStats.income + globalMonthlyStats.expense;
 
         // Point 0: Start of current month
         data.push({
