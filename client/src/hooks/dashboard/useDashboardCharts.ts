@@ -15,6 +15,7 @@ interface UseDashboardChartsProps {
     categoryTrendId: string;
     currentYearBudget: any;
     previousYearBudget: any;
+    nextYearBudget: any;
     currentYear: number;
 }
 
@@ -30,6 +31,7 @@ export function useDashboardCharts({
     categoryTrendId,
     currentYearBudget,
     previousYearBudget,
+    nextYearBudget,
     currentYear
 }: UseDashboardChartsProps) {
 
@@ -41,7 +43,7 @@ export function useDashboardCharts({
 
     // Helper to get budget for a specific month, year, and type
     const getMonthlyBudgetTotal = useCallback((monthIndex: number, year: number, type: 'income' | 'expense') => {
-        const budgetSource = year === currentYear ? currentYearBudget : (year === currentYear - 1 ? previousYearBudget : null);
+        const budgetSource = year === currentYear ? currentYearBudget : (year === currentYear - 1 ? previousYearBudget : (year === currentYear + 1 ? nextYearBudget : null));
         if (!budgetSource || !budgetSource.budgetData) return 0;
 
         let total = 0;
@@ -406,6 +408,35 @@ export function useDashboardCharts({
             });
     }, [accounts, portfolioSummary]);
 
+    // Net Worth projection for the next 12 months
+    const netWorthProjectionData = useMemo(() => {
+        const data = [];
+        const today = new Date();
+
+        // Start from current net worth
+        let accumulatedNetWorth = accounts.reduce((sum, acc) => sum + Number(acc.balance), 0);
+
+        // Loop 12 months ahead starting from NEXT month
+        for (let i = 1; i <= 12; i++) {
+            const date = new Date(today.getFullYear(), today.getMonth() + i, 1);
+            const year = date.getFullYear();
+            const monthIndex = date.getMonth() + 1; // 1-12
+
+            const budgetedIncome = getMonthlyBudgetTotal(monthIndex, year, 'income');
+            const budgetedExpense = getMonthlyBudgetTotal(monthIndex, year, 'expense');
+            const monthlyNet = budgetedIncome - budgetedExpense;
+
+            accumulatedNetWorth += monthlyNet;
+
+            data.push({
+                name: format(date, 'MMM yy'),
+                netWorth: accumulatedNetWorth
+            });
+        }
+
+        return data;
+    }, [accounts, getMonthlyBudgetTotal]);
+
     return {
         globalMonthlyStats,
         chartData,
@@ -415,6 +446,7 @@ export function useDashboardCharts({
         budgetExpenseComparisonData,
         budgetIncomeComparisonData,
         netWorthByTypeData,
+        netWorthProjectionData,
         selectedCategoryForTrend
     };
 }

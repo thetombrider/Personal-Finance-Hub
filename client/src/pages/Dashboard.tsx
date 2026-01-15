@@ -16,6 +16,7 @@ import { CashFlowChart } from "@/components/dashboard/charts/CashFlowChart";
 import { SpendingBreakdownChart } from "@/components/dashboard/charts/SpendingBreakdownChart";
 import { BudgetComparisonChart } from "@/components/dashboard/charts/BudgetComparisonChart";
 import { CategoryTrendChart } from "@/components/dashboard/charts/CategoryTrendChart";
+import { NetWorthProjectionChart } from "@/components/dashboard/charts/NetWorthProjectionChart";
 
 export default function Dashboard() {
   const { accounts, transactions, categories, formatCurrency } = useFinance();
@@ -47,6 +48,15 @@ export default function Dashboard() {
     enabled: timeRange === "12" // Only fetch previous year if viewing 12 months
   });
 
+  const { data: nextYearBudget } = useQuery({
+    queryKey: ['budget', currentYear + 1],
+    queryFn: async () => {
+      const res = await fetch(`/api/budget/${currentYear + 1}`);
+      if (!res.ok) throw new Error('Failed to fetch budget');
+      return res.json();
+    }
+  });
+
   const { portfolioSummary, trades } = usePortfolioStats();
 
   // Custom Hooks
@@ -68,6 +78,7 @@ export default function Dashboard() {
     categoryTrendId,
     currentYearBudget,
     previousYearBudget,
+    nextYearBudget,
     currentYear
   });
 
@@ -101,15 +112,15 @@ export default function Dashboard() {
           setDetailModal={setDetailModal}
         />
 
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2">
           <NetWorthEvolutionChart
             data={charts.netWorthData}
             totalBalance={stats.totalBalance}
             privacyMode={privacyMode}
             formatCurrency={formatCurrency}
           />
-          <WealthDistributionChart
-            data={charts.netWorthByTypeData}
+          <NetWorthProjectionChart
+            data={charts.netWorthProjectionData}
             privacyMode={privacyMode}
             formatCurrency={formatCurrency}
           />
@@ -121,11 +132,18 @@ export default function Dashboard() {
             privacyMode={privacyMode}
             formatCurrency={formatCurrency}
           />
-          <SpendingBreakdownChart
-            data={charts.categoryData}
-            privacyMode={privacyMode}
-            formatCurrency={formatCurrency}
-          />
+          <div className="md:col-span-3 space-y-6">
+            <WealthDistributionChart
+              data={charts.netWorthByTypeData}
+              privacyMode={privacyMode}
+              formatCurrency={formatCurrency}
+            />
+            <SpendingBreakdownChart
+              data={charts.categoryData}
+              privacyMode={privacyMode}
+              formatCurrency={formatCurrency}
+            />
+          </div>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
