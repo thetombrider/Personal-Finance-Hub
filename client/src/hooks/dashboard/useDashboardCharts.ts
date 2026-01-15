@@ -412,12 +412,21 @@ export function useDashboardCharts({
     const netWorthProjectionData = useMemo(() => {
         const data = [];
         const today = new Date();
+        const firstOfCurrentMonth = startOfMonth(today);
 
-        // Start from current net worth
-        let accumulatedNetWorth = accounts.reduce((sum, acc) => sum + Number(acc.balance), 0);
+        // Calculate starting balance at the beginning of the CURRENT month
+        // current balance - current month income + current month expenses
+        const currentBalance = accounts.reduce((sum, acc) => sum + Number(acc.balance), 0);
+        let accumulatedNetWorth = currentBalance - globalMonthlyStats.income + globalMonthlyStats.expense;
 
-        // Loop 12 months ahead starting from NEXT month
-        for (let i = 1; i <= 12; i++) {
+        // Point 0: Start of current month
+        data.push({
+            name: "Start",
+            netWorth: accumulatedNetWorth
+        });
+
+        // Loop 12 months ahead starting from CURRENT month
+        for (let i = 0; i < 12; i++) {
             const date = new Date(today.getFullYear(), today.getMonth() + i, 1);
             const year = date.getFullYear();
             const monthIndex = date.getMonth() + 1; // 1-12
@@ -435,7 +444,7 @@ export function useDashboardCharts({
         }
 
         return data;
-    }, [accounts, getMonthlyBudgetTotal]);
+    }, [accounts, getMonthlyBudgetTotal, globalMonthlyStats]);
 
     return {
         globalMonthlyStats,
