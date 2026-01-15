@@ -1,5 +1,5 @@
 import { useMemo, useCallback } from "react";
-import { format, subMonths, startOfMonth, endOfMonth, getYear, parseISO, isSameMonth } from "date-fns";
+import { format, subMonths, startOfMonth, endOfMonth, getYear, parseISO, isSameMonth, getDaysInMonth, getDate } from "date-fns";
 import { Trade } from "@shared/schema";
 import { Account, Transaction, Category } from "@/context/FinanceContext";
 
@@ -414,13 +414,11 @@ export function useDashboardCharts({
     const netWorthProjectionData = useMemo(() => {
         const data = [];
         const today = new Date();
-        const firstOfCurrentMonth = startOfMonth(today);
 
-        // Calculate starting balance using totalBalance (which includes investment market value)
-        // Reset to start of month by reversing current month's flow
-        let accumulatedNetWorth = totalBalance - globalMonthlyStats.income + globalMonthlyStats.expense;
+        // Start from current actual Net Worth
+        let accumulatedNetWorth = totalBalance;
 
-        // Point 0: Start of current month
+        // Point 0: Current Status
         data.push({
             name: "Start",
             netWorth: accumulatedNetWorth
@@ -436,7 +434,18 @@ export function useDashboardCharts({
             const budgetedExpense = getMonthlyBudgetTotal(monthIndex, year, 'expense');
             const monthlyNet = budgetedIncome - budgetedExpense;
 
-            accumulatedNetWorth += monthlyNet;
+            if (i === 0) {
+                // For current month, apply only the remaining portion (pro rata)
+                const daysInMonth = getDaysInMonth(today);
+                const currentDay = getDate(today);
+                const remainingDays = Math.max(0, daysInMonth - currentDay);
+                const ratio = remainingDays / daysInMonth;
+
+                accumulatedNetWorth += monthlyNet * ratio;
+            } else {
+                // Future months get full budget impact
+                accumulatedNetWorth += monthlyNet;
+            }
 
             data.push({
                 name: format(date, 'MMM yy'),
@@ -445,7 +454,7 @@ export function useDashboardCharts({
         }
 
         return data;
-    }, [accounts, getMonthlyBudgetTotal, globalMonthlyStats]);
+    }, [accounts, getMonthlyBudgetTotal, totalBalance]);
 
     return {
         globalMonthlyStats,
