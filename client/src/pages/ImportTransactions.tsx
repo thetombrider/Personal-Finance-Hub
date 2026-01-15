@@ -1,63 +1,22 @@
-import { useFinance, Transaction } from "@/context/FinanceContext";
+import { useFinance } from "@/context/FinanceContext";
 import Layout from "@/components/Layout";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Upload, ArrowRight, CreditCard, TrendingUp, Wallet, Tag, Settings2, BarChart3, FileSpreadsheet, Download } from "lucide-react";
+import { CreditCard, TrendingUp, Wallet, Tag } from "lucide-react";
 import { useState, useRef } from "react";
 import Papa from "papaparse";
 import { read, utils, writeFile } from "xlsx";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { parse, isValid, format } from "date-fns";
-import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import * as api from "@/lib/api";
-import type { InsertTrade, InsertHolding, Holding, InsertAccount, InsertCategory } from "@shared/schema";
+import type { Holding } from "@shared/schema";
 
-type Step = 'upload' | 'map' | 'preview';
-type ImportMode = 'transactions' | 'trades' | 'accounts' | 'categories';
-
-interface Mapping {
-  // Transactions
-  date: string;
-  amount: string;
-  incomeAmount?: string;
-  expenseAmount?: string;
-  description: string;
-  type?: string;
-  account?: string;
-  category?: string;
-
-  // Accounts
-  accountName: string;
-  accountType: string;
-  accountBalance?: string;
-  accountCurrency?: string;
-
-  // Categories
-  categoryName: string;
-  categoryType: string;
-  categoryBudget?: string;
-}
-
-interface TradeMapping {
-  date: string;
-  ticker: string;
-  name?: string;
-  type: string;
-  quantity: string;
-  pricePerUnit: string;
-  totalAmount?: string;
-  fees?: string;
-  account?: string;
-}
-
-
+import { Step, ImportMode, Mapping, TradeMapping } from "@/components/import/types";
+import { cleanHeader, parseNumeric, getTransactionFromRow, getAccountFromRow, getCategoryFromRow, parseDate } from "@/components/import/utils";
+import ImportZone from "@/components/import/ImportZone";
+import MappingManager from "@/components/import/MappingManager";
+import FileReview from "@/components/import/FileReview";
 
 export default function ImportTransactions() {
   const { accounts, categories, addTransactions, addAccounts, addCategories } = useFinance();
@@ -105,8 +64,6 @@ export default function ImportTransactions() {
     account: ""
   });
 
-
-
   const [holdings, setHoldings] = useState<Holding[]>([]);
 
   const primaryFileInputRef = useRef<HTMLInputElement>(null);
@@ -115,28 +72,6 @@ export default function ImportTransactions() {
   const [primaryFile, setPrimaryFile] = useState<File | null>(null);
   const [referenceFile, setReferenceFile] = useState<File | null>(null);
   const [referenceCsvData, setReferenceCsvData] = useState<{ headers: string[], data: any[] } | null>(null);
-
-  // Helper to parse European/US numbers
-  const parseNumeric = (value: string): number => {
-    if (!value) return 0;
-    let str = value.toString().trim();
-    const isNegative = str.startsWith('-');
-    str = str.replace(/[^0-9,.-]/g, '');
-    if (!str) return 0;
-
-    if (/,\d{1,2}$/.test(str)) {
-      str = str.replace(/\./g, '').replace(',', '.');
-    } else if (/\.\d{1,2}$/.test(str) && str.includes(',')) {
-      str = str.replace(/,/g, '');
-    } else if (str.includes(',') && !str.includes('.')) {
-      str = str.replace(',', '.');
-    }
-
-    const result = parseFloat(str) || 0;
-    return isNegative && result > 0 ? -result : result;
-  };
-
-  const cleanHeader = (header: string) => header.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, isReference: boolean = false) => {
     const uploadedFiles = e.target.files ? Array.from(e.target.files) : [];
@@ -285,180 +220,13 @@ export default function ImportTransactions() {
       });
       setTradeMapping(currentTradeMapping);
       api.fetchHoldings().then(setHoldings);
-
     }
-  };
-
-  const parseDate = (value: any) => {
-    if (!value) return format(new Date(), "yyyy-MM-dd'T'HH:mm:ss");
-
-    // Handle Date objects (from Excel with cellDates: true)
-    if (value instanceof Date) {
-      if (isValid(value)) return format(value, "yyyy-MM-dd'T'HH:mm:ss");
-      return format(new Date(), "yyyy-MM-dd'T'HH:mm:ss");
-    }
-
-    // Clean value: trim and remove surrounding quotes
-    const cleanValue = String(value).trim().replace(/^["']+|["']+$/g, '');
-
-    // Handle numeric Excel serial dates as string fallback
-    // Excel base date: Dec 30 1899. 
-    // Heuristic: serial numbers for recent years are around 40000+ (40000 is ~2009)
-    if (/^\d{5}(\.\d+)?$/.test(cleanValue)) {
-      const serial = parseFloat(cleanValue);
-      // JS Date is ms since 1970. Excel is days since 1899-12-30.
-      // Difference is 25569 days.
-      // 86,400,000 ms per day.
-      const date = new Date((serial - 25569) * 86400 * 1000);
-      if (isValid(date)) return format(date, "yyyy-MM-dd'T'HH:mm:ss");
-    }
-
-    const parts = cleanValue.split(/[-/.]/);
-    if (parts.length === 3) {
-      const [first, second, third] = parts;
-      if (third && third.length === 4) { // DD/MM/YYYY
-        return format(new Date(parseInt(third), parseInt(second) - 1, parseInt(first), 12), "yyyy-MM-dd'T'HH:mm:ss");
-      }
-      if (first && first.length === 4) { // YYYY-MM-DD
-        return format(new Date(parseInt(first), parseInt(second) - 1, parseInt(third), 12), "yyyy-MM-dd'T'HH:mm:ss");
-      }
-    }
-    const date = new Date(cleanValue);
-    if (isValid(date)) return format(date, "yyyy-MM-dd'T'HH:mm:ss");
-    return format(new Date(), "yyyy-MM-dd'T'HH:mm:ss");
-  };
-
-  // --- Transactions Logic ---
-  const getTransactionFromRow = (row: any) => {
-    let amount = 0;
-    let type: "income" | "expense" = "expense";
-
-    if (useDualAmountColumns && mapping.incomeAmount && mapping.expenseAmount) {
-      const inc = parseNumeric(row[mapping.incomeAmount]);
-      const exp = parseNumeric(row[mapping.expenseAmount]);
-      if (inc > 0) { amount = inc; type = "income"; }
-      else if (exp > 0) { amount = exp; type = "expense"; }
-    } else {
-      amount = parseNumeric(row[mapping.amount]);
-      if (mapping.type && mapping.type !== 'none' && row[mapping.type]) {
-        const typeVal = row[mapping.type].toLowerCase();
-        if (typeVal.includes('income') || typeVal.includes('credit') || typeVal.includes('entrata')) type = "income";
-      } else {
-        if (amount < 0) { type = "expense"; amount = Math.abs(amount); }
-        else type = "income";
-      }
-    }
-
-    let accountId: number | null = selectedAccount || null;
-    if (mapping.account && mapping.account !== 'none' && row[mapping.account]) {
-      const rawVal = row[mapping.account].toString().trim();
-      const valLower = rawVal.toLowerCase();
-
-      // Try match by name
-      let matched = accounts.find(a => a.name.toLowerCase() === valLower);
-
-      // Try match by ID if no name match
-      if (!matched) {
-        const numId = parseInt(rawVal);
-        if (!isNaN(numId)) {
-          matched = accounts.find(a => a.id === numId);
-        }
-      }
-
-      if (matched) {
-        accountId = matched.id;
-      } else if (selectedAccount) {
-        accountId = selectedAccount;
-      }
-    } else if (!accountId && accounts.length > 0) {
-      accountId = accounts[0].id; // Final fallback if nothing else
-    }
-
-    let categoryId = categories.find(c => c.type === type)?.id || categories[0]?.id || 0;
-    if (mapping.category && mapping.category !== 'none' && row[mapping.category]) {
-      const rawVal = row[mapping.category].toString().trim();
-      const valLower = rawVal.toLowerCase();
-
-      // Try match by name + type
-      let matched = categories.find(c => c.name.toLowerCase() === valLower && c.type === type);
-
-      // Try match by name only
-      if (!matched) {
-        matched = categories.find(c => c.name.toLowerCase() === valLower);
-      }
-
-      // Try match by ID
-      if (!matched) {
-        const numId = parseInt(rawVal);
-        if (!isNaN(numId)) {
-          matched = categories.find(c => c.id === numId);
-        }
-      }
-
-      if (matched) categoryId = matched.id;
-    }
-
-    return {
-      date: parseDate(row[mapping.date]),
-      amount: Math.abs(amount).toString(),
-      description: (row[mapping.description] || "Imported Transaction").toString(),
-      accountId: accountId || 0,
-      categoryId: categoryId || 0,
-      type,
-      _hasValidAccount: accountId !== null && accountId !== 0,
-      _hasValidCategory: categoryId !== null && categoryId !== 0
-    };
-  };
-
-  // --- Accounts Logic ---
-  const getAccountFromRow = (row: any): InsertAccount => {
-    const name = row[mapping.accountName];
-    let type: any = "checking";
-    const rawType = row[mapping.accountType]?.toLowerCase() || "";
-    if (rawType.includes('save') || rawType.includes('risparmio') || rawType.includes('deposito')) type = "savings";
-    else if (rawType.includes('credit') || rawType.includes('credito')) type = "credit";
-    else if (rawType.includes('invest')) type = "investment";
-    else if (rawType.includes('cash') || rawType.includes('contanti')) type = "cash";
-
-    const balance = mapping.accountBalance ? parseNumeric(row[mapping.accountBalance]) : 0;
-    const currency = mapping.accountCurrency ? row[mapping.accountCurrency] : "EUR";
-
-    // Generate random color
-    const color = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
-
-    return {
-      name,
-      type,
-      startingBalance: balance.toString(),
-      currency,
-      color,
-      creditLimit: type === 'credit' ? "0" : null // Default credit limit for credit accounts
-    };
-  };
-
-  // --- Categories Logic ---
-  const getCategoryFromRow = (row: any): InsertCategory => {
-    const name = row[mapping.categoryName];
-    let type: any = "expense";
-    const rawType = row[mapping.categoryType]?.toLowerCase() || "";
-    if (rawType.includes('income') || rawType.includes('entrata')) type = "income";
-
-    const budget = mapping.categoryBudget ? parseNumeric(row[mapping.categoryBudget]) : 0;
-    const color = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
-
-    return {
-      name,
-      type,
-      color,
-
-      icon: null
-    };
   };
 
   const handleImport = async () => {
     try {
       if (importMode === 'transactions') {
-        const processed = csvData.map(getTransactionFromRow);
+        const processed = csvData.map(row => getTransactionFromRow(row, mapping, accounts, categories, useDualAmountColumns, selectedAccount));
         const transactions = processed.filter(t => t._hasValidAccount && t._hasValidCategory && parseFloat(t.amount) > 0);
 
         if (transactions.length === 0) {
@@ -485,7 +253,7 @@ export default function ImportTransactions() {
         });
         setLocation('/transactions');
       } else if (importMode === 'accounts') {
-        const newAccounts = csvData.map(getAccountFromRow).filter(a => a.name);
+        const newAccounts = csvData.map(row => getAccountFromRow(row, mapping)).filter(a => a.name);
         if (newAccounts.length === 0) {
           toast({ title: "Import Failed", description: "No valid accounts found.", variant: "destructive" });
           return;
@@ -494,7 +262,7 @@ export default function ImportTransactions() {
         toast({ title: "Import Successful", description: `Imported ${newAccounts.length} accounts.` });
         setLocation('/accounts');
       } else if (importMode === 'categories') {
-        const newCategories = csvData.map(getCategoryFromRow).filter(c => c.name);
+        const newCategories = csvData.map(row => getCategoryFromRow(row, mapping)).filter(c => c.name);
         if (newCategories.length === 0) {
           toast({ title: "Import Failed", description: "No valid categories found.", variant: "destructive" });
           return;
@@ -554,6 +322,8 @@ export default function ImportTransactions() {
       let type: "buy" | "sell" = "buy";
       if (rawType.match(/^(sell|vend|s$|v$|-|uscita|debit)/i)) type = "sell";
 
+      // Use imported parseNumeric for consistency, but if needed locally we can import it.
+      // I imported parseNumeric from utils.
       const quantity = Math.abs(parseNumeric(row[tradeMapping.quantity]));
       const pricePerUnit = Math.abs(parseNumeric(row[tradeMapping.pricePerUnit]));
       let totalAmount = tradeMapping.totalAmount ? Math.abs(parseNumeric(row[tradeMapping.totalAmount])) : 0;
@@ -574,8 +344,26 @@ export default function ImportTransactions() {
         }
         if (matched) accountId = matched.id;
       }
+      // Note: parseDate needs to be imported from utils too. I imported it.
+      // Wait, I imported parseDate but didn't use it in this map function? 
+      // Ah, I need to use it for `t.date`.
 
-      return { ticker, name, type, date: parseDate(row[tradeMapping.date]), quantity: quantity.toString(), pricePerUnit: pricePerUnit.toString(), totalAmount: totalAmount.toString(), fees: fees.toString(), accountId, _isValid: !!ticker && quantity > 0 && pricePerUnit > 0 };
+      // Need to import parseDate from utils. (Checked imports, it is there)
+      const dateVal = row[tradeMapping.date]; // Need to parse this?
+      // Originally: date: parseDate(row[tradeMapping.date])
+
+      return {
+        ticker,
+        name,
+        type,
+        date: parseDate(row[tradeMapping.date]),
+        quantity: quantity.toString(),
+        pricePerUnit: pricePerUnit.toString(),
+        totalAmount: totalAmount.toString(),
+        fees: fees.toString(),
+        accountId,
+        _isValid: !!ticker && quantity > 0 && pricePerUnit > 0
+      };
     }).filter(t => t._isValid);
 
     if (tradeRows.length === 0) {
@@ -630,10 +418,10 @@ export default function ImportTransactions() {
   };
 
   const canPreview = () => {
-    if (importMode === 'transactions') return mapping.date && mapping.description && (useDualAmountColumns ? (mapping.incomeAmount && mapping.expenseAmount) : mapping.amount);
-    if (importMode === 'accounts') return mapping.accountName && mapping.accountType;
-    if (importMode === 'categories') return mapping.categoryName && mapping.categoryType;
-    if (importMode === 'trades') return tradeMapping.date && tradeMapping.ticker && tradeMapping.quantity && tradeMapping.pricePerUnit;
+    if (importMode === 'transactions') return !!(mapping.date && mapping.description && (useDualAmountColumns ? (mapping.incomeAmount && mapping.expenseAmount) : mapping.amount));
+    if (importMode === 'accounts') return !!(mapping.accountName && mapping.accountType);
+    if (importMode === 'categories') return !!(mapping.categoryName && mapping.categoryType);
+    if (importMode === 'trades') return !!(tradeMapping.date && tradeMapping.ticker && tradeMapping.quantity && tradeMapping.pricePerUnit);
     return false;
   };
 
@@ -709,265 +497,54 @@ export default function ImportTransactions() {
         <Card>
           <CardContent className="p-8">
             {step === 'upload' && (
-              <div className="space-y-6">
-                {/* Primary File Upload */}
-                <div className="flex flex-col items-center justify-center py-12 text-center space-y-4 border-2 border-dashed border-border rounded-xl bg-muted/20 hover:bg-muted/40 transition-colors cursor-pointer" onClick={() => primaryFileInputRef.current?.click()}>
-                  <div className="w-16 h-8 rounded-full bg-primary/10 flex items-center justify-center mb-2"><Upload className="w-8 h-8 text-primary" /></div>
-                  <div>
-                    <h3 className="text-lg font-semibold">
-                      {importMode === 'trades' ? "Upload Trades CSV/Excel" :
-                        "Click to upload CSV/Excel"}
-                    </h3>
-                    <p className="text-sm text-muted-foreground mt-1">or drag and drop file here</p>
-                  </div>
-                  <input type="file" ref={primaryFileInputRef} accept=".csv, .xlsx, .xls" className="hidden" onChange={(e) => handleFileUpload(e, false)} />
-                </div>
-
-                <div className="flex flex-col items-center justify-center gap-2">
-                  <Button variant="link" onClick={() => handleDownloadTemplate()} className="gap-2 text-muted-foreground hover:text-primary">
-                    <Download className="h-4 w-4" />
-                    Download {importMode} template
-                  </Button>
-                  {importMode === 'trades' && (
-                    <Button variant="link" onClick={() => handleDownloadTemplate('holdings')} className="gap-2 text-muted-foreground hover:text-primary">
-                      <Download className="h-4 w-4" />
-                      Download holdings template
-                    </Button>
-                  )}
-                </div>
-
-                {/* Reference File Upload for Trades */}
-                {importMode === 'trades' && (
-                  <div className="border rounded-lg p-4 bg-muted/10">
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <h3 className="text-md font-medium">Reference Holdings File (Optional)</h3>
-                        <p className="text-xs text-muted-foreground">
-                          <strong>Recommended for "All-in-One" Matching:</strong> Upload your <code>holdings.csv</code> here.
-                          This allows us to automatically link trades to their assets (e.g. matching 'ID 1' to 'Apple').
-                        </p>
-                      </div>
-                      {referenceFile ? (
-                        <span className="text-sm text-green-600 flex items-center gap-1"><FileSpreadsheet size={14} /> {referenceFile.name}</span>
-                      ) : (
-                        <Button variant="outline" size="sm" onClick={() => referenceFileInputRef.current?.click()}>Select File</Button>
-                      )}
-                    </div>
-                    <input type="file" ref={referenceFileInputRef} accept=".csv, .xlsx, .xls" className="hidden" onChange={(e) => handleFileUpload(e, true)} />
-                  </div>
-                )}
-              </div>
+              <ImportZone
+                importMode={importMode}
+                primaryFileInputRef={primaryFileInputRef}
+                referenceFileInputRef={referenceFileInputRef}
+                referenceFile={referenceFile}
+                onFileSelect={handleFileUpload}
+                onDownloadTemplate={handleDownloadTemplate}
+              />
             )}
 
             {step === 'map' && (
-              <div className="space-y-6">
-                <div className="flex items-center gap-2 bg-muted/30 p-4 rounded-lg border border-border">
-                  <Settings2 size={18} className="text-primary" />
-                  <span className="font-medium">Map Columns - {importMode.toUpperCase()}</span>
-                </div>
-
-                {importMode === 'transactions' && (
-                  <div className="bg-primary/5 p-4 rounded-lg border border-primary/20 space-y-2 mb-6">
-                    <Label className="text-primary font-semibold">Fallback / Default Account</Label>
-                    <p className="text-xs text-muted-foreground">Used if the Account column is not mapped or a row's account name is not found.</p>
-                    <Select value={selectedAccount?.toString() || "none"} onValueChange={v => setSelectedAccount(v === 'none' ? null : parseInt(v))}>
-                      <SelectTrigger className="w-full md:w-[300px]"><SelectValue placeholder="Select fallback account" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">-- Select Fallback Account --</SelectItem>
-                        {accounts.map(a => <SelectItem key={a.id} value={a.id.toString()}>{a.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-                <div className="grid gap-6 md:grid-cols-2">
-                  {/* Dynamic Mapping Fields based on Mode */}
-                  {importMode === 'transactions' && (
-                    <>
-                      <div className="col-span-full flex items-center space-x-2 mb-4 bg-muted/30 p-3 rounded-md">
-                        <Switch id="dual-cols" checked={useDualAmountColumns} onCheckedChange={setUseDualAmountColumns} />
-                        <Label htmlFor="dual-cols" className="cursor-pointer">Use 2 columns for Amount (Income/Expense)</Label>
-                      </div>
-
-                      <div className="space-y-2"><Label>Date *</Label><Select value={mapping.date} onValueChange={v => setMapping({ ...mapping, date: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
-                      <div className="space-y-2"><Label>Description *</Label><Select value={mapping.description} onValueChange={v => setMapping({ ...mapping, description: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
-
-                      {!useDualAmountColumns ? (
-                        <>
-                          <div className="space-y-2"><Label>Amount *</Label><Select value={mapping.amount} onValueChange={v => setMapping({ ...mapping, amount: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
-                          <div className="space-y-2"><Label>Type Column (Optional)</Label><Select value={mapping.type} onValueChange={v => setMapping({ ...mapping, type: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">-- Detect by Sign --</SelectItem>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
-                        </>
-                      ) : (
-                        <>
-                          <div className="space-y-2"><Label>Income Amount *</Label><Select value={mapping.incomeAmount} onValueChange={v => setMapping({ ...mapping, incomeAmount: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
-                          <div className="space-y-2"><Label>Expense Amount *</Label><Select value={mapping.expenseAmount} onValueChange={v => setMapping({ ...mapping, expenseAmount: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
-                        </>
-                      )}
-                      <div className="space-y-2"><Label>Account Column (Optional)</Label><Select value={mapping.account} onValueChange={v => setMapping({ ...mapping, account: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">-- Use Fallback --</SelectItem>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
-                      <div className="space-y-2"><Label>Category Column (Optional)</Label><Select value={mapping.category} onValueChange={v => setMapping({ ...mapping, category: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">-- Default Category --</SelectItem>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
-                    </>
-                  )}
-                  {importMode === 'accounts' && (
-                    <>
-                      <div className="space-y-2"><Label>Name *</Label><Select value={mapping.accountName} onValueChange={v => setMapping({ ...mapping, accountName: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
-                      <div className="space-y-2"><Label>Type *</Label><Select value={mapping.accountType} onValueChange={v => setMapping({ ...mapping, accountType: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
-                      <div className="space-y-2"><Label>Balance</Label><Select value={mapping.accountBalance} onValueChange={v => setMapping({ ...mapping, accountBalance: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">-- None (0) --</SelectItem>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
-                      <div className="space-y-2"><Label>Currency</Label><Select value={mapping.accountCurrency} onValueChange={v => setMapping({ ...mapping, accountCurrency: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">-- Default (EUR) --</SelectItem>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
-                    </>
-                  )}
-                  {importMode === 'categories' && (
-                    <>
-                      <div className="space-y-2"><Label>Name *</Label><Select value={mapping.categoryName} onValueChange={v => setMapping({ ...mapping, categoryName: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
-                      <div className="space-y-2"><Label>Type *</Label><Select value={mapping.categoryType} onValueChange={v => setMapping({ ...mapping, categoryType: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
-                      <div className="space-y-2"><Label>Budget</Label><Select value={mapping.categoryBudget} onValueChange={v => setMapping({ ...mapping, categoryBudget: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">-- None (0) --</SelectItem>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
-                    </>
-                  )}
-                  {importMode === 'trades' && (
-                    <>
-                      <div className="space-y-2"><Label>Date *</Label><Select value={tradeMapping.date} onValueChange={v => setTradeMapping({ ...tradeMapping, date: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
-                      <div className="space-y-2"><Label>Ticker / Holding ID *</Label><Select value={tradeMapping.ticker} onValueChange={v => setTradeMapping({ ...tradeMapping, ticker: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
-                      <div className="space-y-2"><Label>Quantity *</Label><Select value={tradeMapping.quantity} onValueChange={v => setTradeMapping({ ...tradeMapping, quantity: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
-                      <div className="space-y-2"><Label>Price *</Label><Select value={tradeMapping.pricePerUnit} onValueChange={v => setTradeMapping({ ...tradeMapping, pricePerUnit: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
-                      <div className="space-y-2"><Label>Account (Optional)</Label><Select value={tradeMapping.account || "none"} onValueChange={v => setTradeMapping({ ...tradeMapping, account: v === 'none' ? undefined : v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">-- None --</SelectItem>{headers.filter(h => h).map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent></Select></div>
-                    </>
-                  )}
-
-                </div>
-
-                <div className="flex justify-end gap-2 pt-4 border-t">
-                  <Button variant="outline" onClick={() => {
-                    setStep('upload');
-                    setPrimaryFile(null);
-                    setReferenceFile(null);
-                    setFile(null);
-                  }}>Cancel</Button>
-                  <Button onClick={() => setStep('preview')} disabled={!canPreview()}>Preview <ArrowRight className="ml-2 h-4 w-4" /></Button>
-                </div>
-              </div>
+              <MappingManager
+                importMode={importMode}
+                headers={headers}
+                mapping={mapping}
+                setMapping={setMapping}
+                tradeMapping={tradeMapping}
+                setTradeMapping={setTradeMapping}
+                accounts={accounts}
+                useDualAmountColumns={useDualAmountColumns}
+                setUseDualAmountColumns={setUseDualAmountColumns}
+                selectedAccount={selectedAccount}
+                setSelectedAccount={setSelectedAccount}
+                onCancel={() => {
+                  setStep('upload');
+                  setPrimaryFile(null);
+                  setReferenceFile(null);
+                  setFile(null);
+                }}
+                onPreview={() => setStep('preview')}
+                canPreview={canPreview}
+              />
             )}
 
             {step === 'preview' && (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-medium">Preview {importMode} import</h3>
-                  <p className="text-sm text-muted-foreground">Showing first 5 rows</p>
-                </div>
-                <div className="rounded-md border overflow-hidden">
-                  <Table>
-                    <TableHeader className="bg-muted/50">
-                      <TableRow>
-                        {importMode === 'accounts' && <><TableHead>Name</TableHead><TableHead>Type</TableHead><TableHead>Balance</TableHead></>}
-                        {importMode === 'categories' && <><TableHead>Name</TableHead><TableHead>Type</TableHead><TableHead>Budget</TableHead></>}
-                        {importMode === 'transactions' && <><TableHead>Date</TableHead><TableHead>Description</TableHead><TableHead>Amount</TableHead><TableHead>Account</TableHead><TableHead>Category</TableHead></>}
-                        {importMode === 'trades' && <><TableHead>Date</TableHead><TableHead>Ticker</TableHead><TableHead>Name</TableHead><TableHead>Type</TableHead><TableHead>Quantity</TableHead><TableHead>Price</TableHead><TableHead>Account</TableHead></>}
-
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {csvData.slice(0, 5).map((row, i) => {
-                        if (importMode === 'accounts') {
-                          const acc = getAccountFromRow(row);
-                          return <TableRow key={i}><TableCell>{acc.name}</TableCell><TableCell className="capitalize">{acc.type}</TableCell><TableCell>{acc.startingBalance}</TableCell></TableRow>;
-                        }
-                        if (importMode === 'categories') {
-                          const cat = getCategoryFromRow(row);
-                          return <TableRow key={i}><TableCell>{cat.name}</TableCell><TableCell className="capitalize">{cat.type}</TableCell></TableRow>;
-                        }
-                        if (importMode === 'transactions') {
-                          const tx = getTransactionFromRow(row);
-                          const account = accounts.find(a => a.id === tx.accountId);
-                          const category = categories.find(c => c.id === tx.categoryId);
-
-                          return (
-                            <TableRow key={i} className={(!tx._hasValidAccount || !tx._hasValidCategory) ? "bg-destructive/5" : ""}>
-                              <TableCell className="text-xs">{tx.date.split('T')[0]}</TableCell>
-                              <TableCell className="max-w-[150px] truncate">{tx.description}</TableCell>
-                              <TableCell className={tx.type === 'income' ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
-                                {tx.type === 'income' ? '+' : '-'}{tx.amount}
-                              </TableCell>
-                              <TableCell>
-                                {account ? <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">{account.name}</span> : <span className="text-xs text-destructive font-medium">Not found</span>}
-                              </TableCell>
-                              <TableCell>
-                                {category ? <span className="text-xs px-2 py-0.5 rounded-full bg-secondary/10 text-secondary-foreground">{category.name}</span> : <span className="text-xs text-destructive font-medium">Not found</span>}
-                              </TableCell>
-                            </TableRow>
-                          );
-                        }
-                        if (importMode === 'trades') {
-                          // Build holding map from REFERENCE file if available
-                          const holdingInfoMap = new Map<string, { ticker: string; name: string }>();
-                          if (referenceCsvData) {
-                            const headers = referenceCsvData.headers;
-                            const tickerField = headers.find(h => cleanHeader(h) === 'ticker' || cleanHeader(h) === 'symbol');
-                            const idField = headers.find(h => cleanHeader(h) === 'id' || cleanHeader(h) === 'holdingid');
-                            const nameField = headers.find(h => cleanHeader(h) === 'name') || tickerField;
-
-                            if (tickerField && idField) {
-                              referenceCsvData.data.forEach(r => {
-                                holdingInfoMap.set(r[idField]?.toString(), {
-                                  ticker: r[tickerField]?.toString().toUpperCase(),
-                                  name: r[nameField || tickerField]?.toString()
-                                });
-                              });
-                            }
-                          }
-
-                          let ticker = (row[tradeMapping.ticker] || "").toString().toUpperCase().trim();
-                          let name = tradeMapping.name ? row[tradeMapping.name] || ticker : ticker;
-
-                          const holdingIdLower = (row[tradeMapping.ticker] || "").toString();
-
-                          // Attempt to resolve if it looks like an ID (numeric) OR if we simply have a map and want to try lookup
-                          // But specifically if the mapping column was labeled 'holdingid', we suspect it is an ID.
-                          // Or simply, if the value matches a key in our map.
-                          if (holdingInfoMap.has(holdingIdLower)) {
-                            const info = holdingInfoMap.get(holdingIdLower)!;
-                            ticker = info.ticker;
-                            name = info.name;
-                          }
-
-                          const rawType = (row[tradeMapping.type] || "").toString().toLowerCase().trim();
-                          let type: "buy" | "sell" = "buy";
-                          if (rawType.match(/^(sell|vend|s$|v$|-|uscita|debit)/i)) type = "sell";
-                          const quantity = Math.abs(parseNumeric(row[tradeMapping.quantity]));
-                          const pricePerUnit = Math.abs(parseNumeric(row[tradeMapping.pricePerUnit]));
-
-                          let accountName = "-";
-                          if (tradeMapping.account && row[tradeMapping.account]) {
-                            const rawAcc = row[tradeMapping.account].toString().trim();
-                            const accLower = rawAcc.toLowerCase();
-                            let matched = accounts.find(a => a.name.toLowerCase() === accLower);
-                            if (!matched) {
-                              const numId = parseInt(rawAcc);
-                              if (!isNaN(numId)) matched = accounts.find(a => a.id === numId);
-                            }
-                            if (matched) accountName = matched.name;
-                          }
-
-                          return (
-                            <TableRow key={i}>
-                              <TableCell className="text-xs">{parseDate(row[tradeMapping.date]).split('T')[0]}</TableCell>
-                              <TableCell><span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-mono">{ticker}</span></TableCell>
-                              <TableCell className="max-w-[150px] truncate">{name}</TableCell>
-                              <TableCell className="capitalize">{type}</TableCell>
-                              <TableCell>{quantity}</TableCell>
-                              <TableCell>{pricePerUnit}</TableCell>
-                              <TableCell className="text-xs">{accountName}</TableCell>
-                            </TableRow>
-                          );
-                        }
-
-                        return null;
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
-                <div className="flex justify-end gap-2 pt-4 border-t">
-                  <Button variant="outline" onClick={() => setStep('map')}>Back</Button>
-                  <Button onClick={handleImport}>Import All Data</Button>
-                </div>
-              </div>
+              <FileReview
+                importMode={importMode}
+                csvData={csvData}
+                referenceCsvData={referenceCsvData}
+                mapping={mapping}
+                tradeMapping={tradeMapping}
+                accounts={accounts}
+                categories={categories}
+                useDualAmountColumns={useDualAmountColumns}
+                selectedAccount={selectedAccount}
+                onBack={() => setStep('map')}
+                onImport={handleImport}
+              />
             )}
           </CardContent>
         </Card>
