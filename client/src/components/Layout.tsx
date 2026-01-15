@@ -129,7 +129,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {/* Main Content */}
       <main className="flex-1 md:pl-64 pt-16 md:pt-0 min-h-screen">
-        <div className="max-w-7xl mx-auto p-4 md:p-8 animate-in fade-in duration-500">
+        <div className="w-full mx-auto p-4 md:p-8 animate-in fade-in duration-500">
           {children}
         </div>
       </main>
