@@ -106,23 +106,23 @@ export function generateWeeklyReportHtml(data: WeeklyReportData): string {
     
     <div class="summary-grid">
       <div class="summary-card income">
-        <div class="summary-label">Entrate</div>
+        <div class="summary-label">Income</div>
         <div class="summary-value income">+${formatEur(data.totalIncome)}</div>
       </div>
       <div class="summary-card expense">
-        <div class="summary-label">Uscite</div>
+        <div class="summary-label">Expenses</div>
         <div class="summary-value expense">-${formatEur(data.totalExpense)}</div>
       </div>
     </div>
     
     <p style="text-align: center; margin-bottom: 25px;">
-      <strong>Bilancio Settimanale:</strong> 
+      <strong>Weekly Balance:</strong> 
       <span style="color: ${data.balanceChange >= 0 ? '#059669' : '#dc2626'}; font-weight: 700;">
         ${data.balanceChange >= 0 ? '+' : ''}${formatEur(data.balanceChange)}
       </span>
     </p>
     
-    <h3>🏷️ Top 5 Categorie Spese</h3>
+    <h3>Top 5 Categories Expenses</h3>
     <div class="category-list">
       ${data.sortedCategories.length > 0
       ? data.sortedCategories.map(([name, amount]) => `

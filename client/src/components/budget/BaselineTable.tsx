@@ -165,7 +165,7 @@ export function BaselineTable({ categories, budgetData, onUpdateBaseline, monthR
 
                             {/* EXPENSE SECTION */}
                             <TableRow className="bg-muted/30">
-                                <TableCell colSpan={visibleMonths.length + 1} className="font-bold py-2 mt-4">USCITE</TableCell>
+                                <TableCell colSpan={visibleMonths.length + 1} className="font-bold py-2 mt-4">Expenses</TableCell>
                             </TableRow>
                             {categories.filter(c => c.type === 'expense').map((category) => (
                                 <TableRow key={category.id}>
