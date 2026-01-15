@@ -523,7 +523,7 @@ export default function Transactions() {
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent className="max-h-[200px]">
-                                {categories.filter(c => c.type === form.watch("type")).map(cat => (
+                                {categories.map(cat => (
                                   <SelectItem key={cat.id} value={cat.id.toString()}>{cat.name}</SelectItem>
                                 ))}
                               </SelectContent>
