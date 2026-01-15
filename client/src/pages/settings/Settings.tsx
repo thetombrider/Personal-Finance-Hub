@@ -60,7 +60,7 @@ export default function Settings() {
     const [isBankModalOpen, setIsBankModalOpen] = useState(false);
     const [renewingInstitutionId, setRenewingInstitutionId] = useState<string | null>(null);
 
-    const { data: authConfig } = useQuery({
+    const { data: authConfig } = useQuery<{ oidcEnabled: boolean }>({
         queryKey: ["/api/auth/config"],
     });
 

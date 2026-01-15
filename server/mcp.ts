@@ -12,7 +12,7 @@ const server = new MCPServer({
 });
 
 // Authentication Middleware
-server.use(async (req, res, next) => {
+server.use(async (req: any, res: any, next: any) => {
     const authHeader = req.headers["authorization"];
     const apiKey = process.env.MCP_API_KEY;
 
@@ -66,7 +66,7 @@ server.tool(
             offset: z.number().optional().default(0),
         }),
     },
-    async ({ limit, offset }) => {
+    async ({ limit, offset }: { limit: number, offset: number }) => {
         try {
             const txs = await db
                 .select()
@@ -105,7 +105,7 @@ server.tool(
             type: z.enum(["income", "expense"]),
         }),
     },
-    async (input) => {
+    async (input: any) => {
         try {
             const [newTx] = await db.insert(transactions).values(input).returning();
             return {

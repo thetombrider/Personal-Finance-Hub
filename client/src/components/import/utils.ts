@@ -155,16 +155,17 @@ export const getAccountFromRow = (row: any, mapping: Mapping): InsertAccount => 
 };
 
 export const getCategoryFromRow = (row: any, mapping: Mapping): InsertCategory => {
-    export const getCategoryFromRow = (row: any, mapping: Mapping): InsertCategory => {
-        const name = row[mapping.categoryName]?.toString().trim() || "Unnamed Category";
-        let type: "income" | "expense" = "expense"; if (rawType.includes('income') || rawType.includes('entrata')) type = "income";
 
-        const color = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+    const name = row[mapping.categoryName]?.toString().trim() || "Unnamed Category";
+    const rawType = row[mapping.categoryType]?.toLowerCase() || "";
+    let type: "income" | "expense" = "expense"; if (rawType.includes('income') || rawType.includes('entrata')) type = "income";
 
-        return {
-            name,
-            type,
-            color,
-            icon: null
-        };
+    const color = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+
+    return {
+        name,
+        type,
+        color,
+        icon: null
     };
+};
