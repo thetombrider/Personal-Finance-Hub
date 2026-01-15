@@ -5,7 +5,7 @@ import { Plus, Trash2, Download, ArrowLeftRight } from "lucide-react";
 import { useState } from "react";
 import { format } from "date-fns";
 import { RecurringExpenseCheck } from "@shared/schema";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { useTransactionsData } from "@/hooks/use-transactions-data";
 import { TransactionForm, TransactionFormValues } from "@/components/transactions/TransactionForm";
@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function Transactions() {
   const { transactions, accounts, categories, addTransaction, addTransfer, updateTransaction, deleteTransaction, deleteTransactions, formatCurrency, isLoading } = useFinance();
+  const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isTransferDialogOpen, setIsTransferDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -54,6 +55,10 @@ export default function Transactions() {
         setSyncProgress((completed / linkedAccounts.length) * 100);
       }
     }
+
+    queryClient.invalidateQueries({ queryKey: ["accounts"] });
+    queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/transactions/staging"] });
 
     setIsSyncingAll(false);
     toast({

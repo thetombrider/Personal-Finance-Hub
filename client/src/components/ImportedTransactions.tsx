@@ -35,6 +35,7 @@ export function ImportedTransactions({ accountId, isOpen, onOpenChange }: Import
     const queryClient = useQueryClient();
     const { toast } = useToast();
     const [statusFilter, setStatusFilter] = useState<string>("pending");
+    const titleAccountName = accountId ? accounts.find(a => a.id === accountId)?.name : null;
 
     // Fetch staged transactions
     const { data: transactions = [], isLoading } = useQuery<StagedTransaction[]>({
@@ -114,7 +115,7 @@ export function ImportedTransactions({ accountId, isOpen, onOpenChange }: Import
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-5xl max-h-[85vh] flex flex-col">
                 <DialogHeader>
-                    <DialogTitle>Review Imported Transactions {accountId ? `- ${accounts.find(a => a.id === accountId)?.name}` : ""}</DialogTitle>
+                    <DialogTitle>Review Imported Transactions{titleAccountName ? ` - ${titleAccountName}` : ""}</DialogTitle>
                     <DialogDescription>
                         Review and categorize transactions fetched from your bank.
                     </DialogDescription>
