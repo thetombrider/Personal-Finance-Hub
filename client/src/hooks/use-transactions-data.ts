@@ -67,8 +67,12 @@ export function useTransactionsData({ transactions, accounts, categories, checks
 
             // Date range filter
             const transactionDate = new Date(t.date);
-            if (dateFrom && transactionDate < dateFrom) {
-                return false;
+            if (dateFrom) {
+                const startOfDay = new Date(dateFrom);
+                startOfDay.setHours(0, 0, 0, 0);
+                if (transactionDate < startOfDay) {
+                    return false;
+                }
             }
             if (dateTo) {
                 const endOfDay = new Date(dateTo);

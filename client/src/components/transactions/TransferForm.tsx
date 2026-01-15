@@ -104,7 +104,7 @@ export function TransferForm({
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>From Account</FormLabel>
-                                        <Select onValueChange={(v) => field.onChange(parseInt(v))} value={field.value?.toString()}>
+                                        <Select onValueChange={(v) => field.onChange(v === '' ? 0 : parseInt(v))} value={field.value === 0 ? '' : field.value.toString()}>
                                             <FormControl>
                                                 <SelectTrigger data-testid="select-from-account">
                                                     <SelectValue placeholder="Select Account" />
@@ -126,7 +126,7 @@ export function TransferForm({
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>To Account</FormLabel>
-                                        <Select onValueChange={(v) => field.onChange(parseInt(v))} value={field.value?.toString()}>
+                                        <Select onValueChange={(v) => field.onChange(v === '' ? 0 : parseInt(v))} value={field.value === 0 ? '' : field.value.toString()}>
                                             <FormControl>
                                                 <SelectTrigger data-testid="select-to-account">
                                                     <SelectValue placeholder="Select Account" />
