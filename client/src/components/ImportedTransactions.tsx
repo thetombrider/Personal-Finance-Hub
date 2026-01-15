@@ -79,6 +79,16 @@ export function ImportedTransactions({ accountId, isOpen, onOpenChange }: Import
         },
     });
 
+    const restoreMutation = useMutation({
+        mutationFn: async (id: number) => {
+            await apiRequest("POST", `/api/transactions/staging/${id}/restore`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["/api/transactions/staging"] });
+            toast({ title: "Transaction Restored" });
+        },
+    });
+
     // Local state for edits
     const [edits, setEdits] = useState<Record<number, { categoryId?: number; description?: string }>>({});
 
@@ -247,9 +257,8 @@ export function ImportedTransactions({ accountId, isOpen, onOpenChange }: Import
                                                             size="sm"
                                                             variant="outline"
                                                             className="h-8"
-                                                            disabled // Making dismissed items read-only for now as per "edit for dismissed... depending on status"
-                                                        // Logic for "undismissing" or "re-evaluating" would need backend support to set status back to pending.
-                                                        // For now, let's keep it simple.
+                                                            onClick={() => restoreMutation.mutate(tx.id)}
+                                                            disabled={restoreMutation.isPending}
                                                         >
                                                             <Undo className="h-4 w-4 mr-1" /> Restore
                                                         </Button>

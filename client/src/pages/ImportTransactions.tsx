@@ -73,8 +73,8 @@ export default function ImportTransactions() {
   const [referenceFile, setReferenceFile] = useState<File | null>(null);
   const [referenceCsvData, setReferenceCsvData] = useState<{ headers: string[], data: any[] } | null>(null);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, isReference: boolean = false) => {
-    const uploadedFiles = e.target.files ? Array.from(e.target.files) : [];
+  const handleFileUpload = (files: File[], isReference: boolean = false) => {
+    const uploadedFiles = files;
     if (uploadedFiles.length > 0) {
       const fileToProcess = uploadedFiles[0];
       const isExcel = fileToProcess.name.endsWith('.xlsx') || fileToProcess.name.endsWith('.xls');

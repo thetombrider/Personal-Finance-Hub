@@ -47,10 +47,12 @@ export const parseDate = (value: any) => {
     if (parts.length === 3) {
         const [first, second, third] = parts;
         if (third && third.length === 4) { // DD/MM/YYYY
-            return format(new Date(parseInt(third), parseInt(second) - 1, parseInt(first), 12), "yyyy-MM-dd'T'HH:mm:ss");
+            const date = new Date(parseInt(third), parseInt(second) - 1, parseInt(first), 12);
+            if (isValid(date)) return format(date, "yyyy-MM-dd'T'HH:mm:ss");
         }
         if (first && first.length === 4) { // YYYY-MM-DD
-            return format(new Date(parseInt(first), parseInt(second) - 1, parseInt(third), 12), "yyyy-MM-dd'T'HH:mm:ss");
+            const date = new Date(parseInt(first), parseInt(second) - 1, parseInt(third), 12);
+            if (isValid(date)) return format(date, "yyyy-MM-dd'T'HH:mm:ss");
         }
     }
     const date = new Date(cleanValue);
@@ -130,9 +132,8 @@ export const getTransactionFromRow = (
 };
 
 export const getAccountFromRow = (row: any, mapping: Mapping): InsertAccount => {
-    const name = row[mapping.accountName];
-    let type: any = "checking";
-    const rawType = row[mapping.accountType]?.toLowerCase() || "";
+    const name = row[mapping.accountName]?.toString().trim() || "Unnamed Account";
+    let type: "checking" | "savings" | "credit" | "investment" | "cash" = "checking"; const rawType = row[mapping.accountType]?.toLowerCase() || "";
     if (rawType.includes('save') || rawType.includes('risparmio') || rawType.includes('deposito')) type = "savings";
     else if (rawType.includes('credit') || rawType.includes('credito')) type = "credit";
     else if (rawType.includes('invest')) type = "investment";
@@ -154,17 +155,16 @@ export const getAccountFromRow = (row: any, mapping: Mapping): InsertAccount => 
 };
 
 export const getCategoryFromRow = (row: any, mapping: Mapping): InsertCategory => {
-    const name = row[mapping.categoryName];
-    let type: any = "expense";
-    const rawType = row[mapping.categoryType]?.toLowerCase() || "";
-    if (rawType.includes('income') || rawType.includes('entrata')) type = "income";
+    export const getCategoryFromRow = (row: any, mapping: Mapping): InsertCategory => {
+        const name = row[mapping.categoryName]?.toString().trim() || "Unnamed Category";
+        let type: "income" | "expense" = "expense"; if (rawType.includes('income') || rawType.includes('entrata')) type = "income";
 
-    const color = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+        const color = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
 
-    return {
-        name,
-        type,
-        color,
-        icon: null
+        return {
+            name,
+            type,
+            color,
+            icon: null
+        };
     };
-};

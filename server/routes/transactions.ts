@@ -137,6 +137,27 @@ export function registerTransactionRoutes(app: Express) {
         }
     });
 
+    app.post("/api/transactions/staging/:id/restore", async (req, res) => {
+        try {
+            if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+
+            const id = parseNumericParam(req.params.id);
+            if (id === null) return res.status(400).json({ error: "Invalid id" });
+
+            // Verify ownership
+            const allStaged = await storage.getImportStaging(req.user.id);
+            const staged = allStaged.find(s => s.id === id);
+            if (!staged) {
+                return res.status(404).json({ error: "Staged transaction not found" });
+            }
+
+            await storage.updateImportStagingStatus(id, req.user.id, "pending");
+            res.status(200).send();
+        } catch (error) {
+            res.status(500).json({ error: "Failed to restore staged transaction" });
+        }
+    });
+
     app.get("/api/transactions/:id", async (req, res) => {
         try {
             if (!req.user) return res.status(401).json({ error: "Unauthorized" });

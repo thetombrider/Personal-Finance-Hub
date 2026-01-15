@@ -8,7 +8,7 @@ interface ImportZoneProps {
     primaryFileInputRef: RefObject<HTMLInputElement | null>;
     referenceFileInputRef: RefObject<HTMLInputElement | null>;
     referenceFile: File | null;
-    onFileSelect: (e: React.ChangeEvent<HTMLInputElement>, isReference?: boolean) => void;
+    onFileSelect: (files: File[], isReference?: boolean) => void;
     onDownloadTemplate: (mode?: string) => void;
 }
 
@@ -20,17 +20,32 @@ export default function ImportZone({
     onFileSelect,
     onDownloadTemplate
 }: ImportZoneProps) {
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+    };
+
+    const handleDrop = (e: React.DragEvent, isReference: boolean = false) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const files = Array.from(e.dataTransfer.files);
+        if (files.length > 0) {
+            onFileSelect(files, isReference);
+        }
+    };
+
     return (
         <div className="space-y-6">
             {/* Primary File Upload */}
             <div
                 className="flex flex-col items-center justify-center py-12 text-center space-y-4 border-2 border-dashed border-border rounded-xl bg-muted/20 hover:bg-muted/40 transition-colors cursor-pointer"
                 onClick={() => primaryFileInputRef.current?.click()}
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDrop(e, false)}
             >
-                <div className="w-16 h-8 rounded-full bg-primary/10 flex items-center justify-center mb-2">
+                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-2">
                     <Upload className="w-8 h-8 text-primary" />
-                </div>
-                <div>
+                </div>                <div>
                     <h3 className="text-lg font-semibold">
                         {importMode === 'trades' ? "Upload Trades CSV/Excel" : "Click to upload CSV/Excel"}
                     </h3>
@@ -41,7 +56,7 @@ export default function ImportZone({
                     ref={primaryFileInputRef}
                     accept=".csv, .xlsx, .xls"
                     className="hidden"
-                    onChange={(e) => onFileSelect(e, false)}
+                    onChange={(e) => onFileSelect(Array.from(e.target.files || []), false)}
                 />
             </div>
 
@@ -82,7 +97,7 @@ export default function ImportZone({
                         ref={referenceFileInputRef}
                         accept=".csv, .xlsx, .xls"
                         className="hidden"
-                        onChange={(e) => onFileSelect(e, true)}
+                        onChange={(e) => onFileSelect(Array.from(e.target.files || []), true)}
                     />
                 </div>
             )}
