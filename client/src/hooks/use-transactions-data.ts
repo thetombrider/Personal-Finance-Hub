@@ -143,7 +143,7 @@ export function useTransactionsData({ transactions, accounts, categories, checks
         setCurrentPage(1);
     };
 
-    const hasActiveFilters = searchQuery || filterAccountId !== 'all' || filterCategoryId !== 'all' || filterStatus !== 'all' || dateFrom || dateTo;
+    const hasActiveFilters = !!(searchQuery || filterAccountId !== 'all' || filterCategoryId !== 'all' || filterStatus !== 'all' || dateFrom || dateTo);
 
     return {
         filteredTransactions,

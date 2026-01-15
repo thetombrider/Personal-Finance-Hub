@@ -31,10 +31,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   const NavContent = () => (
     <div className="flex flex-col h-full">
-      <div className="p-6 flex items-center gap-3">
-        <img src={logo} alt="FinTrack" className="w-8 h-8 rounded-lg" />
-        <span className="font-heading font-bold text-xl tracking-tight text-foreground">FinTrack</span>
-      </div>
+      <Link href="/">
+        <div className="p-6 flex items-center gap-3 cursor-pointer">
+          <img src={logo} alt="FinTrack" className="w-8 h-8 rounded-lg" />
+          <span className="font-heading font-bold text-xl tracking-tight text-foreground">FinTrack</span>
+        </div>
+      </Link>
 
       <nav className="flex-1 px-4 py-4 space-y-1">
         {navItems.map((item) => {
@@ -107,10 +109,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {/* Mobile Header */}
       <div className="md:hidden fixed top-0 left-0 right-0 h-16 border-b border-border bg-background/80 backdrop-blur-md z-50 flex items-center justify-between px-4">
-        <div className="flex items-center gap-2">
-          <img src={logo} alt="FinTrack" className="w-8 h-8 rounded-md" />
-          <span className="font-heading font-bold text-lg text-foreground">FinTrack</span>
-        </div>
+        <Link href="/">
+          <div className="flex items-center gap-2 cursor-pointer">
+            <img src={logo} alt="FinTrack" className="w-8 h-8 rounded-md" />
+            <span className="font-heading font-bold text-lg text-foreground">FinTrack</span>
+          </div>
+        </Link>
         <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon">

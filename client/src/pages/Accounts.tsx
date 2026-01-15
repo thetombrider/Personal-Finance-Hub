@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { format, subMonths, parseISO } from "date-fns";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 // import { it } from "date-fns/locale";
 import { ChevronLeft, ChevronRight, Landmark, RefreshCw } from "lucide-react";
 import { useFinance } from "@/context/FinanceContext";
@@ -209,7 +210,16 @@ export default function Accounts() {
                             <div className="flex items-center gap-2">
                               {accountName}
                               {account?.gocardlessAccountId && (
-                                <div className="w-2 h-2 rounded-full bg-green-500" title="Bank Linked" />
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Landmark size={14} className="text-blue-500/70" />
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Bank Linked</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
                               )}
                             </div>
                           </TableCell>

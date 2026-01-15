@@ -33,9 +33,24 @@ export function registerTransactionRoutes(app: Express) {
                 accountId = parsed;
             }
 
+            const status = req.query.status as string; // 'pending', 'dismissed', 'reconciled', or 'all'
             const staged = await storage.getImportStaging(req.user.id, accountId);
-            const pending = staged.filter(s => s.status === 'pending');
-            res.json(pending);
+
+            let filtered = staged;
+            if (status && status !== 'all') {
+                filtered = staged.filter(s => s.status === status);
+            } else if (!status) {
+                // Default to 'pending' if no status specified, for backward compatibility
+                // But the requirement says "unified staging transactions review table... will show all transactions"
+                // For the new UI we will pass status='all' or specific status.
+                // Existing calls might rely on 'pending' default.
+                filtered = staged.filter(s => s.status === 'pending');
+            }
+
+            // Sort by date desc
+            filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+            res.json(filtered);
         } catch (error) {
             res.status(500).json({ error: "Failed to fetch staged transactions" });
         }

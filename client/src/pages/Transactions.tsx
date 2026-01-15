@@ -12,6 +12,10 @@ import { TransactionForm, TransactionFormValues } from "@/components/transaction
 import { TransferForm, TransferFormValues } from "@/components/transactions/TransferForm";
 import { TransactionFilters } from "@/components/transactions/TransactionFilters";
 import { TransactionsTable } from "@/components/transactions/TransactionsTable";
+import { ImportedTransactions } from "@/components/ImportedTransactions";
+import { RefreshCw, List } from "lucide-react";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Transactions() {
   const { transactions, accounts, categories, addTransaction, addTransfer, updateTransaction, deleteTransaction, deleteTransactions, formatCurrency, isLoading } = useFinance();
@@ -20,6 +24,44 @@ export default function Transactions() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [editFormData, setEditFormData] = useState<TransactionFormValues | null>(null);
+
+  // New state for Sync All and Review Staging
+  const [reviewAccountId, setReviewAccountId] = useState<number | null>(null);
+  const [isSyncingAll, setIsSyncingAll] = useState(false);
+  const [syncProgress, setSyncProgress] = useState(0);
+  const { toast } = useToast();
+
+  const handleSyncAll = async () => {
+    const linkedAccounts = accounts.filter(a => a.gocardlessAccountId);
+    if (linkedAccounts.length === 0) {
+      toast({ title: "No linked accounts", description: "Link a bank account first.", variant: "destructive" });
+      return;
+    }
+
+    setIsSyncingAll(true);
+    setSyncProgress(0);
+    let completed = 0;
+    let errors = 0;
+
+    for (const account of linkedAccounts) {
+      try {
+        await apiRequest("POST", `/api/gocardless/sync/${account.id}`);
+      } catch (error) {
+        console.error(`Failed to sync account ${account.name}`, error);
+        errors++;
+      } finally {
+        completed++;
+        setSyncProgress((completed / linkedAccounts.length) * 100);
+      }
+    }
+
+    setIsSyncingAll(false);
+    toast({
+      title: "Sync Complete",
+      description: `Synced ${linkedAccounts.length} accounts. ${errors > 0 ? `${errors} failed.` : "All successful."}`,
+      variant: errors > 0 ? "destructive" : "default"
+    });
+  };
 
   const { data: checks } = useQuery<RecurringExpenseCheck[]>({
     queryKey: ['reconciliation', 'all'],
@@ -222,6 +264,32 @@ export default function Transactions() {
               <Download size={16} /> Download ({selectedIds.size > 0 ? selectedIds.size : sortedTransactions.length})
             </Button>
 
+            <Button
+              variant="outline"
+              className="gap-2"
+              onClick={() => setReviewAccountId(-1)} // -1 or special flag for "all"
+              title="Review Staging Transactions"
+            >
+              <List size={16} /> Review Staging
+            </Button>
+
+            <Button
+              variant="outline"
+              className="gap-2 relative overflow-hidden"
+              onClick={handleSyncAll}
+              disabled={isSyncingAll}
+              title="Sync All Accounts"
+            >
+              {isSyncingAll && (
+                <div
+                  className="absolute inset-0 bg-primary/10 transition-all duration-300 ease-in-out"
+                  style={{ width: `${syncProgress}%` }}
+                />
+              )}
+              <RefreshCw size={16} className={isSyncingAll ? "animate-spin" : ""} />
+              {isSyncingAll ? `Syncing ${Math.round(syncProgress)}%` : "Sync All"}
+            </Button>
+
             <Button className="gap-2" onClick={() => { setIsDialogOpen(true); setEditingId(null); setEditFormData(null); }} data-testid="button-add-transaction">
               <Plus size={16} /> Add Transaction
             </Button>
@@ -283,6 +351,14 @@ export default function Transactions() {
           onSubmit={onTransferSubmit}
           accounts={accounts}
         />
+
+        {reviewAccountId !== null && (
+          <ImportedTransactions
+            accountId={reviewAccountId === -1 ? null : reviewAccountId}
+            isOpen={reviewAccountId !== null}
+            onOpenChange={(open) => !open && setReviewAccountId(null)}
+          />
+        )}
       </div>
     </Layout>
   );
