@@ -17,7 +17,7 @@ export function WealthDistributionChart({ data, privacyMode, formatCurrency }: W
     };
 
     return (
-        <Card className="md:col-span-1">
+        <Card>
             <CardHeader>
                 <CardTitle>Patrimonio per Tipo</CardTitle>
                 <CardDescription>Distribuzione del patrimonio</CardDescription>

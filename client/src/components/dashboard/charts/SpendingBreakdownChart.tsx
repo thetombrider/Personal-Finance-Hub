@@ -17,7 +17,7 @@ export function SpendingBreakdownChart({ data, privacyMode, formatCurrency }: Sp
     };
 
     return (
-        <Card className="md:col-span-3">
+        <Card>
             <CardHeader>
                 <CardTitle>Spending by Category</CardTitle>
                 <CardDescription>Where your money goes</CardDescription>

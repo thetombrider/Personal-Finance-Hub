@@ -56,14 +56,14 @@ export function CategoryTrendChart({
                 <div className="h-[300px] w-full">
                     {categoryTrendId && data.length > 0 ? (
                         <ResponsiveContainer width="100%" height="100%">
-                            <ComposedChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                            <ComposedChart data={data} margin={{ top: 10, right: 30, left: 40, bottom: 0 }}>
                                 <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
                                 <YAxis
                                     stroke="#888888"
                                     fontSize={12}
                                     tickLine={false}
                                     axisLine={false}
-                                    tickFormatter={(value) => privacyMode ? "•••" : `€${value.toFixed(0)}`}
+                                    tickFormatter={(value) => privacyMode ? "•••" : `€${value.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
                                 />
                                 <Tooltip
                                     formatter={(value: number, name: string) => {

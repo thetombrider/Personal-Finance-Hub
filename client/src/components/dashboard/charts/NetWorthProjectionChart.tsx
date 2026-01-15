@@ -42,7 +42,7 @@ export function NetWorthProjectionChart({ data, privacyMode, formatCurrency }: N
             <CardContent className="pl-0">
                 <div className="h-[250px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                        <AreaChart data={data} margin={{ top: 10, right: 30, left: 40, bottom: 0 }}>
                             <defs>
                                 <linearGradient id="colorProjection" x1="0" y1="0" x2="0" y2="1">
                                     <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
@@ -55,7 +55,7 @@ export function NetWorthProjectionChart({ data, privacyMode, formatCurrency }: N
                                 fontSize={12}
                                 tickLine={false}
                                 axisLine={false}
-                                tickFormatter={(value) => privacyMode ? "•••" : formatCurrency(value)}
+                                tickFormatter={(value) => privacyMode ? "•••" : `€${value.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
                                 domain={['auto', 'auto']}
                             />
                             <Tooltip

@@ -17,7 +17,7 @@ export function NetWorthEvolutionChart({ data, totalBalance, privacyMode, format
     };
 
     return (
-        <Card className="md:col-span-2">
+        <Card>
             <CardHeader>
                 <div className="flex items-center justify-between">
                     <div>

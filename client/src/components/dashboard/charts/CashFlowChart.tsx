@@ -10,7 +10,7 @@ interface CashFlowChartProps {
 
 export function CashFlowChart({ data, privacyMode, formatCurrency }: CashFlowChartProps) {
     return (
-        <Card className="md:col-span-4">
+        <Card>
             <CardHeader>
                 <CardTitle>Cash Flow</CardTitle>
                 <CardDescription>Income vs Expenses over time</CardDescription>

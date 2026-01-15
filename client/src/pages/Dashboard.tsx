@@ -126,24 +126,21 @@ export default function Dashboard() {
           />
         </div>
 
-        <div className="grid gap-6 md:grid-cols-7">
+        <div className="grid gap-6 md:grid-cols-2">
           <CashFlowChart
             data={charts.chartData}
             privacyMode={privacyMode}
             formatCurrency={formatCurrency}
           />
-          <div className="md:col-span-3 space-y-6">
-            <WealthDistributionChart
-              data={charts.netWorthByTypeData}
-              privacyMode={privacyMode}
-              formatCurrency={formatCurrency}
-            />
-            <SpendingBreakdownChart
-              data={charts.categoryData}
-              privacyMode={privacyMode}
-              formatCurrency={formatCurrency}
-            />
-          </div>
+          <CategoryTrendChart
+            data={charts.categoryTrendData}
+            categoryTrendId={categoryTrendId}
+            setCategoryTrendId={setCategoryTrendId}
+            categories={categories}
+            selectedCategoryForTrend={charts.selectedCategoryForTrend}
+            privacyMode={privacyMode}
+            formatCurrency={formatCurrency}
+          />
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
@@ -159,15 +156,18 @@ export default function Dashboard() {
           />
         </div>
 
-        <CategoryTrendChart
-          data={charts.categoryTrendData}
-          categoryTrendId={categoryTrendId}
-          setCategoryTrendId={setCategoryTrendId}
-          categories={categories}
-          selectedCategoryForTrend={charts.selectedCategoryForTrend}
-          privacyMode={privacyMode}
-          formatCurrency={formatCurrency}
-        />
+        <div className="grid gap-6 md:grid-cols-2">
+          <WealthDistributionChart
+            data={charts.netWorthByTypeData}
+            privacyMode={privacyMode}
+            formatCurrency={formatCurrency}
+          />
+          <SpendingBreakdownChart
+            data={charts.categoryData}
+            privacyMode={privacyMode}
+            formatCurrency={formatCurrency}
+          />
+        </div>
 
         <AccountDetailModal
           detailModal={detailModal}
