@@ -14,6 +14,15 @@ export interface HoldingWithStats extends Omit<Holding, 'currentPrice'> {
     gainLossPercent: number | null;
 }
 
+export interface PortfolioSummary {
+    totalInvested: number;
+    totalCurrentValue: number;
+    totalGainLoss: number;
+    totalGainLossPercent: number;
+    holdingsCount: number;
+    holdingsWithValue: number;
+}
+
 export function usePortfolioStats() {
     const [quotes, setQuotes] = useState<Record<string, { price: number; change: number; changePercent: string }>>({});
     const [isRefreshingQuotes, setIsRefreshingQuotes] = useState(false);

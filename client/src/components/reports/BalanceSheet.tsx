@@ -35,7 +35,9 @@ export function BalanceSheet() {
     }
 
     if (error) {
-        return <div className="text-red-500 p-4 border border-red-200 rounded-md bg-red-50">Error loading balance sheet.</div>;
+        return <div className="text-red-500 p-4 border border-red-200 rounded-md bg-red-50">
+            {error instanceof Error ? error.message : String(error)}
+        </div>;
     }
 
     if (!data) return null;
@@ -45,7 +47,7 @@ export function BalanceSheet() {
             <Card>
                 <CardHeader>
                     <CardTitle>Balance Sheet</CardTitle>
-                    <CardDescription>Current situation Assets vs Liabilities</CardDescription>
+                    <CardDescription>Current financial position: Assets vs Liabilities</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="grid md:grid-cols-2 gap-8">
