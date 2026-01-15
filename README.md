@@ -51,6 +51,7 @@ The application requires certain environment variables to be set. You can define
 | `GOCARDLESS_SECRET_ID` | GoCardless Secret ID |
 | `GOCARDLESS_SECRET_KEY` | GoCardless Secret Key |
 | `RESEND_API_KEY` | Resend API Key |
+| `APP_SECRET` | Application secret for session management |
 
 ## Installation
 
