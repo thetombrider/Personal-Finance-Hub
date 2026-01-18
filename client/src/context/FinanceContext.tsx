@@ -26,16 +26,16 @@ interface FinanceContextType {
   categories: Category[];
   transactions: Transaction[];
   isLoading: boolean;
-  addAccount: (account: Omit<InsertAccount, "id">) => Promise<void>;
-  addAccounts: (accounts: Omit<InsertAccount, "id">[]) => Promise<void>;
+  addAccount: (account: Omit<InsertAccount, "id">) => Promise<any>;
+  addAccounts: (accounts: Omit<InsertAccount, "id">[]) => Promise<any>;
   updateAccount: (id: number, account: Partial<Omit<InsertAccount, "id">>) => Promise<void>;
   deleteAccount: (id: number) => Promise<void>;
-  addCategory: (category: Omit<InsertCategory, "id">) => Promise<void>;
-  addCategories: (categories: Omit<InsertCategory, "id">[]) => Promise<void>;
+  addCategory: (category: Omit<InsertCategory, "id">) => Promise<any>;
+  addCategories: (categories: Omit<InsertCategory, "id">[]) => Promise<any>;
   updateCategory: (id: number, category: Partial<InsertCategory>) => Promise<void>;
   deleteCategory: (id: number) => Promise<void>;
-  addTransaction: (transaction: Omit<InsertTransaction, "id">) => Promise<void>;
-  addTransactions: (transactions: Omit<InsertTransaction, "id">[]) => Promise<void>;
+  addTransaction: (transaction: Omit<InsertTransaction, "id">) => Promise<any>;
+  addTransactions: (transactions: Omit<InsertTransaction, "id">[]) => Promise<any>;
   addTransfer: (transfer: TransferData) => Promise<void>;
   updateTransaction: (id: number, transaction: Partial<InsertTransaction>) => Promise<void>;
   deleteTransaction: (id: number) => Promise<void>;
@@ -196,11 +196,11 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
 
   // Helper functions
   const addAccount = async (account: Omit<InsertAccount, "id">) => {
-    await createAccountMutation.mutateAsync(account);
+    return await createAccountMutation.mutateAsync(account);
   };
 
   const addAccounts = async (accounts: Omit<InsertAccount, "id">[]) => {
-    await createAccountsBulkMutation.mutateAsync(accounts);
+    return await createAccountsBulkMutation.mutateAsync(accounts);
   };
 
   const updateAccount = async (id: number, account: Partial<Omit<InsertAccount, "id">>) => {
@@ -212,11 +212,11 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   };
 
   const addCategory = async (category: Omit<InsertCategory, "id">) => {
-    await createCategoryMutation.mutateAsync(category);
+    return await createCategoryMutation.mutateAsync(category);
   };
 
   const addCategories = async (categories: Omit<InsertCategory, "id">[]) => {
-    await createCategoriesBulkMutation.mutateAsync(categories);
+    return await createCategoriesBulkMutation.mutateAsync(categories);
   };
 
   const updateCategory = async (id: number, category: Partial<InsertCategory>) => {
@@ -228,11 +228,11 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   };
 
   const addTransaction = async (transaction: Omit<InsertTransaction, "id">) => {
-    await createTransactionMutation.mutateAsync(transaction);
+    return await createTransactionMutation.mutateAsync(transaction);
   };
 
   const addTransactions = async (transactions: Omit<InsertTransaction, "id">[]) => {
-    await createTransactionsBulkMutation.mutateAsync(transactions);
+    return await createTransactionsBulkMutation.mutateAsync(transactions);
   };
 
   const addTransfer = async (transfer: TransferData) => {

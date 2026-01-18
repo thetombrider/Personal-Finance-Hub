@@ -245,11 +245,12 @@ export default function ImportTransactions() {
         }
 
         const toSave = transactions.map(({ _hasValidAccount, _hasValidCategory, ...tx }) => tx);
-        await addTransactions(toSave);
+        const saved = await addTransactions(toSave);
+        const skipped = toSave.length - (saved?.length || 0);
 
         toast({
           title: "Import Successful",
-          description: `Imported ${transactions.length} transactions.`,
+          description: `Imported ${saved?.length || 0} transactions (${skipped} duplicates skipped).`,
         });
         setLocation('/transactions');
       } else if (importMode === 'accounts') {
@@ -258,8 +259,9 @@ export default function ImportTransactions() {
           toast({ title: "Import Failed", description: "No valid accounts found.", variant: "destructive" });
           return;
         }
-        await addAccounts(newAccounts);
-        toast({ title: "Import Successful", description: `Imported ${newAccounts.length} accounts.` });
+        const saved = await addAccounts(newAccounts);
+        const skipped = newAccounts.length - (saved?.length || 0);
+        toast({ title: "Import Successful", description: `Imported ${saved?.length || 0} accounts (${skipped} duplicates skipped).` });
         setLocation('/accounts');
       } else if (importMode === 'categories') {
         const newCategories = csvData.map(row => getCategoryFromRow(row, mapping)).filter(c => c.name);
@@ -267,8 +269,9 @@ export default function ImportTransactions() {
           toast({ title: "Import Failed", description: "No valid categories found.", variant: "destructive" });
           return;
         }
-        await addCategories(newCategories);
-        toast({ title: "Import Successful", description: `Imported ${newCategories.length} categories.` });
+        const saved = await addCategories(newCategories);
+        const skipped = newCategories.length - (saved?.length || 0);
+        toast({ title: "Import Successful", description: `Imported ${saved?.length || 0} categories (${skipped} duplicates skipped).` });
         setLocation('/categories');
       } else if (importMode === 'trades') {
         await handleTradeImport();
@@ -409,10 +412,11 @@ export default function ImportTransactions() {
       accountId: t.accountId
     }));
 
-    await api.createTradesBulk(validTrades);
+    const saved = await api.createTradesBulk(validTrades);
+    const skipped = validTrades.length - (saved?.length || 0);
     toast({
       title: "Import Successful",
-      description: `Imported ${validTrades.length} trades for ${tickerMap.size} holdings.`,
+      description: `Imported ${saved?.length || 0} trades for ${tickerMap.size} holdings (${skipped} duplicates skipped).`,
     });
     setLocation('/portfolio');
   };

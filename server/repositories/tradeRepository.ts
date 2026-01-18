@@ -34,41 +34,62 @@ export class TradeRepository {
             let transactionId: number | undefined;
 
             if (trade.accountId) {
-                const holding = await tx.select().from(holdings).where(eq(holdings.id, trade.holdingId)).limit(1);
-                const userId = holding[0]?.userId;
+                // RECONCILIATION: Check if a matching transaction already exists
+                const finalType = trade.type === 'buy' ? 'expense' : 'income';
+                const totalAmount = trade.totalAmount.toString();
 
-                if (userId) {
-                    // Find or create "Investimenti" category
-                    const cats = await tx.select().from(categories).where(
-                        and(eq(categories.name, 'Investimenti'), eq(categories.userId, userId))
-                    ).limit(1);
-                    let categoryId = cats[0]?.id;
+                // Try to find an existing transaction with same account, date, amount, and type
+                // We use a small date window or exact date? The import usually preserves date.
+                // Let's try exact date match first.
+                const existingTx = await tx.select().from(transactions).where(
+                    and(
+                        eq(transactions.accountId, trade.accountId),
+                        eq(transactions.date, trade.date),
+                        eq(transactions.amount, totalAmount),
+                        eq(transactions.type, finalType)
+                    )
+                ).limit(1);
 
-                    if (!categoryId) {
-                        const [newCat] = await tx.insert(categories).values({
-                            name: "Investimenti",
-                            type: "expense",
-                            color: "#0ea5e9",
-                            icon: "TrendingUp",
-                            userId: userId
-                        }).returning();
-                        categoryId = newCat.id;
-                    }
+                if (existingTx.length > 0) {
+                    // Use existing transaction!!
+                    transactionId = existingTx[0].id;
+                } else {
+                    // Create NEW transaction (existing logic)
+                    const holding = await tx.select().from(holdings).where(eq(holdings.id, trade.holdingId)).limit(1);
+                    const userId = holding[0]?.userId;
 
-                    if (categoryId) {
-                        const holdingTicker = holding[0]?.ticker || 'Unknown';
-                        const description = `${trade.type === 'buy' ? 'Buy' : 'Sell'} ${parseFloat(trade.quantity.toString()).toFixed(4)} ${holdingTicker} @ ${parseFloat(trade.pricePerUnit.toString()).toFixed(2)}`;
-                        const type = trade.type === 'buy' ? 'expense' : 'income';
+                    if (userId) {
+                        // Find or create "Investimenti" category
+                        const cats = await tx.select().from(categories).where(
+                            and(eq(categories.name, 'Investimenti'), eq(categories.userId, userId))
+                        ).limit(1);
+                        let categoryId = cats[0]?.id;
 
-                        const [newTx] = await tx.insert(transactions).values({
-                            date: trade.date,
-                            amount: trade.totalAmount.toString(),
-                            description: description,
-                            accountId: trade.accountId,
-                            categoryId: categoryId,
-                            type: type
-                        }).returning();
-                        transactionId = newTx.id;
+                        if (!categoryId) {
+                            const [newCat] = await tx.insert(categories).values({
+                                name: "Investimenti",
+                                type: "expense",
+                                color: "#0ea5e9",
+                                icon: "TrendingUp",
+                                userId: userId
+                            }).returning();
+                            categoryId = newCat.id;
+                        }
+
+                        if (categoryId) {
+                            const holdingTicker = holding[0]?.ticker || 'Unknown';
+                            const description = `${trade.type === 'buy' ? 'Buy' : 'Sell'} ${parseFloat(trade.quantity.toString()).toFixed(4)} ${holdingTicker} @ ${parseFloat(trade.pricePerUnit.toString()).toFixed(2)}`;
+
+                            const [newTx] = await tx.insert(transactions).values({
+                                date: trade.date,
+                                amount: trade.totalAmount.toString(),
+                                description: description,
+                                accountId: trade.accountId,
+                                categoryId: categoryId,
+                                type: finalType
+                            }).returning();
+                            transactionId = newTx.id;
+                        }
                     }
                 }
             }
@@ -81,6 +102,23 @@ export class TradeRepository {
     async createTrades(tradesData: InsertTrade[]): Promise<Trade[]> {
         const results: Trade[] = [];
         for (const trade of tradesData) {
+            // DEDUPLICATION: Check if this specific trade already exists
+            // Matching on holding, date, quantity, price, type
+            const existing = await db.select().from(trades).where(
+                and(
+                    eq(trades.holdingId, trade.holdingId),
+                    eq(trades.date, trade.date),
+                    eq(trades.quantity, trade.quantity.toString()), // Decimal column
+                    eq(trades.pricePerUnit, trade.pricePerUnit.toString()), // Decimal column
+                    eq(trades.type, trade.type)
+                )
+            ).limit(1);
+
+            if (existing.length > 0) {
+                // Skip duplicate trade
+                continue;
+            }
+
             results.push(await this.createTrade(trade));
         }
         return results;
