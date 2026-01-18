@@ -3,7 +3,7 @@
  * Handles all category-related database operations.
  */
 
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { db } from "./base";
 import {
     type Category,
@@ -28,8 +28,27 @@ export class CategoryRepository {
 
     async createCategories(categoriesData: InsertCategory[]): Promise<Category[]> {
         if (categoriesData.length === 0) return [];
-        const result = await db.insert(categories).values(categoriesData).returning();
-        return result;
+
+        const results: Category[] = [];
+        for (const category of categoriesData) {
+            if (!category.userId) continue;
+
+            const existing = await db.select().from(categories).where(
+                and(
+                    eq(categories.userId, category.userId),
+                    eq(categories.name, category.name),
+                    eq(categories.type, category.type)
+                )
+            ).limit(1);
+
+            if (existing.length > 0) {
+                continue;
+            }
+
+            const [created] = await db.insert(categories).values(category).returning();
+            results.push(created);
+        }
+        return results;
     }
 
     async updateCategory(id: number, category: Partial<InsertCategory>): Promise<Category | undefined> {

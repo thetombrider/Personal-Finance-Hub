@@ -3,7 +3,7 @@
  * Handles all account-related database operations.
  */
 
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, and } from "drizzle-orm";
 import { db } from "./base";
 import {
     type Account,
@@ -28,8 +28,26 @@ export class AccountRepository {
 
     async createAccounts(accountsData: InsertAccount[]): Promise<Account[]> {
         if (accountsData.length === 0) return [];
-        const result = await db.insert(accounts).values(accountsData).returning();
-        return result;
+
+        const results: Account[] = [];
+        for (const account of accountsData) {
+            if (!account.userId) continue;
+
+            const existing = await db.select().from(accounts).where(
+                and(
+                    eq(accounts.userId, account.userId),
+                    eq(accounts.name, account.name)
+                )
+            ).limit(1);
+
+            if (existing.length > 0) {
+                continue;
+            }
+
+            const [created] = await db.insert(accounts).values(account).returning();
+            results.push(created);
+        }
+        return results;
     }
 
     async updateAccount(id: number, account: Partial<InsertAccount>): Promise<Account | undefined> {
