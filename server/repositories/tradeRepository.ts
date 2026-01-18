@@ -3,7 +3,7 @@
  * Handles trade operations with linked transactions and category auto-creation.
  */
 
-import { eq, inArray, and } from "drizzle-orm";
+import { eq, inArray, and, sql } from "drizzle-orm";
 import { db } from "./base";
 import {
     type Trade,
@@ -44,9 +44,11 @@ export class TradeRepository {
                 const existingTx = await tx.select().from(transactions).where(
                     and(
                         eq(transactions.accountId, trade.accountId),
-                        eq(transactions.date, trade.date),
-                        eq(transactions.amount, totalAmount),
-                        eq(transactions.type, finalType)
+                        eq(transactions.type, finalType),
+                        // Robust Date Match: Compare just the date part
+                        sql`DATE(${transactions.date}) = DATE(${trade.date})`,
+                        // Robust Amount Match: Allow small floating point differences
+                        sql`ABS(${transactions.amount} - ${totalAmount}) < 0.01`
                     )
                 ).limit(1);
 
@@ -107,10 +109,12 @@ export class TradeRepository {
             const existing = await db.select().from(trades).where(
                 and(
                     eq(trades.holdingId, trade.holdingId),
-                    eq(trades.date, trade.date),
-                    eq(trades.quantity, trade.quantity.toString()), // Decimal column
-                    eq(trades.pricePerUnit, trade.pricePerUnit.toString()), // Decimal column
-                    eq(trades.type, trade.type)
+                    eq(trades.type, trade.type),
+                    // Robust Date Match
+                    sql`DATE(${trades.date}) = DATE(${trade.date})`,
+                    // Robust Amount Matching
+                    sql`ABS(${trades.quantity} - ${trade.quantity}) < 0.000001`,
+                    sql`ABS(${trades.pricePerUnit} - ${trade.pricePerUnit}) < 0.0001`
                 )
             ).limit(1);
 
