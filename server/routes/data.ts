@@ -17,7 +17,11 @@ export function registerDataRoutes(app: Express) {
             if (!req.user) return res.status(401).json({ error: "Unauthorized" });
             const userId = req.user.id;
 
-            const data = await storage.exportUserData(userId);
+            // Parse table request
+            const type = req.query.type as string | undefined;
+            const tables = type ? type.split(',') : undefined;
+
+            const data = await storage.exportUserData(userId, tables);
             const workbook = XLSX.utils.book_new();
 
             // Create a sheet for each table

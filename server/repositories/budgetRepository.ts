@@ -34,6 +34,13 @@ export class BudgetRepository {
             ));
     }
 
+    async getAllMonthlyBudgets(userId: string): Promise<MonthlyBudget[]> {
+        const userCategories = db.select({ id: categories.id }).from(categories).where(eq(categories.userId, userId));
+        return await db.select()
+            .from(monthlyBudgets)
+            .where(inArray(monthlyBudgets.categoryId, userCategories));
+    }
+
     /**
      * Upsert a monthly budget with ownership validation.
      * @param userId - The user making the request (for authorization)

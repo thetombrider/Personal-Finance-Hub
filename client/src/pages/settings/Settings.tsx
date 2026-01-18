@@ -11,7 +11,7 @@ import Layout from "@/components/Layout";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
-import { Plus, Trash2, RefreshCw, AlertCircle, CheckCircle2, Download } from "lucide-react";
+
 import {
     AlertDialog,
     AlertDialogAction,
@@ -35,6 +35,13 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Plus, Trash2, RefreshCw, AlertCircle, CheckCircle2, Download, ChevronDown } from "lucide-react";
 
 const formSchema = z.object({
     firstName: z.string().optional(),
@@ -301,17 +308,42 @@ export default function Settings() {
                                     <div>
                                         <h4 className="font-medium">Export Data</h4>
                                         <p className="text-sm text-muted-foreground">
-                                            Download an Excel file with all your personal data.
+                                            Download your data in Excel format.
                                         </p>
                                     </div>
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={() => window.open("/api/export-data", "_blank")}
-                                    >
-                                        <Download className="mr-2 h-4 w-4" />
-                                        Export Excel
-                                    </Button>
+
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="outline">
+                                                <Download className="mr-2 h-4 w-4" />
+                                                Export Data
+                                                <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuItem onClick={() => window.open("/api/export-data", "_blank")}>
+                                                📄 Full Export (All Data)
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => window.open("/api/export-data?type=Accounts", "_blank")}>
+                                                🏦 Accounts
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => window.open("/api/export-data?type=Categories", "_blank")}>
+                                                🏷️ Categories
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => window.open("/api/export-data?type=Transactions,ImportStaging", "_blank")}>
+                                                💸 Transactions
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => window.open("/api/export-data?type=MonthlyBudgets,PlannedExpenses", "_blank")}>
+                                                📊 Budgets
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => window.open("/api/export-data?type=RecurringExpenses,RecurringExpenseChecks", "_blank")}>
+                                                🔄 Recurring Expenses
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => window.open("/api/export-data?type=Holdings,Trades", "_blank")}>
+                                                📈 Portfolio
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                 </div>
 
                                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg bg-destructive/5 border-destructive/20">

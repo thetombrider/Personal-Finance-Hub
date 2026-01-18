@@ -182,7 +182,7 @@ export interface IStorage {
 
   // Data Management
   deleteUser(id: string): Promise<void>;
-  exportUserData(userId: string): Promise<any>;
+  exportUserData(userId: string, tables?: string[]): Promise<any>;
 }
 
 /**
@@ -361,37 +361,85 @@ export class DatabaseStorage implements IStorage {
     await db.delete(users).where(eq(users.id, id));
   }
 
-  async exportUserData(userId: string): Promise<any> {
-    const _accounts = await this.getAccounts(userId);
-    const _categories = await this.getCategories(userId);
-    const _transactions = await this.getTransactions(userId);
-    const _holdings = await this.getHoldings(userId);
-    const _trades = await this.getTrades(userId);
-    const _bankConnections = await this.getBankConnections(userId);
-    const _recurringExpenses = await this.getRecurringExpenses(userId);
+  async exportUserData(userId: string, tables?: string[]): Promise<any> {
+    const data: any = {};
 
-    // Monthly Budgets - need all, not just one year
-    const userCategories = db.select({ id: categories.id }).from(categories).where(eq(categories.userId, userId));
-    const _monthlyBudgets = await db.select().from(monthlyBudgets).where(inArray(monthlyBudgets.categoryId, userCategories));
-    const _plannedExpenses = await db.select().from(plannedExpenses).where(inArray(plannedExpenses.categoryId, userCategories));
+    const shouldExport = (table: string) => !tables || tables.includes(table);
 
-    // Recurring Expense Checks
-    const userAccounts = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.userId, userId));
-    const userRecurringExpenses = db.select({ id: recurringExpenses.id }).from(recurringExpenses).where(inArray(recurringExpenses.accountId, userAccounts));
-    const _recurringExpenseChecks = await db.select().from(recurringExpenseChecks).where(inArray(recurringExpenseChecks.recurringExpenseId, userRecurringExpenses));
+    // 1. User Profile
+    if (shouldExport('User')) {
+      const user = await this.getUser(userId);
+      if (user) {
+        // Exclude sensitive data
+        const { password, ...safeUser } = user;
+        data.User = [safeUser];
+      }
+    }
 
-    return {
-      Accounts: _accounts,
-      Categories: _categories,
-      Transactions: _transactions,
-      Holdings: _holdings,
-      Trades: _trades,
-      BankConnections: _bankConnections,
-      RecurringExpenses: _recurringExpenses,
-      RecurringExpenseChecks: _recurringExpenseChecks,
-      MonthlyBudgets: _monthlyBudgets,
-      PlannedExpenses: _plannedExpenses
-    };
+    // 2. Core Entities
+    if (shouldExport('Accounts')) {
+      data.Accounts = await this.getAccounts(userId);
+    }
+
+    if (shouldExport('Categories')) {
+      data.Categories = await this.getCategories(userId);
+    }
+
+    // 3. Transactions & Imports
+    if (shouldExport('Transactions')) {
+      data.Transactions = await this.getTransactions(userId);
+    }
+
+    if (shouldExport('ImportStaging')) {
+      data.ImportStaging = await this.getImportStaging(userId);
+    }
+
+    // 4. Portfolio
+    if (shouldExport('Holdings')) {
+      data.Holdings = await this.getHoldings(userId);
+    }
+
+    if (shouldExport('Trades')) {
+      data.Trades = await this.getTrades(userId);
+    }
+
+    // 5. Connections
+    if (shouldExport('BankConnections')) {
+      data.BankConnections = await this.getBankConnections(userId);
+    }
+
+    if (shouldExport('Webhooks')) {
+      data.Webhooks = await this.getWebhooks(userId);
+    }
+
+    // 6. Budgets
+    if (shouldExport('MonthlyBudgets') || shouldExport('PlannedExpenses')) {
+      const userCategories = db.select({ id: categories.id }).from(categories).where(eq(categories.userId, userId));
+
+      if (shouldExport('MonthlyBudgets')) {
+        data.MonthlyBudgets = await db.select().from(monthlyBudgets).where(inArray(monthlyBudgets.categoryId, userCategories));
+      }
+
+      if (shouldExport('PlannedExpenses')) {
+        data.PlannedExpenses = await db.select().from(plannedExpenses).where(inArray(plannedExpenses.categoryId, userCategories));
+      }
+    }
+
+    // 7. Recurring Expenses
+    if (shouldExport('RecurringExpenses') || shouldExport('RecurringExpenseChecks')) {
+      const userAccounts = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.userId, userId));
+
+      if (shouldExport('RecurringExpenses')) {
+        data.RecurringExpenses = await db.select().from(recurringExpenses).where(inArray(recurringExpenses.accountId, userAccounts));
+      }
+
+      if (shouldExport('RecurringExpenseChecks')) {
+        const userRecurringExpenses = db.select({ id: recurringExpenses.id }).from(recurringExpenses).where(inArray(recurringExpenses.accountId, userAccounts));
+        data.RecurringExpenseChecks = await db.select().from(recurringExpenseChecks).where(inArray(recurringExpenseChecks.recurringExpenseId, userRecurringExpenses));
+      }
+    }
+
+    return data;
   }
 }
 
