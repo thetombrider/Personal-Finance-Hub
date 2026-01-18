@@ -16,6 +16,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     if (location.startsWith("/reports")) {
       setExpandedItems(prev => ({ ...prev, "Reports": true }));
     }
+    if (location.startsWith("/budget")) {
+      setExpandedItems(prev => ({ ...prev, "Budget": true }));
+    }
   }, [location]);
 
   const toggleExpanded = (label: string) => {
@@ -29,7 +32,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
     { href: "/transactions", label: "Transactions", icon: Receipt },
     { href: "/accounts", label: "Accounts", icon: CreditCard },
-    { href: "/budget", label: "Budget", icon: Calculator },
+    { href: "/accounts", label: "Accounts", icon: CreditCard },
+    {
+      href: "/budget",
+      label: "Budget",
+      icon: Calculator,
+      subItems: [
+        { href: "/budget/overview", label: "Budget Overview" },
+        { href: "/budget/baseline", label: "Set Budget Baseline" },
+        { href: "/budget/recurring", label: "Recurring Expenses" },
+        { href: "/budget/planned", label: "Planned Expenses" },
+      ]
+    },
     { href: "/categories", label: "Categories", icon: PieChart },
     {
       href: "/reports",

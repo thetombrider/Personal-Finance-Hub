@@ -54,6 +54,10 @@ function Router() {
         <Route path="/categories" component={Categories} />
         <Route path="/transactions" component={Transactions} />
         <Route path="/import" component={ImportTransactions} />
+        <Route path="/budget/overview" component={Budget} />
+        <Route path="/budget/baseline" component={Budget} />
+        <Route path="/budget/recurring" component={Budget} />
+        <Route path="/budget/planned" component={Budget} />
         <Route path="/budget" component={Budget} />
         <Route path="/reports/income-statement" component={Reports} />
         <Route path="/reports/balance-sheet" component={Reports} />

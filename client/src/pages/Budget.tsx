@@ -1,6 +1,7 @@
 
 import Layout from "@/components/Layout";
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ interface YearlyBudgetData {
 }
 
 export default function Budget() {
+    const [location, setLocation] = useLocation();
     const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
     const [viewHalf, setViewHalf] = useState<'first' | 'second'>('first');
     const queryClient = useQueryClient();
@@ -39,6 +41,12 @@ export default function Budget() {
     const [isAddPlannedOpen, setIsAddPlannedOpen] = useState(false);
     const [editingRecurring, setEditingRecurring] = useState<RecurringExpense | null>(null);
     const [editingPlanned, setEditingPlanned] = useState<PlannedExpense | null>(null);
+
+    // Default redirect if just /budget
+    if (location === "/budget") {
+        setLocation("/budget/overview");
+        return null;
+    }
 
     const { data, isLoading } = useQuery<YearlyBudgetData>({
         queryKey: ['budget', currentYear],
@@ -178,41 +186,50 @@ export default function Budget() {
 
                 {/* Main Content */}
                 <div className="flex-1 overflow-auto pr-4 space-y-8">
-                    {/* 1. Summary Table (Read Only) */}
-                    <section>
-                        <SummaryTable
-                            categories={data.categories}
-                            budgetData={data.budgetData}
-                            monthRange={monthRange}
-                        />
-                    </section>
-
-                    {/* 2. Baseline Table (Editable) */}
-                    <section>
-                        <BaselineTable
-                            categories={data.categories}
-                            budgetData={data.budgetData}
-                            onUpdateBaseline={handleUpdateBaseline}
-                            monthRange={monthRange}
-                        />
-                    </section>
-
-                    {/* 3. Recurring & Planned Tables */}
-                    <div className="space-y-8">
+                    {/* Overview */}
+                    {location === "/budget/overview" && (
                         <section>
-                            <RecurringExpensesTable
-                                expenses={data.recurringExpenses}
+                            <SummaryTable
                                 categories={data.categories}
-                                onAdd={handleAddRecurring}
-                                onEdit={handleEditRecurring}
-                                onDelete={(id) => deleteRecurringMutation.mutate(id)}
+                                budgetData={data.budgetData}
+                                monthRange={monthRange}
                             />
                         </section>
+                    )}
 
+                    {/* Baseline */}
+                    {location === "/budget/baseline" && (
                         <section>
-                            <RecurringExpensesMonitoring recurringExpenses={data.recurringExpenses} />
+                            <BaselineTable
+                                categories={data.categories}
+                                budgetData={data.budgetData}
+                                onUpdateBaseline={handleUpdateBaseline}
+                                monthRange={monthRange}
+                            />
                         </section>
+                    )}
 
+                    {/* Recurring Expenses */}
+                    {location === "/budget/recurring" && (
+                        <div className="space-y-8">
+                            <section>
+                                <RecurringExpensesTable
+                                    expenses={data.recurringExpenses}
+                                    categories={data.categories}
+                                    onAdd={handleAddRecurring}
+                                    onEdit={handleEditRecurring}
+                                    onDelete={(id) => deleteRecurringMutation.mutate(id)}
+                                />
+                            </section>
+
+                            <section>
+                                <RecurringExpensesMonitoring recurringExpenses={data.recurringExpenses} />
+                            </section>
+                        </div>
+                    )}
+
+                    {/* Planned Expenses */}
+                    {location === "/budget/planned" && (
                         <section>
                             <PlannedExpensesTable
                                 expenses={data.plannedExpenses}
@@ -222,7 +239,7 @@ export default function Budget() {
                                 onDelete={(id) => deletePlannedMutation.mutate(id)}
                             />
                         </section>
-                    </div>
+                    )}
                 </div>
 
                 {/* Dialogs */}
