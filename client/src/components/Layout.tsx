@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, CreditCard, PieChart, Receipt, Menu, Settings, FileSpreadsheet, TrendingUp, LogOut, Calculator } from "lucide-react";
-import { useState } from "react";
+import { LayoutDashboard, CreditCard, PieChart, Receipt, Menu, Settings, FileSpreadsheet, TrendingUp, LogOut, Calculator, ChevronDown, ChevronRight } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
@@ -9,6 +9,21 @@ import logo from "@assets/generated_images/abstract_geometric_finance_logo.png";
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
+
+  // Initialize expanded state based on current location
+  useEffect(() => {
+    if (location.startsWith("/reports")) {
+      setExpandedItems(prev => ({ ...prev, "Reports": true }));
+    }
+  }, [location]);
+
+  const toggleExpanded = (label: string) => {
+    setExpandedItems(prev => ({
+      ...prev,
+      [label]: !prev[label]
+    }));
+  };
 
   const navItems = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -16,7 +31,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     { href: "/accounts", label: "Accounts", icon: CreditCard },
     { href: "/budget", label: "Budget", icon: Calculator },
     { href: "/categories", label: "Categories", icon: PieChart },
-    { href: "/reports", label: "Reports", icon: FileSpreadsheet },
+    {
+      href: "/reports",
+      label: "Reports",
+      icon: FileSpreadsheet,
+      subItems: [
+        { href: "/reports/income-statement", label: "Income Statement" },
+        { href: "/reports/balance-sheet", label: "Balance Sheet" },
+      ]
+    },
     { href: "/portfolio", label: "Portfolio", icon: TrendingUp },
     { href: "/import", label: "Import Data", icon: FileSpreadsheet },
   ];
@@ -41,21 +64,67 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <nav className="flex-1 px-4 py-4 space-y-1">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive = location === item.href;
+          // Active if current path is exactly item.href or if it's a parent of current path (for subitems)
+          // But for "Reports" parent, we might want it active if any child is active.
+          const isActive = location === item.href || (item.subItems && location.startsWith(item.href));
+          const isExpanded = expandedItems[item.label];
+
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group",
-                isActive
-                  ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
+            <div key={item.label}>
+              {!item.subItems ? (
+                <Link
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group",
+                    isActive
+                      ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
+                      : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                  )}
+                >
+                  <Icon size={18} className={cn("transition-colors", isActive ? "text-primary-foreground" : "text-muted-foreground group-hover:text-foreground")} />
+                  {item.label}
+                </Link>
+              ) : (
+                <div className="space-y-1">
+                  <button
+                    onClick={() => toggleExpanded(item.label)}
+                    className={cn(
+                      "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group hover:bg-accent hover:text-foreground",
+                      isActive // Even if collapsed, if active show as selected but maybe different style? Or key it on expanded.
+                        ? "text-primary hover:bg-primary/5"
+                        : "text-muted-foreground"
+                    )}>
+                    <div className="flex items-center gap-3">
+                      <Icon size={18} className={cn("transition-colors", isActive ? "text-primary" : "text-muted-foreground")} />
+                      {item.label}
+                    </div>
+                    {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                  </button>
+
+                  {isExpanded && (
+                    <div className="pl-9 space-y-1">
+                      {item.subItems.map(sub => {
+                        const isSubActive = location === sub.href;
+                        return (
+                          <Link
+                            key={sub.href}
+                            href={sub.href}
+                            className={cn(
+                              "block px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                              isSubActive
+                                ? "bg-primary/10 text-primary"
+                                : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                            )}
+                          >
+                            {sub.label}
+                          </Link>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
               )}
-            >
-              <Icon size={18} className={cn("transition-colors", isActive ? "text-primary-foreground" : "text-muted-foreground group-hover:text-foreground")} />
-              {item.label}
-            </Link>
+            </div>
           );
         })}
       </nav>

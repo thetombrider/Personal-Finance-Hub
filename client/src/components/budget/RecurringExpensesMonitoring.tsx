@@ -76,8 +76,8 @@ export function RecurringExpensesMonitoring({ recurringExpenses }: RecurringExpe
             <CardHeader>
                 <div className="flex items-center justify-between">
                     <div>
-                        <CardTitle>Monitoraggio Ricorrenti</CardTitle>
-                        <CardDescription>Verifica storico pagamenti ultimi 12 mesi</CardDescription>
+                        <CardTitle>Recurring Expenses Monitoring</CardTitle>
+                        <CardDescription>Verify payment history for the last 12 months</CardDescription>
                     </div>
                     <Button
                         variant="outline"
@@ -91,7 +91,7 @@ export function RecurringExpensesMonitoring({ recurringExpenses }: RecurringExpe
                         disabled={runCheckMutation.isPending}
                     >
                         {runCheckMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
-                        Controlla Ora (Ultimi 12 Mesi)
+                        Run Check (Last 12 Months)
                     </Button>
                 </div>
             </CardHeader>
@@ -99,7 +99,7 @@ export function RecurringExpensesMonitoring({ recurringExpenses }: RecurringExpe
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="w-[200px]">Spesa</TableHead>
+                            <TableHead className="w-[200px]">Expense</TableHead>
                             {months.map(m => (
                                 <TableHead key={`${m.year}-${m.month}`} className="text-center w-[80px]">{m.label}</TableHead>
                             ))}

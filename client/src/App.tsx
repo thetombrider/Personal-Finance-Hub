@@ -55,6 +55,8 @@ function Router() {
         <Route path="/transactions" component={Transactions} />
         <Route path="/import" component={ImportTransactions} />
         <Route path="/budget" component={Budget} />
+        <Route path="/reports/income-statement" component={Reports} />
+        <Route path="/reports/balance-sheet" component={Reports} />
         <Route path="/reports" component={Reports} />
         <Route path="/portfolio" component={Portfolio} />
         <Route path="/settings/accounts" component={ManageAccounts} />
