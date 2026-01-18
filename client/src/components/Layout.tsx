@@ -19,6 +19,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     if (location.startsWith("/budget")) {
       setExpandedItems(prev => ({ ...prev, "Budget": true }));
     }
+    if (location.startsWith("/settings")) {
+      setExpandedItems(prev => ({ ...prev, "Settings": true }));
+    }
   }, [location]);
 
   const toggleExpanded = (label: string) => {
@@ -56,15 +59,21 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     },
     { href: "/portfolio", label: "Portfolio", icon: TrendingUp },
     { href: "/import", label: "Import Data", icon: FileSpreadsheet },
+    {
+      href: "/settings",
+      label: "Settings",
+      icon: Settings,
+      subItems: [
+        { href: "/settings/accounts", label: "Account Management" },
+        { href: "/settings/categories", label: "Category Management" },
+        { href: "/settings/webhooks", label: "Webhook Management" },
+        { href: "/settings/email-reports", label: "Email Reports" },
+        { href: "/settings", label: "User Settings" },
+      ]
+    },
   ];
 
-  const settingsItems = [
-    { href: "/settings/accounts", label: "Account Management" },
-    { href: "/settings/categories", label: "Category Management" },
-    { href: "/settings/webhooks", label: "Webhook Management" },
-    { href: "/settings/email-reports", label: "Email Reports" },
-    { href: "/settings", label: "User Settings" },
-  ];
+
 
   const NavContent = () => (
     <div className="flex flex-col h-full">
@@ -143,29 +152,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         })}
       </nav>
 
-      <div className="p-4 border-t border-border space-y-1">
-        <div className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-          <Settings size={14} />
-          Settings
-        </div>
-        {settingsItems.map((item) => {
-          const isActive = location === item.href;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200",
-                isActive
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
-              )}
-            >
-              {item.label}
-            </Link>
-          );
-        })}
-      </div>
+
 
       <div className="mt-auto p-4 border-t border-border">
         <Button
