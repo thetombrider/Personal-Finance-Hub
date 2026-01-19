@@ -136,7 +136,7 @@ export default function Accounts() {
                 </div>
 
                 <Select value={timeRange} onValueChange={setTimeRange}>
-                  <SelectTrigger className="w-[140px]" data-testid="select-time-range">
+                  <SelectTrigger className="w-[170px]" data-testid="select-time-range">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
