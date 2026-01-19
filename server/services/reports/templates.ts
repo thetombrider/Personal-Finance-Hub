@@ -27,48 +27,58 @@ export function generateWeeklyReportHtml(data: WeeklyReportData): string {
 <head>
   <meta charset="utf-8">
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; padding: 20px; }
-    .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-    h1 { color: #1a1a1a; margin-bottom: 5px; }
-    .subtitle { color: #666; margin-bottom: 30px; }
-    .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px; }
-    .summary-card { background: #f8f9fa; padding: 20px; border-radius: 8px; text-align: center; }
-    .summary-card.income { background: #ecfdf5; }
-    .summary-card.expense { background: #fef2f2; }
-    .summary-label { font-size: 12px; color: #666; text-transform: uppercase; }
-    .summary-value { font-size: 24px; font-weight: 700; margin-top: 5px; }
-    .summary-value.income { color: #059669; }
-    .summary-value.expense { color: #dc2626; }
-    .category-list { margin: 20px 0; }
-    .category-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #eee; }
-    .category-name { color: #333; }
-    .category-amount { font-weight: 600; color: #dc2626; }
-    .footer { text-align: center; margin-top: 30px; color: #999; font-size: 12px; }
-    .balance-card { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 25px; border-radius: 12px; text-align: center; margin-bottom: 25px; }
-    .balance-label { font-size: 14px; opacity: 0.9; }
-    .balance-value { font-size: 32px; font-weight: 700; margin-top: 5px; }
+    body { font-family: 'JetBrains Mono', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #ffffff; padding: 20px; color: #171717; }
+    .container { max-width: 600px; margin: 0 auto; background: white; border: 1px solid #e5e5e5; padding: 30px; }
+    h1 { color: #171717; margin-bottom: 5px; font-weight: 700; letter-spacing: -0.025em; }
+    h3 { font-weight: 600; font-size: 16px; margin-top: 30px; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .subtitle { color: #737373; margin-bottom: 40px; font-size: 14px; }
+    
+    .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px; }
+    .summary-card { padding: 20px; border: 1px solid #e5e5e5; text-align: center; }
+    .summary-label { font-size: 11px; color: #737373; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+    .summary-value { font-size: 24px; font-weight: 700; }
+    .summary-value.income { color: #171717; }
+    .summary-value.expense { color: #171717; }
+    
+    .balance-card { border: 1px solid #171717; background: #171717; color: white; padding: 30px; text-align: center; margin-bottom: 40px; }
+    .balance-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.8; margin-bottom: 10px; }
+    .balance-value { font-size: 42px; font-weight: 700; letter-spacing: -0.025em; }
+    
+    .category-list { margin: 20px 0; border-top: 1px solid #e5e5e5; }
+    .category-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e5e5e5; }
+    .category-name { color: #171717; font-size: 13px; }
+    .category-amount { font-weight: 600; color: #171717; font-size: 13px; }
+    
     .expense-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-    .expense-table th { text-align: left; padding: 10px 8px; border-bottom: 2px solid #eee; font-size: 11px; color: #666; text-transform: uppercase; }
-    .expense-table td { padding: 12px 8px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
-    .expense-table .amount { font-weight: 600; color: #dc2626; text-align: right; }
-    .expense-table .desc { color: #333; }
-    .expense-table .meta { color: #888; font-size: 11px; }
-    .credit-card-section { background: #fef3c7; border-radius: 8px; padding: 20px; margin-top: 25px; }
-    .credit-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-    .credit-card-title { font-weight: 600; color: #92400e; }
-    .credit-card-total { font-weight: 700; color: #dc2626; }
-    .portfolio-section { background: #f0fdf4; border-radius: 8px; padding: 20px; margin-top: 25px; }
-    .portfolio-header { margin-bottom: 15px; }
-    .portfolio-title { font-weight: 600; color: #166534; font-size: 16px; }
-    .portfolio-table { width: 100%; border-collapse: collapse; margin: 10px 0; }
-    .portfolio-table th { text-align: left; padding: 8px 6px; border-bottom: 2px solid #86efac; font-size: 10px; color: #166534; text-transform: uppercase; }
-    .portfolio-table td { padding: 10px 6px; border-bottom: 1px solid #dcfce7; font-size: 12px; }
-    .portfolio-table .ticker { font-weight: 600; color: #166534; }
+    .expense-table th { text-align: left; padding: 10px 0; border-bottom: 1px solid #171717; font-size: 10px; color: #737373; text-transform: uppercase; letter-spacing: 0.05em; }
+    .expense-table td { padding: 12px 0; border-bottom: 1px solid #e5e5e5; font-size: 12px; color: #171717; }
+    .expense-table .amount { font-weight: 600; text-align: right; }
+    .expense-table .desc { color: #171717; }
+    .expense-table .meta { color: #737373; font-size: 11px; }
+    
+    .credit-card-section { border: 1px solid #e5e5e5; padding: 25px; margin-top: 40px; }
+    .credit-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #e5e5e5; }
+    .credit-card-title { font-weight: 600; color: #171717; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .credit-card-total { font-weight: 700; color: #171717; }
+    
+    .portfolio-section { border: 1px solid #e5e5e5; padding: 25px; margin-top: 40px; }
+    .portfolio-header { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #e5e5e5; }
+    .portfolio-title { font-weight: 600; color: #171717; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; }
+    
+    .portfolio-table { width: 100%; border-collapse: collapse; }
+    .portfolio-table th { text-align: left; padding: 8px 0; border-bottom: 1px solid #737373; font-size: 10px; color: #737373; text-transform: uppercase; letter-spacing: 0.05em; }
+    .portfolio-table td { padding: 10px 0; border-bottom: 1px solid #e5e5e5; font-size: 12px; color: #171717; }
+    .portfolio-table .ticker { font-weight: 600; font-family: 'JetBrains Mono', monospace; }
     .portfolio-table .number { text-align: right; }
-    .portfolio-table .gain { color: #059669; font-weight: 600; }
-    .portfolio-table .loss { color: #dc2626; font-weight: 600; }
-    .portfolio-table tfoot td { border-top: 2px solid #86efac; font-weight: 700; background: #dcfce7; }
-  </style>
+    .portfolio-table .gain { color: #171717; }
+    .portfolio-table .loss { color: #171717; }
+    .portfolio-table tfoot td { border-top: 2px solid #171717; border-bottom: none; font-weight: 700; padding-top: 20px; }
+    
+    .footer { text-align: center; margin-top: 60px; color: #a3a3a3; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; }
+    
+    /* Utilities */
+    .text-right { text-align: right; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }  </style>
 </head>
 <body>
   <div class="container">

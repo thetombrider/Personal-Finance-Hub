@@ -38,7 +38,7 @@ export function DashboardHeader({
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
-                <div className="bg-card border border-border p-1 rounded-lg shadow-sm">
+                <div className="bg-card border border-border p-1">
                     <Select value={selectedAccount} onValueChange={setSelectedAccount}>
                         <SelectTrigger className="w-[160px] border-none bg-transparent shadow-none focus:ring-0" data-testid="select-account-filter">
                             <SelectValue placeholder="All Accounts" />
@@ -51,7 +51,7 @@ export function DashboardHeader({
                         </SelectContent>
                     </Select>
                 </div>
-                <div className="bg-card border border-border p-1 rounded-lg shadow-sm">
+                <div className="bg-card border border-border p-1">
                     <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                         <SelectTrigger className="w-[160px] border-none bg-transparent shadow-none focus:ring-0" data-testid="select-category-filter">
                             <SelectValue placeholder="All Categories" />

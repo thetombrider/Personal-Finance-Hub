@@ -249,24 +249,24 @@ export default function Transactions() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-heading font-bold text-foreground">Transactions</h1>
-            <p className="text-muted-foreground">Track every penny ({transactions.length} total)</p>
           </div>
 
           <div className="flex items-center gap-2">
             {selectedIds.size > 0 && (
-              <Button variant="destructive" className="gap-2" onClick={handleBulkDelete} data-testid="button-bulk-delete">
-                <Trash2 size={16} /> Delete ({selectedIds.size})
+              <Button variant="destructive" className="gap-2 px-3" onClick={handleBulkDelete} data-testid="button-bulk-delete" title={`Delete ${selectedIds.size} transactions`}>
+                <Trash2 size={16} /> {selectedIds.size}
               </Button>
             )}
 
             <Button
               variant="outline"
-              className="gap-2"
+              className="gap-2 px-3"
               onClick={handleDownload}
               disabled={selectedIds.size === 0 && sortedTransactions.length === 0}
               data-testid="button-download-transactions"
+              title={`Download ${(selectedIds.size > 0 ? selectedIds.size : sortedTransactions.length)} transactions`}
             >
-              <Download size={16} /> Download ({selectedIds.size > 0 ? selectedIds.size : sortedTransactions.length})
+              <Download size={16} /> {(selectedIds.size > 0 ? selectedIds.size : sortedTransactions.length)}
             </Button>
 
             <Button
@@ -295,12 +295,12 @@ export default function Transactions() {
               {isSyncingAll ? `Syncing ${Math.round(syncProgress)}%` : "Sync All"}
             </Button>
 
-            <Button className="gap-2" onClick={() => { setIsDialogOpen(true); setEditingId(null); setEditFormData(null); }} data-testid="button-add-transaction">
-              <Plus size={16} /> Add Transaction
+            <Button size="icon" onClick={() => { setIsDialogOpen(true); setEditingId(null); setEditFormData(null); }} data-testid="button-add-transaction" title="Add Transaction">
+              <Plus size={16} />
             </Button>
 
-            <Button variant="outline" className="gap-2" onClick={() => setIsTransferDialogOpen(true)} data-testid="button-add-transfer">
-              <ArrowLeftRight size={16} /> Transfer
+            <Button variant="outline" size="icon" onClick={() => setIsTransferDialogOpen(true)} data-testid="button-add-transfer" title="Transfer">
+              <ArrowLeftRight size={16} />
             </Button>
           </div>
         </div>
