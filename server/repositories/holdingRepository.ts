@@ -61,7 +61,12 @@ export class HoldingRepository {
     async updateHolding(id: number, userId: string, holding: Partial<InsertHolding>): Promise<Holding | undefined> {
         return await db.transaction(async (tx) => {
             const updateData = holding.ticker
-                ? { ...holding, ticker: holding.ticker.toUpperCase() }
+                ? {
+                    ...holding,
+                    ticker: holding.ticker.toUpperCase(),
+                    currentPrice: null,
+                    lastPriceUpdate: null
+                }
                 : holding;
 
             const [updated] = await tx.update(holdings)
