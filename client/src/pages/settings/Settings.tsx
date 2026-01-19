@@ -41,7 +41,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, Trash2, RefreshCw, AlertCircle, CheckCircle2, Download, ChevronDown } from "lucide-react";
+import { Plus, Trash2, RefreshCw, AlertCircle, CheckCircle2, Download, ChevronDown, FileText, Landmark, Tags, ArrowRightLeft, PieChart, CalendarClock, TrendingUp } from "lucide-react";
 
 const formSchema = z.object({
     firstName: z.string().optional(),
@@ -323,25 +323,32 @@ export default function Settings() {
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
                                             <DropdownMenuItem onClick={() => window.open("/api/export-data", "_blank")}>
-                                                📄 Full Export (All Data)
+                                                <FileText className="mr-2 h-4 w-4" />
+                                                Full Export (All Data)
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onClick={() => window.open("/api/export-data?type=Accounts", "_blank")}>
-                                                🏦 Accounts
+                                                <Landmark className="mr-2 h-4 w-4" />
+                                                Accounts
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onClick={() => window.open("/api/export-data?type=Categories", "_blank")}>
-                                                🏷️ Categories
+                                                <Tags className="mr-2 h-4 w-4" />
+                                                Categories
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onClick={() => window.open("/api/export-data?type=Transactions,ImportStaging", "_blank")}>
-                                                💸 Transactions
+                                                <ArrowRightLeft className="mr-2 h-4 w-4" />
+                                                Transactions
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onClick={() => window.open("/api/export-data?type=MonthlyBudgets,PlannedExpenses", "_blank")}>
-                                                📊 Budgets
+                                                <PieChart className="mr-2 h-4 w-4" />
+                                                Budgets
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onClick={() => window.open("/api/export-data?type=RecurringExpenses,RecurringExpenseChecks", "_blank")}>
-                                                🔄 Recurring Expenses
+                                                <CalendarClock className="mr-2 h-4 w-4" />
+                                                Recurring Expenses
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onClick={() => window.open("/api/export-data?type=Holdings,Trades", "_blank")}>
-                                                📈 Portfolio
+                                                <TrendingUp className="mr-2 h-4 w-4" />
+                                                Portfolio
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
