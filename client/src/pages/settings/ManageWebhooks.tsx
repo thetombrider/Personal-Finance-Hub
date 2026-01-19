@@ -2,7 +2,7 @@ import { useState } from "react";
 import Layout from "@/components/Layout";
 import { TallyGuideDialog } from "@/components/settings/TallyGuideDialog";
 import { GenericJSONGuideDialog } from "@/components/settings/GenericJSONGuideDialog";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -374,102 +374,94 @@ export default function ManageWebhooks() {
                     </DialogContent>
                 </Dialog>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Your Webhooks</CardTitle>
-                        <CardDescription>
-                            Configure URLs in the external service to start receiving data.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                        <Table>
-                            <TableHeader>
+                <div className="rounded-md border w-full">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Name</TableHead>
+                                <TableHead>Endpoint URL</TableHead>
+                                <TableHead>Secret (Signature)</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Last Used</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {webhooks.length === 0 ? (
                                 <TableRow>
-                                    <TableHead>Name</TableHead>
-                                    <TableHead>Endpoint URL</TableHead>
-                                    <TableHead>Secret (Signature)</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead>Last Used</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
+                                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                                        No webhooks configured. Create one to start.
+                                    </TableCell>
                                 </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {webhooks.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                                            No webhooks configured. Create one to start.
+                            ) : (
+                                webhooks.map((webhook) => (
+                                    <TableRow key={webhook.id}>
+                                        <TableCell className="font-medium">
+                                            <div className="flex items-center gap-2">
+                                                {webhook.type === 'tally' && <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded">TALLY</span>}
+                                                {webhook.type === 'generic' && <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">JSON</span>}
+                                                {webhook.name}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-2 max-w-[250px]">
+                                                <code className="bg-slate-100 px-1 py-0.5 rounded text-xs truncate flex-1 block">
+                                                    .../api/webhooks/{webhook.id}
+                                                </code>
+                                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyToClipboard(getWebhookUrl(webhook.id))}>
+                                                    <Copy className="h-3 w-3" />
+                                                </Button>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs font-mono text-muted-foreground">
+                                                    {webhook.secret ? (showSecret[webhook.id] ? webhook.secret : "••••••••") : "None"}
+                                                </span>
+                                                {webhook.secret && (
+                                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => toggleSecret(webhook.id)}>
+                                                        {showSecret[webhook.id] ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge variant={webhook.active ? "secondary" : "outline"} className={webhook.active ? "bg-green-100 text-green-800" : "text-slate-500"}>
+                                                {webhook.active ? "Active" : "Inactive"}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell className="text-xs text-muted-foreground">
+                                            {webhook.lastUsedAt ? format(new Date(webhook.lastUsedAt), "dd/MM/yyyy HH:mm") : "Never"}
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <div className="flex items-center justify-end gap-1">
+                                                {webhook.type === 'tally' && (
+                                                    <Button variant="ghost" size="icon" onClick={() => setIsGuideOpen(true)} title="Configuration Guide">
+                                                        <HelpCircle className="h-4 w-4 text-blue-500" />
+                                                    </Button>
+                                                )}
+                                                {webhook.type === 'generic' && (
+                                                    <Button variant="ghost" size="icon" onClick={() => setIsGenericGuideOpen(true)} title="JSON Configuration Guide">
+                                                        <HelpCircle className="h-4 w-4 text-emerald-500" />
+                                                    </Button>
+                                                )}
+                                                <Button variant="ghost" size="icon" onClick={() => setViewingLogsId(webhook.id)} title="Logs">
+                                                    <ScrollText className="h-4 w-4" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" onClick={() => handleEdit(webhook)} title="Edit">
+                                                    <Edit2 className="h-4 w-4" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" onClick={() => handleDelete(webhook.id)} className="text-red-500 hover:text-red-700 hover:bg-red-50" title="Delete">
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
                                         </TableCell>
                                     </TableRow>
-                                ) : (
-                                    webhooks.map((webhook) => (
-                                        <TableRow key={webhook.id}>
-                                            <TableCell className="font-medium">
-                                                <div className="flex items-center gap-2">
-                                                    {webhook.type === 'tally' && <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded">TALLY</span>}
-                                                    {webhook.type === 'generic' && <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">JSON</span>}
-                                                    {webhook.name}
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="flex items-center gap-2 max-w-[250px]">
-                                                    <code className="bg-slate-100 px-1 py-0.5 rounded text-xs truncate flex-1 block">
-                                                        .../api/webhooks/{webhook.id}
-                                                    </code>
-                                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyToClipboard(getWebhookUrl(webhook.id))}>
-                                                        <Copy className="h-3 w-3" />
-                                                    </Button>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-xs font-mono text-muted-foreground">
-                                                        {webhook.secret ? (showSecret[webhook.id] ? webhook.secret : "••••••••") : "None"}
-                                                    </span>
-                                                    {webhook.secret && (
-                                                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => toggleSecret(webhook.id)}>
-                                                            {showSecret[webhook.id] ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-                                                        </Button>
-                                                    )}
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge variant={webhook.active ? "secondary" : "outline"} className={webhook.active ? "bg-green-100 text-green-800" : "text-slate-500"}>
-                                                    {webhook.active ? "Active" : "Inactive"}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell className="text-xs text-muted-foreground">
-                                                {webhook.lastUsedAt ? format(new Date(webhook.lastUsedAt), "dd/MM/yyyy HH:mm") : "Never"}
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <div className="flex items-center justify-end gap-1">
-                                                    {webhook.type === 'tally' && (
-                                                        <Button variant="ghost" size="icon" onClick={() => setIsGuideOpen(true)} title="Configuration Guide">
-                                                            <HelpCircle className="h-4 w-4 text-blue-500" />
-                                                        </Button>
-                                                    )}
-                                                    {webhook.type === 'generic' && (
-                                                        <Button variant="ghost" size="icon" onClick={() => setIsGenericGuideOpen(true)} title="JSON Configuration Guide">
-                                                            <HelpCircle className="h-4 w-4 text-emerald-500" />
-                                                        </Button>
-                                                    )}
-                                                    <Button variant="ghost" size="icon" onClick={() => setViewingLogsId(webhook.id)} title="Logs">
-                                                        <ScrollText className="h-4 w-4" />
-                                                    </Button>
-                                                    <Button variant="ghost" size="icon" onClick={() => handleEdit(webhook)} title="Edit">
-                                                        <Edit2 className="h-4 w-4" />
-                                                    </Button>
-                                                    <Button variant="ghost" size="icon" onClick={() => handleDelete(webhook.id)} className="text-red-500 hover:text-red-700 hover:bg-red-50" title="Delete">
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                </Card>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
             </div>
 
             <WebhookLogsDialog

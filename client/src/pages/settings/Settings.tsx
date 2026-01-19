@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -147,121 +147,120 @@ export default function Settings() {
 
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Personal Information</CardTitle>
-                                <CardDescription>
+                        <div className="space-y-6">
+                            <div>
+                                <h3 className="text-lg font-medium">Personal Information</h3>
+                                <p className="text-sm text-muted-foreground">
                                     Manage your personal information.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="grid gap-4 md:grid-cols-2">
-                                    <FormField
-                                        control={form.control}
-                                        name="firstName"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>First Name</FormLabel>
-                                                <FormControl>
-                                                    <Input {...field} placeholder="Your first name" />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={form.control}
-                                        name="lastName"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Last Name</FormLabel>
-                                                <FormControl>
-                                                    <Input {...field} placeholder="Your last name" />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
+                                </p>
+                            </div>
+                            <div className="grid gap-4 md:grid-cols-2">
                                 <FormField
                                     control={form.control}
-                                    name="email"
+                                    name="firstName"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Email</FormLabel>
+                                            <FormLabel>First Name</FormLabel>
                                             <FormControl>
-                                                <Input {...field} type="email" placeholder="your@email.com" />
+                                                <Input {...field} placeholder="Your first name" />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}
                                 />
-                            </CardContent>
-                        </Card>
+                                <FormField
+                                    control={form.control}
+                                    name="lastName"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Last Name</FormLabel>
+                                            <FormControl>
+                                                <Input {...field} placeholder="Your last name" />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                            <FormField
+                                control={form.control}
+                                name="email"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Email</FormLabel>
+                                        <FormControl>
+                                            <Input {...field} type="email" placeholder="your@email.com" />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
 
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Credentials</CardTitle>
-                                <CardDescription>
+                        <div className="shrink-0 bg-border h-[1px] w-full my-6" />
+
+                        <div className="space-y-6">
+                            <div>
+                                <h3 className="text-lg font-medium">Credentials</h3>
+                                <p className="text-sm text-muted-foreground">
                                     Update your username and password.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
+                                </p>
+                            </div>
+                            <FormField
+                                control={form.control}
+                                name="username"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Username</FormLabel>
+                                        <FormControl>
+                                            <Input {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <div className="grid gap-4 md:grid-cols-2">
                                 <FormField
                                     control={form.control}
-                                    name="username"
+                                    name="password"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Username</FormLabel>
+                                            <FormLabel>New Password (optional)</FormLabel>
                                             <FormControl>
-                                                <Input {...field} />
+                                                <Input type="password" {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}
                                 />
 
-                                <div className="grid gap-4 md:grid-cols-2">
-                                    <FormField
-                                        control={form.control}
-                                        name="password"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>New Password (optional)</FormLabel>
-                                                <FormControl>
-                                                    <Input type="password" {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    <FormField
-                                        control={form.control}
-                                        name="confirmPassword"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Confirm Password</FormLabel>
-                                                <FormControl>
-                                                    <Input type="password" {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
-                            </CardContent>
-                        </Card>
+                                <FormField
+                                    control={form.control}
+                                    name="confirmPassword"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Confirm Password</FormLabel>
+                                            <FormControl>
+                                                <Input type="password" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                        </div>
 
                         {authConfig?.oidcEnabled && (
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Single Sign-On (SSO)</CardTitle>
-                                    <CardDescription>
-                                        Manage access via external provider (e.g. Replit).
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
+                            <>
+                                <div className="shrink-0 bg-border h-[1px] w-full my-6" />
+                                <div className="space-y-6">
+                                    <div>
+                                        <h3 className="text-lg font-medium">Single Sign-On (SSO)</h3>
+                                        <p className="text-sm text-muted-foreground">
+                                            Manage access via external provider (e.g. Replit).
+                                        </p>
+                                    </div>
                                     {user?.oidcId ? (
                                         <div className="flex items-center gap-2 p-4 bg-muted/50 rounded-lg border">
                                             <CheckCircle2 className="h-5 w-5 text-green-500" />
@@ -292,18 +291,20 @@ export default function Settings() {
                                             </Button>
                                         </div>
                                     )}
-                                </CardContent>
-                            </Card>
+                                </div>
+                            </>
                         )}
 
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Data Management</CardTitle>
-                                <CardDescription>
+                        <div className="shrink-0 bg-border h-[1px] w-full my-6" />
+
+                        <div className="space-y-6">
+                            <div>
+                                <h3 className="text-lg font-medium">Data Management</h3>
+                                <p className="text-sm text-muted-foreground">
                                     Export your data or permanently delete your account.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
+                                </p>
+                            </div>
+                            <div className="space-y-4">
                                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg bg-background">
                                     <div>
                                         <h4 className="font-medium">Export Data</h4>
@@ -391,8 +392,8 @@ export default function Settings() {
                                         </AlertDialogContent>
                                     </AlertDialog>
                                 </div>
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </div>
 
                         <div className="flex justify-end">
                             <Button type="submit" disabled={isLoading} size="lg">

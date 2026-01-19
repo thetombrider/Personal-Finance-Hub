@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -74,18 +74,19 @@ export default function EmailReports() {
           <p className="text-muted-foreground">Manage automatic email reports</p>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+        <div className="space-y-6">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
               <Mail className="h-5 w-5" />
-              Weekly Report
-            </CardTitle>
-            <CardDescription>
+              <h3 className="text-lg font-medium">Weekly Report</h3>
+            </div>
+            <p className="text-sm text-muted-foreground">
               Receive a summary of your weekly expenses every Sunday morning
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg text-green-700 dark:text-green-300">
+            </p>
+          </div>
+
+          <div className="space-y-6">
+            <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg text-green-700 dark:text-green-300 border border-green-100 dark:border-green-900/30">
               <CheckCircle2 className="h-5 w-5" />
               <span className="text-sm font-medium">Automatic report active - sent every Sunday at 9:00 AM</span>
             </div>
@@ -122,21 +123,17 @@ export default function EmailReports() {
                 <Eye className="h-4 w-4 mr-2" /> Preview
               </Button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {showPreview && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Report Preview</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div
-                className="border rounded-lg overflow-hidden"
-                dangerouslySetInnerHTML={{ __html: previewHtml }}
-              />
-            </CardContent>
-          </Card>
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Report Preview</h3>
+            <div
+              className="border rounded-lg overflow-hidden"
+              dangerouslySetInnerHTML={{ __html: previewHtml }}
+            />
+          </div>
         )}
       </div>
     </Layout>

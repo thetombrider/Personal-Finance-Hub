@@ -1,6 +1,6 @@
 import { useFinance, Account, AccountType } from "@/context/FinanceContext";
 import Layout from "@/components/Layout";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -359,127 +359,121 @@ export default function ManageAccounts() {
           </div>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Your Accounts</CardTitle>
-            <CardDescription>Manage all your accounts and bank synchronizations.</CardDescription>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[300px]">Account</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Current Balance</TableHead>
-                  <TableHead>Connection Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {accounts.map((account) => {
-                  const Icon = getIcon(account.type);
-                  const status = getConnectionStatus(account);
+        <div className="rounded-md border w-full">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[300px]">Account</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Current Balance</TableHead>
+                <TableHead>Connection Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {accounts.map((account) => {
+                const Icon = getIcon(account.type);
+                const status = getConnectionStatus(account);
 
-                  return (
-                    <TableRow key={account.id}>
-                      <TableCell className="font-medium">
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={cn("p-2 rounded-lg text-white shadow-sm")}
-                            style={{ backgroundColor: account.color }}
-                          >
-                            <Icon size={16} />
-                          </div>
-                          <div className="flex flex-col">
-                            <span>{account.name}</span>
-                            {(account as any).gocardlessAccountId && (
-                              <span className="text-xs text-muted-foreground font-mono">Linked</span>
-                            )}
-                          </div>
+                return (
+                  <TableRow key={account.id}>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={cn("p-2 rounded-lg text-white shadow-sm")}
+                          style={{ backgroundColor: account.color }}
+                        >
+                          <Icon size={16} />
                         </div>
-                      </TableCell>
-                      <TableCell className="capitalize">{account.type}</TableCell>
-                      <TableCell>
-                        <div className={cn(
-                          "font-semibold",
-                          account.balance < 0 ? "text-red-500" : "text-emerald-600"
-                        )}>
-                          {formatCurrency(account.balance)}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {status ? (
-                          <div className="flex flex-col gap-1 items-start">
-                            <Badge variant={status.variant} className={cn("gap-1 pointer-events-none", status.color)}>
-                              {status.label === "Active" && <CheckCircle2 className="h-3 w-3" />}
-                              {(status.isExpired) && <AlertCircle className="h-3 w-3" />}
-                              {status.label}
-                            </Badge>
-                            {status.label === "Active" && status.days !== undefined && (
-                              <span className="text-xs text-muted-foreground">{status.days} days remaining</span>
-                            )}
-                          </div>
-                        ) : (
-                          <Badge variant="secondary" className="bg-slate-100 text-slate-500 hover:bg-slate-100">Manual</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          {status && (status.isExpired || (status.days !== undefined && status.days < 10) || status.label === "Linked (Legacy)") && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setRenewingInstitutionId(status.institutionId);
-                                setIsLinkModalOpen(true);
-                              }}
-                              className="text-indigo-600 border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 h-8"
-                            >
-                              <RefreshCw className="mr-2 h-3.5 w-3.5" />
-                              Renew
-                            </Button>
-                          )}
-
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleEdit(account)}
-                            className="h-8 w-8 text-muted-foreground hover:text-primary"
-                            title="Edit"
-                          >
-                            <Edit2 className="h-4 w-4" />
-                          </Button>
-
+                        <div className="flex flex-col">
+                          <span>{account.name}</span>
                           {(account as any).gocardlessAccountId && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleUnlink(account.id)}
-                              className="h-8 w-8 text-orange-400 hover:text-orange-600 hover:bg-orange-50"
-                              title="Unlink Bank"
-                            >
-                              <Unlink className="h-4 w-4" />
-                            </Button>
+                            <span className="text-xs text-muted-foreground font-mono">Linked</span>
                           )}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="capitalize">{account.type}</TableCell>
+                    <TableCell>
+                      <div className={cn(
+                        "font-semibold",
+                        account.balance < 0 ? "text-red-500" : "text-emerald-600"
+                      )}>
+                        {formatCurrency(account.balance)}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {status ? (
+                        <div className="flex flex-col gap-1 items-start">
+                          <Badge variant={status.variant} className={cn("gap-1 pointer-events-none", status.color)}>
+                            {status.label === "Active" && <CheckCircle2 className="h-3 w-3" />}
+                            {(status.isExpired) && <AlertCircle className="h-3 w-3" />}
+                            {status.label}
+                          </Badge>
+                          {status.label === "Active" && status.days !== undefined && (
+                            <span className="text-xs text-muted-foreground">{status.days} days remaining</span>
+                          )}
+                        </div>
+                      ) : (
+                        <Badge variant="secondary" className="bg-slate-100 text-slate-500 hover:bg-slate-100">Manual</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        {status && (status.isExpired || (status.days !== undefined && status.days < 10) || status.label === "Linked (Legacy)") && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setRenewingInstitutionId(status.institutionId);
+                              setIsLinkModalOpen(true);
+                            }}
+                            className="text-indigo-600 border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 h-8"
+                          >
+                            <RefreshCw className="mr-2 h-3.5 w-3.5" />
+                            Renew
+                          </Button>
+                        )}
 
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEdit(account)}
+                          className="h-8 w-8 text-muted-foreground hover:text-primary"
+                          title="Edit"
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+
+                        {(account as any).gocardlessAccountId && (
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => handleDelete(account.id)}
-                            className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                            title="Delete"
+                            onClick={() => handleUnlink(account.id)}
+                            className="h-8 w-8 text-orange-400 hover:text-orange-600 hover:bg-orange-50"
+                            title="Unlink Bank"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Unlink className="h-4 w-4" />
                           </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+                        )}
+
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(account.id)}
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                          title="Delete"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       <BankLinkModal
