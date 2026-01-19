@@ -271,19 +271,20 @@ export default function Transactions() {
 
             <Button
               variant="outline"
-              className="gap-2"
+              size="icon"
               onClick={() => setReviewAccountId(-1)} // -1 or special flag for "all"
               title="Review Staging Transactions"
             >
-              <List size={16} /> Review Staging
+              <List size={16} />
             </Button>
 
             <Button
               variant="outline"
-              className="gap-2 relative overflow-hidden"
+              size="icon"
+              className="relative overflow-hidden"
               onClick={handleSyncAll}
               disabled={isSyncingAll}
-              title="Sync All Accounts"
+              title={isSyncingAll ? `Syncing ${Math.round(syncProgress)}%` : "Sync All Accounts"}
             >
               {isSyncingAll && (
                 <div
@@ -292,7 +293,6 @@ export default function Transactions() {
                 />
               )}
               <RefreshCw size={16} className={isSyncingAll ? "animate-spin" : ""} />
-              {isSyncingAll ? `Syncing ${Math.round(syncProgress)}%` : "Sync All"}
             </Button>
 
             <Button size="icon" onClick={() => { setIsDialogOpen(true); setEditingId(null); setEditFormData(null); }} data-testid="button-add-transaction" title="Add Transaction">
