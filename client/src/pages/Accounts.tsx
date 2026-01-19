@@ -11,17 +11,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import { ImportedTransactions } from "@/components/ImportedTransactions";
-import { List } from "lucide-react";
+
 
 export default function Accounts() {
   const { accounts, transactions, formatCurrency, isLoading } = useFinance();
   const [timeRange, setTimeRange] = useState('12');
   const [page, setPage] = useState(0);
-  const [syncing, setSyncing] = useState<number | null>(null);
-  const [reviewAccountId, setReviewAccountId] = useState<number | null>(null);
-  const { toast } = useToast();
 
   const monthsList = useMemo(() => {
     const months = parseInt(timeRange);
@@ -84,39 +79,7 @@ export default function Accounts() {
     return data;
   }, [transactions, accounts, monthsList]);
 
-  const handleSync = async (accountId: number) => {
-    setSyncing(accountId);
-    try {
-      const res = await apiRequest("POST", `/api/gocardless/sync/${accountId}`);
-      const data = await res.json();
-      toast({
-        title: "Sync Complete",
-        description: `Staged ${data.added} new transactions for review.`,
-      });
-      // queryClient.invalidateQueries({ queryKey: ["/api/transactions"] }); // No longer needed as they are not imported yet
-    } catch (error: any) {
-      // Check if it's a rate limit error (parsed from response by queryClient/apiRequest helper usually returns error object)
-      // Note: apiRequest throws if !res.ok. We need to catch the error object which might have status or we need to check the response manually if apiRequest didn't throw.
-      // Actually apiRequest from `lib/queryClient` usually throws an Error object.
-      // Let's assume the standard error handling, but we might need to parse the response if the error object contains it.
 
-      // If we use standard fetch pattern, we get response.
-      // But here we used `apiRequest`. Let's see how `apiRequest` behaves.
-      // Usually it throws.
-
-      const isRateLimit = error.message?.includes("429") || error.message?.includes("Rate limit") || (error as any).status === 429;
-
-      toast({
-        title: isRateLimit ? "Limit Reached" : "Sync Failed",
-        description: isRateLimit
-          ? "Too many requests to the bank. Please try again later."
-          : "Unable to sync transactions.",
-        variant: "destructive",
-      });
-    } finally {
-      setSyncing(null);
-    }
-  };
 
   if (isLoading) {
     return (
@@ -196,7 +159,7 @@ export default function Accounts() {
                         <TableHead key={m.key} className="text-center w-[10%] min-w-[80px] text-xs sm:text-sm p-1 capitalize">{m.label}</TableHead>
                       ))}
                       <TableHead className="text-center w-[10%] min-w-[100px] font-semibold p-1">Period Total</TableHead>
-                      <TableHead className="text-center w-[100px]">Actions</TableHead>
+
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -234,29 +197,7 @@ export default function Accounts() {
                           <TableCell className={`text-center font-semibold ${total > 0 ? 'text-emerald-600' : total < 0 ? 'text-rose-600' : ''}`}>
                             {total !== 0 ? formatCurrency(total) : '-'}
                           </TableCell>
-                          <TableCell className="text-center">
-                            {account?.gocardlessAccountId && (
-                              <div className="flex items-center">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleSync(account.id)}
-                                  disabled={syncing === account.id}
-                                  title="Sync with Bank"
-                                >
-                                  <RefreshCw className={`h-4 w-4 ${syncing === account.id ? 'animate-spin' : ''}`} />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => setReviewAccountId(account.id)}
-                                  title="Review Imported Transactions"
-                                >
-                                  <List className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            )}
-                          </TableCell>
+
                         </TableRow>
                       );
                     })}
@@ -275,7 +216,7 @@ export default function Accounts() {
                           sum + Object.values(acc).reduce((s, v) => s + v, 0), 0
                         ))}
                       </TableCell>
-                      <TableCell />
+
                     </TableRow>
                   </TableBody>
                 </Table>
@@ -287,13 +228,7 @@ export default function Accounts() {
       </div>
 
 
-      {reviewAccountId && (
-        <ImportedTransactions
-          accountId={reviewAccountId}
-          isOpen={!!reviewAccountId}
-          onOpenChange={(open) => !open && setReviewAccountId(null)}
-        />
-      )}
+
     </Layout>
   );
 }
