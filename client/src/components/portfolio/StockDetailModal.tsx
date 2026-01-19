@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -6,6 +6,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Pencil, Check, X } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import * as api from "@/lib/api";
 import {
   LineChart,
   Line,
@@ -35,6 +41,7 @@ interface StockDetailModalProps {
     gainLossPercent: number | null;
   };
   trades: Trade[];
+  initialIsEditing?: boolean;
 }
 
 export function StockDetailModal({
@@ -42,7 +49,49 @@ export function StockDetailModal({
   onClose,
   holding,
   trades,
+  initialIsEditing = false,
 }: StockDetailModalProps) {
+  const [isEditing, setIsEditing] = useState(initialIsEditing);
+  const [ticker, setTicker] = useState(holding.ticker);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    setIsEditing(initialIsEditing);
+  }, [initialIsEditing, isOpen]);
+
+  useEffect(() => {
+    setTicker(holding.ticker);
+  }, [holding.ticker]);
+
+  const updateHoldingMutation = useMutation({
+    mutationFn: (newTicker: string) => api.updateHolding(holding.id, { ticker: newTicker }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["holdings"] });
+      queryClient.invalidateQueries({ queryKey: ["trades"] }); // Invalidate trades as descriptions change
+      queryClient.invalidateQueries({ queryKey: ["transactions"] }); // Invalidate transactions as descriptions change
+      toast({ title: "Holding updated", description: "Ticker updated successfully." });
+      setIsEditing(false);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error updating holding",
+        description: error.message,
+        variant: "destructive"
+      });
+    },
+  });
+
+  const handleSave = () => {
+    if (!ticker.trim()) return;
+    updateHoldingMutation.mutate(ticker.toUpperCase());
+  };
+
+  const handleCancel = () => {
+    setTicker(holding.ticker);
+    setIsEditing(false);
+  };
+
   const chartData = useMemo(() => {
     // Sort trades by date
     const sortedTrades = [...trades].sort(
@@ -95,12 +144,41 @@ export function StockDetailModal({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <span className="font-bold text-xl">{holding.ticker}</span>
-            <span className="text-muted-foreground font-normal text-base">
-              {holding.name}
-            </span>
-          </DialogTitle>
+          <div className="flex items-center justify-between mr-8">
+            {isEditing ? (
+              <div className="flex items-center gap-2">
+                <Input
+                  value={ticker}
+                  onChange={(e) => setTicker(e.target.value.toUpperCase())}
+                  className="w-32 font-bold text-xl uppercase"
+                  autoFocus
+                />
+                <Button size="icon" variant="ghost" onClick={handleSave} disabled={updateHoldingMutation.isPending}>
+                  <Check className="h-4 w-4 text-green-600" />
+                </Button>
+                <Button size="icon" variant="ghost" onClick={handleCancel}>
+                  <X className="h-4 w-4 text-red-600" />
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 group">
+                <DialogTitle className="flex items-center gap-2">
+                  <span className="font-bold text-xl">{holding.ticker}</span>
+                  <span className="text-muted-foreground font-normal text-base">
+                    {holding.name}
+                  </span>
+                </DialogTitle>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={() => setIsEditing(true)}
+                >
+                  <Pencil className="h-3 w-3 text-muted-foreground" />
+                </Button>
+              </div>
+            )}
+          </div>
         </DialogHeader>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 my-4">
@@ -151,8 +229,8 @@ export function StockDetailModal({
             <CardContent className="p-4 pt-0">
               <div
                 className={`text-2xl font-bold ${(holding.gainLoss || 0) >= 0
-                    ? "text-green-600"
-                    : "text-red-600"
+                  ? "text-green-600"
+                  : "text-red-600"
                   }`}
               >
                 {holding.gainLoss
@@ -162,8 +240,8 @@ export function StockDetailModal({
               {holding.gainLossPercent !== null && (
                 <p
                   className={`text-xs ${holding.gainLossPercent >= 0
-                      ? "text-green-600"
-                      : "text-red-600"
+                    ? "text-green-600"
+                    : "text-red-600"
                     }`}
                 >
                   {holding.gainLossPercent >= 0 ? "+" : ""}

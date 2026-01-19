@@ -9,6 +9,8 @@ import {
     type Holding,
     type InsertHolding,
     holdings,
+    trades,
+    transactions,
 } from "@shared/schema";
 
 export class HoldingRepository {
@@ -57,14 +59,36 @@ export class HoldingRepository {
      * @returns The updated holding if found and owned by user, undefined otherwise
      */
     async updateHolding(id: number, userId: string, holding: Partial<InsertHolding>): Promise<Holding | undefined> {
-        const updateData = holding.ticker
-            ? { ...holding, ticker: holding.ticker.toUpperCase() }
-            : holding;
-        const result = await db.update(holdings)
-            .set(updateData)
-            .where(and(eq(holdings.id, id), eq(holdings.userId, userId)))
-            .returning();
-        return result[0];
+        return await db.transaction(async (tx) => {
+            const updateData = holding.ticker
+                ? { ...holding, ticker: holding.ticker.toUpperCase() }
+                : holding;
+
+            const [updated] = await tx.update(holdings)
+                .set(updateData)
+                .where(and(eq(holdings.id, id), eq(holdings.userId, userId)))
+                .returning();
+
+            if (!updated) return undefined;
+
+            // Propagate ticker change to all connected trades' transactions
+            if (holding.ticker) {
+                const newTicker = holding.ticker.toUpperCase();
+                const holdingTrades = await tx.select().from(trades).where(eq(trades.holdingId, id));
+
+                for (const trade of holdingTrades) {
+                    if (trade.transactionId) {
+                        const description = `${trade.type === 'buy' ? 'Buy' : 'Sell'} ${parseFloat(trade.quantity.toString()).toFixed(4)} ${newTicker} @ ${parseFloat(trade.pricePerUnit.toString()).toFixed(2)}`;
+
+                        await tx.update(transactions)
+                            .set({ description })
+                            .where(eq(transactions.id, trade.transactionId));
+                    }
+                }
+            }
+
+            return updated;
+        });
     }
 
     /**

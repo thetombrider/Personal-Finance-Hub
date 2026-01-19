@@ -1,14 +1,16 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { PiggyBank } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { PiggyBank, Pencil } from "lucide-react";
 import type { HoldingWithStats } from "@/hooks/usePortfolioStats";
 
 interface HoldingsTableProps {
     holdingsWithStats: HoldingWithStats[];
     onSelectHolding: (holding: HoldingWithStats) => void;
+    onEditHolding?: (holding: HoldingWithStats) => void;
 }
 
-export function HoldingsTable({ holdingsWithStats, onSelectHolding }: HoldingsTableProps) {
+export function HoldingsTable({ holdingsWithStats, onSelectHolding, onEditHolding }: HoldingsTableProps) {
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat("it-IT", {
             style: "currency",
@@ -33,6 +35,7 @@ export function HoldingsTable({ holdingsWithStats, onSelectHolding }: HoldingsTa
                     <Table>
                         <TableHeader>
                             <TableRow>
+                                <TableHead className="w-[50px]"></TableHead>
                                 <TableHead>Holding</TableHead>
                                 <TableHead className="text-right">Quantity</TableHead>
                                 <TableHead className="text-right">Avg Price</TableHead>
@@ -50,6 +53,19 @@ export function HoldingsTable({ holdingsWithStats, onSelectHolding }: HoldingsTa
                                     className="cursor-pointer hover:bg-muted/50"
                                     onClick={() => onSelectHolding(holding)}
                                 >
+                                    <TableCell>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8 text-muted-foreground hover:text-primary z-10"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onEditHolding?.(holding);
+                                            }}
+                                        >
+                                            <Pencil className="h-4 w-4" />
+                                        </Button>
+                                    </TableCell>
                                     <TableCell>
                                         <div>
                                             <p className="font-medium">{holding.ticker}</p>

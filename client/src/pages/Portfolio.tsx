@@ -17,6 +17,7 @@ import { AddTradeModal } from "@/components/portfolio/AddTradeModal";
 export default function Portfolio() {
   const [isAddTradeOpen, setIsAddTradeOpen] = useState(false);
   const [selectedHoldingForDetail, setSelectedHoldingForDetail] = useState<HoldingWithStats | null>(null);
+  const [isEditingHolding, setIsEditingHolding] = useState(false);
 
   const { data: accountsData } = useQuery({
     queryKey: ["accounts"],
@@ -86,7 +87,14 @@ export default function Portfolio() {
           <TabsContent value="holdings">
             <HoldingsTable
               holdingsWithStats={holdingsWithStats}
-              onSelectHolding={setSelectedHoldingForDetail}
+              onSelectHolding={(h) => {
+                setIsEditingHolding(false);
+                setSelectedHoldingForDetail(h);
+              }}
+              onEditHolding={(h) => {
+                setIsEditingHolding(true);
+                setSelectedHoldingForDetail(h);
+              }}
             />
           </TabsContent>
 
@@ -110,9 +118,13 @@ export default function Portfolio() {
       {selectedHoldingForDetail && (
         <StockDetailModal
           isOpen={!!selectedHoldingForDetail}
-          onClose={() => setSelectedHoldingForDetail(null)}
+          onClose={() => {
+            setSelectedHoldingForDetail(null);
+            setIsEditingHolding(false);
+          }}
           holding={selectedHoldingForDetail}
           trades={trades.filter(t => t.holdingId === selectedHoldingForDetail.id)}
+          initialIsEditing={isEditingHolding}
         />
       )}
     </Layout>
