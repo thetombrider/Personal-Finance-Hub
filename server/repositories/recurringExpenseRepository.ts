@@ -13,12 +13,33 @@ import {
     recurringExpenses,
     recurringExpenseChecks,
     accounts,
+    categories,
 } from "@shared/schema";
 
 export class RecurringExpenseRepository {
     async getRecurringExpenses(userId: string): Promise<RecurringExpense[]> {
         const userAccounts = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.userId, userId));
         return await db.select().from(recurringExpenses).where(inArray(recurringExpenses.accountId, userAccounts));
+    }
+
+    async getExportableRecurringExpenses(userId: string) {
+        const userAccounts = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.userId, userId));
+
+        return await db.select({
+            name: recurringExpenses.name,
+            amount: recurringExpenses.amount,
+            interval: recurringExpenses.interval,
+            dayOfMonth: recurringExpenses.dayOfMonth,
+            startDate: recurringExpenses.startDate,
+            endDate: recurringExpenses.endDate,
+            active: recurringExpenses.active,
+            Account: accounts.name,
+            Category: categories.name
+        })
+            .from(recurringExpenses)
+            .leftJoin(accounts, eq(recurringExpenses.accountId, accounts.id))
+            .leftJoin(categories, eq(recurringExpenses.categoryId, categories.id))
+            .where(inArray(recurringExpenses.accountId, userAccounts));
     }
 
     async getActiveRecurringExpenses(userId: string): Promise<RecurringExpense[]> {

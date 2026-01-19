@@ -12,6 +12,7 @@ import {
     holdings,
     transactions,
     categories,
+    accounts,
 } from "@shared/schema";
 
 export class TradeRepository {
@@ -27,6 +28,26 @@ export class TradeRepository {
     async getTrade(id: number): Promise<Trade | undefined> {
         const result = await db.select().from(trades).where(eq(trades.id, id));
         return result[0];
+    }
+
+    async getExportableTrades(userId: string) {
+        const userHoldings = db.select({ id: holdings.id }).from(holdings).where(eq(holdings.userId, userId));
+
+        return await db.select({
+            date: trades.date,
+            ticker: holdings.ticker,
+            type: trades.type,
+            quantity: trades.quantity,
+            pricePerUnit: trades.pricePerUnit,
+            totalAmount: trades.totalAmount,
+            fees: trades.fees,
+            Account: accounts.name,
+            TransactionID: trades.transactionId
+        })
+            .from(trades)
+            .innerJoin(holdings, eq(trades.holdingId, holdings.id))
+            .leftJoin(accounts, eq(trades.accountId, accounts.id))
+            .where(inArray(trades.holdingId, userHoldings));
     }
 
     async createTrade(trade: InsertTrade): Promise<Trade> {

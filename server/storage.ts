@@ -387,7 +387,7 @@ export class DatabaseStorage implements IStorage {
 
     // 3. Transactions & Imports
     if (shouldExport('Transactions')) {
-      data.Transactions = await this.getTransactions(userId);
+      data.Transactions = await this.transactionRepo.getExportableTransactions(userId);
     }
 
     if (shouldExport('ImportStaging')) {
@@ -400,7 +400,7 @@ export class DatabaseStorage implements IStorage {
     }
 
     if (shouldExport('Trades')) {
-      data.Trades = await this.getTrades(userId);
+      data.Trades = await this.tradeRepo.getExportableTrades(userId);
     }
 
     // 5. Connections
@@ -414,28 +414,23 @@ export class DatabaseStorage implements IStorage {
 
     // 6. Budgets
     if (shouldExport('MonthlyBudgets') || shouldExport('PlannedExpenses')) {
-      const userCategories = db.select({ id: categories.id }).from(categories).where(eq(categories.userId, userId));
-
       if (shouldExport('MonthlyBudgets')) {
-        data.MonthlyBudgets = await db.select().from(monthlyBudgets).where(inArray(monthlyBudgets.categoryId, userCategories));
+        data.MonthlyBudgets = await this.budgetRepo.getExportableMonthlyBudgets(userId);
       }
 
       if (shouldExport('PlannedExpenses')) {
-        data.PlannedExpenses = await db.select().from(plannedExpenses).where(inArray(plannedExpenses.categoryId, userCategories));
+        data.PlannedExpenses = await this.plannedExpenseRepo.getExportablePlannedExpenses(userId);
       }
     }
 
     // 7. Recurring Expenses
     if (shouldExport('RecurringExpenses') || shouldExport('RecurringExpenseChecks')) {
-      const userAccounts = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.userId, userId));
-
       if (shouldExport('RecurringExpenses')) {
-        data.RecurringExpenses = await db.select().from(recurringExpenses).where(inArray(recurringExpenses.accountId, userAccounts));
+        data.RecurringExpenses = await this.recurringExpenseRepo.getExportableRecurringExpenses(userId);
       }
 
       if (shouldExport('RecurringExpenseChecks')) {
-        const userRecurringExpenses = db.select({ id: recurringExpenses.id }).from(recurringExpenses).where(inArray(recurringExpenses.accountId, userAccounts));
-        data.RecurringExpenseChecks = await db.select().from(recurringExpenseChecks).where(inArray(recurringExpenseChecks.recurringExpenseId, userRecurringExpenses));
+        data.RecurringExpenseChecks = await this.recurringExpenseRepo.getAllRecurringExpenseChecks(userId);
       }
     }
 

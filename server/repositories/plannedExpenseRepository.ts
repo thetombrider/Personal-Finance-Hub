@@ -52,6 +52,21 @@ export class PlannedExpenseRepository {
             .where(inArray(plannedExpenses.categoryId, userCategories));
     }
 
+    async getExportablePlannedExpenses(userId: string) {
+        const userCategories = db.select({ id: categories.id }).from(categories).where(eq(categories.userId, userId));
+
+        return await db.select({
+            date: plannedExpenses.date,
+            name: plannedExpenses.name,
+            amount: plannedExpenses.amount,
+            notes: plannedExpenses.notes,
+            Category: categories.name
+        })
+            .from(plannedExpenses)
+            .innerJoin(categories, eq(plannedExpenses.categoryId, categories.id))
+            .where(inArray(plannedExpenses.categoryId, userCategories));
+    }
+
     /**
      * Create a planned expense.
      * @throws Error if insert fails to return a result

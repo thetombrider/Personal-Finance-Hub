@@ -32,7 +32,30 @@ export function registerDataRoutes(app: Express) {
 
             const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
 
-            res.setHeader("Content-Disposition", `attachment; filename="fintrack_export_${new Date().toISOString().split('T')[0]}.xlsx"`);
+            const dateStr = new Date().toISOString().split('T')[0];
+            let filenameSuffix = "full";
+
+            if (req.query.type) {
+                const typeStr = req.query.type as string;
+
+                // Map specific combinations from frontend to clean filenames
+                if (typeStr === 'Transactions,ImportStaging') {
+                    filenameSuffix = 'transactions';
+                } else if (typeStr === 'MonthlyBudgets,PlannedExpenses') {
+                    filenameSuffix = 'budgets';
+                } else if (typeStr === 'RecurringExpenses,RecurringExpenseChecks') {
+                    filenameSuffix = 'recurring_expenses';
+                } else if (typeStr === 'Holdings,Trades') {
+                    filenameSuffix = 'portfolio';
+                } else if (typeStr.includes(',')) {
+                    filenameSuffix = "custom";
+                } else {
+                    // Convert "MonthlyBudgets" -> "monthly_budgets" (snake_case)
+                    filenameSuffix = typeStr.replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase();
+                }
+            }
+
+            res.setHeader("Content-Disposition", `attachment; filename="fintrack_export_${filenameSuffix}_${dateStr}.xlsx"`);
             res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
             res.send(buffer);
         } catch (error) {

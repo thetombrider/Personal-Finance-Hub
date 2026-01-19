@@ -11,6 +11,7 @@ import {
     transactions,
     accounts,
     trades,
+    categories,
 } from "@shared/schema";
 
 export interface TransferData {
@@ -55,6 +56,25 @@ export class TransactionRepository {
     async getTransaction(id: number): Promise<Transaction | undefined> {
         const result = await db.select().from(transactions).where(eq(transactions.id, id));
         return result[0];
+    }
+
+    async getExportableTransactions(userId: string) {
+        const userAccounts = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.userId, userId));
+
+        return await db.select({
+            date: transactions.date,
+            amount: transactions.amount,
+            description: transactions.description,
+            type: transactions.type,
+            Account: accounts.name,
+            Category: categories.name,
+            LinkedTransactionID: transactions.linkedTransactionId,
+            ExternalID: transactions.externalId
+        })
+            .from(transactions)
+            .leftJoin(accounts, eq(transactions.accountId, accounts.id))
+            .leftJoin(categories, eq(transactions.categoryId, categories.id))
+            .where(inArray(transactions.accountId, userAccounts));
     }
 
     async createTransaction(transaction: InsertTransaction): Promise<Transaction> {

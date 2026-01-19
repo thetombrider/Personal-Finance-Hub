@@ -41,6 +41,20 @@ export class BudgetRepository {
             .where(inArray(monthlyBudgets.categoryId, userCategories));
     }
 
+    async getExportableMonthlyBudgets(userId: string) {
+        const userCategories = db.select({ id: categories.id }).from(categories).where(eq(categories.userId, userId));
+
+        return await db.select({
+            year: monthlyBudgets.year,
+            month: monthlyBudgets.month,
+            amount: monthlyBudgets.amount,
+            Category: categories.name
+        })
+            .from(monthlyBudgets)
+            .innerJoin(categories, eq(monthlyBudgets.categoryId, categories.id))
+            .where(inArray(monthlyBudgets.categoryId, userCategories));
+    }
+
     /**
      * Upsert a monthly budget with ownership validation.
      * @param userId - The user making the request (for authorization)
