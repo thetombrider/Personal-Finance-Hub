@@ -73,7 +73,13 @@ export default function AuthPage() {
 
             <TabsContent value="login" className="space-y-4">
               {!authConfig?.ssoOnly && (
-                <>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleAuth("login");
+                  }}
+                  className="space-y-4"
+                >
                   <div className="space-y-2">
                     <Label htmlFor="username">Username</Label>
                     <Input
@@ -94,14 +100,14 @@ export default function AuthPage() {
                     />
                   </div>
                   <Button
+                    type="submit"
                     className="w-full"
-                    onClick={() => handleAuth("login")}
                     disabled={isLoading}
                   >
                     {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                     Sign In
                   </Button>
-                </>
+                </form>
               )}
 
               {authConfig?.oidcEnabled && (
@@ -132,33 +138,41 @@ export default function AuthPage() {
 
             {!authConfig?.ssoOnly && !authConfig?.disableSignup && (
               <TabsContent value="register" className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="reg-username">Username</Label>
-                  <Input
-                    id="reg-username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="Choose a username"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="reg-password">Password</Label>
-                  <Input
-                    id="reg-password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Choose a password"
-                  />
-                </div>
-                <Button
-                  className="w-full"
-                  onClick={() => handleAuth("register")}
-                  disabled={isLoading}
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleAuth("register");
+                  }}
+                  className="space-y-4"
                 >
-                  {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                  Create Account
-                </Button>
+                  <div className="space-y-2">
+                    <Label htmlFor="reg-username">Username</Label>
+                    <Input
+                      id="reg-username"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="Choose a username"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="reg-password">Password</Label>
+                    <Input
+                      id="reg-password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Choose a password"
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Create Account
+                  </Button>
+                </form>
               </TabsContent>
             )}
           </Tabs>
