@@ -10,6 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import Layout from "@/components/Layout";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 
 import {
@@ -50,6 +51,7 @@ const formSchema = z.object({
     username: z.string().min(3, "Username must be at least 3 characters"),
     password: z.string().optional(),
     confirmPassword: z.string().optional(),
+    font: z.enum(["JetBrains Mono", "Inter", "Raleway"]).optional(),
 }).refine((data) => {
     if (data.password && data.password !== data.confirmPassword) {
         return false;
@@ -80,6 +82,7 @@ export default function Settings() {
             username: user?.username || "",
             password: "",
             confirmPassword: "",
+            font: user?.appearanceSettings?.font || "JetBrains Mono",
         },
     });
 
@@ -101,6 +104,9 @@ export default function Settings() {
             }
             if (values.password) {
                 updateData.password = values.password;
+            }
+            if (values.font !== user?.appearanceSettings?.font) {
+                updateData.appearanceSettings = { font: values.font };
             }
 
             if (Object.keys(updateData).length === 0) {
@@ -294,6 +300,59 @@ export default function Settings() {
                                 </div>
                             </>
                         )}
+
+                        <div className="shrink-0 bg-border h-[1px] w-full my-6" />
+
+                        <div className="space-y-6">
+                            <div>
+                                <h3 className="text-lg font-medium">Look and Feel</h3>
+                                <p className="text-sm text-muted-foreground">
+                                    Customize the application appearance.
+                                </p>
+                            </div>
+                            <FormField
+                                control={form.control}
+                                name="font"
+                                render={({ field }) => (
+                                    <FormItem className="space-y-3">
+                                        <FormLabel>Font Family</FormLabel>
+                                        <FormControl>
+                                            <RadioGroup
+                                                onValueChange={field.onChange}
+                                                defaultValue={field.value}
+                                                className="flex flex-col space-y-1"
+                                            >
+                                                <FormItem className="flex items-center space-x-3 space-y-0">
+                                                    <FormControl>
+                                                        <RadioGroupItem value="JetBrains Mono" />
+                                                    </FormControl>
+                                                    <FormLabel className="font-normal font-mono">
+                                                        JetBrains Mono (Default)
+                                                    </FormLabel>
+                                                </FormItem>
+                                                <FormItem className="flex items-center space-x-3 space-y-0">
+                                                    <FormControl>
+                                                        <RadioGroupItem value="Inter" />
+                                                    </FormControl>
+                                                    <FormLabel className="font-normal font-[Inter]">
+                                                        Inter
+                                                    </FormLabel>
+                                                </FormItem>
+                                                <FormItem className="flex items-center space-x-3 space-y-0">
+                                                    <FormControl>
+                                                        <RadioGroupItem value="Raleway" />
+                                                    </FormControl>
+                                                    <FormLabel className="font-normal font-[Raleway]">
+                                                        Raleway
+                                                    </FormLabel>
+                                                </FormItem>
+                                            </RadioGroup>
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
 
                         <div className="shrink-0 bg-border h-[1px] w-full my-6" />
 

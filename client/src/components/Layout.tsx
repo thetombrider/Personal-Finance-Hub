@@ -1,6 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { LayoutDashboard, CreditCard, PieChart, Receipt, Menu, Settings, FileSpreadsheet, TrendingUp, LogOut, Calculator, ChevronDown, ChevronRight } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
@@ -8,8 +9,25 @@ import { cn } from "@/lib/utils";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
+  const { user } = useAuth();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
+
+  // Apply font preference
+  useEffect(() => {
+    if (user?.appearanceSettings?.font) {
+      const font = user.appearanceSettings.font;
+      let fontFamily = "'JetBrains Mono', monospace";
+      if (font === "Inter") fontFamily = "'Inter', sans-serif";
+      if (font === "Raleway") fontFamily = "'Raleway', sans-serif";
+
+      document.documentElement.style.setProperty("--font-sans", fontFamily);
+      document.documentElement.style.setProperty("--font-heading", fontFamily);
+    } else {
+      document.documentElement.style.removeProperty("--font-sans");
+      document.documentElement.style.removeProperty("--font-heading");
+    }
+  }, [user?.appearanceSettings?.font]);
 
   // Initialize expanded state based on current location
   useEffect(() => {

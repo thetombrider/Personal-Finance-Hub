@@ -293,6 +293,7 @@ export function setupAuth(app: Express) {
             if (req.body.firstName !== undefined) updateData.firstName = req.body.firstName;
             if (req.body.lastName !== undefined) updateData.lastName = req.body.lastName;
             if (req.body.profileImageUrl !== undefined) updateData.profileImageUrl = req.body.profileImageUrl;
+            if (req.body.appearanceSettings !== undefined) updateData.appearanceSettings = req.body.appearanceSettings;
 
             // Update password
             if (req.body.password) {
