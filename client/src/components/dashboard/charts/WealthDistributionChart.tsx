@@ -19,8 +19,8 @@ export function WealthDistributionChart({ data, privacyMode, formatCurrency }: W
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Patrimonio per Tipo</CardTitle>
-                <CardDescription>Distribuzione del patrimonio</CardDescription>
+                <CardTitle>Wealth by Type</CardTitle>
+                <CardDescription>Wealth distribution</CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="h-[250px] w-full">
@@ -47,9 +47,9 @@ export function WealthDistributionChart({ data, privacyMode, formatCurrency }: W
                                 <Tooltip
                                     formatter={(value: any, name: string) => {
                                         const numValue = Number(value) || 0;
-                                        if (name === 'loss') return [displayCurrency(numValue), 'Perdita Latente'];
-                                        if (name === 'gain') return [displayCurrency(numValue), 'Guadagno Latente'];
-                                        return [displayCurrency(numValue), 'Valore Base'];
+                                        if (name === 'loss') return [displayCurrency(numValue), 'Unrealized Loss'];
+                                        if (name === 'gain') return [displayCurrency(numValue), 'Unrealized Gain'];
+                                        return [displayCurrency(numValue), 'Base Value'];
                                     }}
                                     contentStyle={{ backgroundColor: 'var(--color-card)', borderRadius: '8px', border: '1px solid var(--color-border)' }}
                                     itemStyle={{ color: 'var(--color-foreground)' }}
