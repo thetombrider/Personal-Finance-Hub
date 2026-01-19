@@ -68,9 +68,9 @@ export default function Portfolio() {
               <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshingQuotes ? "animate-spin" : ""}`} />
               Aggiorna Prezzi
             </Button>
-            <Button onClick={() => setIsAddTradeOpen(true)} data-testid="button-add-trade">
+            <Button onClick={() => setIsAddTradeOpen(true)} data-testid="button-new-transaction">
               <Plus className="mr-2 h-4 w-4" />
-              New Buy
+              New Transaction
             </Button>
           </div>
         </div>

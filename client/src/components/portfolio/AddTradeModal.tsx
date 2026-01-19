@@ -19,9 +19,10 @@ interface AddTradeModalProps {
     onOpenChange: (open: boolean) => void;
     accounts: Account[];
     holdings: Holding[];
+    defaultType?: "buy" | "sell";
 }
 
-export function AddTradeModal({ isOpen, onOpenChange, accounts, holdings }: AddTradeModalProps) {
+export function AddTradeModal({ isOpen, onOpenChange, accounts, holdings, defaultType = "buy" }: AddTradeModalProps) {
     const { toast } = useToast();
     const queryClient = useQueryClient();
 
@@ -41,7 +42,7 @@ export function AddTradeModal({ isOpen, onOpenChange, accounts, holdings }: AddT
         pricePerUnit: "",
         fees: "0",
         date: format(new Date(), "yyyy-MM-dd"),
-        type: "buy" as "buy" | "sell",
+        type: defaultType,
         accountId: ""
     });
 
@@ -58,7 +59,7 @@ export function AddTradeModal({ isOpen, onOpenChange, accounts, holdings }: AddT
             pricePerUnit: "",
             fees: "0",
             date: format(new Date(), "yyyy-MM-dd"),
-            type: "buy",
+            type: defaultType,
             accountId: ""
         });
     };
@@ -66,8 +67,13 @@ export function AddTradeModal({ isOpen, onOpenChange, accounts, holdings }: AddT
     useEffect(() => {
         if (!isOpen) {
             resetTradeForm();
+        } else {
+            // Ensure type is updated if modal is kept open (unlikely but good practice)
+            // or just rely on resetTradeForm being called on next open.
+            // Actually better to just set the type when it opens.
+            setTradeForm(prev => ({ ...prev, type: defaultType }));
         }
-    }, [isOpen]);
+    }, [isOpen, defaultType]);
 
     const createHoldingMutation = useMutation({
         mutationFn: api.createHolding,
@@ -78,6 +84,9 @@ export function AddTradeModal({ isOpen, onOpenChange, accounts, holdings }: AddT
         mutationFn: api.createTrade,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["trades"] });
+            queryClient.invalidateQueries({ queryKey: ["transactions"] });
+            queryClient.invalidateQueries({ queryKey: ["accounts"] });
+            queryClient.invalidateQueries({ queryKey: ["portfolio-stats"] }); // Also refresh portfolio stats
             toast({ title: "Purchase registered", description: "The transaction was saved successfully." });
             onOpenChange(false);
         },
