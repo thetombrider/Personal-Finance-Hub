@@ -37,11 +37,11 @@ export function CashFlowChart({ data, privacyMode, formatCurrency }: CashFlowCha
                                     const label = name === 'income' ? 'Income' : 'Expenses';
                                     return [formattedValue, label];
                                 }}
-                                contentStyle={{ backgroundColor: 'var(--color-card)', borderRadius: '8px', border: '1px solid var(--color-border)' }}
+                                contentStyle={{ backgroundColor: 'var(--color-card)', borderRadius: '0px', border: '1px solid var(--color-border)' }}
                                 itemStyle={{ color: 'var(--color-foreground)' }}
                             />
-                            <Area type="monotone" dataKey="income" stroke="#10b981" fillOpacity={1} fill="url(#colorIncome)" strokeWidth={2} name="income" />
-                            <Area type="monotone" dataKey="expense" stroke="#ef4444" fillOpacity={1} fill="url(#colorExpense)" strokeWidth={2} name="expense" />
+                            <Area type="linear" dataKey="income" stroke="#10b981" fillOpacity={1} fill="url(#colorIncome)" strokeWidth={2} name="income" />
+                            <Area type="linear" dataKey="expense" stroke="#ef4444" fillOpacity={1} fill="url(#colorExpense)" strokeWidth={2} name="expense" />
                         </AreaChart>
                     </ResponsiveContainer>
                 </div>

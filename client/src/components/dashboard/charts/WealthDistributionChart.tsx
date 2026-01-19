@@ -51,16 +51,16 @@ export function WealthDistributionChart({ data, privacyMode, formatCurrency }: W
                                         if (name === 'gain') return [displayCurrency(numValue), 'Unrealized Gain'];
                                         return [displayCurrency(numValue), 'Base Value'];
                                     }}
-                                    contentStyle={{ backgroundColor: 'var(--color-card)', borderRadius: '8px', border: '1px solid var(--color-border)' }}
+                                    contentStyle={{ backgroundColor: 'var(--color-card)', borderRadius: '0px', border: '1px solid var(--color-border)' }}
                                     itemStyle={{ color: 'var(--color-foreground)' }}
                                 />
-                                <Bar dataKey="base" stackId="a" fill="#3b82f6" radius={[0, 4, 4, 0]}>
+                                <Bar dataKey="base" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]}>
                                     {data.map((entry, index) => (
                                         <Cell key={`cell-base-${index}`} fill={entry.name === 'Investments' ? '#3b82f6' : COLORS[index % COLORS.length]} />
                                     ))}
                                 </Bar>
-                                <Bar dataKey="gain" stackId="a" fill="#10b981" radius={[0, 4, 4, 0]} />
-                                <Bar dataKey="loss" stackId="a" fill="#ef4444" radius={[0, 4, 4, 0]} />
+                                <Bar dataKey="gain" stackId="a" fill="#10b981" radius={[0, 0, 0, 0]} />
+                                <Bar dataKey="loss" stackId="a" fill="#ef4444" radius={[0, 0, 0, 0]} />
                             </BarChart>
                         </ResponsiveContainer>
                     ) : (

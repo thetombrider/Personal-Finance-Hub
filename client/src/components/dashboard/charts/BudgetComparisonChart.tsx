@@ -47,11 +47,11 @@ export function BudgetComparisonChart({ data, privacyMode, type }: BudgetCompari
                                     const label = name === 'budget' ? 'Budget' : actualLabel;
                                     return [formattedValue, label];
                                 }}
-                                contentStyle={{ backgroundColor: 'var(--color-card)', borderRadius: '8px', border: '1px solid var(--color-border)' }}
+                                contentStyle={{ backgroundColor: 'var(--color-card)', borderRadius: '0px', border: '1px solid var(--color-border)' }}
                                 itemStyle={{ color: 'var(--color-foreground)' }}
                             />
-                            <Area type="monotone" dataKey="budget" stroke="#3b82f6" fillOpacity={1} fill={`url(#colorBudget${type})`} strokeWidth={2} name="budget" />
-                            <Area type="monotone" dataKey="actual" stroke={actualColor} fillOpacity={1} fill={`url(#${gradientId})`} strokeWidth={2} name="actual" />
+                            <Area type="linear" dataKey="budget" stroke="#3b82f6" fillOpacity={1} fill={`url(#colorBudget${type})`} strokeWidth={2} name="budget" />
+                            <Area type="linear" dataKey="actual" stroke={actualColor} fillOpacity={1} fill={`url(#${gradientId})`} strokeWidth={2} name="actual" />
                         </AreaChart>
                     </ResponsiveContainer>
                 </div>

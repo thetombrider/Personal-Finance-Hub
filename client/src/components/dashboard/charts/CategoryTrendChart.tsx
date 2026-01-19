@@ -71,12 +71,12 @@ export function CategoryTrendChart({
                                         const label = selectedCategoryForTrend?.name || 'Total';
                                         return [displayCurrency(value), label];
                                     }}
-                                    contentStyle={{ backgroundColor: 'var(--color-card)', borderRadius: '8px', border: '1px solid var(--color-border)' }}
+                                    contentStyle={{ backgroundColor: 'var(--color-card)', borderRadius: '0px', border: '1px solid var(--color-border)' }}
                                     itemStyle={{ color: 'var(--color-foreground)' }}
                                 />
                                 <Bar
                                     dataKey="total"
-                                    radius={[4, 4, 0, 0]}
+                                    radius={[0, 0, 0, 0]}
                                     name="total"
                                     maxBarSize={50}
                                 >
@@ -88,7 +88,7 @@ export function CategoryTrendChart({
                                     ))}
                                 </Bar>
                                 <Line
-                                    type="monotone"
+                                    type="linear"
                                     dataKey="budget"
                                     stroke="#3b82f6"
                                     strokeWidth={2}

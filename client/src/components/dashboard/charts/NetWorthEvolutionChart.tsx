@@ -56,11 +56,11 @@ export function NetWorthEvolutionChart({ data, totalBalance, privacyMode, format
                             />
                             <Tooltip
                                 formatter={(value: number) => [displayCurrency(value), 'Net Worth']}
-                                contentStyle={{ backgroundColor: 'var(--color-card)', borderRadius: '8px', border: '1px solid var(--color-border)' }}
+                                contentStyle={{ backgroundColor: 'var(--color-card)', borderRadius: '0px', border: '1px solid var(--color-border)' }}
                                 itemStyle={{ color: 'var(--color-foreground)' }}
                             />
                             <Area
-                                type="monotone"
+                                type="linear"
                                 dataKey="netWorth"
                                 stroke="#6366f1"
                                 fillOpacity={1}

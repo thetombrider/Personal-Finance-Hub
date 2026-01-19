@@ -39,11 +39,10 @@ export function StatsGrid({
     return (
         <div className="grid gap-4 grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
             <Card
-                className="relative overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+                className="relative overflow-hidden cursor-pointer"
                 onClick={() => setDetailModal('total')}
                 data-testid="card-total-balance"
             >
-                <div className="absolute right-0 top-0 h-full w-1/2 bg-gradient-to-l from-primary/5 to-transparent" />
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium whitespace-nowrap">Net Worth</CardTitle>
                     <Wallet className="h-4 w-4 text-muted-foreground" />
@@ -59,7 +58,7 @@ export function StatsGrid({
             </Card>
 
             <Card
-                className="cursor-pointer hover:shadow-md transition-shadow"
+                className="cursor-pointer"
                 onClick={() => setDetailModal('cash')}
                 data-testid="card-total-cash"
             >
@@ -78,7 +77,7 @@ export function StatsGrid({
             </Card>
 
             <Card
-                className="cursor-pointer hover:shadow-md transition-shadow"
+                className="cursor-pointer"
                 onClick={() => setDetailModal('savings')}
                 data-testid="card-total-savings"
             >
@@ -97,7 +96,7 @@ export function StatsGrid({
             </Card>
 
             <Card
-                className="cursor-pointer hover:shadow-md transition-shadow"
+                className="cursor-pointer"
                 onClick={() => setDetailModal('investments')}
                 data-testid="card-total-investments"
             >

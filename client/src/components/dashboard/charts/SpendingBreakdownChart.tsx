@@ -42,7 +42,7 @@ export function SpendingBreakdownChart({ data, privacyMode, formatCurrency }: Sp
                                 </Pie>
                                 <Tooltip
                                     formatter={(value: number) => displayCurrency(value)}
-                                    contentStyle={{ backgroundColor: 'var(--color-card)', borderRadius: '8px', border: '1px solid var(--color-border)' }}
+                                    contentStyle={{ backgroundColor: 'var(--color-card)', borderRadius: '0px', border: '1px solid var(--color-border)' }}
                                 />
                             </PieChart>
                         </ResponsiveContainer>
