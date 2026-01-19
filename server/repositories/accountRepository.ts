@@ -3,12 +3,13 @@
  * Handles all account-related database operations.
  */
 
-import { eq, inArray, and } from "drizzle-orm";
+import { eq, inArray, and, sql } from "drizzle-orm";
 import { db } from "./base";
 import {
     type Account,
     type InsertAccount,
     accounts,
+    transactions,
 } from "@shared/schema";
 
 export class AccountRepository {
@@ -61,5 +62,28 @@ export class AccountRepository {
 
     async getAllAccounts(): Promise<Account[]> {
         return await db.select().from(accounts);
+    }
+
+    async getExportableAccounts(userId: string) {
+        return await db.select({
+            id: accounts.id,
+            name: accounts.name,
+            type: accounts.type,
+            startingBalance: accounts.startingBalance,
+            currency: accounts.currency,
+            currentBalance: sql<number>`
+                COALESCE(${accounts.startingBalance}, 0) + 
+                COALESCE(SUM(
+                    CASE 
+                        WHEN ${transactions.type} = 'income' THEN ${transactions.amount}
+                        ELSE -${transactions.amount}
+                    END
+                ), 0)
+            `.as('current_balance')
+        })
+            .from(accounts)
+            .leftJoin(transactions, eq(accounts.id, transactions.accountId))
+            .where(eq(accounts.userId, userId))
+            .groupBy(accounts.id);
     }
 }

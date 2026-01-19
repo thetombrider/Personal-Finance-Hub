@@ -24,6 +24,15 @@ export function registerDataRoutes(app: Express) {
             const data = await storage.exportUserData(userId, tables);
             const workbook = XLSX.utils.book_new();
 
+            // Create Metadata sheet
+            const metadata = [
+                { Key: "Export Date", Value: new Date().toISOString() },
+                { Key: "Tables Included", Value: tables ? tables.join(', ') : "All Tables" },
+                { Key: "User ID", Value: userId }
+            ];
+            const metadataSheet = XLSX.utils.json_to_sheet(metadata);
+            XLSX.utils.book_append_sheet(workbook, metadataSheet, "Metadata");
+
             // Create a sheet for each table
             for (const [tableName, rows] of Object.entries(data)) {
                 const worksheet = XLSX.utils.json_to_sheet(rows as Record<string, unknown>[]);

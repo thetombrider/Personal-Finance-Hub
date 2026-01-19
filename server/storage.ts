@@ -378,7 +378,7 @@ export class DatabaseStorage implements IStorage {
 
     // 2. Core Entities
     if (shouldExport('Accounts')) {
-      data.Accounts = await this.getAccounts(userId);
+      data.Accounts = await this.accountRepo.getExportableAccounts(userId);
     }
 
     if (shouldExport('Categories')) {
