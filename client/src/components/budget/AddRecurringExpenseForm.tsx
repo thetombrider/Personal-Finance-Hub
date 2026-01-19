@@ -17,7 +17,7 @@ interface AddRecurringExpenseFormProps {
     initialData?: RecurringExpense;
 }
 
-export function AddRecurringExpenseForm({ onSuccess, categories, accounts, initialData }: AddRecurringExpenseFormProps) {
+export function AddRecurringExpenseForm({ onSuccess, categories, accounts, initialData, type }: AddRecurringExpenseFormProps & { type?: 'income' | 'expense' }) {
     const { toast } = useToast();
     const queryClient = useQueryClient();
     const [name, setName] = useState(initialData?.name || "");
@@ -27,6 +27,11 @@ export function AddRecurringExpenseForm({ onSuccess, categories, accounts, initi
     const [startDate, setStartDate] = useState(initialData?.startDate ? new Date(initialData.startDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
     const [matchPattern, setMatchPattern] = useState(initialData?.matchPattern || "");
     const [active, setActive] = useState(initialData?.active ?? true);
+
+    // Filter categories based on type if provided
+    const filteredCategories = type
+        ? categories.filter(c => c.type === type)
+        : categories;
 
     const isEditing = !!initialData;
 
@@ -83,7 +88,7 @@ export function AddRecurringExpenseForm({ onSuccess, categories, accounts, initi
     return (
         <div className="space-y-4 pt-4">
             <div className="space-y-2">
-                <Label>Expense Name</Label>
+                <Label>Transaction Name</Label>
                 <Input value={name} onChange={e => setName(e.target.value)} placeholder="E.g. Netflix" />
             </div>
 
@@ -115,7 +120,7 @@ export function AddRecurringExpenseForm({ onSuccess, categories, accounts, initi
                         <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent className="max-h-[200px]">
-                        {categories.map(cat => (
+                        {filteredCategories.map(cat => (
                             <SelectItem key={cat.id} value={cat.id.toString()}>
                                 <div className="flex items-center gap-2">
                                     <div className="w-3 h-3 rounded-full" style={{ backgroundColor: cat.color }} />
@@ -128,7 +133,7 @@ export function AddRecurringExpenseForm({ onSuccess, categories, accounts, initi
             </div>
 
             <div className="space-y-2">
-                <Label>Debit Account</Label>
+                <Label>{type === 'income' ? 'Credit Account' : 'Debit Account'}</Label>
                 <Select value={accountId} onValueChange={setAccountId}>
                     <SelectTrigger>
                         <SelectValue placeholder="Select account" />

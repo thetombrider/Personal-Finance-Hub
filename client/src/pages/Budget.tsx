@@ -13,13 +13,13 @@ import {
 } from "@shared/schema";
 import { SummaryTable } from "@/components/budget/SummaryTable";
 import { BaselineTable } from "@/components/budget/BaselineTable";
-import { RecurringExpensesTable } from "@/components/budget/RecurringExpensesTable";
-import { PlannedExpensesTable } from "@/components/budget/PlannedExpensesTable";
+import { RecurringTransactionsTable } from "@/components/budget/RecurringTransactionsTable";
+import { PlannedTransactionsTable } from "@/components/budget/PlannedTransactionsTable";
 import { AddRecurringExpenseForm } from "@/components/budget/AddRecurringExpenseForm";
 import { AddPlannedExpenseForm } from "@/components/budget/AddPlannedExpenseForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useFinance } from "@/context/FinanceContext";
-import { RecurringExpensesMonitoring } from "@/components/budget/RecurringExpensesMonitoring";
+import { RecurringTransactionsMonitoring } from "@/components/budget/RecurringTransactionsMonitoring";
 
 interface YearlyBudgetData {
     categories: any[];
@@ -41,6 +41,10 @@ export default function Budget() {
     const [isAddPlannedOpen, setIsAddPlannedOpen] = useState(false);
     const [editingRecurring, setEditingRecurring] = useState<RecurringExpense | null>(null);
     const [editingPlanned, setEditingPlanned] = useState<PlannedExpense | null>(null);
+
+    // Track which type we are adding (income or expense)
+    const [addRecurringType, setAddRecurringType] = useState<'income' | 'expense'>('expense');
+    const [addPlannedType, setAddPlannedType] = useState<'income' | 'expense'>('expense');
 
     // Default redirect if just /budget
     if (location === "/budget") {
@@ -111,24 +115,34 @@ export default function Budget() {
         await updateBaselineMutation.mutateAsync({ categoryId, month, amount });
     };
 
-    const handleAddRecurring = () => {
+    const handleAddRecurring = (type: 'income' | 'expense') => {
         setEditingRecurring(null);
+        setAddRecurringType(type);
         setIsAddRecurringOpen(true);
     };
 
     const handleEditRecurring = (expense: RecurringExpense) => {
+        const cat = categories.find(c => c.id === expense.categoryId);
+        setAddRecurringType(cat?.type === 'income' ? 'income' : 'expense');
         setEditingRecurring(expense);
         setIsAddRecurringOpen(true);
     };
 
-    const handleAddPlanned = () => {
+    const handleAddPlanned = (type: 'income' | 'expense') => {
         setEditingPlanned(null);
+        setAddPlannedType(type);
         setIsAddPlannedOpen(true);
     };
 
     const handleEditPlanned = (expense: PlannedExpense) => {
+        const cat = categories.find(c => c.id === expense.categoryId);
+        setAddPlannedType(cat?.type === 'income' ? 'income' : 'expense');
         setEditingPlanned(expense);
         setIsAddPlannedOpen(true);
+    };
+
+    const getCategoryType = (categoryId: number) => {
+        return categories.find(c => c.id === categoryId)?.type || 'expense';
     };
 
     if (isLoading || !data) {
@@ -140,6 +154,13 @@ export default function Budget() {
             </Layout>
         );
     }
+
+    // Split data by type
+    const plannedIncome = data.plannedExpenses.filter(e => getCategoryType(e.categoryId) === 'income');
+    const plannedExpenses = data.plannedExpenses.filter(e => getCategoryType(e.categoryId) === 'expense');
+
+    const recurringIncome = data.recurringExpenses.filter(e => getCategoryType(e.categoryId) === 'income');
+    const recurringExpenses = data.recurringExpenses.filter(e => getCategoryType(e.categoryId) === 'expense');
 
     return (
         <Layout>
@@ -209,32 +230,63 @@ export default function Budget() {
                         </section>
                     )}
 
-                    {/* Recurring Expenses */}
+                    {/* Recurring Transactions */}
                     {location === "/budget/recurring" && (
                         <div className="space-y-8">
-                            <section>
-                                <RecurringExpensesTable
-                                    expenses={data.recurringExpenses}
+                            <section className="space-y-6">
+                                <RecurringTransactionsTable
+                                    title="Recurring Income"
+                                    emptyMessage="No recurring income set."
+                                    transactions={recurringIncome}
                                     categories={data.categories}
-                                    onAdd={handleAddRecurring}
+                                    onAdd={() => handleAddRecurring('income')}
+                                    onEdit={handleEditRecurring}
+                                    onDelete={(id) => deleteRecurringMutation.mutate(id)}
+                                />
+                                <RecurringTransactionsTable
+                                    title="Recurring Expenses"
+                                    emptyMessage="No recurring expenses set."
+                                    transactions={recurringExpenses}
+                                    categories={data.categories}
+                                    onAdd={() => handleAddRecurring('expense')}
                                     onEdit={handleEditRecurring}
                                     onDelete={(id) => deleteRecurringMutation.mutate(id)}
                                 />
                             </section>
 
-                            <section>
-                                <RecurringExpensesMonitoring recurringExpenses={data.recurringExpenses} />
+                            <section className="space-y-6">
+                                <RecurringTransactionsMonitoring
+                                    title="Income Monitoring"
+                                    description="Verify income history for the last 12 months"
+                                    transactions={recurringIncome}
+                                />
+                                <RecurringTransactionsMonitoring
+                                    title="Expenses Monitoring"
+                                    description="Verify payment history for the last 12 months"
+                                    transactions={recurringExpenses}
+                                />
                             </section>
                         </div>
                     )}
 
-                    {/* Planned Expenses */}
+                    {/* Planned Transactions */}
                     {location === "/budget/planned" && (
-                        <section>
-                            <PlannedExpensesTable
-                                expenses={data.plannedExpenses}
+                        <section className="space-y-6">
+                            <PlannedTransactionsTable
+                                title="Planned Income"
+                                emptyMessage="No extra planned income."
+                                transactions={plannedIncome}
                                 categories={data.categories}
-                                onAdd={handleAddPlanned}
+                                onAdd={() => handleAddPlanned('income')}
+                                onEdit={handleEditPlanned}
+                                onDelete={(id) => deletePlannedMutation.mutate(id)}
+                            />
+                            <PlannedTransactionsTable
+                                title="Planned Expenses"
+                                emptyMessage="No extra planned expenses."
+                                transactions={plannedExpenses}
+                                categories={data.categories}
+                                onAdd={() => handleAddPlanned('expense')}
                                 onEdit={handleEditPlanned}
                                 onDelete={(id) => deletePlannedMutation.mutate(id)}
                             />
@@ -247,10 +299,10 @@ export default function Budget() {
                     <DialogContent>
                         <DialogHeader>
                             <DialogTitle>
-                                {editingRecurring ? "Edit Recurring Expense" : "New Recurring Expense"}
+                                {editingRecurring ? "Edit Recurring Transaction" : `New Recurring ${addRecurringType === 'income' ? 'Income' : 'Expense'}`}
                             </DialogTitle>
                             <DialogDescription>
-                                Enter details for the recurring expense you want to track.
+                                Enter details for the recurring transaction you want to track.
                             </DialogDescription>
                         </DialogHeader>
                         <AddRecurringExpenseForm
@@ -261,6 +313,7 @@ export default function Budget() {
                             categories={categories}
                             accounts={accounts} // Passed from context
                             initialData={editingRecurring || undefined}
+                            type={addRecurringType}
                         />
                     </DialogContent>
                 </Dialog>
@@ -269,10 +322,10 @@ export default function Budget() {
                     <DialogContent>
                         <DialogHeader>
                             <DialogTitle>
-                                {editingPlanned ? "Edit Planned Expense" : "New Planned Expense"}
+                                {editingPlanned ? "Edit Planned Transaction" : `New Planned ${addPlannedType === 'income' ? 'Income' : 'Expense'}`}
                             </DialogTitle>
                             <DialogDescription>
-                                Plan a one-time future expense for your annual budget.
+                                Plan a one-time future transaction for your annual budget.
                             </DialogDescription>
                         </DialogHeader>
                         <AddPlannedExpenseForm
@@ -283,6 +336,7 @@ export default function Budget() {
                             categories={categories}
                             year={currentYear}
                             initialData={editingPlanned || undefined}
+                            type={addPlannedType}
                         />
                     </DialogContent>
                 </Dialog>

@@ -16,7 +16,7 @@ interface AddPlannedExpenseFormProps {
     initialData?: PlannedExpense;
 }
 
-export function AddPlannedExpenseForm({ onSuccess, categories, year, initialData }: AddPlannedExpenseFormProps) {
+export function AddPlannedExpenseForm({ onSuccess, categories, year, initialData, type }: AddPlannedExpenseFormProps & { type?: 'income' | 'expense' }) {
     const { toast } = useToast();
     const queryClient = useQueryClient();
     const [name, setName] = useState(initialData?.name || "");
@@ -27,6 +27,12 @@ export function AddPlannedExpenseForm({ onSuccess, categories, year, initialData
     const [date, setDate] = useState(defaultDate);
 
     const isEditing = !!initialData;
+
+    // Filter categories based on type if provided
+    const filteredCategories = type
+        ? categories.filter(c => c.type === type)
+        : categories;
+
 
     const mutation = useMutation({
         mutationFn: async (data: any) => {
@@ -104,7 +110,7 @@ export function AddPlannedExpenseForm({ onSuccess, categories, year, initialData
                         <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent className="max-h-[200px]">
-                        {categories.map(cat => (
+                        {filteredCategories.map(cat => (
                             <SelectItem key={cat.id} value={cat.id.toString()}>
                                 <div className="flex items-center gap-2">
                                     <div className="w-3 h-3 rounded-full" style={{ backgroundColor: cat.color }} />
