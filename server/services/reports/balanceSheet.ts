@@ -44,9 +44,15 @@ export async function getBalanceSheet(storage: IStorage, marketDataService: Mark
     ]);
 
     // Assets
-    // 1. Liquidità (Cash) & Savings
-    // We separate 'checking' + 'cash' from 'savings'
+    // 1. & 2. Liquidity (Cash + Checking) & Savings
     const allTransactions = await storage.getTransactions(userId);
+
+    // Structure to hold account breakdowns
+    const cashAccounts: any[] = [];
+    const savingsAccounts: any[] = [];
+    const investmentAccounts: any[] = [];
+    const creditCardAccounts: any[] = [];
+
     let cashTotal = 0;   // Checking + Cash
     let savingsTotal = 0; // Savings
 
@@ -54,16 +60,34 @@ export async function getBalanceSheet(storage: IStorage, marketDataService: Mark
         if (account.type === 'checking' || account.type === 'savings' || account.type === 'cash') {
             const currentBalance = computeCurrentBalance(account, allTransactions);
 
+            const accountData = {
+                id: account.id,
+                name: account.name,
+                balance: currentBalance,
+                type: account.type
+            };
+
             if (account.type === 'savings') {
                 savingsTotal += currentBalance;
+                savingsAccounts.push(accountData);
             } else {
                 // checking or cash
                 cashTotal += currentBalance;
+                cashAccounts.push(accountData);
             }
+        } else if (account.type === 'investment') {
+            // For investment accounts, we start with their cash balance
+            const currentBalance = computeCurrentBalance(account, allTransactions);
+            investmentAccounts.push({
+                id: account.id,
+                name: account.name,
+                balance: currentBalance, // Will add holding values to this later
+                type: account.type
+            });
         }
     }
 
-    // 2. Investments (Holdings)
+    // 3. Investments (Holdings)
     // Fetch current prices and build map
     const quotesList = await Promise.all(holdingsList.map(h => marketDataService.getQuote(h.ticker)));
     const quotesMap = new Map();
@@ -71,24 +95,92 @@ export async function getBalanceSheet(storage: IStorage, marketDataService: Mark
         quotesMap.set(h.ticker, quotesList[index]);
     });
 
-    let investmentsValue = 0;
+    let totalInvestmentsValue = 0;
+
+    // Track unassigned investment value
+    let unassignedInvestmentValue = 0;
+
     for (const holding of holdingsList) {
         const holdingTrades = allTrades.filter(t => t.holdingId === holding.id);
-        let quantity = 0;
+
+        // We need to calculate quantity per account for this holding
+        // Group trades by account
+        const accountQuantities = new Map<number | null, number>();
+
         for (const t of holdingTrades) {
             const qty = parseFloat(t.quantity.toString());
-            if (t.type === 'buy') quantity += qty;
-            else quantity -= qty;
+            const accId = t.accountId || null;
+            const currentQty = accountQuantities.get(accId) || 0;
+
+            if (t.type === 'buy') {
+                accountQuantities.set(accId, currentQty + qty);
+            } else {
+                accountQuantities.set(accId, currentQty - qty);
+            }
         }
 
-        if (quantity > 0.0001) {
-            const quote = quotesMap.get(holding.ticker);
-            const price = quote?.data.price || parseFloat(holding.currentPrice?.toString() || "0");
-            investmentsValue += quantity * price;
+        // Calculate value for each account
+        const quote = quotesMap.get(holding.ticker);
+        const price = quote?.data.price || parseFloat(holding.currentPrice?.toString() || "0");
+
+        for (const [accId, qty] of Array.from(accountQuantities.entries())) {
+            if (qty > 0.0001) {
+                const value = qty * price;
+                totalInvestmentsValue += value;
+
+                if (accId) {
+                    // Find the account in our list and add the value
+                    const accountIndex = investmentAccounts.findIndex(a => a.id === accId);
+                    if (accountIndex >= 0) {
+                        investmentAccounts[accountIndex].balance += value;
+                    } else {
+                        // Account might be hidden or archived, or just not in the initial investment list if type was changed
+                        // For now, if we can't find it in investmentAccounts (e.g. maybe it was a checking account used for trade),
+                        // we should validly considering adding it or just tracking as unassigned/other if strict.
+                        // Let's see if we can find it in the original accounts list
+                        const account = accounts.find(a => a.id === accId);
+                        if (account) {
+                            // If it wasn't already in the list (e.g. mixed use), let's add it or aggregated it?
+                            // Simplest is to treat it as investment source.
+                            // But checking if it is already in cash/savings lists?
+                            // User asked for breakdown. If I bought stock with Checking, it's an asset of Checking?
+                            // Usually "Investments" category implies Investment Accounts.
+                            // But strict financial view: Holding is the Asset. 
+                            // Let's stick to: If account is in investmentAccounts, update it.
+                            // If not, add to unassigned for now to ensure totals match, OR see if we should create an entry.
+                            // Let's create an entry if missing but exists.
+                            investmentAccounts.push({
+                                id: account.id,
+                                name: account.name,
+                                balance: value, // Just the investment value
+                                type: account.type
+                            });
+                        } else {
+                            unassignedInvestmentValue += value;
+                        }
+                    }
+                } else {
+                    unassignedInvestmentValue += value;
+                }
+            }
         }
     }
 
-    const totalAssets = cashTotal + savingsTotal + investmentsValue;
+    // Add unassigned if any
+    if (unassignedInvestmentValue > 0.01) {
+        investmentAccounts.push({
+            id: -1,
+            name: "Unassigned / Legacy",
+            balance: unassignedInvestmentValue,
+            type: "other"
+        });
+    }
+
+    // Recalculate investment total from accounts to be sure
+    const calculatedInvestmentsTotal = investmentAccounts.reduce((sum, acc) => sum + acc.balance, 0);
+
+
+    const totalAssets = cashTotal + savingsTotal + calculatedInvestmentsTotal;
 
     // Liabilities
     // Credit cards logic
@@ -98,7 +190,14 @@ export async function getBalanceSheet(storage: IStorage, marketDataService: Mark
             const currentBalance = computeCurrentBalance(account, allTransactions);
             // Liability is the magnitude of the debt (absolute value of negative balance)
             if (currentBalance < 0) {
-                totalLiabilities += Math.abs(currentBalance);
+                const liabilityAmount = Math.abs(currentBalance);
+                totalLiabilities += liabilityAmount;
+                creditCardAccounts.push({
+                    id: account.id,
+                    name: account.name,
+                    balance: liabilityAmount,
+                    type: account.type
+                });
             }
         }
     }
@@ -108,13 +207,25 @@ export async function getBalanceSheet(storage: IStorage, marketDataService: Mark
 
     return {
         assets: {
-            cash: cashTotal,
-            savings: savingsTotal,
-            investments: investmentsValue,
+            cash: {
+                total: cashTotal,
+                accounts: cashAccounts
+            },
+            savings: {
+                total: savingsTotal,
+                accounts: savingsAccounts
+            },
+            investments: {
+                total: calculatedInvestmentsTotal,
+                accounts: investmentAccounts
+            },
             total: totalAssets
         },
         liabilities: {
-            creditCards: totalLiabilities,
+            creditCards: {
+                total: totalLiabilities,
+                accounts: creditCardAccounts
+            },
             total: totalLiabilities
         },
         equity: {

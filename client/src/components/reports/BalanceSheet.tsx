@@ -1,23 +1,53 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Loader2 } from "lucide-react";
+import { Loader2, ChevronRight } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import { useState } from "react";
+import { cn } from "@/lib/utils";
+
+interface AccountBalance {
+    id: number;
+    name: string;
+    balance: number;
+    type: string;
+}
+
+interface CategoryData {
+    total: number;
+    accounts: AccountBalance[];
+}
 
 export interface BalanceSheetResponse {
     assets: {
-        cash: number;
-        savings: number;
-        investments: number;
+        cash: CategoryData;
+        savings: CategoryData;
+        investments: CategoryData;
         total: number;
     };
     liabilities: {
-        creditCards: number;
+        creditCards: CategoryData;
         total: number;
     };
     equity: {
         netWorth: number;
     };
+}
+
+function AccountList({ accounts, colorClass = "text-muted-foreground" }: { accounts: AccountBalance[], colorClass?: string }) {
+    if (!accounts || accounts.length === 0) return null;
+
+    return (
+        <div className="pl-4 space-y-2 mt-2 mb-4 border-l-2 border-muted/50 ml-2">
+            {accounts.map(account => (
+                <div key={account.id} className="flex justify-between items-center text-sm">
+                    <span className={cn("text-muted-foreground", colorClass)}>{account.name}</span>
+                    <span className={cn("font-mono", colorClass)}>{formatCurrency(account.balance)}</span>
+                </div>
+            ))}
+        </div>
+    );
 }
 
 export function BalanceSheet() {
@@ -58,18 +88,30 @@ export function BalanceSheet() {
                             </div>
 
                             <div className="space-y-4">
-                                <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
-                                    <span className="font-medium">Liquidity (Cash + Checking)</span>
-                                    <span>{formatCurrency(data.assets.cash)}</span>
+                                <div>
+                                    <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
+                                        <span className="font-medium">Liquidity (Cash + Checking)</span>
+                                        <span>{formatCurrency(data.assets.cash.total)}</span>
+                                    </div>
+                                    <AccountList accounts={data.assets.cash.accounts} />
                                 </div>
-                                <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
-                                    <span className="font-medium">Savings</span>
-                                    <span>{formatCurrency(data.assets.savings)}</span>
+
+                                <div>
+                                    <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
+                                        <span className="font-medium">Savings</span>
+                                        <span>{formatCurrency(data.assets.savings.total)}</span>
+                                    </div>
+                                    <AccountList accounts={data.assets.savings.accounts} />
                                 </div>
-                                <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
-                                    <span className="font-medium">Investments</span>
-                                    <span>{formatCurrency(data.assets.investments)}</span>
+
+                                <div>
+                                    <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
+                                        <span className="font-medium">Investments</span>
+                                        <span>{formatCurrency(data.assets.investments.total)}</span>
+                                    </div>
+                                    <AccountList accounts={data.assets.investments.accounts} />
                                 </div>
+
                                 <Separator />
                                 <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg font-bold text-lg text-green-800">
                                     <span>Total Assets</span>
@@ -87,10 +129,14 @@ export function BalanceSheet() {
                             <div className="space-y-4">
                                 <div className="space-y-2">
                                     <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Liabilities</h4>
-                                    <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
-                                        <span className="font-medium">Credit Cards</span>
-                                        <span>{formatCurrency(data.liabilities.creditCards)}</span>
+                                    <div>
+                                        <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
+                                            <span className="font-medium">Credit Cards</span>
+                                            <span>{formatCurrency(data.liabilities.creditCards.total)}</span>
+                                        </div>
+                                        <AccountList accounts={data.liabilities.creditCards.accounts} colorClass="text-red-600/70" />
                                     </div>
+
                                     <div className="flex justify-between items-center p-3 bg-red-50 rounded-lg font-bold text-red-800">
                                         <span>Total Liabilities</span>
                                         <span>{formatCurrency(data.liabilities.total)}</span>
@@ -115,3 +161,4 @@ export function BalanceSheet() {
         </div>
     );
 }
+
