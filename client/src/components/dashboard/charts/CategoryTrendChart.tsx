@@ -68,7 +68,7 @@ export function CategoryTrendChart({
                                 <Tooltip
                                     formatter={(value: number, name: string) => {
                                         if (name === 'budget') return [displayCurrency(value), 'Budget'];
-                                        const label = selectedCategoryForTrend?.name || 'Totale';
+                                        const label = selectedCategoryForTrend?.name || 'Total';
                                         return [displayCurrency(value), label];
                                     }}
                                     contentStyle={{ backgroundColor: 'var(--color-card)', borderRadius: '8px', border: '1px solid var(--color-border)' }}

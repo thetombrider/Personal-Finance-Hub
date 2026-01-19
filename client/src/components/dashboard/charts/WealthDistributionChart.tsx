@@ -56,7 +56,7 @@ export function WealthDistributionChart({ data, privacyMode, formatCurrency }: W
                                 />
                                 <Bar dataKey="base" stackId="a" fill="#3b82f6" radius={[0, 4, 4, 0]}>
                                     {data.map((entry, index) => (
-                                        <Cell key={`cell-base-${index}`} fill={entry.name === 'Investimenti' ? '#3b82f6' : COLORS[index % COLORS.length]} />
+                                        <Cell key={`cell-base-${index}`} fill={entry.name === 'Investments' ? '#3b82f6' : COLORS[index % COLORS.length]} />
                                     ))}
                                 </Bar>
                                 <Bar dataKey="gain" stackId="a" fill="#10b981" radius={[0, 4, 4, 0]} />
