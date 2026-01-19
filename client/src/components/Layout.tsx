@@ -43,8 +43,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       subItems: [
         { href: "/budget/overview", label: "Budget Overview" },
         { href: "/budget/baseline", label: "Set Budget Baseline" },
-        { href: "/budget/recurring", label: "Recurring Expenses" },
-        { href: "/budget/planned", label: "Planned Expenses" },
+        { href: "/budget/recurring", label: "Recurring Transactions" },
+        { href: "/budget/planned", label: "Planned Transactions" },
       ]
     },
     { href: "/categories", label: "Categories", icon: PieChart },

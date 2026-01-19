@@ -94,61 +94,53 @@ export default function Accounts() {
   return (
     <Layout>
       <div className="flex flex-col gap-6 h-[calc(100vh-6rem)] md:h-[calc(100vh-4rem)]">
-        <div className="flex justify-between items-start">
+        <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-heading font-bold text-foreground">Accounts</h1>
-            <p className="text-muted-foreground">Account flow analysis</p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <div className="flex items-center border rounded-md mr-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setPage(p => p + 1)}
+                disabled={!canGoBack}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-sm px-2 font-medium min-w-[80px] text-center">
+                {visibleMonths.length > 0
+                  ? `${visibleMonths[0].label} - ${visibleMonths[visibleMonths.length - 1].label} `
+                  : 'No data'}
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setPage(p => Math.max(0, p - 1))}
+                disabled={!canGoForward}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <Select value={timeRange} onValueChange={setTimeRange}>
+              <SelectTrigger className="w-[170px]" data-testid="select-time-range">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="6">Last 6 months</SelectItem>
+                <SelectItem value="12">Last 12 months</SelectItem>
+                <SelectItem value="24">Last 24 months</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
-        <Card className="flex-1 flex flex-col min-h-0">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-lg">Account Flow</CardTitle>
-                <CardDescription>Monthly summary of net income/expense for each account</CardDescription>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="flex items-center border rounded-md mr-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => setPage(p => p + 1)}
-                    disabled={!canGoBack}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <span className="text-sm px-2 font-medium min-w-[80px] text-center">
-                    {visibleMonths.length > 0
-                      ? `${visibleMonths[0].label} - ${visibleMonths[visibleMonths.length - 1].label} `
-                      : 'No data'}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => setPage(p => Math.max(0, p - 1))}
-                    disabled={!canGoForward}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-
-                <Select value={timeRange} onValueChange={setTimeRange}>
-                  <SelectTrigger className="w-[170px]" data-testid="select-time-range">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="6">Last 6 months</SelectItem>
-                    <SelectItem value="12">Last 12 months</SelectItem>
-                    <SelectItem value="24">Last 24 months</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0 flex-1 overflow-hidden relative">
+        <Card className="flex flex-col max-h-[calc(100vh-14rem)] md:max-h-[calc(100vh-12rem)]">
+          <CardContent className="p-0 overflow-auto">
             <ScrollArea className="w-full h-full">
               <div className="w-full">
                 <Table>

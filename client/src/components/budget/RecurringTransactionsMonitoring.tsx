@@ -2,7 +2,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { RecurringExpense, RecurringExpenseCheck } from "@shared/schema";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle2, XCircle, Clock, Check } from "lucide-react";
 import { useState } from "react";
@@ -76,74 +75,67 @@ export function RecurringTransactionsMonitoring({ transactions, title, descripti
     if (activeTransactions.length === 0) return null;
 
     return (
-        <Card>
-            <CardHeader>
-                <div className="flex items-center justify-between">
-                    <div>
-                        <CardTitle>{title}</CardTitle>
-                        <CardDescription>{description}</CardDescription>
-                    </div>
+        <div className="space-y-4">
+            <div className="flex items-start justify-between">
+                <div>
+                    <h2 className="text-lg font-semibold">{title}</h2>
+                    <p className="text-sm text-muted-foreground mt-1">{description}</p>
                 </div>
-            </CardHeader>
-            <CardContent>
-                <div className="rounded-md border p-1 bg-muted/20">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-[200px]">Transaction</TableHead>
-                                {months.map(m => (
-                                    <TableHead key={`${m.year}-${m.month}`} className="text-center w-[80px] p-1 text-xs">{m.label}</TableHead>
-                                ))}
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {activeTransactions.map(transaction => (
-                                <TableRow key={transaction.id}>
-                                    <TableCell className="font-medium text-sm">{transaction.name}</TableCell>
-                                    {months.map((m, i) => {
-                                        const check = getStatus(transaction.id, i);
-                                        return (
-                                            <TableCell
-                                                key={`${m.year}-${m.month}`}
-                                                className="text-center cursor-pointer hover:bg-muted/50 p-1"
-                                                onClick={() => handleCellClick(transaction, check)}
-                                            >
-                                                <div className="flex justify-center">
-                                                    {!check && <span className="text-muted-foreground text-xs">-</span>}
-                                                    {check?.status === 'MATCHED' && <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
-                                                    {check?.status === 'MISSING' && <XCircle className="h-4 w-4 text-red-500" />}
-                                                    {check?.status === 'PENDING' && <Clock className="h-4 w-4 text-amber-500" />}
-                                                </div>
-                                            </TableCell>
-                                        );
-                                    })}
-                                </TableRow>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={async () => {
+                        await Promise.all(months.map(m => runCheckMutation.mutateAsync({ year: m.year, month: m.month })));
+                    }}
+                    disabled={runCheckMutation.isPending}
+                >
+                    {runCheckMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
+                    Run Check (Last 12 Months)
+                </Button>
+            </div>
+            <div className="rounded-md border p-1 bg-muted/20">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead className="w-[200px]">Transaction</TableHead>
+                            {months.map(m => (
+                                <TableHead key={`${m.year}-${m.month}`} className="text-center w-[80px] p-1 text-xs">{m.label}</TableHead>
                             ))}
-                        </TableBody>
-                    </Table>
-                </div>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {activeTransactions.map(transaction => (
+                            <TableRow key={transaction.id}>
+                                <TableCell className="font-medium text-sm">{transaction.name}</TableCell>
+                                {months.map((m, i) => {
+                                    const check = getStatus(transaction.id, i);
+                                    return (
+                                        <TableCell
+                                            key={`${m.year}-${m.month}`}
+                                            className="text-center cursor-pointer hover:bg-muted/50 p-1"
+                                            onClick={() => handleCellClick(transaction, check)}
+                                        >
+                                            <div className="flex justify-center">
+                                                {!check && <span className="text-muted-foreground text-xs">-</span>}
+                                                {check?.status === 'MATCHED' && <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
+                                                {check?.status === 'MISSING' && <XCircle className="h-4 w-4 text-red-500" />}
+                                                {check?.status === 'PENDING' && <Clock className="h-4 w-4 text-amber-500" />}
+                                            </div>
+                                        </TableCell>
+                                    );
+                                })}
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </div>
 
-                <div className="mt-4 flex justify-end">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={async () => {
-                            await Promise.all(months.map(m => runCheckMutation.mutateAsync({ year: m.year, month: m.month })));
-                        }}
-                        disabled={runCheckMutation.isPending}
-                    >
-                        {runCheckMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
-                        Run Check (Last 12 Months)
-                    </Button>
-                </div>
-
-                <ReconciliationDetailModal
-                    open={!!selectedCheck}
-                    onOpenChange={(open) => !open && setSelectedCheck(null)}
-                    check={selectedCheck?.check || null}
-                    expense={selectedCheck?.expense || null}
-                />
-            </CardContent>
-        </Card>
+            <ReconciliationDetailModal
+                open={!!selectedCheck}
+                onOpenChange={(open) => !open && setSelectedCheck(null)}
+                check={selectedCheck?.check || null}
+                expense={selectedCheck?.expense || null}
+            />
+        </div>
     );
 }

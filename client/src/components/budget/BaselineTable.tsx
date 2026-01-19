@@ -8,7 +8,6 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { type Category } from "@shared/schema";
 import { Loader2 } from "lucide-react";
@@ -22,8 +21,8 @@ interface BaselineTableProps {
 
 export function BaselineTable({ categories, budgetData, onUpdateBaseline, monthRange }: BaselineTableProps) {
     const allMonths = [
-        "Gen", "Feb", "Mar", "Apr", "Mag", "Giu",
-        "Lug", "Ago", "Set", "Ott", "Nov", "Dic"
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
     ];
 
     const visibleMonths = allMonths.slice(monthRange[0], monthRange[1]);
@@ -94,126 +93,121 @@ export function BaselineTable({ categories, budgetData, onUpdateBaseline, monthR
     };
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Monthly Baseline</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                    Set the monthly baseline for each category. Press enter or click outside to save.
-                </p>
-            </CardHeader>
-            <CardContent>
-                <div className="rounded-md border w-full">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-[15%]">Category</TableHead>
-                                {visibleMonths.map((month) => (
-                                    <TableHead key={month} className="text-right w-auto md:w-[12%] p-2">
-                                        {month}
-                                    </TableHead>
-                                ))}
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {/* INCOME SECTION */}
-                            <TableRow className="bg-muted/30">
-                                <TableCell colSpan={visibleMonths.length + 1} className="font-bold py-2">Income</TableCell>
-                            </TableRow>
-                            {categories.filter(c => c.type === 'income').map((category) => (
-                                <TableRow key={category.id}>
-                                    <TableCell className="font-medium">
-                                        <div className="flex items-center gap-2">
-                                            <div
-                                                className="w-3 h-3 rounded-full min-w-[12px]"
-                                                style={{ backgroundColor: category.color }}
-                                            />
-                                            <span className="truncate">{category.name}</span>
-                                        </div>
-                                    </TableCell>
-                                    {visibleMonths.map((_, index) => {
-                                        const month = startMonthIndex + index + 1;
-                                        const key = getKey(category.id, month);
-                                        const isUpdating = updating === key;
-
-                                        return (
-                                            <TableCell key={index} className="p-2">
-                                                <div className="relative">
-                                                    <Input
-                                                        type="number"
-                                                        min="0"
-                                                        step="50"
-                                                        className={`text-right h-8 px-2 text-xs sm:text-sm border-transparent hover:border-input focus:border-primary w-full ${getValue(category.id, month) === "" ? "placeholder:text-muted-foreground/30" : ""
-                                                            }`}
-                                                        placeholder="0"
-                                                        value={getValue(category.id, month)}
-                                                        onChange={(e) => handleChange(category.id, month, e.target.value)}
-                                                        onBlur={() => handleBlur(category.id, month)}
-                                                        onKeyDown={(e) => handleKeyDown(e, category.id, month)}
-                                                        disabled={isUpdating}
-                                                    />
-                                                    {isUpdating && (
-                                                        <div className="absolute inset-0 flex items-center justify-center bg-background/50">
-                                                            <Loader2 className="h-3 w-3 animate-spin text-primary" />
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </TableCell>
-                                        );
-                                    })}
-                                </TableRow>
+        <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+                Set the monthly baseline for each category. Press enter or click outside to save.
+            </p>
+            <div className="rounded-md border w-full">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead className="w-[15%]">Category</TableHead>
+                            {visibleMonths.map((month) => (
+                                <TableHead key={month} className="text-right w-auto md:w-[12%] p-2">
+                                    {month}
+                                </TableHead>
                             ))}
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {/* INCOME SECTION */}
+                        <TableRow className="bg-muted/30">
+                            <TableCell colSpan={visibleMonths.length + 1} className="font-bold py-2">Income</TableCell>
+                        </TableRow>
+                        {categories.filter(c => c.type === 'income').map((category) => (
+                            <TableRow key={category.id}>
+                                <TableCell className="font-medium">
+                                    <div className="flex items-center gap-2">
+                                        <div
+                                            className="w-3 h-3 rounded-full min-w-[12px]"
+                                            style={{ backgroundColor: category.color }}
+                                        />
+                                        <span className="truncate">{category.name}</span>
+                                    </div>
+                                </TableCell>
+                                {visibleMonths.map((_, index) => {
+                                    const month = startMonthIndex + index + 1;
+                                    const key = getKey(category.id, month);
+                                    const isUpdating = updating === key;
 
-                            {/* EXPENSE SECTION */}
-                            <TableRow className="bg-muted/30">
-                                <TableCell colSpan={visibleMonths.length + 1} className="font-bold py-2 mt-4">Expenses</TableCell>
+                                    return (
+                                        <TableCell key={index} className="p-2">
+                                            <div className="relative">
+                                                <Input
+                                                    type="number"
+                                                    min="0"
+                                                    step="50"
+                                                    className={`text-right h-8 px-2 text-xs sm:text-sm border-transparent hover:border-input focus:border-primary w-full ${getValue(category.id, month) === "" ? "placeholder:text-muted-foreground/30" : ""
+                                                        }`}
+                                                    placeholder="0"
+                                                    value={getValue(category.id, month)}
+                                                    onChange={(e) => handleChange(category.id, month, e.target.value)}
+                                                    onBlur={() => handleBlur(category.id, month)}
+                                                    onKeyDown={(e) => handleKeyDown(e, category.id, month)}
+                                                    disabled={isUpdating}
+                                                />
+                                                {isUpdating && (
+                                                    <div className="absolute inset-0 flex items-center justify-center bg-background/50">
+                                                        <Loader2 className="h-3 w-3 animate-spin text-primary" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </TableCell>
+                                    );
+                                })}
                             </TableRow>
-                            {categories.filter(c => c.type === 'expense').map((category) => (
-                                <TableRow key={category.id}>
-                                    <TableCell className="font-medium">
-                                        <div className="flex items-center gap-2">
-                                            <div
-                                                className="w-3 h-3 rounded-full min-w-[12px]"
-                                                style={{ backgroundColor: category.color }}
-                                            />
-                                            <span className="truncate">{category.name}</span>
-                                        </div>
-                                    </TableCell>
-                                    {visibleMonths.map((_, index) => {
-                                        const month = startMonthIndex + index + 1;
-                                        const key = getKey(category.id, month);
-                                        const isUpdating = updating === key;
+                        ))}
 
-                                        return (
-                                            <TableCell key={index} className="p-2">
-                                                <div className="relative">
-                                                    <Input
-                                                        type="number"
-                                                        min="0"
-                                                        step="50"
-                                                        className={`text-right h-8 px-2 text-xs sm:text-sm border-transparent hover:border-input focus:border-primary w-full ${getValue(category.id, month) === "" ? "placeholder:text-muted-foreground/30" : ""
-                                                            }`}
-                                                        placeholder="0"
-                                                        value={getValue(category.id, month)}
-                                                        onChange={(e) => handleChange(category.id, month, e.target.value)}
-                                                        onBlur={() => handleBlur(category.id, month)}
-                                                        onKeyDown={(e) => handleKeyDown(e, category.id, month)}
-                                                        disabled={isUpdating}
-                                                    />
-                                                    {isUpdating && (
-                                                        <div className="absolute inset-0 flex items-center justify-center bg-background/50">
-                                                            <Loader2 className="h-3 w-3 animate-spin text-primary" />
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </TableCell>
-                                        );
-                                    })}
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </div>
-            </CardContent>
-        </Card>
+                        {/* EXPENSE SECTION */}
+                        <TableRow className="bg-muted/30">
+                            <TableCell colSpan={visibleMonths.length + 1} className="font-bold py-2 mt-4">Expenses</TableCell>
+                        </TableRow>
+                        {categories.filter(c => c.type === 'expense').map((category) => (
+                            <TableRow key={category.id}>
+                                <TableCell className="font-medium">
+                                    <div className="flex items-center gap-2">
+                                        <div
+                                            className="w-3 h-3 rounded-full min-w-[12px]"
+                                            style={{ backgroundColor: category.color }}
+                                        />
+                                        <span className="truncate">{category.name}</span>
+                                    </div>
+                                </TableCell>
+                                {visibleMonths.map((_, index) => {
+                                    const month = startMonthIndex + index + 1;
+                                    const key = getKey(category.id, month);
+                                    const isUpdating = updating === key;
+
+                                    return (
+                                        <TableCell key={index} className="p-2">
+                                            <div className="relative">
+                                                <Input
+                                                    type="number"
+                                                    min="0"
+                                                    step="50"
+                                                    className={`text-right h-8 px-2 text-xs sm:text-sm border-transparent hover:border-input focus:border-primary w-full ${getValue(category.id, month) === "" ? "placeholder:text-muted-foreground/30" : ""
+                                                        }`}
+                                                    placeholder="0"
+                                                    value={getValue(category.id, month)}
+                                                    onChange={(e) => handleChange(category.id, month, e.target.value)}
+                                                    onBlur={() => handleBlur(category.id, month)}
+                                                    onKeyDown={(e) => handleKeyDown(e, category.id, month)}
+                                                    disabled={isUpdating}
+                                                />
+                                                {isUpdating && (
+                                                    <div className="absolute inset-0 flex items-center justify-center bg-background/50">
+                                                        <Loader2 className="h-3 w-3 animate-spin text-primary" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </TableCell>
+                                    );
+                                })}
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </div>
+        </div>
     );
 }
