@@ -456,6 +456,84 @@ export function useDashboardCharts({
         return data;
     }, [accounts, getMonthlyBudgetTotal, totalBalance]);
 
+    // Sankey Data - By Category (Net Flow)
+    // Sankey Data - By Category (Net Flow)
+    const sankeyCategoryData = useMemo(() => {
+        const months = parseInt(timeRange);
+        const startDate = startOfMonth(subMonths(new Date(), months - 1));
+        const endDate = endOfMonth(new Date());
+
+        // Filter transactions
+        const relevantTx = transactions.filter(t => {
+            const tDate = parseISO(t.date);
+            const isTransfer = t.categoryId === transferCategoryId;
+            return !isTransfer &&
+                tDate >= startDate && tDate <= endDate &&
+                (selectedAccount === "all" || t.accountId === parseInt(selectedAccount));
+        });
+
+        // Calculate Net Flow per Category
+        const catMap = new Map<string, { value: number, color: string }>();
+
+        relevantTx.forEach(t => {
+            const amount = parseFloat(t.amount.toString()) || 0;
+            const cat = categories.find(c => c.id === t.categoryId);
+            const name = cat ? cat.name : 'Unknown';
+            const color = cat ? cat.color : '#888888';
+
+            const current = catMap.get(name) || { value: 0, color };
+
+            if (t.type === 'income') {
+                catMap.set(name, { value: current.value + amount, color });
+            } else if (t.type === 'expense') {
+                catMap.set(name, { value: current.value - amount, color });
+            }
+        });
+
+        const nodes: { name: string, fill?: string }[] = [];
+        const links: { source: number; target: number; value: number }[] = [];
+
+        // Distribute categories based on Net Flow direction
+        const incomeEntries: { name: string, value: number, color: string }[] = [];
+        const expenseEntries: { name: string, value: number, color: string }[] = [];
+
+        catMap.forEach((data, name) => {
+            if (data.value > 0) {
+                // Net Inflow
+                incomeEntries.push({ name, value: data.value, color: data.color });
+            } else if (data.value < 0) {
+                // Net Outflow
+                expenseEntries.push({ name, value: Math.abs(data.value), color: data.color });
+            }
+        });
+
+        incomeEntries.sort((a, b) => b.value - a.value);
+        expenseEntries.sort((a, b) => b.value - a.value);
+
+        // 1. Income Nodes (Sources)
+        nodes.push(...incomeEntries.map(e => ({ name: e.name, fill: e.color })));
+
+        // 2. Center Node
+        const centerNodeIndex = nodes.length;
+        nodes.push({ name: 'Net Flow', fill: 'var(--foreground)' });
+
+        // 3. Expense Nodes (Targets)
+        const firstExpenseNodeIndex = nodes.length;
+        nodes.push(...expenseEntries.map(e => ({ name: e.name, fill: e.color })));
+
+        // Links: Income -> Center
+        incomeEntries.forEach((entry, idx) => {
+            links.push({ source: idx, target: centerNodeIndex, value: entry.value });
+        });
+
+        // Links: Center -> Expense
+        expenseEntries.forEach((entry, idx) => {
+            links.push({ source: centerNodeIndex, target: firstExpenseNodeIndex + idx, value: entry.value });
+        });
+
+        return { nodes, links };
+    }, [transactions, timeRange, selectedAccount, categories, transferCategoryId]);
+
     return {
         globalMonthlyStats,
         chartData,
@@ -466,6 +544,7 @@ export function useDashboardCharts({
         budgetIncomeComparisonData,
         netWorthByTypeData,
         netWorthProjectionData,
-        selectedCategoryForTrend
+        selectedCategoryForTrend,
+        sankeyCategoryData
     };
 }

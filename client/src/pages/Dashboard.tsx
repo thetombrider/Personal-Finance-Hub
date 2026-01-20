@@ -17,6 +17,7 @@ import { SpendingBreakdownChart } from "@/components/dashboard/charts/SpendingBr
 import { BudgetComparisonChart } from "@/components/dashboard/charts/BudgetComparisonChart";
 import { CategoryTrendChart } from "@/components/dashboard/charts/CategoryTrendChart";
 import { NetWorthProjectionChart } from "@/components/dashboard/charts/NetWorthProjectionChart";
+import { SankeyChart } from "@/components/dashboard/charts/SankeyChart";
 
 export default function Dashboard() {
   const { accounts, transactions, categories, formatCurrency } = useFinance();
@@ -165,6 +166,16 @@ export default function Dashboard() {
           />
           <SpendingBreakdownChart
             data={charts.categoryData}
+            privacyMode={privacyMode}
+            formatCurrency={formatCurrency}
+          />
+        </div>
+
+        <div className="grid gap-6">
+          <SankeyChart
+            data={charts.sankeyCategoryData}
+            title="Category Net Flow"
+            description="Income Sources vs Expense Destinations"
             privacyMode={privacyMode}
             formatCurrency={formatCurrency}
           />

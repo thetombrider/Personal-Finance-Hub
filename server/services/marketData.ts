@@ -1,5 +1,7 @@
 import { storage } from "../storage";
-import yahooFinance from 'yahoo-finance2';
+import YahooFinance from 'yahoo-finance2';
+
+const yahooFinance = new YahooFinance();
 
 interface CachedQuote {
     data: {
