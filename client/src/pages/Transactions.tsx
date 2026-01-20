@@ -168,6 +168,15 @@ export default function Transactions() {
     }
   };
 
+  const handleBulkDeleteFiltered = async () => {
+    const count = sortedTransactions.length;
+    if (confirm(`Are you sure you want to delete all ${count} filtered transactions?`)) {
+      const idsToDelete = sortedTransactions.map(t => t.id);
+      await deleteTransactions(idsToDelete);
+      setSelectedIds(new Set());
+    }
+  };
+
   const toggleSelection = (id: number) => {
     const newSelected = new Set(selectedIds);
     if (newSelected.has(id)) {
@@ -272,7 +281,13 @@ export default function Transactions() {
           <div className="flex items-center gap-2">
             {selectedIds.size > 0 && (
               <Button variant="destructive" className="gap-2 px-3" onClick={handleBulkDelete} data-testid="button-bulk-delete" title={`Delete ${selectedIds.size} transactions`}>
-                <Trash2 size={16} /> {selectedIds.size}
+                <Trash2 size={16} /> Selected ({selectedIds.size})
+              </Button>
+            )}
+
+            {filterState.hasActiveFilters && sortedTransactions.length > 0 && (
+              <Button variant="destructive" className="gap-2 px-3" onClick={handleBulkDeleteFiltered} data-testid="button-bulk-delete-filtered" title={`Delete all ${sortedTransactions.length} filtered transactions`}>
+                <Trash2 size={16} /> All Filtered Results ({sortedTransactions.length})
               </Button>
             )}
 
