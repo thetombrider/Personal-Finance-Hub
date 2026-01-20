@@ -60,7 +60,9 @@ export const categories = pgTable("categories", {
   userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }),
 });
 
-export const insertCategorySchema = createInsertSchema(categories).omit({ id: true });
+export const insertCategorySchema = createInsertSchema(categories).omit({ id: true }).extend({
+  type: z.enum(["income", "expense", "transfer"]),
+});
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
 export type Category = typeof categories.$inferSelect;
 

@@ -13,7 +13,7 @@ export interface Account extends Omit<DbAccount, "type"> {
 }
 
 export interface Category extends Omit<DbCategory, "type"> {
-  type: "income" | "expense";
+  type: "income" | "expense" | "transfer";
 }
 
 export interface Transaction extends Omit<DbTransaction, "type"> {

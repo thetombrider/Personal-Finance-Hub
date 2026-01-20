@@ -32,10 +32,13 @@ export function registerBudgetRoutes(app: Express) {
                 return startYear <= year;
             });
 
+            // Filter out transfer categories from budget calculations
+            const budgetCategories = categories.filter(c => c.type !== 'transfer');
+
             // Initialize response structure
             const budgetData: Record<number, Record<number, { baseline: number; planned: number; recurring: number; total: number }>> = {};
 
-            categories.forEach(cat => {
+            budgetCategories.forEach(cat => {
                 budgetData[cat.id] = {};
                 for (let m = 1; m <= 12; m++) {
                     budgetData[cat.id][m] = { baseline: 0, planned: 0, recurring: 0, total: 0 };
@@ -80,7 +83,7 @@ export function registerBudgetRoutes(app: Express) {
             }
 
             res.json({
-                categories,
+                categories: budgetCategories,
                 budgetData,
                 plannedExpenses,
                 recurringExpenses: filteredRecurringExpenses

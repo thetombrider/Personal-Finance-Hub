@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 
 const categorySchema = z.object({
   name: z.string().min(2, "Name is required"),
-  type: z.enum(["income", "expense"]),
+  type: z.enum(["income", "expense", "transfer"]),
   color: z.string().default("#3b82f6"),
 });
 
@@ -155,6 +155,7 @@ export default function ManageCategories() {
                             <SelectContent>
                               <SelectItem value="income">Income</SelectItem>
                               <SelectItem value="expense">Expense</SelectItem>
+                              <SelectItem value="transfer">Transfer</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -228,7 +229,7 @@ export default function ManageCategories() {
                       {isEditing ? (
                         <Select
                           value={editForm.type}
-                          onValueChange={(val: "income" | "expense") => setEditForm({ ...editForm, type: val })}
+                          onValueChange={(val: "income" | "expense" | "transfer") => setEditForm({ ...editForm, type: val })}
                         >
                           <SelectTrigger className="h-8 w-[120px]">
                             <SelectValue />
@@ -236,11 +237,12 @@ export default function ManageCategories() {
                           <SelectContent>
                             <SelectItem value="income">Income</SelectItem>
                             <SelectItem value="expense">Expense</SelectItem>
+                            <SelectItem value="transfer">Transfer</SelectItem>
                           </SelectContent>
                         </Select>
                       ) : (
-                        <Badge variant={category.type === 'income' ? 'default' : 'secondary'} className={category.type === 'income' ? 'bg-emerald-500 hover:bg-emerald-600' : ''}>
-                          {category.type === 'income' ? 'Income' : 'Expense'}
+                        <Badge variant={category.type === 'income' ? 'default' : 'secondary'} className={category.type === 'income' ? 'bg-emerald-500 hover:bg-emerald-600' : category.type === 'transfer' ? 'bg-slate-500 hover:bg-slate-600' : ''}>
+                          {category.type === 'income' ? 'Income' : category.type === 'expense' ? 'Expense' : 'Transfer'}
                         </Badge>
                       )}
                     </TableCell>

@@ -18,7 +18,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Transactions() {
-  const { transactions, accounts, categories, addTransaction, addTransfer, updateTransaction, deleteTransaction, deleteTransactions, formatCurrency, isLoading } = useFinance();
+  const { transactions, accounts, categories, addTransaction, addCategory, addTransfer, updateTransaction, deleteTransaction, deleteTransactions, formatCurrency, isLoading } = useFinance();
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isTransferDialogOpen, setIsTransferDialogOpen] = useState(false);
@@ -107,7 +107,25 @@ export default function Transactions() {
   };
 
   const onTransferSubmit = async (data: TransferFormValues) => {
+    let transferCategoryId = transferCategory?.id;
+
+    // If transfer category doesn't exist, create it
     if (!transferCategory) {
+      try {
+        const newCategory = await addCategory({
+          name: "Transfers",
+          type: "transfer",
+          color: "#94a3b8",
+          icon: "ArrowLeftRight",
+        });
+        transferCategoryId = newCategory.id;
+      } catch (error) {
+        alert("Failed to create transfer category. Please create it manually in settings.");
+        return;
+      }
+    }
+
+    if (!transferCategoryId) {
       alert("Category 'Transfers' not found. Please create it first in settings.");
       return;
     }
@@ -117,7 +135,7 @@ export default function Transactions() {
       description: data.description,
       fromAccountId: data.fromAccountId,
       toAccountId: data.toAccountId,
-      categoryId: transferCategory.id,
+      categoryId: transferCategoryId,
       date: format(data.date, "yyyy-MM-dd'T'HH:mm:ss"),
     });
 
