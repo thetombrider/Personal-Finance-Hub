@@ -1,10 +1,5 @@
 import { storage } from "../storage";
-import yahooFinance2 from 'yahoo-finance2';
-
-// Robustly handle CJS/ESM interop for YahooFinance constructor
-// In some builds (CJS), it's { default: YahooFinance }, in others it might be the class directly.
-const YahooFinance = (yahooFinance2 as any).default || yahooFinance2;
-const yahooFinance = new YahooFinance();
+import yahooFinance from 'yahoo-finance2';
 
 interface CachedQuote {
     data: {
