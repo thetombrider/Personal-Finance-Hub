@@ -13,6 +13,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
 
+
   // Apply font preference
   useEffect(() => {
     if (user?.appearanceSettings?.font) {
@@ -21,11 +22,43 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       if (font === "Inter") fontFamily = "'Inter', sans-serif";
       if (font === "Raleway") fontFamily = "'Raleway', sans-serif";
 
+      // Set both CSS variables AND direct font-family to cover all use cases
+      // CSS variables for Tailwind utilities (font-sans, font-heading, etc.)
       document.documentElement.style.setProperty("--font-sans", fontFamily);
       document.documentElement.style.setProperty("--font-heading", fontFamily);
+      // Direct font-family for elements without specific classes
+      document.documentElement.style.setProperty("font-family", fontFamily, "important");
+      document.body.style.setProperty("font-family", fontFamily, "important");
+
+      // Add/update style element for headings to ensure they use the custom font
+      let styleEl = document.getElementById("custom-font-headings");
+      if (!styleEl) {
+        styleEl = document.createElement("style");
+        styleEl.id = "custom-font-headings";
+        document.head.appendChild(styleEl);
+      }
+      // Target all headings, dialog/modal titles, and any element with heading-like classes
+      styleEl.textContent = `
+        h1, h2, h3, h4, h5, h6,
+        [class*="DialogTitle"],
+        [class*="AlertDialogTitle"],
+        [class*="SheetTitle"],
+        [class*="PopoverTitle"],
+        [class*="CardTitle"],
+        .font-heading,
+        .font-bold {
+          font-family: ${fontFamily} !important;
+        }
+      `;
     } else {
       document.documentElement.style.removeProperty("--font-sans");
       document.documentElement.style.removeProperty("--font-heading");
+      document.documentElement.style.removeProperty("font-family");
+      document.body.style.removeProperty("font-family");
+
+      // Remove custom heading styles
+      const styleEl = document.getElementById("custom-font-headings");
+      if (styleEl) styleEl.remove();
     }
   }, [user?.appearanceSettings?.font]);
 

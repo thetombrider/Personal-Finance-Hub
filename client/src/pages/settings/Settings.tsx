@@ -129,6 +129,7 @@ export default function Settings() {
                 username: values.username,
                 password: "",
                 confirmPassword: "",
+                font: values.font,
             });
         } catch (error: any) {
             toast({
