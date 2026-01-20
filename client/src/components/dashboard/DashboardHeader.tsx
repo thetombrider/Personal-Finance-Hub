@@ -38,32 +38,28 @@ export function DashboardHeader({
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
-                <div className="bg-card border border-border p-1">
-                    <Select value={selectedAccount} onValueChange={setSelectedAccount}>
-                        <SelectTrigger className="w-[160px] border-none bg-transparent shadow-none focus:ring-0" data-testid="select-account-filter">
-                            <SelectValue placeholder="All Accounts" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Accounts</SelectItem>
-                            {accounts.map(acc => (
-                                <SelectItem key={acc.id} value={acc.id.toString()}>{acc.name}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-                <div className="bg-card border border-border p-1">
-                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                        <SelectTrigger className="w-[160px] border-none bg-transparent shadow-none focus:ring-0" data-testid="select-category-filter">
-                            <SelectValue placeholder="All Categories" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Categories</SelectItem>
-                            {categories.filter(c => c.name.toLowerCase() !== 'trasferimenti').map(cat => (
-                                <SelectItem key={cat.id} value={cat.id.toString()}>{cat.name}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
+                <Select value={selectedAccount} onValueChange={setSelectedAccount}>
+                    <SelectTrigger className="w-[180px]" data-testid="select-account-filter">
+                        <SelectValue placeholder="All Accounts" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Accounts</SelectItem>
+                        {accounts.map(acc => (
+                            <SelectItem key={acc.id} value={acc.id.toString()}>{acc.name}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                    <SelectTrigger className="w-[180px]" data-testid="select-category-filter">
+                        <SelectValue placeholder="All Categories" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Categories</SelectItem>
+                        {categories.filter(c => c.name.toLowerCase() !== 'trasferimenti').map(cat => (
+                            <SelectItem key={cat.id} value={cat.id.toString()}>{cat.name}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
                 <Tabs value={timeRange} onValueChange={setTimeRange} className="w-auto">
                     <TabsList className="h-9">
                         <TabsTrigger value="3" className="text-xs px-3">3M</TabsTrigger>
