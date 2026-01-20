@@ -40,7 +40,6 @@ The application requires certain environment variables to be set. You can define
 | Variable | Description |
 |----------|-------------|
 | `DATABASE_URL` | Connection string for PostgreSQL (e.g., `postgres://user:pass@host:5432/db`) |
-| `ALPHA_VANTAGE_API_KEY` | API Key for stock market data (get one from Alpha Vantage) |
 | `DISABLE_SIGNUP` | Set to `true` to disable new user registrations |
 | `SSO_ONLY` | Set to `true` to disable local user registration and login|
 | `OIDC_ISSUER_URL` | (Optional) OIDC Issuer URL |
