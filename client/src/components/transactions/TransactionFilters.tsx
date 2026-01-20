@@ -37,6 +37,26 @@ interface TransactionFiltersProps {
     totalCount: number;
 }
 
+function getContrastTextColor(hex: string): string {
+    // Basic validation
+    if (!/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)) return '#fff';
+
+    let c = hex.substring(1).split('');
+    if (c.length === 3) {
+        c = [c[0], c[0], c[1], c[1], c[2], c[2]];
+    }
+    const num = parseInt(c.join(''), 16);
+    const r = (num >> 16) & 255;
+    const g = (num >> 8) & 255;
+    const b = num & 255;
+
+    // Calculate luminance
+    // Formula: 0.299*R + 0.587*G + 0.114*B
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+    return luminance > 0.5 ? '#000' : '#fff';
+}
+
 export function TransactionFilters({
     searchQuery, setSearchQuery,
     dateFrom, setDateFrom,
@@ -285,7 +305,7 @@ export function TransactionFilters({
                                                             "cursor-pointer hover:opacity-80 transition-opacity pl-2 pr-2 py-1",
                                                             isSelected ? "" : "bg-transparent text-foreground border-input"
                                                         )}
-                                                        style={isSelected ? { backgroundColor: tag.color, borderColor: tag.color, color: '#fff' } : {}}
+                                                        style={isSelected ? { backgroundColor: tag.color, borderColor: tag.color, color: getContrastTextColor(tag.color) } : {}}
                                                         onClick={() => {
                                                             if (isSelected) {
                                                                 setFilterTagIds(filterTagIds.filter(id => id !== tag.id));

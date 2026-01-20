@@ -248,7 +248,7 @@ export const tags = pgTable("tags", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   color: varchar("color", { length: 7 }).notNull(),
-  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
 }, (table) => ({
   uniqueNameUser: uniqueIndex("idx_tags_name_user").on(table.name, table.userId),
 }));

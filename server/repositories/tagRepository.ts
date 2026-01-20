@@ -31,7 +31,12 @@ export const tagRepository = {
     },
 
     // Delete a tag
-    async deleteTag(id: number): Promise<void> {
+    // Delete a tag
+    async deleteTag(id: number, userId: string): Promise<void> {
+        const [tag] = await db.select().from(tags).where(eq(tags.id, id));
+        if (!tag || tag.userId !== userId) {
+            throw new Error("Unauthorized or Tag not found");
+        }
         await db.delete(tags).where(eq(tags.id, id));
     },
 
@@ -73,15 +78,11 @@ export const tagRepository = {
     async removeTagsFromTransactions(transactionIds: number[], tagIds: number[]): Promise<void> {
         if (transactionIds.length === 0 || tagIds.length === 0) return;
 
-        console.log(`[tagRepository] Removing tags. Transactions: ${transactionIds.join(', ')}, Tags: ${tagIds.join(', ')}`);
-
         await db.delete(transactionTags).where(
             and(
                 inArray(transactionTags.transactionId, transactionIds),
                 inArray(transactionTags.tagId, tagIds)
             )
         );
-
-        console.log(`[tagRepository] Deletion query executed.`);
     }
 };

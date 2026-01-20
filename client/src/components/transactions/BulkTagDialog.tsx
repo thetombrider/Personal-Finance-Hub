@@ -63,8 +63,15 @@ export function BulkTagDialog({ isOpen, onOpenChange, selectedIds }: BulkTagDial
         }
     };
 
+    const handleOpenChange = (open: boolean) => {
+        onOpenChange(open);
+        if (!open) {
+            setSelectedTagIds([]);
+        }
+    };
+
     return (
-        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+        <Dialog open={isOpen} onOpenChange={handleOpenChange}>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">

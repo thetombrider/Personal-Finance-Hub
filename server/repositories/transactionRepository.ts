@@ -3,7 +3,7 @@
  * Handles transaction operations including transfers and bulk imports with deduplication.
  */
 
-import { eq, inArray, and, gte, lte, sql } from "drizzle-orm";
+import { eq, inArray, and, gte, lte, sql, getTableColumns } from "drizzle-orm";
 import { db } from "./base";
 import {
     type Transaction,
@@ -92,6 +92,17 @@ export class TransactionRepository {
         if (result.length === 0) return undefined;
         const [txWithTags] = await this.attachTags(result);
         return txWithTags;
+    }
+
+    async getTransactionsWithUsers(ids: number[]) {
+        if (ids.length === 0) return [];
+        return await db.select({
+            ...getTableColumns(transactions), // Select all transaction fields
+            userId: accounts.userId // Add userId from joined account
+        })
+            .from(transactions)
+            .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+            .where(inArray(transactions.id, ids));
     }
 
     async getExportableTransactions(userId: string) {

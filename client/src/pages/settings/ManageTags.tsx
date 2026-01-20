@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useFinance, Tag } from "@/context/FinanceContext";
+import { useToast } from "@/hooks/use-toast";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +36,7 @@ type TagFormValues = z.infer<typeof tagSchema>;
 
 export default function ManageTags() {
     const { tags, addTag, updateTag, deleteTag, isLoading } = useFinance();
+    const { toast } = useToast();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     // Inline editing state
@@ -53,9 +55,22 @@ export default function ManageTags() {
     });
 
     const onSubmit = async (data: TagFormValues) => {
-        await addTag(data);
-        setIsDialogOpen(false);
-        form.reset();
+        try {
+            await addTag(data);
+            setIsDialogOpen(false);
+            form.reset();
+            toast({
+                title: "Tag created",
+                description: "The tag has been successfully created.",
+            });
+        } catch (error) {
+            console.error(error);
+            toast({
+                title: "Error",
+                description: "Failed to create tag. Please try again.",
+                variant: "destructive",
+            });
+        }
     };
 
     const startEditing = (tag: Tag) => {
@@ -74,12 +89,26 @@ export default function ManageTags() {
         try {
             // Basic validation
             if (!editForm.name || editForm.name.length < 2) {
+                toast({
+                    title: "Validation Error",
+                    description: "Tag name must be at least 2 characters.",
+                    variant: "destructive",
+                });
                 return;
             }
             await updateTag(id, editForm);
             setEditingId(null);
+            toast({
+                title: "Tag updated",
+                description: "The tag has been successfully updated.",
+            });
         } catch (error) {
             console.error("Failed to update tag", error);
+            toast({
+                title: "Error",
+                description: "Failed to update tag. Please try again.",
+                variant: "destructive",
+            });
         }
     };
 

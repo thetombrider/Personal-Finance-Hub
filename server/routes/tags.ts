@@ -4,6 +4,10 @@ import { insertTagSchema } from "@shared/schema";
 import { z } from "zod";
 import { parseNumericParam, checkOwnership } from "./middleware";
 
+import { TransactionRepository } from "../repositories/transactionRepository";
+
+const transactionRepository = new TransactionRepository();
+
 const batchOperationSchema = z.object({
     transactionIds: z.array(z.number()),
     tagIds: z.array(z.number())
@@ -87,7 +91,7 @@ export function registerTagRoutes(app: Express) {
                 return res.status(403).json({ error: "Forbidden" });
             }
 
-            await tagRepository.deleteTag(id);
+            await tagRepository.deleteTag(id, req.user.id);
             res.status(204).send();
         } catch (error) {
             res.status(500).json({ error: "Failed to delete tag" });
@@ -103,19 +107,18 @@ export function registerTagRoutes(app: Express) {
             const transactionId = parseNumericParam(req.params.id);
             if (transactionId === null) return res.status(400).json({ error: "Invalid transaction id" });
 
-            // TODO: Ideally check transaction ownership here, but skipping for now to rely on repository security usually or adding specific check
-            // For strictness, we should fetch transaction and check owner.
-            // const transaction = await storage.getTransaction(transactionId);
-            // if (!transaction || transaction.userId !== req.user.id) ... 
-            // Assuming caller has access or extending checkOwnership flow if needed.
-            // Given existing patterns, we'll proceed.
+            // Security check: Transaction Ownership
+            const transactions = await transactionRepository.getTransactionsWithUsers([transactionId]);
+            if (transactions.length === 0) {
+                return res.status(404).json({ error: "Transaction not found" });
+            }
+            if (transactions[0].userId !== req.user.id) {
+                return res.status(403).json({ error: "Transaction does not belong to you" });
+            }
 
             const { tagIds } = z.object({ tagIds: z.array(z.number()) }).parse(req.body);
 
-            // We should verify that all tags belong to the user
-            // Optimization: Fetch all tags for user and verify IDs?
-            // For now, trusting the input or letting DB constraints fail if IDs don't exist (though they might exist for other users).
-            // Ideally: 
+            // Security: Verify tags belong to user
             const userTags = await tagRepository.getTags(req.user.id);
             const userTagIds = new Set(userTags.map(t => t.id));
             const allValid = tagIds.every(id => userTagIds.has(id));
@@ -130,6 +133,7 @@ export function registerTagRoutes(app: Express) {
             if (error instanceof z.ZodError) {
                 return res.status(400).json({ error: error.errors });
             }
+            console.error(error);
             res.status(500).json({ error: "Failed to update transaction tags" });
         }
     });
@@ -147,8 +151,19 @@ export function registerTagRoutes(app: Express) {
                 return res.status(403).json({ error: "One or more tags do not belong to you or do not exist" });
             }
 
-            // Security: We should also theoretically check transaction ownership
-            // But for batch operations, maybe just proceed; complex to check all. A robust app would check.
+            // Security: Verify transaction ownership
+            const transactions = await transactionRepository.getTransactionsWithUsers(transactionIds);
+            // Ensure we found all transactions (optional strictness: or just process found ones?)
+            // If length differs, some IDs don't exist.
+            // But critical check is: do all found ones belong to user?
+            // AND ensure we cover the requested IDs if we want strict mode.
+            // Simple check: iterate transactions and check userId.
+            const allOwned = transactions.every(t => t.userId === req.user!.id);
+            if (!allOwned || transactions.length !== transactionIds.length) {
+                // If length mismatch, implies not found or duplicates (but we passed array).
+                // Let's assume strict: if any not found or not owned, fail.
+                return res.status(403).json({ error: "One or more transactions do not belong to you" });
+            }
 
             await tagRepository.addTagsToTransactions(transactionIds, tagIds);
             res.status(200).json({ success: true });
@@ -173,6 +188,13 @@ export function registerTagRoutes(app: Express) {
                 return res.status(403).json({ error: "One or more tags do not belong to you or do not exist" });
             }
 
+            // Security: Verify transaction ownership
+            const transactions = await transactionRepository.getTransactionsWithUsers(transactionIds);
+            const allOwned = transactions.every(t => t.userId === req.user!.id);
+            if (!allOwned || transactions.length !== transactionIds.length) {
+                return res.status(403).json({ error: "One or more transactions do not belong to you" });
+            }
+
             await tagRepository.removeTagsFromTransactions(transactionIds, tagIds);
             res.status(200).json({ success: true });
         } catch (error) {
@@ -182,4 +204,5 @@ export function registerTagRoutes(app: Express) {
             res.status(500).json({ error: "Failed to batch remove tags" });
         }
     });
+
 }

@@ -39,7 +39,7 @@ interface FinanceContextType {
   addCategories: (categories: Omit<InsertCategory, "id">[]) => Promise<any>;
   updateCategory: (id: number, category: Partial<InsertCategory>) => Promise<void>;
   deleteCategory: (id: number) => Promise<void>;
-  addTag: (tag: Omit<InsertTag, "id">) => Promise<any>;
+  addTag: (tag: Omit<InsertTag, "id" | "userId">) => Promise<any>;
   updateTag: (id: number, tag: Partial<InsertTag>) => Promise<void>;
   deleteTag: (id: number) => Promise<void>;
   addTransaction: (transaction: Omit<InsertTransaction, "id"> & { tagIds?: number[] }) => Promise<any>;
@@ -163,7 +163,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
 
   // Mutations - Tags
   const createTagMutation = useMutation({
-    mutationFn: async (tag: Omit<InsertTag, "id">) => {
+    mutationFn: async (tag: Omit<InsertTag, "id" | "userId">) => {
       const res = await apiRequest("POST", "/api/tags", tag);
       return res.json();
     },
@@ -311,7 +311,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     await deleteCategoryMutation.mutateAsync(id);
   };
 
-  const addTag = async (tag: Omit<InsertTag, "id">) => {
+  const addTag = async (tag: Omit<InsertTag, "id" | "userId">) => {
     return await createTagMutation.mutateAsync(tag);
   };
 
