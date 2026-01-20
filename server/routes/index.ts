@@ -17,6 +17,8 @@ import { registerBudgetRoutes } from "./budget";
 import { registerMarketRoutes } from "./market";
 
 
+import { registerTagRoutes } from "./tags";
+
 export async function registerRoutes(
     httpServer: Server,
     app: Express
@@ -31,6 +33,7 @@ export async function registerRoutes(
     registerReconciliationRoutes(app);
     registerAccountRoutes(app);
     registerCategoryRoutes(app);
+    registerTagRoutes(app);
     registerTransactionRoutes(app);
     registerTransferRoutes(app);
     registerWebhookRoutes(app);

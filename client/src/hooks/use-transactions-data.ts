@@ -17,6 +17,7 @@ export function useTransactionsData({ transactions, accounts, categories, checks
     const [filterAccountId, setFilterAccountId] = useState<string>('all');
     const [filterCategoryId, setFilterCategoryId] = useState<string>('all');
     const [filterStatus, setFilterStatus] = useState<string>('all');
+    const [filterTagIds, setFilterTagIds] = useState<number[]>([]);
     const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
     const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
 
@@ -65,6 +66,16 @@ export function useTransactionsData({ transactions, accounts, categories, checks
                 return false;
             }
 
+            // Tag filter
+            if (filterTagIds.length > 0) {
+                const transactionTagIds = t.tags?.map(tag => tag.id) || [];
+                // Check if transaction has ALL selected tags (or ANY? usually ALL for precision, but ANY is common too. Let's go with ANY for now as it's often more intuitive for "show me transactions related to X or Y")
+                // Actually, often filters are additive (AND). Let's stick to AND (must have all selected tags) for stricter filtering or OR (has at least one).
+                // "Filter by Tags": usually means "Has at least one of these tags".
+                const hasTag = filterTagIds.some(id => transactionTagIds.includes(id));
+                if (!hasTag) return false;
+            }
+
             // Date range filter
             const transactionDate = new Date(t.date);
             if (dateFrom) {
@@ -84,7 +95,7 @@ export function useTransactionsData({ transactions, accounts, categories, checks
 
             return true;
         });
-    }, [transactions, searchQuery, filterAccountId, filterCategoryId, filterStatus, dateFrom, dateTo, matchedTransactions]);
+    }, [transactions, searchQuery, filterAccountId, filterCategoryId, filterStatus, filterTagIds, dateFrom, dateTo, matchedTransactions]);
 
     const sortedTransactions = useMemo(() => {
         const sorted = [...filteredTransactions].sort((a, b) => {
@@ -138,12 +149,13 @@ export function useTransactionsData({ transactions, accounts, categories, checks
         setFilterAccountId('all');
         setFilterCategoryId('all');
         setFilterStatus('all');
+        setFilterTagIds([]);
         setDateFrom(undefined);
         setDateTo(undefined);
         setCurrentPage(1);
     };
 
-    const hasActiveFilters = !!(searchQuery || filterAccountId !== 'all' || filterCategoryId !== 'all' || filterStatus !== 'all' || dateFrom || dateTo);
+    const hasActiveFilters = !!(searchQuery || filterAccountId !== 'all' || filterCategoryId !== 'all' || filterStatus !== 'all' || filterTagIds.length > 0 || dateFrom || dateTo);
 
     return {
         filteredTransactions,
@@ -155,6 +167,7 @@ export function useTransactionsData({ transactions, accounts, categories, checks
             filterAccountId, setFilterAccountId,
             filterCategoryId, setFilterCategoryId,
             filterStatus, setFilterStatus,
+            filterTagIds, setFilterTagIds,
             dateFrom, setDateFrom,
             dateTo, setDateTo,
             hasActiveFilters,

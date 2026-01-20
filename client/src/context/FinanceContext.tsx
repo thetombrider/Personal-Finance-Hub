@@ -1,8 +1,9 @@
 import { createContext, useContext, ReactNode, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import * as api from "@/lib/api";
 import type { TransferData } from "@/lib/api";
-import type { InsertAccount, InsertCategory, InsertTransaction, Account as DbAccount, Category as DbCategory, Transaction as DbTransaction } from "@shared/schema";
+import type { InsertAccount, InsertCategory, InsertTransaction, Account as DbAccount, Category as DbCategory, Transaction as DbTransaction, Tag as DbTag, InsertTag } from "@shared/schema";
 
 // Types
 export type AccountType = "checking" | "savings" | "credit" | "investment" | "cash";
@@ -16,14 +17,18 @@ export interface Category extends Omit<DbCategory, "type"> {
   type: "income" | "expense" | "transfer";
 }
 
+export interface Tag extends DbTag { }
+
 export interface Transaction extends Omit<DbTransaction, "type"> {
   type: "income" | "expense";
+  tags?: Tag[];
 }
 
 // Context
 interface FinanceContextType {
   accounts: Account[];
   categories: Category[];
+  tags: Tag[];
   transactions: Transaction[];
   isLoading: boolean;
   addAccount: (account: Omit<InsertAccount, "id">) => Promise<any>;
@@ -34,13 +39,18 @@ interface FinanceContextType {
   addCategories: (categories: Omit<InsertCategory, "id">[]) => Promise<any>;
   updateCategory: (id: number, category: Partial<InsertCategory>) => Promise<void>;
   deleteCategory: (id: number) => Promise<void>;
-  addTransaction: (transaction: Omit<InsertTransaction, "id">) => Promise<any>;
+  addTag: (tag: Omit<InsertTag, "id">) => Promise<any>;
+  updateTag: (id: number, tag: Partial<InsertTag>) => Promise<void>;
+  deleteTag: (id: number) => Promise<void>;
+  addTransaction: (transaction: Omit<InsertTransaction, "id"> & { tagIds?: number[] }) => Promise<any>;
   addTransactions: (transactions: Omit<InsertTransaction, "id">[]) => Promise<any>;
   addTransfer: (transfer: TransferData) => Promise<void>;
-  updateTransaction: (id: number, transaction: Partial<InsertTransaction>) => Promise<void>;
+  updateTransaction: (id: number, transaction: Partial<InsertTransaction> & { tagIds?: number[] }) => Promise<void>;
   deleteTransaction: (id: number) => Promise<void>;
   deleteTransactions: (ids: number[]) => Promise<void>;
   clearTransactions: () => Promise<void>;
+  batchAssignTags: (transactionIds: number[], tagIds: number[]) => Promise<void>;
+  batchRemoveTags: (transactionIds: number[], tagIds: number[]) => Promise<void>;
   getAccountBalance: (id: number) => number;
   formatCurrency: (amount: number) => string;
 }
@@ -61,12 +71,20 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     queryFn: api.fetchCategories,
   });
 
+  const { data: tags = [], isLoading: tagsLoading } = useQuery({
+    queryKey: ["tags"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/tags");
+      return res.json();
+    },
+  });
+
   const { data: transactions = [], isLoading: transactionsLoading } = useQuery({
     queryKey: ["transactions"],
     queryFn: api.fetchTransactions,
   });
 
-  const isLoading = accountsLoading || categoriesLoading || transactionsLoading;
+  const isLoading = accountsLoading || categoriesLoading || transactionsLoading || tagsLoading;
 
   // Compute balances
   const accounts = useMemo(() => {
@@ -143,9 +161,69 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     },
   });
 
+  // Mutations - Tags
+  const createTagMutation = useMutation({
+    mutationFn: async (tag: Omit<InsertTag, "id">) => {
+      const res = await apiRequest("POST", "/api/tags", tag);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tags"] });
+    },
+  });
+
+  const updateTagMutation = useMutation({
+    mutationFn: async ({ id, tag }: { id: number; tag: Partial<InsertTag> }) => {
+      const res = await apiRequest("PATCH", `/api/tags/${id}`, tag);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tags"] });
+    },
+  });
+
+  const deleteTagMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/tags/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tags"] });
+      // Tags might have been removed from transactions so refresh them too
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    },
+  });
+
+  const batchAssignTagsMutation = useMutation({
+    mutationFn: async ({ transactionIds, tagIds }: { transactionIds: number[], tagIds: number[] }) => {
+      await apiRequest("POST", "/api/tags/batch", { transactionIds, tagIds });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    },
+  });
+
+  const batchRemoveTagsMutation = useMutation({
+    mutationFn: async ({ transactionIds, tagIds }: { transactionIds: number[], tagIds: number[] }) => {
+      await apiRequest("POST", "/api/tags/batch-delete", { transactionIds, tagIds });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    },
+  });
+
   // Mutations - Transactions
   const createTransactionMutation = useMutation({
-    mutationFn: api.createTransaction,
+    mutationFn: async (transaction: Omit<InsertTransaction, "id"> & { tagIds?: number[] }) => {
+      // Create transaction first
+      const { tagIds, ...txData } = transaction;
+      const newTx = await api.createTransaction(txData);
+
+      // If tags provided, associate them
+      if (tagIds && tagIds.length > 0) {
+        await apiRequest("POST", `/api/transactions/${newTx.id}/tags`, { tagIds });
+      }
+      return newTx;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
     },
@@ -166,8 +244,14 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   });
 
   const updateTransactionMutation = useMutation({
-    mutationFn: ({ id, transaction }: { id: number; transaction: Partial<InsertTransaction> }) =>
-      api.updateTransaction(id, transaction),
+    mutationFn: async ({ id, transaction }: { id: number; transaction: Partial<InsertTransaction> & { tagIds?: number[] } }) => {
+      const { tagIds, ...txData } = transaction;
+      await api.updateTransaction(id, txData);
+
+      if (tagIds !== undefined) {
+        await apiRequest("POST", `/api/transactions/${id}/tags`, { tagIds });
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
     },
@@ -227,7 +311,27 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     await deleteCategoryMutation.mutateAsync(id);
   };
 
-  const addTransaction = async (transaction: Omit<InsertTransaction, "id">) => {
+  const addTag = async (tag: Omit<InsertTag, "id">) => {
+    return await createTagMutation.mutateAsync(tag);
+  };
+
+  const updateTag = async (id: number, tag: Partial<InsertTag>) => {
+    await updateTagMutation.mutateAsync({ id, tag });
+  };
+
+  const deleteTag = async (id: number) => {
+    await deleteTagMutation.mutateAsync(id);
+  };
+
+  const batchAssignTags = async (transactionIds: number[], tagIds: number[]) => {
+    await batchAssignTagsMutation.mutateAsync({ transactionIds, tagIds });
+  };
+
+  const batchRemoveTags = async (transactionIds: number[], tagIds: number[]) => {
+    await batchRemoveTagsMutation.mutateAsync({ transactionIds, tagIds });
+  };
+
+  const addTransaction = async (transaction: Omit<InsertTransaction, "id"> & { tagIds?: number[] }) => {
     return await createTransactionMutation.mutateAsync(transaction);
   };
 
@@ -239,7 +343,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     await createTransferMutation.mutateAsync(transfer);
   };
 
-  const updateTransaction = async (id: number, transaction: Partial<InsertTransaction>) => {
+  const updateTransaction = async (id: number, transaction: Partial<InsertTransaction> & { tagIds?: number[] }) => {
     await updateTransactionMutation.mutateAsync({ id, transaction });
   };
 
@@ -265,9 +369,10 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
 
   return (
     <FinanceContext.Provider value={{
-      accounts, categories, transactions, isLoading,
+      accounts, categories, tags, transactions, isLoading,
       addAccount, addAccounts, updateAccount, deleteAccount,
       addCategory, addCategories, updateCategory, deleteCategory,
+      addTag, updateTag, deleteTag, batchAssignTags, batchRemoveTags,
       addTransaction, addTransactions, addTransfer, updateTransaction, deleteTransaction, deleteTransactions, clearTransactions,
       getAccountBalance, formatCurrency
     }}>
@@ -283,3 +388,4 @@ export function useFinance() {
   }
   return context;
 }
+

@@ -11,6 +11,7 @@ FinTrack is a comprehensive personal finance management application designed to 
 - **📈 Portfolio**: Manage your stock holdings, track performance, and view detailed metrics.
 - **📊 Reports**: Access detailed weekly reports, balance sheets, and income statements with granular breakdowns.
 - **⚙️ Settings**: Customize categories (including monthly budget targets), manage application preferences, and update user profile.
+- **🏷️ Tags**: Organize transactions with flexible, colored tags for cross-category tracking (e.g., "Vacation", "Tax Deductible"). Support for filtering and bulk operations.
 - **🔐 Authentication**: Secure login with support for OIDC providers.
 - **🏦 Bank Sync**: Connect to 2,000+ banks (including PayPal) via GoCardless to automatically sync transactions and balances to a Staging Area for review.
 - **📥 Smart Import**: Advanced CSV importer for Transactions, Trades, and Holdings with automated column mapping.

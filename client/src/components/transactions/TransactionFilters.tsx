@@ -8,8 +8,10 @@ import { Calendar } from "@/components/ui/calendar";
 import { Calendar as CalendarIcon, Search, Filter, X } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { Account, Category } from "@/context/FinanceContext";
+import { Account, Category, Tag } from "@/context/FinanceContext";
 import { useState } from "react";
+import { Check } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface TransactionFiltersProps {
     searchQuery: string;
@@ -24,10 +26,13 @@ interface TransactionFiltersProps {
     setFilterCategoryId: (id: string) => void;
     filterStatus: string;
     setFilterStatus: (status: string) => void;
+    filterTagIds: number[];
+    setFilterTagIds: (ids: number[]) => void;
     hasActiveFilters: boolean;
     clearFilters: () => void;
     accounts: Account[];
     categories: Category[];
+    tags: Tag[];
     resultCount: number;
     totalCount: number;
 }
@@ -39,12 +44,13 @@ export function TransactionFilters({
     filterAccountId, setFilterAccountId,
     filterCategoryId, setFilterCategoryId,
     filterStatus, setFilterStatus,
+    filterTagIds, setFilterTagIds,
     hasActiveFilters, clearFilters,
-    accounts, categories,
+    accounts, categories, tags,
     resultCount, totalCount
 }: TransactionFiltersProps) {
     const [filtersOpen, setFiltersOpen] = useState(false);
-    const [selectedFilter, setSelectedFilter] = useState<'date' | 'account' | 'category' | 'status'>('date');
+    const [selectedFilter, setSelectedFilter] = useState<'date' | 'account' | 'category' | 'status' | 'tags'>('date');
 
     return (
         <Card className="p-4">
@@ -127,6 +133,17 @@ export function TransactionFilters({
                                         onClick={() => setSelectedFilter('status')}
                                     >
                                         Status
+                                    </button>
+                                    <button
+                                        className={cn(
+                                            "w-full px-2 py-1.5 text-left font-medium rounded transition-colors",
+                                            selectedFilter === 'tags'
+                                                ? "bg-primary text-primary-foreground"
+                                                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                        )}
+                                        onClick={() => setSelectedFilter('tags')}
+                                    >
+                                        Tags
                                     </button>
                                 </div>
                                 {hasActiveFilters && (
@@ -250,6 +267,39 @@ export function TransactionFilters({
                                                 <SelectItem value="recurring">Recurring Expenses</SelectItem>
                                             </SelectContent>
                                         </Select>
+                                    </div>
+                                )}
+
+                                {selectedFilter === 'tags' && (
+                                    <div>
+                                        <Label className="text-sm font-medium mb-2 block">Select Tags</Label>
+                                        <div className="flex flex-wrap gap-2">
+                                            {tags.length === 0 && <p className="text-sm text-muted-foreground">No tags available.</p>}
+                                            {tags.map(tag => {
+                                                const isSelected = filterTagIds.includes(tag.id);
+                                                return (
+                                                    <Badge
+                                                        key={tag.id}
+                                                        variant={isSelected ? "default" : "outline"}
+                                                        className={cn(
+                                                            "cursor-pointer hover:opacity-80 transition-opacity pl-2 pr-2 py-1",
+                                                            isSelected ? "" : "bg-transparent text-foreground border-input"
+                                                        )}
+                                                        style={isSelected ? { backgroundColor: tag.color, borderColor: tag.color, color: '#fff' } : {}}
+                                                        onClick={() => {
+                                                            if (isSelected) {
+                                                                setFilterTagIds(filterTagIds.filter(id => id !== tag.id));
+                                                            } else {
+                                                                setFilterTagIds([...filterTagIds, tag.id]);
+                                                            }
+                                                        }}
+                                                    >
+                                                        {tag.name}
+                                                        {isSelected && <Check className="ml-1 h-3 w-3" />}
+                                                    </Badge>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
                                 )}
                             </div>

@@ -13,6 +13,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Account, Category } from "@/context/FinanceContext";
 import { useEffect } from "react";
+import { TagInput } from "@/components/common/TagInput";
 
 const transactionSchema = z.object({
     amount: z.coerce.number().min(0.01, "Amount must be positive"),
@@ -21,6 +22,7 @@ const transactionSchema = z.object({
     categoryId: z.coerce.number().min(1, "Category is required"),
     date: z.date(),
     type: z.enum(["income", "expense"]),
+    tagIds: z.array(z.number()).optional(),
 });
 
 export type TransactionFormValues = z.infer<typeof transactionSchema>;
@@ -53,6 +55,7 @@ export function TransactionForm({
             categoryId: 0,
             date: new Date(),
             type: "expense",
+            tagIds: [],
         },
     });
 
@@ -68,6 +71,7 @@ export function TransactionForm({
                     categoryId: 0,
                     date: new Date(),
                     type: "expense",
+                    tagIds: [],
                 });
             }
         }
@@ -221,6 +225,24 @@ export function TransactionForm({
                                             />
                                         </PopoverContent>
                                     </Popover>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <FormField
+                            control={form.control}
+                            name="tagIds"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Tags</FormLabel>
+                                    <FormControl>
+                                        <TagInput
+                                            selectedTagIds={field.value || []}
+                                            onTagsChange={field.onChange}
+                                            placeholder="Select tags..."
+                                        />
+                                    </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}

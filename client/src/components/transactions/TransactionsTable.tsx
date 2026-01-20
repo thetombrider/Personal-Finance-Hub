@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { Transaction, Account, Category } from "@/context/FinanceContext";
 import { SortField, SortDirection } from "@/hooks/use-transactions-data";
 import { RecurringExpenseCheck } from "@shared/schema";
+import { TagBadge } from "../common/TagBadge";
 
 interface TransactionsTableProps {
     // Data
@@ -143,6 +144,9 @@ export function TransactionsTable({
                                     <SortIcon field="category" />
                                 </div>
                             </TableHead>
+                            <TableHead className="w-[150px]">
+                                Tags
+                            </TableHead>
                             <TableHead
                                 className="cursor-pointer hover:bg-muted/50 transition-colors select-none"
                                 onClick={() => onSort('account')}
@@ -169,7 +173,7 @@ export function TransactionsTable({
                     <TableBody>
                         {paginatedTransactions.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                                     No transactions yet. Add one to get started.
                                 </TableCell>
                             </TableRow>
@@ -221,6 +225,13 @@ export function TransactionsTable({
                                             <div className="flex items-center gap-2">
                                                 <div className="w-2 h-2 rounded-full" style={{ backgroundColor: category?.color || '#ccc' }} />
                                                 {category?.name || 'Unknown'}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex flex-wrap gap-1">
+                                                {transaction.tags && transaction.tags.map(tag => (
+                                                    <TagBadge key={tag.id} tag={tag} />
+                                                ))}
                                             </div>
                                         </TableCell>
                                         <TableCell data-testid={`text-account-${transaction.id}`}>{getAccountName(transaction.accountId)}</TableCell>

@@ -12,16 +12,18 @@ import { TransactionForm, TransactionFormValues } from "@/components/transaction
 import { TransferForm, TransferFormValues } from "@/components/transactions/TransferForm";
 import { TransactionFilters } from "@/components/transactions/TransactionFilters";
 import { TransactionsTable } from "@/components/transactions/TransactionsTable";
+import { BulkTagDialog } from "@/components/transactions/BulkTagDialog";
 import { ImportedTransactions } from "@/components/ImportedTransactions";
-import { RefreshCw, List } from "lucide-react";
+import { RefreshCw, List, Tag } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Transactions() {
-  const { transactions, accounts, categories, addTransaction, addCategory, addTransfer, updateTransaction, deleteTransaction, deleteTransactions, formatCurrency, isLoading } = useFinance();
+  const { transactions, accounts, categories, tags, addTransaction, addCategory, addTransfer, updateTransaction, deleteTransaction, deleteTransactions, formatCurrency, isLoading } = useFinance();
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isTransferDialogOpen, setIsTransferDialogOpen] = useState(false);
+  const [isBulkTagDialogOpen, setIsBulkTagDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [editFormData, setEditFormData] = useState<TransactionFormValues | null>(null);
@@ -280,9 +282,14 @@ export default function Transactions() {
 
           <div className="flex items-center gap-2">
             {selectedIds.size > 0 && (
-              <Button variant="destructive" className="gap-2 px-3" onClick={handleBulkDelete} data-testid="button-bulk-delete" title={`Delete ${selectedIds.size} transactions`}>
-                <Trash2 size={16} /> Selected ({selectedIds.size})
-              </Button>
+              <>
+                <Button variant="outline" className="gap-2 px-3" onClick={() => setIsBulkTagDialogOpen(true)} title={`Manage tags for ${selectedIds.size} transactions`}>
+                  <Tag size={16} /> Tags
+                </Button>
+                <Button variant="destructive" className="gap-2 px-3" onClick={handleBulkDelete} data-testid="button-bulk-delete" title={`Delete ${selectedIds.size} transactions`}>
+                  <Trash2 size={16} /> Selected ({selectedIds.size})
+                </Button>
+              </>
             )}
 
             {filterState.hasActiveFilters && sortedTransactions.length > 0 && (
@@ -342,6 +349,7 @@ export default function Transactions() {
           {...filterState}
           accounts={accounts}
           categories={categories}
+          tags={tags}
           resultCount={filteredTransactions.length}
           totalCount={transactions.length}
         />
@@ -388,6 +396,12 @@ export default function Transactions() {
           onOpenChange={setIsTransferDialogOpen}
           onSubmit={onTransferSubmit}
           accounts={accounts}
+        />
+
+        <BulkTagDialog
+          isOpen={isBulkTagDialogOpen}
+          onOpenChange={setIsBulkTagDialogOpen}
+          selectedIds={Array.from(selectedIds)}
         />
 
         {reviewAccountId !== null && (

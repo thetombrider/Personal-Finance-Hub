@@ -243,3 +243,27 @@ export const webhookLogs = pgTable("webhook_logs", {
 export const insertWebhookLogSchema = createInsertSchema(webhookLogs).omit({ id: true, createdAt: true });
 export type InsertWebhookLog = z.infer<typeof insertWebhookLogSchema>;
 export type WebhookLog = typeof webhookLogs.$inferSelect;
+
+export const tags = pgTable("tags", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  color: varchar("color", { length: 7 }).notNull(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }),
+}, (table) => ({
+  uniqueNameUser: uniqueIndex("idx_tags_name_user").on(table.name, table.userId),
+}));
+
+export const insertTagSchema = createInsertSchema(tags).omit({ id: true });
+export type InsertTag = z.infer<typeof insertTagSchema>;
+export type Tag = typeof tags.$inferSelect;
+
+export const transactionTags = pgTable("transaction_tags", {
+  transactionId: integer("transaction_id").notNull().references(() => transactions.id, { onDelete: "cascade" }),
+  tagId: integer("tag_id").notNull().references(() => tags.id, { onDelete: "cascade" }),
+}, (table) => ({
+  pk: uniqueIndex("pk_transaction_tags").on(table.transactionId, table.tagId), // Simulating composite PK constraint/index behavior
+}));
+
+export const insertTransactionTagSchema = createInsertSchema(transactionTags);
+export type InsertTransactionTag = z.infer<typeof insertTransactionTagSchema>;
+export type TransactionTag = typeof transactionTags.$inferSelect;

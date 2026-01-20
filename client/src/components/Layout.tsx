@@ -117,6 +117,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       subItems: [
         { href: "/settings/accounts", label: "Account Management" },
         { href: "/settings/categories", label: "Category Management" },
+        { href: "/settings/tags", label: "Tag Management" },
         { href: "/settings/webhooks", label: "Webhook Management" },
         { href: "/settings/email-reports", label: "Email Reports" },
         { href: "/settings", label: "User Settings" },

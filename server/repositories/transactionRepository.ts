@@ -8,10 +8,13 @@ import { db } from "./base";
 import {
     type Transaction,
     type InsertTransaction,
+    type Tag,
     transactions,
     accounts,
     trades,
     categories,
+    tags,
+    transactionTags,
 } from "@shared/schema";
 
 export interface TransferData {
@@ -22,6 +25,8 @@ export interface TransferData {
     toAccountId: number;
     categoryId: number;
 }
+
+export type TransactionWithTags = Transaction & { tags: Tag[] };
 
 /**
  * Generate a dedupe key for a transaction
@@ -34,34 +39,68 @@ function generateDedupeKey(accountId: number, date: string | Date, amount: strin
 }
 
 export class TransactionRepository {
-    async getTransactions(userId: string): Promise<Transaction[]> {
-        const userAccounts = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.userId, userId));
-        return await db.select().from(transactions).where(inArray(transactions.accountId, userAccounts));
+    private async attachTags(txs: Transaction[]): Promise<TransactionWithTags[]> {
+        if (txs.length === 0) return [];
+        const txIds = txs.map(t => t.id);
+
+        const txTagRows = await db.select({
+            transactionId: transactionTags.transactionId,
+            tag: tags
+        })
+            .from(transactionTags)
+            .innerJoin(tags, eq(transactionTags.tagId, tags.id))
+            .where(inArray(transactionTags.transactionId, txIds));
+
+        const tagMap = new Map<number, Tag[]>();
+        for (const row of txTagRows) {
+            if (!tagMap.has(row.transactionId)) {
+                tagMap.set(row.transactionId, []);
+            }
+            tagMap.get(row.transactionId)!.push(row.tag);
+        }
+
+        return txs.map(t => ({
+            ...t,
+            tags: tagMap.get(t.id) || []
+        }));
     }
 
-    async getTransactionsByDateRange(userId: string, startDate: Date, endDate: Date): Promise<Transaction[]> {
+    async getTransactions(userId: string): Promise<TransactionWithTags[]> {
+        const userAccounts = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.userId, userId));
+        const results = await db.select().from(transactions).where(inArray(transactions.accountId, userAccounts));
+        return this.attachTags(results);
+    }
+
+    async getTransactionsByDateRange(userId: string, startDate: Date, endDate: Date): Promise<TransactionWithTags[]> {
         const userAccounts = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.userId, userId));
         const startDateStr = startDate.toISOString().split('T')[0] + ' 00:00:00';
         const endDateStr = endDate.toISOString().split('T')[0] + ' 23:59:59';
 
-        return await db.select()
+        const results = await db.select()
             .from(transactions)
             .where(and(
                 inArray(transactions.accountId, userAccounts),
                 gte(transactions.date, startDateStr),
                 lte(transactions.date, endDateStr)
             ));
+
+        return this.attachTags(results);
     }
 
-    async getTransaction(id: number): Promise<Transaction | undefined> {
+    async getTransaction(id: number): Promise<TransactionWithTags | undefined> {
         const result = await db.select().from(transactions).where(eq(transactions.id, id));
-        return result[0];
+        if (result.length === 0) return undefined;
+        const [txWithTags] = await this.attachTags(result);
+        return txWithTags;
     }
 
     async getExportableTransactions(userId: string) {
         const userAccounts = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.userId, userId));
 
-        return await db.select({
+        // Note: For export we might want to aggregate tags into a string column, but for now we follow existing pattern
+        // Or we can add a Tags column:
+        const results = await db.select({
+            id: transactions.id, // Need ID to fetch tags
             date: transactions.date,
             amount: transactions.amount,
             description: transactions.description,
@@ -75,6 +114,35 @@ export class TransactionRepository {
             .leftJoin(accounts, eq(transactions.accountId, accounts.id))
             .leftJoin(categories, eq(transactions.categoryId, categories.id))
             .where(inArray(transactions.accountId, userAccounts));
+
+        // Fetch tags for these transactions
+        if (results.length === 0) return [];
+
+        const txIds = results.map(r => r.id);
+        const txTagRows = await db.select({
+            transactionId: transactionTags.transactionId,
+            tagName: tags.name
+        })
+            .from(transactionTags)
+            .innerJoin(tags, eq(transactionTags.tagId, tags.id))
+            .where(inArray(transactionTags.transactionId, txIds));
+
+        const tagMap = new Map<number, string[]>();
+        for (const row of txTagRows) {
+            if (!tagMap.has(row.transactionId)) {
+                tagMap.set(row.transactionId, []);
+            }
+            tagMap.get(row.transactionId)!.push(row.tagName);
+        }
+
+        // Return exportable format with Tags column
+        return results.map(r => {
+            const { id, ...rest } = r;
+            return {
+                ...rest,
+                Tags: (tagMap.get(id) || []).join(", ")
+            };
+        });
     }
 
     async createTransaction(transaction: InsertTransaction): Promise<Transaction> {
@@ -259,3 +327,4 @@ export class TransactionRepository {
         });
     }
 }
+
