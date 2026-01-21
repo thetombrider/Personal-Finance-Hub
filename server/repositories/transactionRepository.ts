@@ -3,7 +3,8 @@
  * Handles transaction operations including transfers and bulk imports with deduplication.
  */
 
-import { eq, inArray, and, gte, lte, sql, getTableColumns } from "drizzle-orm";
+import { eq, inArray, and, gte, lte, lt, sql, getTableColumns } from "drizzle-orm";
+import { format, addDays } from "date-fns";
 import { db } from "./base";
 import {
     type Transaction,
@@ -73,15 +74,22 @@ export class TransactionRepository {
 
     async getTransactionsByDateRange(userId: string, startDate: Date, endDate: Date): Promise<TransactionWithTags[]> {
         const userAccounts = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.userId, userId));
-        const startDateStr = startDate.toISOString().split('T')[0] + ' 00:00:00';
-        const endDateStr = endDate.toISOString().split('T')[0] + ' 23:59:59';
+
+        // Use local date formatting to respect the user's/server's timezone intent
+        // startDate is inclusive
+        const startDateStr = format(startDate, 'yyyy-MM-dd');
+
+        // Use strict less-than next day for end date to ensure full coverage of the end date
+        // regardless of time components or string types
+        const nextDay = addDays(endDate, 1);
+        const nextDayStr = format(nextDay, 'yyyy-MM-dd');
 
         const results = await db.select()
             .from(transactions)
             .where(and(
                 inArray(transactions.accountId, userAccounts),
                 gte(transactions.date, startDateStr),
-                lte(transactions.date, endDateStr)
+                lt(transactions.date, nextDayStr)
             ));
 
         return this.attachTags(results);
