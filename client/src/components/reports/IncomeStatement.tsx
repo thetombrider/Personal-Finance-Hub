@@ -161,7 +161,6 @@ export function IncomeStatement() {
                                 label="Total Income"
                                 summary={data.summary.income}
                                 isIncome
-                                onDrilldown={() => handleDrilldown("Total Income", undefined, 'income')}
                             />
 
                             {/* Expenses Section */}
@@ -176,7 +175,6 @@ export function IncomeStatement() {
                             <SummaryRow
                                 label="Total Expenses"
                                 summary={data.summary.expenses}
-                                onDrilldown={() => handleDrilldown("Total Expenses", undefined, 'expense')}
                             />
 
                             {/* Net Result */}
@@ -251,7 +249,7 @@ function IncomeStatementRow({ item, onDrilldown }: { item: IncomeStatementItem, 
     );
 }
 
-function SummaryRow({ label, summary, isIncome = false, onDrilldown }: { label: string, summary: IncomeStatementSummary, isIncome?: boolean, onDrilldown: () => void }) {
+function SummaryRow({ label, summary, isIncome = false, onDrilldown }: { label: string, summary: IncomeStatementSummary, isIncome?: boolean, onDrilldown?: () => void }) {
     // Backend returns summary: actual, budget. 
     // We calculate diff here as Actual - Budget for consistency with backend items.
     const diff = summary.actual - summary.budget;
@@ -266,9 +264,9 @@ function SummaryRow({ label, summary, isIncome = false, onDrilldown }: { label: 
         <div className="grid grid-cols-12 gap-4 p-4 font-semibold bg-muted/20 border-t">
             <div className="col-span-4">{label}</div>
             <div
-                className="col-span-2 text-right cursor-pointer hover:underline hover:text-primary transition-colors"
+                className={cn("col-span-2 text-right", onDrilldown ? "cursor-pointer hover:underline hover:text-primary transition-colors" : "")}
                 onClick={onDrilldown}
-                title="View transactions"
+                title={onDrilldown ? "View transactions" : undefined}
             >
                 {formatCurrency(summary.actual)}
             </div>

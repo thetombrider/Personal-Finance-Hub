@@ -234,7 +234,7 @@ export default function Accounts() {
                             return (
                               <TableCell
                                 key={m.key}
-                                className={`text-center text-xs sm:text-sm p-1 ${val > 0 ? 'text-emerald-600' : val < 0 ? 'text-rose-600' : ''} cursor-pointer hover:bg-muted/50 transition-colors`}
+                                className={`text-center text-xs sm:text-sm p-1 ${val > 0 ? 'text-emerald-600' : val < 0 ? 'text-rose-600' : ''} cursor-pointer hover:underline hover:bg-muted/50 transition-colors`}
                                 onClick={() => handleDrilldown(accountName, m.key)}
                                 title="View transactions"
                               >
@@ -243,7 +243,7 @@ export default function Accounts() {
                             );
                           })}
                           <TableCell
-                            className={`text-center font-semibold ${total > 0 ? 'text-emerald-600' : total < 0 ? 'text-rose-600' : ''} cursor-pointer hover:bg-muted/50 transition-colors`}
+                            className={`text-center font-semibold ${total > 0 ? 'text-emerald-600' : total < 0 ? 'text-rose-600' : ''} cursor-pointer hover:underline hover:bg-muted/50 transition-colors`}
                             onClick={() => handleTotalDrilldown(accountName)}
                             title="View all transactions for this period"
                           >
