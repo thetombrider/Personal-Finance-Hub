@@ -27,6 +27,8 @@ export function AddRecurringExpenseForm({ onSuccess, categories, accounts, initi
     const [startDate, setStartDate] = useState(initialData?.startDate ? new Date(initialData.startDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
     const [matchPattern, setMatchPattern] = useState(initialData?.matchPattern || "");
     const [active, setActive] = useState(initialData?.active ?? true);
+    const [interval, setInterval] = useState(initialData?.interval || "monthly");
+    const [isVariableAmount, setIsVariableAmount] = useState(initialData?.isVariableAmount ?? false);
 
     // Filter categories based on type if provided
     const filteredCategories = type
@@ -78,10 +80,11 @@ export function AddRecurringExpenseForm({ onSuccess, categories, accounts, initi
             categoryId: parseInt(categoryId),
             accountId: parseInt(accountId),
             startDate: new Date(startDate).toISOString(), // Ensure ISO string
-            interval: 'monthly', // Fixed for now
+            interval,
             dayOfMonth: new Date(startDate).getDate(), // Derive from start date
             active,
-            matchPattern // Add matchPattern
+            matchPattern,
+            isVariableAmount
         });
     };
 
@@ -104,12 +107,35 @@ export function AddRecurringExpenseForm({ onSuccess, categories, accounts, initi
 
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label>Amount (€)</Label>
+                    <Label>{isVariableAmount ? "Estimated Amount (€)" : "Amount (€)"}</Label>
                     <Input type="number" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00" />
                 </div>
                 <div className="space-y-2">
                     <Label>Start Date</Label>
                     <Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
+                </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label>Interval</Label>
+                    <Select value={interval} onValueChange={setInterval}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select interval" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="weekly">Weekly</SelectItem>
+                            <SelectItem value="monthly">Monthly</SelectItem>
+                            <SelectItem value="quarterly">Quarterly</SelectItem>
+                            <SelectItem value="yearly">Yearly</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="space-y-2 flex items-end pb-2">
+                    <div className="flex items-center space-x-2">
+                        <Switch id="variable" checked={isVariableAmount} onCheckedChange={setIsVariableAmount} />
+                        <Label htmlFor="variable" className="cursor-pointer">Variable Amount</Label>
+                    </div>
                 </div>
             </div>
 

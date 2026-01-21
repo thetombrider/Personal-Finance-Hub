@@ -143,6 +143,7 @@ export const recurringExpenses = pgTable("recurring_expenses", {
   lastGenerated: timestamp("last_generated", { mode: "string" }),
   active: boolean("active").notNull().default(true),
   matchPattern: text("match_pattern"),
+  isVariableAmount: boolean("is_variable_amount").notNull().default(false),
 });
 
 export const insertRecurringExpenseSchema = createInsertSchema(recurringExpenses).omit({ id: true });

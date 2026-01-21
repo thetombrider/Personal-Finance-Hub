@@ -93,8 +93,16 @@ export function RecurringTransactionsTable({
                                     </TableCell>
                                     <TableCell className="text-right font-bold">
                                         {formatCurrency(parseFloat(transaction.amount.toString()))}
+                                        {transaction.isVariableAmount && (
+                                            <Badge variant="outline" className="ml-2 text-xs">~</Badge>
+                                        )}
                                     </TableCell>
-                                    <TableCell className="capitalize">{transaction.interval === 'monthly' ? 'Monthly' : transaction.interval}</TableCell>
+                                    <TableCell className="capitalize">
+                                        {transaction.interval === 'monthly' ? 'Monthly' :
+                                            transaction.interval === 'weekly' ? 'Weekly' :
+                                                transaction.interval === 'quarterly' ? 'Quarterly' :
+                                                    transaction.interval === 'yearly' ? 'Yearly' : transaction.interval}
+                                    </TableCell>
                                     <TableCell>{format(new Date(transaction.startDate), "dd/MM/yyyy")}</TableCell>
                                     <TableCell>
                                         <Badge variant={transaction.active ? "default" : "outline"}>

@@ -37,15 +37,19 @@ export class ReconciliationService {
 
     private async checkExpense(expense: RecurringExpense, year: number, month: number, transactions: Transaction[], userId: string) {
         try {
-            // 1. Calculate expected date with safe handling for short months
-            // If dayOfMonth is 31 but month is Feb (28/29 days), use last day of month
-            const daysInMonth = new Date(year, month, 0).getDate();
-            const safeDay = Math.min(expense.dayOfMonth, daysInMonth);
-            const expectedDate = new Date(year, month - 1, safeDay);
+            // 1. Calculate expected date based on interval
+            const expectedDates = this.calculateExpectedDates(expense, year, month);
+
+            // If no expected dates for this month/year, skip
+            if (expectedDates.length === 0) {
+                return;
+            }
+
+            // For now, process the first expected date (most intervals have only one per month)
+            const expectedDate = expectedDates[0];
 
             // If start date is in future, skip
             const startDate = new Date(expense.startDate);
-            // Ignore time portion for comparison
             startDate.setHours(0, 0, 0, 0);
             const checkDate = new Date(expectedDate);
             checkDate.setHours(0, 0, 0, 0);
@@ -69,8 +73,8 @@ export class ReconciliationService {
                 const expAmount = parseFloat(expense.amount);
                 const diff = Math.abs(tAmount - expAmount);
 
-                // Tolerance: 12.0 units or 5% whichever is larger? Stuck to user pref 12.0 for now.
-                const isAmountMatch = diff < 12.0;
+                // Amount matching: skip for variable amounts, otherwise use tolerance
+                const isAmountMatch = expense.isVariableAmount || diff < 12.0;
 
                 // Description Match
                 // Logic: 
@@ -140,6 +144,99 @@ export class ReconciliationService {
             console.error(`Failed to check expense ${expense.id} (${expense.name}):`, error);
             // Continue processing other expenses instead of failing the whole batch
         }
+    }
+
+    /**
+     * Calculate expected dates for a recurring expense in a given month/year
+     * based on its interval (monthly, weekly, quarterly, yearly)
+     */
+    private calculateExpectedDates(expense: RecurringExpense, year: number, month: number): Date[] {
+        const interval = expense.interval || 'monthly';
+        const startDate = new Date(expense.startDate);
+        startDate.setHours(0, 0, 0, 0);
+
+        switch (interval.toLowerCase()) {
+            case 'monthly':
+                return this.calculateMonthlyDate(expense, year, month);
+
+            case 'weekly':
+                return this.calculateWeeklyDates(expense, year, month);
+
+            case 'quarterly':
+                return this.calculateQuarterlyDate(expense, year, month);
+
+            case 'yearly':
+                return this.calculateYearlyDate(expense, year, month);
+
+            default:
+                // Fallback to monthly
+                return this.calculateMonthlyDate(expense, year, month);
+        }
+    }
+
+    private calculateMonthlyDate(expense: RecurringExpense, year: number, month: number): Date[] {
+        const daysInMonth = new Date(year, month, 0).getDate();
+        const safeDay = Math.min(expense.dayOfMonth, daysInMonth);
+        return [new Date(year, month - 1, safeDay)];
+    }
+
+    private calculateWeeklyDates(expense: RecurringExpense, year: number, month: number): Date[] {
+        const dates: Date[] = [];
+        const startDate = new Date(expense.startDate);
+        startDate.setHours(0, 0, 0, 0);
+
+        // First day of the target month
+        const monthStart = new Date(year, month - 1, 1);
+        const monthEnd = new Date(year, month, 0);
+
+        // Calculate the first occurrence in or after the target month
+        let currentDate = new Date(startDate);
+
+        // Fast-forward to the target month if needed
+        while (currentDate < monthStart) {
+            currentDate.setDate(currentDate.getDate() + 7);
+        }
+
+        // Collect all weekly occurrences within the target month
+        while (currentDate <= monthEnd) {
+            if (currentDate >= monthStart) {
+                dates.push(new Date(currentDate));
+            }
+            currentDate.setDate(currentDate.getDate() + 7);
+        }
+
+        return dates;
+    }
+
+    private calculateQuarterlyDate(expense: RecurringExpense, year: number, month: number): Date[] {
+        const startDate = new Date(expense.startDate);
+        const startMonth = startDate.getMonth() + 1; // 1-12
+
+        // Quarterly means every 3 months from start date
+        // Check if this month is a quarterly occurrence
+        const monthsSinceStart = (year - startDate.getFullYear()) * 12 + (month - startMonth);
+
+        if (monthsSinceStart >= 0 && monthsSinceStart % 3 === 0) {
+            const daysInMonth = new Date(year, month, 0).getDate();
+            const safeDay = Math.min(expense.dayOfMonth, daysInMonth);
+            return [new Date(year, month - 1, safeDay)];
+        }
+
+        return [];
+    }
+
+    private calculateYearlyDate(expense: RecurringExpense, year: number, month: number): Date[] {
+        const startDate = new Date(expense.startDate);
+        const startMonth = startDate.getMonth() + 1; // 1-12
+
+        // Yearly means same month and day each year
+        if (month === startMonth) {
+            const daysInMonth = new Date(year, month, 0).getDate();
+            const safeDay = Math.min(expense.dayOfMonth, daysInMonth);
+            return [new Date(year, month - 1, safeDay)];
+        }
+
+        return [];
     }
 }
 
