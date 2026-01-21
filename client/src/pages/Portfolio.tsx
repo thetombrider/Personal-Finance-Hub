@@ -53,8 +53,8 @@ export default function Portfolio() {
 
   return (
     <Layout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-6 h-[calc(100vh-6rem)] md:h-[calc(100vh-4rem)]">
+        <div className="flex-none flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight" data-testid="text-page-title">Investment Portfolio</h1>
             <p className="text-muted-foreground">Track your investments</p>
@@ -76,15 +76,17 @@ export default function Portfolio() {
           </div>
         </div>
 
-        <PortfolioSummary portfolioSummary={portfolioSummary} />
+        <div className="flex-none">
+          <PortfolioSummary portfolioSummary={portfolioSummary} />
+        </div>
 
-        <Tabs defaultValue="holdings" className="space-y-4">
-          <TabsList>
+        <Tabs defaultValue="holdings" className="flex-1 flex flex-col min-h-0 gap-4">
+          <TabsList className="flex-none w-auto self-start">
             <TabsTrigger value="holdings" data-testid="tab-holdings">Holdings</TabsTrigger>
             <TabsTrigger value="trades" data-testid="tab-trades">Transaction History</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="holdings">
+          <TabsContent value="holdings" className="flex-1 overflow-auto min-h-0">
             <HoldingsTable
               holdingsWithStats={holdingsWithStats}
               onSelectHolding={(h) => {
@@ -98,7 +100,7 @@ export default function Portfolio() {
             />
           </TabsContent>
 
-          <TabsContent value="trades">
+          <TabsContent value="trades" className="flex-1 flex flex-col min-h-0">
             <TransactionsHistory
               trades={trades}
               holdings={holdings}

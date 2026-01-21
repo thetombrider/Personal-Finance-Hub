@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Eye, EyeOff, Plus, ArrowLeftRight, TrendingUp, List } from "lucide-react";
+import { Eye, EyeOff, Plus, ArrowLeftRight, TrendingUp, List, CalendarClock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface DashboardHeaderProps {
@@ -10,6 +10,8 @@ interface DashboardHeaderProps {
     onNewTrade: () => void;
     onReviewStaging: () => void;
     pendingStagingCount: number;
+    onReviewRecurring?: () => void;
+    missingRecurringCount?: number;
 }
 
 export function DashboardHeader({
@@ -19,7 +21,9 @@ export function DashboardHeader({
     onNewTransfer,
     onNewTrade,
     onReviewStaging,
-    pendingStagingCount
+    pendingStagingCount,
+    onReviewRecurring,
+    missingRecurringCount
 }: DashboardHeaderProps) {
     return (
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -47,6 +51,20 @@ export function DashboardHeader({
                             </Badge>
                         )}
                     </Button>
+                    {missingRecurringCount !== undefined && missingRecurringCount > 0 && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={onReviewRecurring}
+                            title="Missing Recurring Transactions"
+                            className="relative border-amber-500 text-amber-600 hover:bg-amber-50 hover:text-amber-700 dark:border-amber-400 dark:text-amber-400 dark:hover:bg-amber-950/30"
+                        >
+                            <CalendarClock className="mr-2 h-4 w-4" /> Recurring
+                            <Badge className="ml-2 px-1.5 py-0.5 h-5 text-xs bg-amber-500 hover:bg-amber-600 text-white border-none">
+                                {missingRecurringCount}
+                            </Badge>
+                        </Button>
+                    )}
                 </div>
 
                 <Button

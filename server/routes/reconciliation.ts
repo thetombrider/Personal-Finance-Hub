@@ -1,3 +1,4 @@
+import { subMonths } from "date-fns";
 import type { Express } from "express";
 import { storage } from "../storage";
 import { reconciliationService } from "../services/reconciliation";
@@ -57,5 +58,30 @@ export function registerReconciliationRoutes(app: Express) {
             res.status(500).json({ error: "Failed to fetch checks" });
         }
     });
-}
+    app.get("/api/reconciliation/missing", async (req, res) => {
+        try {
+            if (!req.user) return res.status(401).json({ error: "Unauthorized" });
 
+            const now = new Date();
+            const results = [];
+
+            // Check current month and previous 2 months (total 3 months window)
+            for (let i = 0; i < 3; i++) {
+                const d = subMonths(now, i);
+                const year = d.getFullYear();
+                const month = d.getMonth() + 1;
+
+                // Run check to ensure data is fresh
+                await reconciliationService.checkRecurringExpenses(req.user.id, year, month);
+                const checks = await storage.getRecurringExpenseChecksWithDetails(req.user.id, year, month);
+                const missing = checks.filter(c => c.status === "MISSING");
+                results.push(...missing);
+            }
+
+            res.json({ count: results.length, missing: results });
+        } catch (error) {
+            console.error("Missing checks error:", error);
+            res.status(500).json({ error: "Failed to fetch missing checks" });
+        }
+    });
+}

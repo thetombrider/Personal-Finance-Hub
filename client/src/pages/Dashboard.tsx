@@ -22,6 +22,7 @@ import { TransactionForm, TransactionFormValues } from "@/components/transaction
 import { TransferForm, TransferFormValues } from "@/components/transactions/TransferForm";
 import { AddTradeModal } from "@/components/portfolio/AddTradeModal";
 import { ImportedTransactions } from "@/components/ImportedTransactions";
+import { MissingRecurringTransactionsModal } from "@/components/dashboard/MissingRecurringTransactionsModal";
 import { format } from "date-fns";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -37,6 +38,7 @@ export default function Dashboard() {
   const [isTransferOpen, setIsTransferOpen] = useState(false);
   const [isAddTradeOpen, setIsAddTradeOpen] = useState(false);
   const [isReviewStagingOpen, setIsReviewStagingOpen] = useState(false);
+  const [isMissingRecurringOpen, setIsMissingRecurringOpen] = useState(false);
 
   const currentYear = new Date().getFullYear();
   const { data: currentYearBudget } = useQuery({
@@ -72,6 +74,15 @@ export default function Dashboard() {
       const res = await apiRequest("GET", "/api/transactions/staging?status=pending");
       const data = await res.json();
       return Array.isArray(data) ? data.length : 0;
+    }
+  });
+
+  const { data: missingRecurringCount = 0 } = useQuery({
+    queryKey: ["/api/reconciliation/missing", "count"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/reconciliation/missing");
+      const data = await res.json();
+      return data.count || 0;
     }
   });
 
@@ -157,6 +168,8 @@ export default function Dashboard() {
           onNewTrade={() => setIsAddTradeOpen(true)}
           onReviewStaging={() => setIsReviewStagingOpen(true)}
           pendingStagingCount={pendingStagingCount}
+          onReviewRecurring={() => setIsMissingRecurringOpen(true)}
+          missingRecurringCount={missingRecurringCount}
         />
 
         <StatsGrid
@@ -276,6 +289,11 @@ export default function Dashboard() {
           isOpen={isReviewStagingOpen}
           onOpenChange={setIsReviewStagingOpen}
           accountId={null} // All accounts
+        />
+
+        <MissingRecurringTransactionsModal
+          isOpen={isMissingRecurringOpen}
+          onOpenChange={setIsMissingRecurringOpen}
         />
       </div>
     </Layout>

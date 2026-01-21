@@ -21,14 +21,8 @@ export class ReconciliationService {
             const fetchStart = subDays(startDate, 10);
             const fetchEnd = addDays(endDate, 10);
 
-            // Fetch all transactions and filter in memory for now as getTransactions doesn't support date range yet
-            // If performance becomes an issue, we should add getTransactionsByDateRange to storage
-            const allTransactions = await storage.getTransactions(userId);
-
-            const relevantTransactions = allTransactions.filter(t => {
-                const d = new Date(t.date);
-                return d >= fetchStart && d <= fetchEnd;
-            });
+            // Fetch transactions for the specific range
+            const relevantTransactions = await storage.getTransactionsByDateRange(userId, fetchStart, fetchEnd);
 
             console.log(`Processing ${activeExpenses.length} active recurring expenses against ${relevantTransactions.length} transactions`);
 

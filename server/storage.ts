@@ -108,7 +108,7 @@ export interface IStorage {
     categoryId: number;
   }): Promise<{ fromTransaction: Transaction; toTransaction: Transaction }>;
   updateTransaction(id: number, transaction: Partial<InsertTransaction>): Promise<Transaction | undefined>;
-  updateTransaction(id: number, transaction: Partial<InsertTransaction>): Promise<Transaction | undefined>;
+
   updateTransactions(ids: number[], transaction: Partial<InsertTransaction> & { tagIds?: number[] }): Promise<Transaction[]>;
   deleteTransaction(id: number): Promise<void>;
   deleteTransactions(ids: number[]): Promise<void>;
@@ -147,6 +147,7 @@ export interface IStorage {
   deleteRecurringExpense(id: number, userId: string): Promise<boolean>;
   upsertRecurringExpenseCheck(check: InsertRecurringExpenseCheck, userId: string): Promise<void>;
   getRecurringExpenseChecks(userId: string, year: number, month: number): Promise<RecurringExpenseCheck[]>;
+  getRecurringExpenseChecksWithDetails(userId: string, year: number, month: number): Promise<any[]>;
   getAllRecurringExpenseChecks(userId: string): Promise<RecurringExpenseCheck[]>;
 
   // Planned Expenses
@@ -240,7 +241,7 @@ export class DatabaseStorage implements IStorage {
   createTransactions = (txs: InsertTransaction[]) => this.transactionRepo.createTransactions(txs);
   createTransfer = (data: { date: string; amount: string; description: string; fromAccountId: number; toAccountId: number; categoryId: number }) => this.transactionRepo.createTransfer(data);
   updateTransaction = (id: number, transaction: Partial<InsertTransaction>) => this.transactionRepo.updateTransaction(id, transaction);
-  updateTransaction = (id: number, transaction: Partial<InsertTransaction>) => this.transactionRepo.updateTransaction(id, transaction);
+
   updateTransactions = (ids: number[], transaction: Partial<InsertTransaction> & { tagIds?: number[] }) => this.transactionRepo.updateTransactions(ids, transaction);
   deleteTransaction = (id: number) => this.transactionRepo.deleteTransaction(id);
   deleteTransactions = (ids: number[]) => this.transactionRepo.deleteTransactions(ids);
@@ -279,6 +280,7 @@ export class DatabaseStorage implements IStorage {
   deleteRecurringExpense = (id: number, userId: string) => this.recurringExpenseRepo.deleteRecurringExpense(id, userId);
   upsertRecurringExpenseCheck = (check: InsertRecurringExpenseCheck, userId: string) => this.recurringExpenseRepo.upsertRecurringExpenseCheck(check, userId);
   getRecurringExpenseChecks = (userId: string, year: number, month: number) => this.recurringExpenseRepo.getRecurringExpenseChecks(userId, year, month);
+  getRecurringExpenseChecksWithDetails = (userId: string, year: number, month: number) => this.recurringExpenseRepo.getRecurringExpenseChecksWithDetails(userId, year, month);
   getAllRecurringExpenseChecks = (userId: string) => this.recurringExpenseRepo.getAllRecurringExpenseChecks(userId);
 
   // Planned Expense operations - delegate to PlannedExpenseRepository

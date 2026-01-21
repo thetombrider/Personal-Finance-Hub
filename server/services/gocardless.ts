@@ -326,6 +326,9 @@ class GoCardlessService {
             }
         }
 
+        // Update lastSynced timestamp
+        await storage.updateAccount(localAccountId, { lastSynced: new Date().toISOString() });
+
         return { added: addedCount, total: booked.length };
     }
 

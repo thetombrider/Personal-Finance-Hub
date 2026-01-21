@@ -43,6 +43,7 @@ export const accounts = pgTable("accounts", {
   gocardlessAccountId: varchar("gocardless_account_id").unique(),
   bankConnectionId: integer("bank_connection_id").references(() => bankConnections.id, { onDelete: "set null" }),
   userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }),
+  lastSynced: timestamp("last_synced", { mode: "string" }),
 });
 
 export const insertAccountSchema = createInsertSchema(accounts).omit({ id: true }).extend({

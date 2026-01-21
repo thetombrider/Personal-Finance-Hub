@@ -1,6 +1,6 @@
 
 import Layout from "@/components/Layout";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -47,10 +47,7 @@ export default function Budget() {
     const [addPlannedType, setAddPlannedType] = useState<'income' | 'expense'>('expense');
 
     // Default redirect if just /budget
-    if (location === "/budget") {
-        setLocation("/budget/overview");
-        return null;
-    }
+
 
     const { data, isLoading } = useQuery<YearlyBudgetData>({
         queryKey: ['budget', currentYear],
@@ -109,6 +106,16 @@ export default function Budget() {
             toast({ title: "Planned expense deleted" });
         }
     });
+
+    useEffect(() => {
+        if (location === "/budget") {
+            setLocation("/budget/overview");
+        }
+    }, [location, setLocation]);
+
+    if (location === "/budget") {
+        return null;
+    }
 
     // Handlers
     const handleUpdateBaseline = async (categoryId: number, month: number, amount: number) => {

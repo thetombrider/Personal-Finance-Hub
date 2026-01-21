@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Trash2, Download, Pencil } from "lucide-react";
+import { Trash2, Download, Pencil, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
@@ -48,10 +48,21 @@ export function TransactionsHistory({ trades, holdings, accounts }: Transactions
         }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     }, [trades, holdings]);
 
+    const [itemsPerPage] = useState(50);
+    const [currentPage, setCurrentPage] = useState(1);
+
     const filteredTrades = useMemo(() => {
         if (tradesHoldingFilter === "all") return tradesWithHoldings;
         return tradesWithHoldings.filter(trade => trade.holdingId === parseInt(tradesHoldingFilter));
     }, [tradesWithHoldings, tradesHoldingFilter]);
+
+    // Reset pagination when filter changes
+    useMemo(() => {
+        setCurrentPage(1);
+    }, [tradesHoldingFilter]);
+
+    const totalPages = Math.ceil(filteredTrades.length / itemsPerPage);
+    const paginatedTrades = filteredTrades.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
     const allFilteredTradesSelected = filteredTrades.length > 0 && filteredTrades.every(t => selectedTradeIds.has(t.id));
     const someFilteredTradesSelected = filteredTrades.some(t => selectedTradeIds.has(t.id)) && !allFilteredTradesSelected;
@@ -215,8 +226,8 @@ export function TransactionsHistory({ trades, holdings, accounts }: Transactions
 
     return (
         <>
-            <Card>
-                <CardHeader>
+            <Card className="flex-1 flex flex-col min-h-0 border-0 shadow-none bg-transparent sm:border sm:shadow-sm sm:bg-card">
+                <CardHeader className="flex-none px-0 sm:px-6">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div>
                             <CardTitle>Transaction History</CardTitle>
@@ -252,95 +263,155 @@ export function TransactionsHistory({ trades, holdings, accounts }: Transactions
                         </div>
                     </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="flex-1 flex flex-col min-h-0 p-0 sm:p-6 sm:pt-0">
                     {filteredTrades.length === 0 ? (
                         <div className="text-center py-8 text-muted-foreground">
                             <p>No transactions registered</p>
                         </div>
                     ) : (
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead className="w-[50px]">
-                                        <Checkbox
-                                            checked={allFilteredTradesSelected || someFilteredTradesSelected}
-                                            onCheckedChange={toggleAllTrades}
-                                            aria-label="Select all"
-                                        />
-                                    </TableHead>
-                                    <TableHead>Date</TableHead>
-                                    <TableHead>Type</TableHead>
-                                    <TableHead>Holding</TableHead>
-                                    <TableHead className="text-right">Quantity</TableHead>
-                                    <TableHead className="text-right">Price</TableHead>
-                                    <TableHead className="text-right">Fees</TableHead>
-                                    <TableHead className="text-right">Total</TableHead>
-                                    <TableHead></TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {filteredTrades.map((trade) => (
-                                    <TableRow key={trade.id} data-testid={`row-trade-${trade.id}`}>
-                                        <TableCell>
-                                            <Checkbox
-                                                checked={selectedTradeIds.has(trade.id)}
-                                                onCheckedChange={() => toggleTradeSelection(trade.id)}
-                                                aria-label="Select row"
-                                                onClick={(e) => e.stopPropagation()}
-                                            />
-                                        </TableCell>
-                                        <TableCell>
-                                            {format(parseISO(trade.date), "dd MMM yyyy", { locale: it })}
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge variant={trade.type === "buy" ? "default" : "secondary"}>
-                                                {trade.type === "buy" ? "Buy" : "Sell"}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div>
-                                                <p className="font-medium">{trade.holding?.ticker || "—"}</p>
-                                                <p className="text-sm text-muted-foreground truncate max-w-[150px]">
-                                                    {trade.holding?.name || "—"}
-                                                </p>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="text-right font-mono">
-                                            {parseFloat(trade.quantity).toFixed(4)}
-                                        </TableCell>
-                                        <TableCell className="text-right font-mono">
-                                            {formatCurrency(parseFloat(trade.pricePerUnit))}
-                                        </TableCell>
-                                        <TableCell className="text-right font-mono">
-                                            {formatCurrency(parseFloat(trade.fees))}
-                                        </TableCell>
-                                        <TableCell className="text-right font-mono font-medium">
-                                            {formatCurrency(parseFloat(trade.totalAmount))}
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex gap-1">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => openEditDialog(trade)}
-                                                    data-testid={`button-edit-trade-${trade.id}`}
-                                                >
-                                                    <Pencil className="h-4 w-4 text-muted-foreground hover:text-primary" />
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => setTradeToDelete(trade)}
-                                                    data-testid={`button-delete-trade-${trade.id}`}
-                                                >
-                                                    <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
-                                                </Button>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
+                        <div className="flex-1 flex flex-col min-h-0 border rounded-lg bg-card overflow-hidden">
+                            <div className="flex-1 overflow-auto relative">
+                                <table className="w-full caption-bottom text-sm">
+                                    <TableHeader className="sticky top-0 z-10 bg-card shadow-sm">
+                                        <TableRow>
+                                            <TableHead className="w-[50px]">
+                                                <Checkbox
+                                                    checked={allFilteredTradesSelected || someFilteredTradesSelected}
+                                                    onCheckedChange={toggleAllTrades}
+                                                    aria-label="Select all"
+                                                />
+                                            </TableHead>
+                                            <TableHead>Date</TableHead>
+                                            <TableHead>Type</TableHead>
+                                            <TableHead>Holding</TableHead>
+                                            <TableHead className="text-right">Quantity</TableHead>
+                                            <TableHead className="text-right">Price</TableHead>
+                                            <TableHead className="text-right">Fees</TableHead>
+                                            <TableHead className="text-right">Total</TableHead>
+                                            <TableHead></TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {paginatedTrades.map((trade) => (
+                                            <TableRow key={trade.id} data-testid={`row-trade-${trade.id}`}>
+                                                <TableCell>
+                                                    <Checkbox
+                                                        checked={selectedTradeIds.has(trade.id)}
+                                                        onCheckedChange={() => toggleTradeSelection(trade.id)}
+                                                        aria-label="Select row"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    />
+                                                </TableCell>
+                                                <TableCell>
+                                                    {format(parseISO(trade.date), "dd MMM yyyy", { locale: it })}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Badge variant={trade.type === "buy" ? "default" : "secondary"}>
+                                                        {trade.type === "buy" ? "Buy" : "Sell"}
+                                                    </Badge>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div>
+                                                        <p className="font-medium">{trade.holding?.ticker || "—"}</p>
+                                                        <p className="text-sm text-muted-foreground truncate max-w-[150px]">
+                                                            {trade.holding?.name || "—"}
+                                                        </p>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="text-right font-mono">
+                                                    {parseFloat(trade.quantity).toFixed(4)}
+                                                </TableCell>
+                                                <TableCell className="text-right font-mono">
+                                                    {formatCurrency(parseFloat(trade.pricePerUnit))}
+                                                </TableCell>
+                                                <TableCell className="text-right font-mono">
+                                                    {formatCurrency(parseFloat(trade.fees))}
+                                                </TableCell>
+                                                <TableCell className="text-right font-mono font-medium">
+                                                    {formatCurrency(parseFloat(trade.totalAmount))}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex gap-1">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            onClick={() => openEditDialog(trade)}
+                                                            data-testid={`button-edit-trade-${trade.id}`}
+                                                        >
+                                                            <Pencil className="h-4 w-4 text-muted-foreground hover:text-primary" />
+                                                        </Button>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            onClick={() => setTradeToDelete(trade)}
+                                                            data-testid={`button-delete-trade-${trade.id}`}
+                                                        >
+                                                            <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                                                        </Button>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </table>
+                            </div>
+
+                            {totalPages > 1 && (
+                                <div className="flex items-center justify-between px-4 py-3 border-t bg-card z-10">
+                                    <div className="text-sm text-muted-foreground">
+                                        Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredTrades.length)} of {filteredTrades.length} transactions
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                                            disabled={currentPage === 1}
+                                            data-testid="button-prev-page"
+                                        >
+                                            <ChevronLeft className="h-4 w-4 mr-1" />
+                                            Previous
+                                        </Button>
+                                        <div className="flex items-center gap-1">
+                                            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                                let pageNum: number;
+                                                if (totalPages <= 5) {
+                                                    pageNum = i + 1;
+                                                } else if (currentPage <= 3) {
+                                                    pageNum = i + 1;
+                                                } else if (currentPage >= totalPages - 2) {
+                                                    pageNum = totalPages - 4 + i;
+                                                } else {
+                                                    pageNum = currentPage - 2 + i;
+                                                }
+                                                return (
+                                                    <Button
+                                                        key={pageNum}
+                                                        variant={currentPage === pageNum ? "default" : "outline"}
+                                                        size="sm"
+                                                        className="w-8 h-8 p-0"
+                                                        onClick={() => setCurrentPage(pageNum)}
+                                                        data-testid={`button-page-${pageNum}`}
+                                                    >
+                                                        {pageNum}
+                                                    </Button>
+                                                );
+                                            })}
+                                        </div>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                                            disabled={currentPage === totalPages}
+                                            data-testid="button-next-page"
+                                        >
+                                            Next
+                                            <ChevronRight className="h-4 w-4 ml-1" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     )}
                 </CardContent>
             </Card>

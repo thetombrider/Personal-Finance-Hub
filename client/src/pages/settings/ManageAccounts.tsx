@@ -366,6 +366,7 @@ export default function ManageAccounts() {
                 <TableHead className="w-[300px]">Account</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Current Balance</TableHead>
+                <TableHead>Last Sync</TableHead>
                 <TableHead>Connection Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -401,6 +402,20 @@ export default function ManageAccounts() {
                       )}>
                         {formatCurrency(account.balance)}
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      {(account as any).lastSynced ? (
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium">
+                            {format(new Date((account as any).lastSynced), "dd MMM yyyy")}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {format(new Date((account as any).lastSynced), "HH:mm")}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground text-xs text-center block w-10">-</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       {status ? (

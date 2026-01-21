@@ -165,4 +165,43 @@ export class RecurringExpenseRepository {
         const userExpenses = db.select({ id: recurringExpenses.id }).from(recurringExpenses).where(inArray(recurringExpenses.accountId, userAccounts));
         return await db.select().from(recurringExpenseChecks).where(inArray(recurringExpenseChecks.recurringExpenseId, userExpenses));
     }
+
+
+    async getRecurringExpenseChecksWithDetails(userId: string, year: number, month: number) {
+        // First get user account IDs
+        const userAccountsResult = await db.select({ id: accounts.id })
+            .from(accounts)
+            .where(eq(accounts.userId, userId));
+        const userAccountIds = userAccountsResult.map(a => a.id);
+
+        if (userAccountIds.length === 0) {
+            return [];
+        }
+
+        // Then query with proper joins
+        return await db.select({
+            id: recurringExpenseChecks.id,
+            recurringExpenseId: recurringExpenseChecks.recurringExpenseId,
+            month: recurringExpenseChecks.month,
+            year: recurringExpenseChecks.year,
+            status: recurringExpenseChecks.status,
+            transactionId: recurringExpenseChecks.transactionId,
+            matchedDate: recurringExpenseChecks.matchedDate,
+            matchedAmount: recurringExpenseChecks.matchedAmount,
+            // Enriched fields from recurring expense
+            name: recurringExpenses.name,
+            amount: recurringExpenses.amount,
+            dayOfMonth: recurringExpenses.dayOfMonth,
+            accountId: recurringExpenses.accountId,
+            accountName: accounts.name,
+        })
+            .from(recurringExpenseChecks)
+            .innerJoin(recurringExpenses, eq(recurringExpenseChecks.recurringExpenseId, recurringExpenses.id))
+            .innerJoin(accounts, eq(recurringExpenses.accountId, accounts.id))
+            .where(and(
+                eq(recurringExpenseChecks.year, year),
+                eq(recurringExpenseChecks.month, month),
+                inArray(recurringExpenses.accountId, userAccountIds)
+            ));
+    }
 }

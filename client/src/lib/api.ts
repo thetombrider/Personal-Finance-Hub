@@ -339,3 +339,11 @@ export async function fetchBatchQuotes(symbols: string[]): Promise<Record<string
   }
   return res.json();
 }
+
+// ============ RECONCILIATION ============
+
+export async function fetchMissingRecurringChecks() {
+  const res = await fetch(`${API_BASE}/reconciliation/missing`);
+  if (!res.ok) throw new Error("Failed to fetch missing recurring checks");
+  return res.json();
+}
