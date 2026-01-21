@@ -4,22 +4,58 @@ FinTrack is a comprehensive personal finance management application designed to 
 
 ## Features
 
-- **📊 Dashboard**: Get a high-level overview of your net worth, recent activity, and financial trends.
+### Core Functionality
+- **📊 Dashboard**: Get a high-level overview of your net worth, recent activity, and financial trends with an enhanced Sankey chart visualization showing income and expense flows.
+  - **Quick Actions**: Fast access to create new transactions, transfers, portfolio trades, and review pending staged transactions with real-time badge counts.
+  - **Recurring Transaction Alerts**: Visual indicators and detailed modal for missing recurring transactions, showing days overdue and expected amounts.
 - **💰 Account Management**: Track various types of accounts including Checking, Savings, Credit Cards, and Investments.
+  - **Last Sync Tracking**: See when each connected bank account was last synchronized.
+  - **Detailed Reports**: Click on account names or monthly values to drill down into specific transactions.
 - **📝 Transactions**: Record income and expenses, categorize them, and import transactions via CSV.
+  - **Bulk Editing**: Select multiple transactions and edit category, account, date, and tags simultaneously.
+  - **Tag Management**: Organize transactions with flexible, colored tags for cross-category tracking (e.g., "Vacation", "Tax Deductible").
+  - **Advanced Filtering**: Filter by categories, accounts, date ranges, and tags with URL-based state persistence.
+  - **Pagination**: Navigate large transaction lists with 50 rows per page and sticky headers.
+
+### Budgeting & Planning
 - **📉 Budgeting**: Advanced budgeting system with semester views, baseline (expected) monthly budgets, and tracking of recurring and planned expenses.
+  - **Recurring Transaction Monitoring**: Automatic detection and alerts for missing recurring expenses.
+  - **Visual Indicators**: Clear alerts on the dashboard when recurring transactions are overdue.
+
+### Portfolio Management
 - **📈 Portfolio**: Manage your stock holdings, track performance, and view detailed metrics.
-- **📊 Reports**: Access detailed weekly reports, balance sheets, and income statements with granular breakdowns.
-- **⚙️ Settings**: Customize categories (including monthly budget targets), manage application preferences, and update user profile.
-- **🏷️ Tags**: Organize transactions with flexible, colored tags for cross-category tracking (e.g., "Vacation", "Tax Deductible"). Support for filtering and bulk operations.
-- **🔐 Authentication**: Secure login with support for OIDC providers.
+  - **Market Data Integration**: Real-time stock quotes via Yahoo Finance integration.
+  - **Trade History**: Comprehensive tracking of all portfolio trades with pagination support.
+
+### Reports & Analytics
+- **📊 Reports**: Access detailed reports with granular breakdowns and interactive drilldowns.
+  - **Income Statement**: Monthly income and expense tracking with drilldown capabilities to view underlying transactions.
+  - **Balance Sheet**: Track assets, liabilities, and net worth over time.
+  - **Category Analysis**: Click on any category or monthly value to see detailed transaction breakdowns in a modal.
+  - **Account Reports**: Analyze account balances and transaction history with interactive drilldowns.
+  - **Reorganized Navigation**: Reports section includes sublinks for Accounts and Categories for easier access.
+
+### Customization & Settings
+- **⚙️ Settings**: Comprehensive customization options for your financial hub.
+  - **Category Management**: Create and manage income, expense, and transfer categories with monthly budget targets and color coding.
+  - **Font Customization**: Choose from multiple fonts applied globally across the application.
+  - **User Profile**: Update personal information and preferences.
+  - **Webhook Management**: Create, manage, and view logs for all integrations.
+
+### Security & Authentication
+- **🔐 Authentication**: Secure login with support for OIDC providers and local authentication.
+  - **Transaction Ownership**: Automatic verification ensures users can only access and modify their own transactions.
+  - **Session Management**: Secure session handling with cryptographically signed cookies.
+
+### Integrations
 - **🏦 Bank Sync**: Connect to 2,000+ banks (including PayPal) via GoCardless to automatically sync transactions and balances to a Staging Area for review.
+  - **Sync Status Tracking**: See the last synchronization timestamp for each connected account.
 - **📥 Smart Import**: Advanced CSV importer for Transactions, Trades, and Holdings with automated column mapping.
 - **📧 Weekly Reports**: Automated email summaries with financial insights and market data sent via Resend.
 - **🔗 Webhooks & Integrations**: 
-    - **Tally.so Integration**: Log expenses directly from Tally forms.
-    - **Generic Webhooks**: Receive standard JSON payloads from services like n8n, Make, or Zapier.
-    - **Management UI**: Create, manage, and view logs for all your webhooks directly in the settings.
+  - **Tally.so Integration**: Log expenses directly from Tally forms.
+  - **Generic Webhooks**: Receive standard JSON payloads from services like n8n, Make, or Zapier.
+  - **Management UI**: Create, manage, and view logs for all your webhooks directly in the settings.
 
 ## Tech Stack
 
