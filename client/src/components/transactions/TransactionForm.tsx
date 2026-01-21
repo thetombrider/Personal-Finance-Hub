@@ -85,7 +85,7 @@ export function TransactionForm({
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
-                    <DialogTitle>{isEditing ? "Edit Transaction" : "Add New Transaction"}</DialogTitle>
+                    <DialogTitle>{isEditing ? "Edit Transaction" : "New Transaction"}</DialogTitle>
                 </DialogHeader>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">

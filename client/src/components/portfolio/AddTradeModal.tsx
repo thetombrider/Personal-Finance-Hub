@@ -193,7 +193,7 @@ export function AddTradeModal({ isOpen, onOpenChange, accounts, holdings, defaul
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
-                    <DialogTitle>Register Transaction</DialogTitle>
+                    <DialogTitle>New Trade</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                     <Tabs value={entryMode} onValueChange={(v) => setEntryMode(v as "search" | "manual")}>

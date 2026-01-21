@@ -1,15 +1,25 @@
-
 import { Button } from "@/components/ui/button";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Plus, ArrowLeftRight, TrendingUp, List } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface DashboardHeaderProps {
     privacyMode: boolean;
     setPrivacyMode: (value: boolean) => void;
+    onNewTransaction: () => void;
+    onNewTransfer: () => void;
+    onNewTrade: () => void;
+    onReviewStaging: () => void;
+    pendingStagingCount: number;
 }
 
 export function DashboardHeader({
     privacyMode,
-    setPrivacyMode
+    setPrivacyMode,
+    onNewTransaction,
+    onNewTransfer,
+    onNewTrade,
+    onReviewStaging,
+    pendingStagingCount
 }: DashboardHeaderProps) {
     return (
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -19,6 +29,26 @@ export function DashboardHeader({
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-2 mr-2 border-r pr-4">
+                    <Button variant="outline" size="sm" onClick={onNewTransaction} title="New Transaction">
+                        <Plus className="mr-2 h-4 w-4" /> Transaction
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={onNewTransfer} title="New Transfer">
+                        <ArrowLeftRight className="mr-2 h-4 w-4" /> Transfer
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={onNewTrade} title="New Portfolio Trade">
+                        <TrendingUp className="mr-2 h-4 w-4" /> Trade
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={onReviewStaging} title="Review Staging" className="relative">
+                        <List className="mr-2 h-4 w-4" /> Review
+                        {pendingStagingCount > 0 && (
+                            <Badge variant="destructive" className="ml-2 px-1.5 py-0.5 h-5 text-xs">
+                                {pendingStagingCount}
+                            </Badge>
+                        )}
+                    </Button>
+                </div>
+
                 <Button
                     variant="outline"
                     size="icon"

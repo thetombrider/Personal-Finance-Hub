@@ -18,13 +18,25 @@ import { BudgetComparisonChart } from "@/components/dashboard/charts/BudgetCompa
 import { CategoryTrendChart } from "@/components/dashboard/charts/CategoryTrendChart";
 import { NetWorthProjectionChart } from "@/components/dashboard/charts/NetWorthProjectionChart";
 import { SankeyChart } from "@/components/dashboard/charts/SankeyChart";
+import { TransactionForm, TransactionFormValues } from "@/components/transactions/TransactionForm";
+import { TransferForm, TransferFormValues } from "@/components/transactions/TransferForm";
+import { AddTradeModal } from "@/components/portfolio/AddTradeModal";
+import { ImportedTransactions } from "@/components/ImportedTransactions";
+import { format } from "date-fns";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function Dashboard() {
-  const { accounts, transactions, categories, formatCurrency } = useFinance();
+  const { accounts, transactions, categories, formatCurrency, addTransaction, addCategory, addTransfer } = useFinance();
   const [, setLocation] = useLocation();
   const [categoryTrendId, setCategoryTrendId] = useState<string>("");
   const [privacyMode, setPrivacyMode] = useState(false);
   const [detailModal, setDetailModal] = useState<'total' | 'cash' | 'savings' | 'investments' | null>(null);
+
+  // Quick Action States
+  const [isTransactionOpen, setIsTransactionOpen] = useState(false);
+  const [isTransferOpen, setIsTransferOpen] = useState(false);
+  const [isAddTradeOpen, setIsAddTradeOpen] = useState(false);
+  const [isReviewStagingOpen, setIsReviewStagingOpen] = useState(false);
 
   const currentYear = new Date().getFullYear();
   const { data: currentYearBudget } = useQuery({
@@ -54,7 +66,64 @@ export default function Dashboard() {
     }
   });
 
-  const { portfolioSummary, trades } = usePortfolioStats();
+  const { data: pendingStagingCount = 0 } = useQuery({
+    queryKey: ["/api/transactions/staging", "count"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/transactions/staging?status=pending");
+      const data = await res.json();
+      return Array.isArray(data) ? data.length : 0;
+    }
+  });
+
+  const { portfolioSummary, trades, holdings } = usePortfolioStats();
+
+  const investmentAccounts = accounts.filter(a => a.type === "investment");
+
+  const onTransactionSubmit = async (data: TransactionFormValues) => {
+    const formattedData = {
+      ...data,
+      amount: data.amount.toString(),
+      date: format(data.date, "yyyy-MM-dd'T'HH:mm:ss"),
+    };
+    await addTransaction(formattedData);
+    setIsTransactionOpen(false);
+  };
+
+  const onTransferSubmit = async (data: TransferFormValues) => {
+    const transferCategory = categories.find(c => c.name.toLowerCase() === "trasferimenti" || c.name.toLowerCase() === "transfer");
+    let transferCategoryId = transferCategory?.id;
+
+    if (!transferCategory) {
+      try {
+        const newCategory = await addCategory({
+          name: "Transfers",
+          type: "transfer",
+          color: "#94a3b8",
+          icon: "ArrowLeftRight",
+        });
+        transferCategoryId = newCategory.id;
+      } catch (error) {
+        alert("Failed to create transfer category. Please create it manually in settings.");
+        return;
+      }
+    }
+
+    if (!transferCategoryId) {
+      alert("Category 'Transfers' not found. Please create it first in settings.");
+      return;
+    }
+
+    await addTransfer({
+      amount: data.amount.toString(),
+      description: data.description,
+      fromAccountId: data.fromAccountId,
+      toAccountId: data.toAccountId,
+      categoryId: transferCategoryId,
+      date: format(data.date, "yyyy-MM-dd'T'HH:mm:ss"),
+    });
+
+    setIsTransferOpen(false);
+  };
 
   // Custom Hooks
   const stats = useDashboardStats({
@@ -83,6 +152,11 @@ export default function Dashboard() {
         <DashboardHeader
           privacyMode={privacyMode}
           setPrivacyMode={setPrivacyMode}
+          onNewTransaction={() => setIsTransactionOpen(true)}
+          onNewTransfer={() => setIsTransferOpen(true)}
+          onNewTrade={() => setIsAddTradeOpen(true)}
+          onReviewStaging={() => setIsReviewStagingOpen(true)}
+          pendingStagingCount={pendingStagingCount}
         />
 
         <StatsGrid
@@ -172,6 +246,36 @@ export default function Dashboard() {
           accounts={accounts}
           formatCurrency={formatCurrency}
           onNavigateToPortfolio={() => setLocation('/portfolio')}
+        />
+
+        <TransactionForm
+          isOpen={isTransactionOpen}
+          onOpenChange={setIsTransactionOpen}
+          onSubmit={onTransactionSubmit}
+          initialData={null}
+          accounts={accounts}
+          categories={categories}
+          isEditing={false}
+        />
+
+        <TransferForm
+          isOpen={isTransferOpen}
+          onOpenChange={setIsTransferOpen}
+          onSubmit={onTransferSubmit}
+          accounts={accounts}
+        />
+
+        <AddTradeModal
+          isOpen={isAddTradeOpen}
+          onOpenChange={setIsAddTradeOpen}
+          accounts={investmentAccounts}
+          holdings={holdings}
+        />
+
+        <ImportedTransactions
+          isOpen={isReviewStagingOpen}
+          onOpenChange={setIsReviewStagingOpen}
+          accountId={null} // All accounts
         />
       </div>
     </Layout>
