@@ -90,8 +90,8 @@ export function TransactionsTable({
     return (
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden border rounded-lg bg-card">
             <div className="flex-1 overflow-auto relative">
-                <Table>
-                    <TableHeader className="sticky top-0 z-10 bg-card">
+                <table className="w-full caption-bottom text-sm">
+                    <TableHeader className="sticky top-0 z-10 bg-card shadow-sm">
                         <TableRow>
                             <TableHead className="w-[120px]">
                                 <div className="flex items-center gap-2">
@@ -253,7 +253,7 @@ export function TransactionsTable({
                             })
                         )}
                     </TableBody>
-                </Table>
+                </table>
             </div>
 
             {totalPages > 1 && (

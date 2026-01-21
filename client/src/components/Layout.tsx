@@ -64,7 +64,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   // Initialize expanded state based on current location
   useEffect(() => {
-    if (location.startsWith("/reports")) {
+    if (location.startsWith("/reports") || location.startsWith("/accounts") || location.startsWith("/categories")) {
       setExpandedItems(prev => ({ ...prev, "Reports": true }));
     }
     if (location.startsWith("/budget")) {
@@ -85,7 +85,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const navItems = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
     { href: "/transactions", label: "Transactions", icon: Receipt },
-    { href: "/accounts", label: "Accounts", icon: CreditCard },
 
     {
       href: "/budget",
@@ -98,7 +97,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         { href: "/budget/planned", label: "Planned Transactions" },
       ]
     },
-    { href: "/categories", label: "Categories", icon: PieChart },
     {
       href: "/reports",
       label: "Reports",
@@ -106,6 +104,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       subItems: [
         { href: "/reports/income-statement", label: "Income Statement" },
         { href: "/reports/balance-sheet", label: "Balance Sheet" },
+        { href: "/accounts", label: "Accounts" },
+        { href: "/categories", label: "Categories" },
       ]
     },
     { href: "/portfolio", label: "Portfolio", icon: TrendingUp },
@@ -138,9 +138,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <nav className="flex-1 px-4 py-4 space-y-1">
         {navItems.map((item) => {
           const Icon = item.icon;
-          // Active if current path is exactly item.href or if it's a parent of current path (for subitems)
-          // But for "Reports" parent, we might want it active if any child is active.
-          const isActive = location === item.href || (item.subItems && location.startsWith(item.href));
+          // Active if current path is exactly item.href or if any subItem corresponds to current path
+          const isActive = location === item.href || (item.subItems && item.subItems.some(sub => location === sub.href || location.startsWith(sub.href + "/")));
           const isExpanded = expandedItems[item.label];
 
           return (

@@ -5,26 +5,59 @@ import { RecurringExpenseCheck } from '@shared/schema';
 export type SortField = 'date' | 'description' | 'category' | 'account' | 'amount';
 export type SortDirection = 'asc' | 'desc';
 
+export interface TransactionFiltersState {
+    searchQuery: string;
+    setSearchQuery: (query: string) => void;
+    filterAccountId: string;
+    setFilterAccountId: (id: string) => void;
+    filterCategoryId: string;
+    setFilterCategoryId: (id: string) => void;
+    filterStatus: string;
+    setFilterStatus: (status: string) => void;
+    filterType: string;
+    setFilterType: (type: string) => void;
+    filterTagIds: number[];
+    setFilterTagIds: (ids: number[]) => void;
+    dateFrom: Date | undefined;
+    setDateFrom: (date: Date | undefined) => void;
+    dateTo: Date | undefined;
+    setDateTo: (date: Date | undefined) => void;
+    hasActiveFilters: boolean;
+    clearFilters: () => void;
+}
+
 interface UseTransactionsDataProps {
     transactions: Transaction[];
     accounts: Account[];
     categories: Category[];
     checks?: RecurringExpenseCheck[];
+    initialFilters?: Partial<{
+        accountId: string;
+        categoryId: string;
+        type: string;
+        status: string;
+        dateFrom: Date;
+        dateTo: Date;
+        tagIds: number[];
+        searchQuery: string;
+    }>;
+    itemsPerPage?: number;
 }
 
-export function useTransactionsData({ transactions, accounts, categories, checks }: UseTransactionsDataProps) {
-    const [searchQuery, setSearchQuery] = useState('');
-    const [filterAccountId, setFilterAccountId] = useState<string>('all');
-    const [filterCategoryId, setFilterCategoryId] = useState<string>('all');
-    const [filterStatus, setFilterStatus] = useState<string>('all');
-    const [filterTagIds, setFilterTagIds] = useState<number[]>([]);
-    const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
-    const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
+export function useTransactionsData({ transactions, accounts, categories, checks, initialFilters, itemsPerPage: customItemsPerPage = 50 }: UseTransactionsDataProps) {
+    const [searchQuery, setSearchQuery] = useState(initialFilters?.searchQuery || '');
+    const [filterAccountId, setFilterAccountId] = useState<string>(initialFilters?.accountId || 'all');
+    const [filterCategoryId, setFilterCategoryId] = useState<string>(initialFilters?.categoryId || 'all');
+    const [filterStatus, setFilterStatus] = useState<string>(initialFilters?.status || 'all');
+    const [filterType, setFilterType] = useState<string>(initialFilters?.type || 'all');
+    const [filterTagIds, setFilterTagIds] = useState<number[]>(initialFilters?.tagIds || []);
+    const [dateFrom, setDateFrom] = useState<Date | undefined>(initialFilters?.dateFrom);
+    const [dateTo, setDateTo] = useState<Date | undefined>(initialFilters?.dateTo);
 
     const [sortField, setSortField] = useState<SortField>('date');
     const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 50;
+    const itemsPerPage = customItemsPerPage;
 
     const matchedTransactions = useMemo(() => {
         const map = new Map<number, RecurringExpenseCheck>();
@@ -55,6 +88,11 @@ export function useTransactionsData({ transactions, accounts, categories, checks
 
             // Category filter
             if (filterCategoryId !== 'all' && t.categoryId !== parseInt(filterCategoryId)) {
+                return false;
+            }
+
+            // Type filter
+            if (filterType !== 'all' && t.type !== filterType) {
                 return false;
             }
 
@@ -95,7 +133,7 @@ export function useTransactionsData({ transactions, accounts, categories, checks
 
             return true;
         });
-    }, [transactions, searchQuery, filterAccountId, filterCategoryId, filterStatus, filterTagIds, dateFrom, dateTo, matchedTransactions]);
+    }, [transactions, searchQuery, filterAccountId, filterCategoryId, filterStatus, filterType, filterTagIds, dateFrom, dateTo, matchedTransactions]);
 
     const sortedTransactions = useMemo(() => {
         const sorted = [...filteredTransactions].sort((a, b) => {
@@ -149,13 +187,14 @@ export function useTransactionsData({ transactions, accounts, categories, checks
         setFilterAccountId('all');
         setFilterCategoryId('all');
         setFilterStatus('all');
+        setFilterType('all');
         setFilterTagIds([]);
         setDateFrom(undefined);
         setDateTo(undefined);
         setCurrentPage(1);
     };
 
-    const hasActiveFilters = !!(searchQuery || filterAccountId !== 'all' || filterCategoryId !== 'all' || filterStatus !== 'all' || filterTagIds.length > 0 || dateFrom || dateTo);
+    const hasActiveFilters = !!(searchQuery || filterAccountId !== 'all' || filterCategoryId !== 'all' || filterStatus !== 'all' || filterType !== 'all' || filterTagIds.length > 0 || dateFrom || dateTo);
 
     return {
         filteredTransactions,
@@ -167,6 +206,7 @@ export function useTransactionsData({ transactions, accounts, categories, checks
             filterAccountId, setFilterAccountId,
             filterCategoryId, setFilterCategoryId,
             filterStatus, setFilterStatus,
+            filterType, setFilterType,
             filterTagIds, setFilterTagIds,
             dateFrom, setDateFrom,
             dateTo, setDateTo,

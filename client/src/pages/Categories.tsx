@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { format, subMonths, parseISO } from "date-fns";
+import { format, subMonths, parseISO, startOfMonth, endOfMonth } from "date-fns";
 // import { it } from "date-fns/locale";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useFinance } from "@/context/FinanceContext";
@@ -9,11 +9,17 @@ import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { TransactionDrilldown } from "@/components/reports/TransactionDrilldown";
 
 export default function Categories() {
   const { categories, transactions, formatCurrency, isLoading } = useFinance();
   const [timeRange, setTimeRange] = useState('12');
   const [page, setPage] = useState(0);
+  const [drilldownConfig, setDrilldownConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    filters: any;
+  } | null>(null);
 
   const monthsList = useMemo(() => {
     const months = parseInt(timeRange);
@@ -83,6 +89,91 @@ export default function Categories() {
 
     return data;
   }, [transactions, categories, monthsList]);
+
+  const handleDrilldown = (categoryName: string, monthKey: string) => {
+    const category = categories.find(c => c.name === categoryName);
+    if (!category) return;
+
+    const [year, month] = monthKey.split('-').map(Number);
+    const date = new Date(year, month - 1);
+    const fromDate = startOfMonth(date);
+    const toDate = endOfMonth(date);
+
+    setDrilldownConfig({
+      isOpen: true,
+      title: `${categoryName} - ${format(date, 'MMMM yyyy')}`,
+      filters: {
+        categoryId: category.id.toString(),
+        dateFrom: fromDate,
+        dateTo: toDate,
+      },
+    });
+  };
+
+  const handleTotalDrilldown = (categoryName: string) => {
+    const category = categories.find(c => c.name === categoryName);
+    if (!category || monthsList.length === 0) return;
+
+    const firstMonth = monthsList[0].date;
+    const lastMonth = monthsList[monthsList.length - 1].date;
+    const fromDate = startOfMonth(firstMonth);
+    const toDate = endOfMonth(lastMonth);
+
+    setDrilldownConfig({
+      isOpen: true,
+      title: `${categoryName} - Period Total`,
+      filters: {
+        categoryId: category.id.toString(),
+        dateFrom: fromDate,
+        dateTo: toDate,
+      },
+    });
+  };
+
+  const handleMonthlyTotalDrilldown = (monthKey: string) => {
+    const [year, month] = monthKey.split('-').map(Number);
+    const date = new Date(year, month - 1);
+    const fromDate = startOfMonth(date);
+    const toDate = endOfMonth(date);
+
+    setDrilldownConfig({
+      isOpen: true,
+      title: `Total - ${format(date, 'MMMM yyyy')}`,
+      filters: {
+        dateFrom: fromDate,
+        dateTo: toDate,
+        // We want to exclude transfers from this view as well to match the table
+        // But checking 'type' or 'categoryId' for exclusion is tricky in basic filters.
+        // For now, let's just show all transactions for that month, or maybe filter by excluded categories?
+        // The table excludes 'trasferimenti'.
+        // The drilldown filters usually accept specific IDs.
+        // If we want to exclude transfers, we might need a negative filter or just accept it shows everything.
+        // Given the table explicitly filters 'relevantCategories', showing transfers in drilldown might be confusing.
+        // However, useTransactionsData doesn't support 'excludeCategoryId'.
+        // Let's stick to showing all transactions for the month for the 'Total' row,
+        // or maybe filtering by valid categories if possible.
+        // Simplified: Show all for now.
+      },
+    });
+  }
+
+  const handleGrandTotalDrilldown = () => {
+    if (monthsList.length === 0) return;
+    const firstMonth = monthsList[0].date;
+    const lastMonth = monthsList[monthsList.length - 1].date;
+    const fromDate = startOfMonth(firstMonth);
+    const toDate = endOfMonth(lastMonth);
+
+    setDrilldownConfig({
+      isOpen: true,
+      title: `Grand Total - Period`,
+      filters: {
+        dateFrom: fromDate,
+        dateTo: toDate,
+      },
+    });
+  }
+
 
   if (isLoading) {
     return (
@@ -167,12 +258,19 @@ export default function Categories() {
                           {visibleMonths.map(m => {
                             const val = months[m.key];
                             return (
-                              <TableCell key={m.key} className={`text-center text-xs sm:text-sm p-1 ${val > 0 ? 'text-emerald-600' : val < 0 ? 'text-rose-600' : ''}`}>
+                              <TableCell
+                                key={m.key}
+                                className={`text-center text-xs sm:text-sm p-1 cursor-pointer hover:underline ${val > 0 ? 'text-emerald-600' : val < 0 ? 'text-rose-600' : ''}`}
+                                onClick={() => handleDrilldown(catName, m.key)}
+                              >
                                 {val !== 0 ? formatCurrency(val) : '-'}
                               </TableCell>
                             );
                           })}
-                          <TableCell className={`text-center font-semibold ${total > 0 ? 'text-emerald-600' : total < 0 ? 'text-rose-600' : ''}`}>
+                          <TableCell
+                            className={`text-center font-semibold cursor-pointer hover:underline ${total > 0 ? 'text-emerald-600' : total < 0 ? 'text-rose-600' : ''}`}
+                            onClick={() => handleTotalDrilldown(catName)}
+                          >
                             {total !== 0 ? formatCurrency(total) : '-'}
                           </TableCell>
                         </TableRow>
@@ -183,12 +281,19 @@ export default function Categories() {
                       {visibleMonths.map(m => {
                         const monthTotal = Object.values(categoryMonthlyData).reduce((sum, cat) => sum + (cat[m.key] || 0), 0);
                         return (
-                          <TableCell key={m.key} className={`text-center ${monthTotal > 0 ? 'text-emerald-600' : monthTotal < 0 ? 'text-rose-600' : ''}`}>
+                          <TableCell
+                            key={m.key}
+                            className={`text-center cursor-pointer hover:underline ${monthTotal > 0 ? 'text-emerald-600' : monthTotal < 0 ? 'text-rose-600' : ''}`}
+                            onClick={() => handleMonthlyTotalDrilldown(m.key)}
+                          >
                             {monthTotal !== 0 ? formatCurrency(monthTotal) : '-'}
                           </TableCell>
                         );
                       })}
-                      <TableCell className="text-center">
+                      <TableCell
+                        className="text-center cursor-pointer hover:underline"
+                        onClick={handleGrandTotalDrilldown}
+                      >
                         {formatCurrency(Object.values(categoryMonthlyData).reduce((sum, cat) =>
                           sum + Object.values(cat).reduce((s, v) => s + v, 0), 0
                         ))}
@@ -202,6 +307,15 @@ export default function Categories() {
           </CardContent>
         </Card>
       </div>
+
+      {drilldownConfig && (
+        <TransactionDrilldown
+          isOpen={drilldownConfig.isOpen}
+          onClose={() => setDrilldownConfig(null)}
+          title={drilldownConfig.title}
+          initialFilters={drilldownConfig.filters}
+        />
+      )}
     </Layout>
   );
 }

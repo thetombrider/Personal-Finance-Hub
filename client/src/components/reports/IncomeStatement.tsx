@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, TrendingUp, TrendingDown } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
+import { TransactionDrilldown } from "./TransactionDrilldown";
 
 export interface IncomeStatementItem {
     category: {
@@ -54,6 +55,40 @@ export function IncomeStatement() {
         }))
     ];
     const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
+
+    const [drilldownConfig, setDrilldownConfig] = useState<{
+        title: string;
+        filters: {
+            categoryId?: string;
+            type?: string;
+            dateFrom: Date;
+            dateTo: Date;
+        }
+    } | null>(null);
+
+    const handleDrilldown = (categoryName: string, categoryId: number | undefined, type: 'income' | 'expense' | undefined) => {
+        let dateFrom: Date;
+        let dateTo: Date;
+
+        if (month === 0) {
+            dateFrom = new Date(year, 0, 1);
+            dateTo = new Date(year, 11, 31, 23, 59, 59);
+        } else {
+            // month is 1-indexed in state, but 0-indexed in Date constructor
+            dateFrom = new Date(year, month - 1, 1);
+            dateTo = new Date(year, month, 0, 23, 59, 59);
+        }
+
+        setDrilldownConfig({
+            title: `${categoryName} - ${month === 0 ? year : format(dateFrom, 'MMMM yyyy')}`,
+            filters: {
+                categoryId: categoryId?.toString(),
+                type,
+                dateFrom,
+                dateTo
+            }
+        });
+    };
 
     if (isLoading) {
         return <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
@@ -116,16 +151,33 @@ export function IncomeStatement() {
                             {/* Income Section */}
                             <div className="p-4 bg-green-50/30 font-semibold text-green-700">Income</div>
                             {data.items.filter(i => i.isIncome).map((item) => (
-                                <IncomeStatementRow key={item.category.id} item={item} />
+                                <IncomeStatementRow
+                                    key={item.category.id}
+                                    item={item}
+                                    onDrilldown={() => handleDrilldown(item.category.name, item.category.id, undefined)}
+                                />
                             ))}
-                            <SummaryRow label="Total Income" summary={data.summary.income} isIncome />
+                            <SummaryRow
+                                label="Total Income"
+                                summary={data.summary.income}
+                                isIncome
+                                onDrilldown={() => handleDrilldown("Total Income", undefined, 'income')}
+                            />
 
                             {/* Expenses Section */}
                             <div className="p-4 bg-red-50/30 font-semibold text-red-700 mt-4 border-t">Expenses</div>
                             {data.items.filter(i => !i.isIncome).map((item) => (
-                                <IncomeStatementRow key={item.category.id} item={item} />
+                                <IncomeStatementRow
+                                    key={item.category.id}
+                                    item={item}
+                                    onDrilldown={() => handleDrilldown(item.category.name, item.category.id, undefined)}
+                                />
                             ))}
-                            <SummaryRow label="Total Expenses" summary={data.summary.expenses} />
+                            <SummaryRow
+                                label="Total Expenses"
+                                summary={data.summary.expenses}
+                                onDrilldown={() => handleDrilldown("Total Expenses", undefined, 'expense')}
+                            />
 
                             {/* Net Result */}
                             <div className="grid grid-cols-12 gap-4 p-4 bg-muted/50 font-bold border-t mt-4">
@@ -147,11 +199,20 @@ export function IncomeStatement() {
                     </div>
                 </CardContent>
             </Card>
+
+            {drilldownConfig && (
+                <TransactionDrilldown
+                    isOpen={!!drilldownConfig}
+                    onClose={() => setDrilldownConfig(null)}
+                    title={drilldownConfig.title}
+                    initialFilters={drilldownConfig.filters}
+                />
+            )}
         </div>
     );
 }
 
-function IncomeStatementRow({ item }: { item: IncomeStatementItem }) {
+function IncomeStatementRow({ item, onDrilldown }: { item: IncomeStatementItem, onDrilldown: () => void }) {
     const diff = item.difference;
     // Backend now returns Difference = Actual - Budget for ALL items.
     // Income: Actual > Budget (Positive Diff) => GOOD (Green)
@@ -170,7 +231,11 @@ function IncomeStatementRow({ item }: { item: IncomeStatementItem }) {
                 <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.category.color }} />
                 <span>{item.category.name}</span>
             </div>
-            <div className="col-span-2 text-right font-medium">
+            <div
+                className="col-span-2 text-right font-medium cursor-pointer hover:underline hover:text-primary transition-colors"
+                onClick={onDrilldown}
+                title="View transactions"
+            >
                 {formatCurrency(item.actual)}
             </div>
             <div className="col-span-2 text-right text-muted-foreground">
@@ -186,7 +251,7 @@ function IncomeStatementRow({ item }: { item: IncomeStatementItem }) {
     );
 }
 
-function SummaryRow({ label, summary, isIncome = false }: { label: string, summary: IncomeStatementSummary, isIncome?: boolean }) {
+function SummaryRow({ label, summary, isIncome = false, onDrilldown }: { label: string, summary: IncomeStatementSummary, isIncome?: boolean, onDrilldown: () => void }) {
     // Backend returns summary: actual, budget. 
     // We calculate diff here as Actual - Budget for consistency with backend items.
     const diff = summary.actual - summary.budget;
@@ -200,7 +265,11 @@ function SummaryRow({ label, summary, isIncome = false }: { label: string, summa
     return (
         <div className="grid grid-cols-12 gap-4 p-4 font-semibold bg-muted/20 border-t">
             <div className="col-span-4">{label}</div>
-            <div className="col-span-2 text-right">
+            <div
+                className="col-span-2 text-right cursor-pointer hover:underline hover:text-primary transition-colors"
+                onClick={onDrilldown}
+                title="View transactions"
+            >
                 {formatCurrency(summary.actual)}
             </div>
             <div className="col-span-2 text-right text-muted-foreground">

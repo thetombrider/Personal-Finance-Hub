@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { format, subMonths, parseISO } from "date-fns";
+import { format, subMonths, parseISO, startOfMonth, endOfMonth, parse } from "date-fns";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 // import { it } from "date-fns/locale";
 import { ChevronLeft, ChevronRight, Landmark, RefreshCw } from "lucide-react";
@@ -11,12 +11,22 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { TransactionDrilldown } from "@/components/reports/TransactionDrilldown";
 
 
 export default function Accounts() {
   const { accounts, transactions, formatCurrency, isLoading } = useFinance();
   const [timeRange, setTimeRange] = useState('12');
   const [page, setPage] = useState(0);
+
+  const [drilldownConfig, setDrilldownConfig] = useState<{
+    title: string;
+    filters: {
+      accountId?: string;
+      dateFrom: Date;
+      dateTo: Date;
+    }
+  } | null>(null);
 
   const monthsList = useMemo(() => {
     const months = parseInt(timeRange);
@@ -79,6 +89,47 @@ export default function Accounts() {
     return data;
   }, [transactions, accounts, monthsList]);
 
+  const handleDrilldown = (accountName: string, monthKey: string) => {
+    const account = accounts.find(a => a.name === accountName);
+    if (!account) return;
+
+    const date = parse(monthKey, 'yyyy-MM', new Date());
+    const dateFrom = startOfMonth(date);
+    const dateTo = endOfMonth(date);
+
+    setDrilldownConfig({
+      title: `${accountName} - ${format(date, 'MMMM yyyy')}`,
+      filters: {
+        accountId: account.id.toString(),
+        dateFrom,
+        dateTo
+      }
+    });
+  };
+
+  const handleTotalDrilldown = (accountName: string) => {
+    // Drilldown for the entire visible period for an account (or maybe just strict total? The table shows "Period Total")
+    // The "Period Total" column sums the visible months? 
+    // The code says: const total = Object.values(months).reduce((sum, val) => sum + val, 0);
+    // Wait, 'months' in the reduce is `data[acc.name]`. `data` is initialized with `monthsList`.
+    // So it sums ALL months in `monthsList` (last 6/12/24), not just visible columns.
+    // So the date range should cover the entire `monthsList`.
+
+    const account = accounts.find(a => a.name === accountName);
+    if (!account || monthsList.length === 0) return;
+
+    const startDate = monthsList[0].date;
+    const endDate = monthsList[monthsList.length - 1].date;
+
+    setDrilldownConfig({
+      title: `${accountName} - Total (${timeRange} months)`,
+      filters: {
+        accountId: account.id.toString(),
+        dateFrom: startOfMonth(startDate),
+        dateTo: endOfMonth(endDate)
+      }
+    });
+  }
 
 
   if (isLoading) {
@@ -181,12 +232,21 @@ export default function Accounts() {
                           {visibleMonths.map(m => {
                             const val = months[m.key];
                             return (
-                              <TableCell key={m.key} className={`text-center text-xs sm:text-sm p-1 ${val > 0 ? 'text-emerald-600' : val < 0 ? 'text-rose-600' : ''}`}>
+                              <TableCell
+                                key={m.key}
+                                className={`text-center text-xs sm:text-sm p-1 ${val > 0 ? 'text-emerald-600' : val < 0 ? 'text-rose-600' : ''} cursor-pointer hover:bg-muted/50 transition-colors`}
+                                onClick={() => handleDrilldown(accountName, m.key)}
+                                title="View transactions"
+                              >
                                 {val !== 0 ? formatCurrency(val) : '-'}
                               </TableCell>
                             );
                           })}
-                          <TableCell className={`text-center font-semibold ${total > 0 ? 'text-emerald-600' : total < 0 ? 'text-rose-600' : ''}`}>
+                          <TableCell
+                            className={`text-center font-semibold ${total > 0 ? 'text-emerald-600' : total < 0 ? 'text-rose-600' : ''} cursor-pointer hover:bg-muted/50 transition-colors`}
+                            onClick={() => handleTotalDrilldown(accountName)}
+                            title="View all transactions for this period"
+                          >
                             {total !== 0 ? formatCurrency(total) : '-'}
                           </TableCell>
 
@@ -217,6 +277,15 @@ export default function Accounts() {
             </ScrollArea>
           </CardContent>
         </Card>
+
+        {drilldownConfig && (
+          <TransactionDrilldown
+            isOpen={!!drilldownConfig}
+            onClose={() => setDrilldownConfig(null)}
+            title={drilldownConfig.title}
+            initialFilters={drilldownConfig.filters}
+          />
+        )}
       </div>
 
 
