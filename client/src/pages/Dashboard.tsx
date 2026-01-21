@@ -22,9 +22,6 @@ import { SankeyChart } from "@/components/dashboard/charts/SankeyChart";
 export default function Dashboard() {
   const { accounts, transactions, categories, formatCurrency } = useFinance();
   const [, setLocation] = useLocation();
-  const [timeRange, setTimeRange] = useState("12"); // months
-  const [selectedAccount, setSelectedAccount] = useState<string>("all");
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [categoryTrendId, setCategoryTrendId] = useState<string>("");
   const [privacyMode, setPrivacyMode] = useState(false);
   const [detailModal, setDetailModal] = useState<'total' | 'cash' | 'savings' | 'investments' | null>(null);
@@ -45,8 +42,7 @@ export default function Dashboard() {
       const res = await fetch(`/api/budget/${currentYear - 1}`);
       if (!res.ok) throw new Error('Failed to fetch budget');
       return res.json();
-    },
-    enabled: timeRange === "12" // Only fetch previous year if viewing 12 months
+    }
   });
 
   const { data: nextYearBudget } = useQuery({
@@ -73,9 +69,6 @@ export default function Dashboard() {
     categories,
     trades,
     portfolioSummary,
-    timeRange,
-    selectedAccount,
-    selectedCategory,
     categoryTrendId,
     currentYearBudget,
     previousYearBudget,
@@ -88,14 +81,6 @@ export default function Dashboard() {
     <Layout>
       <div className="space-y-8">
         <DashboardHeader
-          accounts={accounts}
-          categories={categories}
-          selectedAccount={selectedAccount}
-          setSelectedAccount={setSelectedAccount}
-          selectedCategory={selectedCategory}
-          setSelectedCategory={setSelectedCategory}
-          timeRange={timeRange}
-          setTimeRange={setTimeRange}
           privacyMode={privacyMode}
           setPrivacyMode={setPrivacyMode}
         />

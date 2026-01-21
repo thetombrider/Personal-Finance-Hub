@@ -9,9 +9,6 @@ interface UseDashboardChartsProps {
     categories: Category[];
     trades: Trade[];
     portfolioSummary: any; // Using any for now or the interface from useDashboardStats if shared
-    timeRange: string;
-    selectedAccount: string;
-    selectedCategory: string;
     categoryTrendId: string;
     currentYearBudget: any;
     previousYearBudget: any;
@@ -26,9 +23,6 @@ export function useDashboardCharts({
     categories,
     trades,
     portfolioSummary,
-    timeRange,
-    selectedAccount,
-    selectedCategory,
     categoryTrendId,
     currentYearBudget,
     previousYearBudget,
@@ -78,7 +72,7 @@ export function useDashboardCharts({
 
     // Prepare chart data (excluding transfers)
     const chartData = useMemo(() => {
-        const months = parseInt(timeRange);
+        const months = 12;
         const data = [];
         for (let i = months - 1; i >= 0; i--) {
             const date = subMonths(new Date(), i);
@@ -88,10 +82,7 @@ export function useDashboardCharts({
             const monthTx = transactions.filter(t => {
                 const tDate = parseISO(t.date);
                 const isTransfer = t.categoryId === transferCategoryId;
-                const matchesCategory = selectedCategory === "all" || t.categoryId === parseInt(selectedCategory);
-                return !isTransfer && tDate >= monthStart && tDate <= monthEnd &&
-                    (selectedAccount === "all" || t.accountId === parseInt(selectedAccount)) &&
-                    matchesCategory;
+                return !isTransfer && tDate >= monthStart && tDate <= monthEnd;
             });
 
             const income = monthTx.filter(t => t.type === 'income').reduce((sum, t) => sum + (parseFloat(t.amount.toString()) || 0), 0);
@@ -105,11 +96,11 @@ export function useDashboardCharts({
             });
         }
         return data;
-    }, [transactions, timeRange, selectedAccount, selectedCategory, transferCategoryId]);
+    }, [transactions, transferCategoryId]);
 
-    // Category data (excluding transfers) - filtered by time range
+    // Category data (excluding transfers) - filtered by time range (fixed to 12 months)
     const categoryData = useMemo(() => {
-        const months = parseInt(timeRange);
+        const months = 12;
         const startDate = startOfMonth(subMonths(new Date(), months - 1));
         const endDate = endOfMonth(new Date());
 
@@ -117,7 +108,6 @@ export function useDashboardCharts({
             const tDate = parseISO(t.date);
             return t.type === 'expense' &&
                 t.categoryId !== transferCategoryId &&
-                (selectedAccount === "all" || t.accountId === parseInt(selectedAccount)) &&
                 tDate >= startDate && tDate <= endDate;
         });
         const catMap = new Map<string, number>();
@@ -131,11 +121,11 @@ export function useDashboardCharts({
         });
 
         return Array.from(catMap.entries()).map(([name, value]) => ({ name, value }));
-    }, [transactions, selectedAccount, categories, transferCategoryId, timeRange]);
+    }, [transactions, categories, transferCategoryId]);
 
     // Net Worth evolution over time
     const netWorthData = useMemo(() => {
-        const months = parseInt(timeRange);
+        const months = 12;
         const data = [];
 
         // Calculate starting balance (sum of all account starting balances)
@@ -195,7 +185,7 @@ export function useDashboardCharts({
             });
         }
         return data;
-    }, [transactions, accounts, timeRange, trades]);
+    }, [transactions, accounts, trades]);
 
     // Category trend data (monthly totals for selected category)
     const selectedCategoryForTrend = useMemo(() =>
@@ -206,7 +196,7 @@ export function useDashboardCharts({
     const categoryTrendData = useMemo(() => {
         if (!categoryTrendId || !selectedCategoryForTrend) return [];
 
-        const months = parseInt(timeRange);
+        const months = 12;
         const data = [];
         const catId = parseInt(categoryTrendId);
         const categoryType = selectedCategoryForTrend.type;
@@ -232,8 +222,7 @@ export function useDashboardCharts({
                     return t.categoryId === catId &&
                         t.type === categoryType &&
                         tDate >= monthStart &&
-                        tDate <= monthEnd &&
-                        (selectedAccount === "all" || t.accountId === parseInt(selectedAccount));
+                        tDate <= monthEnd;
                 })
                 .reduce((sum, t) => sum + (parseFloat(t.amount.toString()) || 0), 0);
 
@@ -245,11 +234,11 @@ export function useDashboardCharts({
             });
         }
         return data;
-    }, [transactions, categoryTrendId, timeRange, selectedAccount, selectedCategoryForTrend, currentYearBudget, previousYearBudget, currentYear]);
+    }, [transactions, categoryTrendId, selectedCategoryForTrend, currentYearBudget, previousYearBudget, currentYear]);
 
     // Budget vs Actual Expenses (Global)
     const budgetExpenseComparisonData = useMemo(() => {
-        const months = parseInt(timeRange);
+        const months = 12;
         const data = [];
 
         for (let i = months - 1; i >= 0; i--) {
@@ -263,23 +252,11 @@ export function useDashboardCharts({
             const actual = transactions.filter(t => {
                 const tDate = parseISO(t.date);
                 const isTransfer = t.categoryId === transferCategoryId;
-                const matchesCategory = selectedCategory === "all" || t.categoryId === parseInt(selectedCategory);
-                return !isTransfer && t.type === 'expense' && tDate >= monthStart && tDate <= monthEnd &&
-                    (selectedAccount === "all" || t.accountId === parseInt(selectedAccount)) &&
-                    matchesCategory;
+                return !isTransfer && t.type === 'expense' && tDate >= monthStart && tDate <= monthEnd;
             }).reduce((sum, t) => sum + (parseFloat(t.amount.toString()) || 0), 0);
 
             // Budget
-            let budget = 0;
-            if (selectedCategory !== "all") {
-                const catId = parseInt(selectedCategory);
-                const budgetSource = year === currentYear ? currentYearBudget : (year === currentYear - 1 ? previousYearBudget : null);
-                if (budgetSource && budgetSource.budgetData && budgetSource.budgetData[catId] && budgetSource.budgetData[catId][monthIndex]) {
-                    budget = budgetSource.budgetData[catId][monthIndex].total || 0;
-                }
-            } else {
-                budget = getMonthlyBudgetTotal(monthIndex, year, 'expense');
-            }
+            let budget = getMonthlyBudgetTotal(monthIndex, year, 'expense');
 
             data.push({
                 name: format(date, 'MMM'),
@@ -288,11 +265,11 @@ export function useDashboardCharts({
             });
         }
         return data;
-    }, [transactions, timeRange, selectedAccount, selectedCategory, getMonthlyBudgetTotal, transferCategoryId, currentYearBudget, previousYearBudget, currentYear]);
+    }, [transactions, getMonthlyBudgetTotal, transferCategoryId, currentYearBudget, previousYearBudget, currentYear]);
 
     // Budget vs Actual Income (Global)
     const budgetIncomeComparisonData = useMemo(() => {
-        const months = parseInt(timeRange);
+        const months = 12;
         const data = [];
 
         for (let i = months - 1; i >= 0; i--) {
@@ -306,27 +283,12 @@ export function useDashboardCharts({
             const actual = transactions.filter(t => {
                 const tDate = parseISO(t.date);
                 const isTransfer = t.categoryId === transferCategoryId;
-                const matchesCategory = selectedCategory === "all" || t.categoryId === parseInt(selectedCategory);
 
-                return !isTransfer && t.type === 'income' && tDate >= monthStart && tDate <= monthEnd &&
-                    (selectedAccount === "all" || t.accountId === parseInt(selectedAccount)) &&
-                    matchesCategory;
+                return !isTransfer && t.type === 'income' && tDate >= monthStart && tDate <= monthEnd;
             }).reduce((sum, t) => sum + (parseFloat(t.amount.toString()) || 0), 0);
 
             // Budget
-            let budget = 0;
-            if (selectedCategory !== "all") {
-                const catId = parseInt(selectedCategory);
-                const cat = categories.find(c => c.id === catId);
-                if (cat && cat.type === 'income') {
-                    const budgetSource = year === currentYear ? currentYearBudget : (year === currentYear - 1 ? previousYearBudget : null);
-                    if (budgetSource && budgetSource.budgetData && budgetSource.budgetData[catId] && budgetSource.budgetData[catId][monthIndex]) {
-                        budget = budgetSource.budgetData[catId][monthIndex].total || 0;
-                    }
-                }
-            } else {
-                budget = getMonthlyBudgetTotal(monthIndex, year, 'income');
-            }
+            let budget = getMonthlyBudgetTotal(monthIndex, year, 'income');
 
             data.push({
                 name: format(date, 'MMM'),
@@ -335,7 +297,7 @@ export function useDashboardCharts({
             });
         }
         return data;
-    }, [transactions, timeRange, selectedAccount, selectedCategory, getMonthlyBudgetTotal, transferCategoryId, categories, currentYearBudget, previousYearBudget, currentYear]);
+    }, [transactions, getMonthlyBudgetTotal, transferCategoryId, categories, currentYearBudget, previousYearBudget, currentYear]);
 
     // Net Worth by account type with Investment Gain/Loss split
     const netWorthByTypeData = useMemo(() => {
@@ -459,7 +421,7 @@ export function useDashboardCharts({
     // Sankey Data - By Category (Net Flow)
     // Sankey Data - By Category (Net Flow)
     const sankeyCategoryData = useMemo(() => {
-        const months = parseInt(timeRange);
+        const months = 12;
         const startDate = startOfMonth(subMonths(new Date(), months - 1));
         const endDate = endOfMonth(new Date());
 
@@ -468,8 +430,7 @@ export function useDashboardCharts({
             const tDate = parseISO(t.date);
             const isTransfer = t.categoryId === transferCategoryId;
             return !isTransfer &&
-                tDate >= startDate && tDate <= endDate &&
-                (selectedAccount === "all" || t.accountId === parseInt(selectedAccount));
+                tDate >= startDate && tDate <= endDate;
         });
 
         // Calculate Net Flow per Category
@@ -532,7 +493,7 @@ export function useDashboardCharts({
         });
 
         return { nodes, links };
-    }, [transactions, timeRange, selectedAccount, categories, transferCategoryId]);
+    }, [transactions, categories, transferCategoryId]);
 
     return {
         globalMonthlyStats,
