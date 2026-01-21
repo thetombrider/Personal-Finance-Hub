@@ -25,16 +25,27 @@ const transactionSchema = z.object({
     tagIds: z.array(z.number()).optional(),
 });
 
+const bulkTransactionSchema = z.object({
+    amount: z.coerce.number().optional(),
+    description: z.string().optional(),
+    accountId: z.coerce.number().optional(),
+    categoryId: z.coerce.number().optional(),
+    date: z.date().optional(),
+    type: z.enum(["income", "expense"]).optional(),
+    tagIds: z.array(z.number()).optional(),
+});
+
 export type TransactionFormValues = z.infer<typeof transactionSchema>;
+export type BulkTransactionFormValues = z.infer<typeof bulkTransactionSchema>;
 
 interface TransactionFormProps {
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
-    onSubmit: (data: TransactionFormValues) => Promise<void>;
+    onSubmit: (data: TransactionFormValues | BulkTransactionFormValues, dirtyFields?: Partial<Record<keyof TransactionFormValues, boolean>>) => Promise<void>;
     initialData?: TransactionFormValues | null;
     accounts: Account[];
     categories: Category[];
-    isEditing: boolean;
+    mode?: "create" | "edit" | "bulk-edit";
 }
 
 export function TransactionForm({
@@ -44,10 +55,13 @@ export function TransactionForm({
     initialData,
     accounts,
     categories,
-    isEditing
+    mode = "create"
 }: TransactionFormProps) {
+    const isBulkEdit = mode === "bulk-edit";
+    const resolver = isBulkEdit ? zodResolver(bulkTransactionSchema) : zodResolver(transactionSchema);
+
     const form = useForm<TransactionFormValues>({
-        resolver: zodResolver(transactionSchema),
+        resolver,
         defaultValues: {
             amount: 0,
             description: "",
@@ -77,15 +91,27 @@ export function TransactionForm({
         }
     }, [isOpen, initialData, form]);
 
-    const handleSubmit = async (data: TransactionFormValues) => {
-        await onSubmit(data);
+    const handleSubmit = async (data: TransactionFormValues | BulkTransactionFormValues) => {
+        await onSubmit(data, form.formState.dirtyFields);
+    };
+
+    const getTitle = () => {
+        if (mode === "bulk-edit") return "Bulk Edit Transactions";
+        if (mode === "edit") return "Edit Transaction";
+        return "New Transaction";
+    };
+
+    const getButtonText = () => {
+        if (mode === "bulk-edit") return "Update Transactions";
+        if (mode === "edit") return "Save Changes";
+        return "Add Transaction";
     };
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
-                    <DialogTitle>{isEditing ? "Edit Transaction" : "New Transaction"}</DialogTitle>
+                    <DialogTitle>{getTitle()}</DialogTitle>
                 </DialogHeader>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
@@ -96,7 +122,7 @@ export function TransactionForm({
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Type</FormLabel>
-                                        <Select onValueChange={field.onChange} value={field.value}>
+                                        <Select onValueChange={field.onChange} value={field.value} disabled={isBulkEdit}>
                                             <FormControl>
                                                 <SelectTrigger data-testid="select-type">
                                                     <SelectValue />
@@ -118,7 +144,7 @@ export function TransactionForm({
                                     <FormItem>
                                         <FormLabel>Amount</FormLabel>
                                         <FormControl>
-                                            <Input type="number" step="0.01" {...field} data-testid="input-amount" />
+                                            <Input type="number" step="0.01" {...field} data-testid="input-amount" disabled={isBulkEdit} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -133,7 +159,7 @@ export function TransactionForm({
                                 <FormItem>
                                     <FormLabel>Description</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="e.g. Weekly Groceries" {...field} data-testid="input-description" />
+                                        <Input placeholder="e.g. Weekly Groceries" {...field} data-testid="input-description" disabled={isBulkEdit} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -249,7 +275,7 @@ export function TransactionForm({
                         />
 
                         <DialogFooter>
-                            <Button type="submit" data-testid="button-submit-transaction">{isEditing ? "Save Changes" : "Add Transaction"}</Button>
+                            <Button type="submit" data-testid="button-submit-transaction">{getButtonText()}</Button>
                         </DialogFooter>
                     </form>
                 </Form>

@@ -253,6 +253,49 @@ export class TransactionRepository {
         return result[0];
     }
 
+    async updateTransactions(ids: number[], transaction: Partial<InsertTransaction> & { tagIds?: number[] }): Promise<Transaction[]> {
+        if (ids.length === 0) return [];
+
+        const { tagIds, ...txUpdates } = transaction;
+
+        return await db.transaction(async (tx) => {
+            // Update transaction fields if any provided
+            let updatedTxs: Transaction[] = [];
+            if (Object.keys(txUpdates).length > 0) {
+                updatedTxs = await tx.update(transactions)
+                    .set(txUpdates)
+                    .where(inArray(transactions.id, ids))
+                    .returning();
+            } else {
+                // If only tags are updated, fetch the transactions to return them
+                updatedTxs = await tx.select().from(transactions).where(inArray(transactions.id, ids));
+            }
+
+            // Update tags if provided
+            if (tagIds !== undefined) {
+                // Delete existing tags for these transactions
+                await tx.delete(transactionTags)
+                    .where(inArray(transactionTags.transactionId, ids));
+
+                // Insert new tags for each transaction
+                if (tagIds.length > 0) {
+                    const uniqueIds = Array.from(new Set(ids));
+                    const uniqueTagIds = Array.from(new Set(tagIds));
+
+                    const newTags = uniqueIds.flatMap(txId =>
+                        uniqueTagIds.map(tagId => ({
+                            transactionId: txId,
+                            tagId
+                        }))
+                    );
+                    await tx.insert(transactionTags).values(newTags);
+                }
+            }
+
+            return updatedTxs;
+        });
+    }
+
     /**
      * Delete a single transaction, unlinking trades and paired transfer transactions.
      */

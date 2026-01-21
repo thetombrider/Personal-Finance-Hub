@@ -261,6 +261,45 @@ export function registerTransactionRoutes(app: Express) {
         }
     });
 
+    app.post("/api/transactions/bulk-update", async (req, res) => {
+        try {
+            if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+
+            const schema = z.object({
+                ids: z.array(z.number()),
+                updates: insertTransactionSchema.partial().extend({
+                    tagIds: z.array(z.number()).optional()
+                })
+            });
+
+            const { ids, updates } = schema.parse(req.body);
+
+            if (ids.length === 0) {
+                return res.status(400).json({ error: "No transaction IDs provided" });
+            }
+
+            // Verify ownership of all transactions
+            // Optimization: Get all account IDs for these transactions and check ownership
+            for (const id of ids) {
+                const transaction = await storage.getTransaction(id);
+                if (!transaction) continue; // Skip not found, or maybe error? Let's skip.
+
+                const account = await storage.getAccount(transaction.accountId);
+                if (!account || !checkOwnership(account.userId, req.user.id)) {
+                    return res.status(403).json({ error: "Forbidden: Cannot update transactions you don't own" });
+                }
+            }
+
+            const transactions = await storage.updateTransactions(ids, updates);
+            res.json(transactions);
+        } catch (error) {
+            if (error instanceof z.ZodError) {
+                return res.status(400).json({ error: error.errors });
+            }
+            res.status(500).json({ error: "Failed to update transactions" });
+        }
+    });
+
     app.delete("/api/transactions/:id", async (req, res) => {
         try {
             if (!req.user) return res.status(401).json({ error: "Unauthorized" });

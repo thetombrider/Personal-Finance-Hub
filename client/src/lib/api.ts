@@ -130,6 +130,19 @@ export async function updateTransaction(id: number, transaction: Partial<InsertT
   return res.json();
 }
 
+export async function updateTransactionsBulk(ids: number[], updates: Partial<InsertTransaction>) {
+  const res = await fetch(`${API_BASE}/transactions/bulk-update`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ids, updates }),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.details || errorData.error || "Failed to update transactions");
+  }
+  return res.json();
+}
+
 export async function deleteTransaction(id: number) {
   const res = await fetch(`${API_BASE}/transactions/${id}`, {
     method: "DELETE",

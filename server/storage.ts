@@ -108,6 +108,8 @@ export interface IStorage {
     categoryId: number;
   }): Promise<{ fromTransaction: Transaction; toTransaction: Transaction }>;
   updateTransaction(id: number, transaction: Partial<InsertTransaction>): Promise<Transaction | undefined>;
+  updateTransaction(id: number, transaction: Partial<InsertTransaction>): Promise<Transaction | undefined>;
+  updateTransactions(ids: number[], transaction: Partial<InsertTransaction> & { tagIds?: number[] }): Promise<Transaction[]>;
   deleteTransaction(id: number): Promise<void>;
   deleteTransactions(ids: number[]): Promise<void>;
   clearTransactions(): Promise<void>;
@@ -238,6 +240,8 @@ export class DatabaseStorage implements IStorage {
   createTransactions = (txs: InsertTransaction[]) => this.transactionRepo.createTransactions(txs);
   createTransfer = (data: { date: string; amount: string; description: string; fromAccountId: number; toAccountId: number; categoryId: number }) => this.transactionRepo.createTransfer(data);
   updateTransaction = (id: number, transaction: Partial<InsertTransaction>) => this.transactionRepo.updateTransaction(id, transaction);
+  updateTransaction = (id: number, transaction: Partial<InsertTransaction>) => this.transactionRepo.updateTransaction(id, transaction);
+  updateTransactions = (ids: number[], transaction: Partial<InsertTransaction> & { tagIds?: number[] }) => this.transactionRepo.updateTransactions(ids, transaction);
   deleteTransaction = (id: number) => this.transactionRepo.deleteTransaction(id);
   deleteTransactions = (ids: number[]) => this.transactionRepo.deleteTransactions(ids);
   clearTransactions = () => this.transactionRepo.clearTransactions();

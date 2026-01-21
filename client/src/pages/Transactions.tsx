@@ -1,14 +1,15 @@
 import { useFinance, Transaction } from "@/context/FinanceContext";
+
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2, Download, ArrowLeftRight } from "lucide-react";
+import { Plus, Trash2, Download, ArrowLeftRight, Edit2 } from "lucide-react";
 import { useState } from "react";
 import { format } from "date-fns";
 import { RecurringExpenseCheck } from "@shared/schema";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { useTransactionsData } from "@/hooks/use-transactions-data";
-import { TransactionForm, TransactionFormValues } from "@/components/transactions/TransactionForm";
+import { TransactionForm, type TransactionFormValues, type BulkTransactionFormValues } from "@/components/transactions/TransactionForm";
 import { TransferForm, TransferFormValues } from "@/components/transactions/TransferForm";
 import { TransactionFilters } from "@/components/transactions/TransactionFilters";
 import { TransactionsTable } from "@/components/transactions/TransactionsTable";
@@ -19,12 +20,13 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Transactions() {
-  const { transactions, accounts, categories, tags, addTransaction, addCategory, addTransfer, updateTransaction, deleteTransaction, deleteTransactions, formatCurrency, isLoading } = useFinance();
+  const { transactions, accounts, categories, tags, addTransaction, addCategory, addTransfer, updateTransaction, updateTransactions, deleteTransaction, deleteTransactions, formatCurrency, isLoading } = useFinance();
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isTransferDialogOpen, setIsTransferDialogOpen] = useState(false);
   const [isBulkTagDialogOpen, setIsBulkTagDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [formMode, setFormMode] = useState<'create' | 'edit' | 'bulk-edit'>('create');
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [editFormData, setEditFormData] = useState<TransactionFormValues | null>(null);
 
@@ -33,6 +35,15 @@ export default function Transactions() {
   const [isSyncingAll, setIsSyncingAll] = useState(false);
   const [syncProgress, setSyncProgress] = useState(0);
   const { toast } = useToast();
+
+  const { data: pendingStagingCount = 0 } = useQuery({
+    queryKey: ["/api/transactions/staging", "count"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/transactions/staging?status=pending");
+      const data = await res.json();
+      return Array.isArray(data) ? data.length : 0;
+    }
+  });
 
   const handleSyncAll = async () => {
     const linkedAccounts = accounts.filter(a => a.gocardlessAccountId);
@@ -91,11 +102,41 @@ export default function Transactions() {
 
   const transferCategory = categories.find(c => c.name.toLowerCase() === "trasferimenti" || c.name.toLowerCase() === "transfer");
 
-  const onSubmit = async (data: TransactionFormValues) => {
+  const onSubmit = async (data: TransactionFormValues | BulkTransactionFormValues, dirtyFields?: Partial<Record<keyof TransactionFormValues, boolean>>) => {
+    if (formMode === 'bulk-edit') {
+      const updates: any = {};
+      if (dirtyFields) {
+        Object.keys(dirtyFields).forEach(key => {
+          if (dirtyFields[key as keyof TransactionFormValues]) {
+            const value = (data as any)[key];
+            if (key === 'date' && value instanceof Date) {
+              updates[key] = format(value, "yyyy-MM-dd'T'HH:mm:ss");
+            } else {
+              updates[key] = value;
+            }
+          }
+        });
+      }
+
+      // Ensure we don't update amount/desc in bulk edit even if they were somehow dirty
+      delete updates.amount;
+      delete updates.description;
+
+      if (Object.keys(updates).length > 0) {
+        await updateTransactions(Array.from(selectedIds), updates);
+        setSelectedIds(new Set());
+        toast({ title: "Transactions updated", description: `${selectedIds.size} transactions updated successfully.` });
+      }
+
+      setIsDialogOpen(false);
+      return;
+    }
+
+    const formData = data as TransactionFormValues;
     const formattedData = {
-      ...data,
-      amount: data.amount.toString(),
-      date: format(data.date, "yyyy-MM-dd'T'HH:mm:ss"),
+      ...formData,
+      amount: formData.amount.toString(),
+      date: format(formData.date, "yyyy-MM-dd'T'HH:mm:ss"),
     };
 
     if (editingId) {
@@ -105,6 +146,7 @@ export default function Transactions() {
     }
     setIsDialogOpen(false);
     setEditingId(null);
+    setFormMode('create');
     setEditFormData(null);
   };
 
@@ -146,6 +188,7 @@ export default function Transactions() {
 
   const handleEdit = (transaction: Transaction) => {
     setEditingId(transaction.id);
+    setFormMode('edit');
     setEditFormData({
       amount: parseFloat(transaction.amount),
       description: transaction.description,
@@ -153,7 +196,15 @@ export default function Transactions() {
       categoryId: transaction.categoryId,
       date: new Date(transaction.date),
       type: transaction.type as "income" | "expense",
+      tagIds: transaction.tags?.map(t => t.id) || [],
     });
+    setIsDialogOpen(true);
+  };
+
+  const handleBulkEdit = () => {
+    setFormMode('bulk-edit');
+    setEditingId(null);
+    setEditFormData(null);
     setIsDialogOpen(true);
   };
 
@@ -286,6 +337,11 @@ export default function Transactions() {
                 <Button variant="outline" className="gap-2 px-3" onClick={() => setIsBulkTagDialogOpen(true)} title={`Manage tags for ${selectedIds.size} transactions`}>
                   <Tag size={16} /> Tags
                 </Button>
+                {selectedIds.size > 1 && (
+                  <Button variant="outline" className="gap-2 px-3" onClick={handleBulkEdit} title={`Edit ${selectedIds.size} transactions`}>
+                    <Edit2 size={16} /> Edit
+                  </Button>
+                )}
                 <Button variant="destructive" className="gap-2 px-3" onClick={handleBulkDelete} data-testid="button-bulk-delete" title={`Delete ${selectedIds.size} transactions`}>
                   <Trash2 size={16} /> Selected ({selectedIds.size})
                 </Button>
@@ -314,8 +370,14 @@ export default function Transactions() {
               size="icon"
               onClick={() => setReviewAccountId(-1)} // -1 or special flag for "all"
               title="Review Staging Transactions"
+              className="relative"
             >
               <List size={16} />
+              {pendingStagingCount > 0 && (
+                <div className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] text-destructive-foreground">
+                  {pendingStagingCount}
+                </div>
+              )}
             </Button>
 
             <Button
@@ -335,7 +397,7 @@ export default function Transactions() {
               <RefreshCw size={16} className={isSyncingAll ? "animate-spin" : ""} />
             </Button>
 
-            <Button size="icon" onClick={() => { setIsDialogOpen(true); setEditingId(null); setEditFormData(null); }} data-testid="button-add-transaction" title="Add Transaction">
+            <Button size="icon" onClick={() => { setIsDialogOpen(true); setEditingId(null); setFormMode('create'); setEditFormData(null); }} data-testid="button-add-transaction" title="Add Transaction">
               <Plus size={16} />
             </Button>
 
@@ -385,10 +447,10 @@ export default function Transactions() {
           isOpen={isDialogOpen}
           onOpenChange={setIsDialogOpen}
           onSubmit={onSubmit}
-          initialData={editingId ? editFormData : null}
+          initialData={editFormData}
           accounts={accounts}
           categories={categories}
-          isEditing={!!editingId}
+          mode={formMode}
         />
 
         <TransferForm

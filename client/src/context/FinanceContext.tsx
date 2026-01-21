@@ -46,6 +46,7 @@ interface FinanceContextType {
   addTransactions: (transactions: Omit<InsertTransaction, "id">[]) => Promise<any>;
   addTransfer: (transfer: TransferData) => Promise<void>;
   updateTransaction: (id: number, transaction: Partial<InsertTransaction> & { tagIds?: number[] }) => Promise<void>;
+  updateTransactions: (ids: number[], updates: Partial<InsertTransaction>) => Promise<void>;
   deleteTransaction: (id: number) => Promise<void>;
   deleteTransactions: (ids: number[]) => Promise<void>;
   clearTransactions: () => Promise<void>;
@@ -257,6 +258,16 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     },
   });
 
+  const updateTransactionsBulkMutation = useMutation({
+    mutationFn: async ({ ids, updates }: { ids: number[]; updates: Partial<InsertTransaction> }) => {
+      await api.updateTransactionsBulk(ids, updates);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["accounts"] }); // Balance might change if amount changed (though amount is disabled for now)
+    },
+  });
+
   const deleteTransactionMutation = useMutation({
     mutationFn: api.deleteTransaction,
     onSuccess: () => {
@@ -347,6 +358,10 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     await updateTransactionMutation.mutateAsync({ id, transaction });
   };
 
+  const updateTransactions = async (ids: number[], updates: Partial<InsertTransaction>) => {
+    await updateTransactionsBulkMutation.mutateAsync({ ids, updates });
+  };
+
   const deleteTransaction = async (id: number) => {
     await deleteTransactionMutation.mutateAsync(id);
   };
@@ -373,7 +388,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       addAccount, addAccounts, updateAccount, deleteAccount,
       addCategory, addCategories, updateCategory, deleteCategory,
       addTag, updateTag, deleteTag, batchAssignTags, batchRemoveTags,
-      addTransaction, addTransactions, addTransfer, updateTransaction, deleteTransaction, deleteTransactions, clearTransactions,
+      addTransaction, addTransactions, addTransfer, updateTransaction, updateTransactions, deleteTransaction, deleteTransactions, clearTransactions,
       getAccountBalance, formatCurrency
     }}>
       {children}
