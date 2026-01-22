@@ -158,6 +158,97 @@ export function registerTransactionRoutes(app: Express) {
         }
     });
 
+    app.post("/api/transactions/staging/bulk-approve", async (req, res) => {
+        try {
+            if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+
+            const schema = z.object({
+                updates: z.array(z.object({
+                    id: z.number(),
+                    categoryId: z.number(),
+                    description: z.string().optional()
+                }))
+            });
+
+            const { updates } = schema.parse(req.body);
+
+            if (updates.length === 0) return res.status(400).json({ error: "No updates provided" });
+
+            // 1. Get all staging records for user
+            const allStaged = await storage.getImportStaging(req.user.id);
+            const stagedMap = new Map(allStaged.map(s => [s.id, s]));
+
+            const transactionsToCreate = [];
+            const stagingIdsToUpdate: number[] = [];
+
+            // 2. Validate and prepare
+            for (const update of updates) {
+                const staged = stagedMap.get(update.id);
+                if (!staged) continue; // Skip if not found/owned (or fail? skipping is safer/easier)
+
+                // Validate amount is number
+                const numAmount = parseFloat(staged.amount);
+                if (!Number.isFinite(numAmount)) continue;
+
+                const type = numAmount < 0 ? "expense" : "income";
+                const absAmount = Math.abs(numAmount).toFixed(2);
+                const finalDesc = update.description || staged.description;
+
+                transactionsToCreate.push({
+                    accountId: staged.accountId,
+                    date: staged.date,
+                    amount: absAmount,
+                    description: finalDesc,
+                    categoryId: update.categoryId,
+                    type: type,
+                    externalId: staged.externalId,
+                });
+                stagingIdsToUpdate.push(update.id);
+            }
+
+            if (transactionsToCreate.length === 0) {
+                return res.status(400).json({ error: "No valid transactions to approve" });
+            }
+
+            // 3. Create transactions in bulk
+            const newTransactions = await storage.createTransactions(transactionsToCreate);
+
+            // 4. Update staging status
+            await storage.updateImportStagingStatusBulk(stagingIdsToUpdate, req.user.id, "reconciled");
+
+            res.status(201).json(newTransactions);
+        } catch (error) {
+            console.error("Bulk approve error:", error);
+            if (error instanceof z.ZodError) {
+                return res.status(400).json({ error: error.errors });
+            }
+            res.status(500).json({ error: "Failed to bulk approve transactions" });
+        }
+    });
+
+    app.post("/api/transactions/staging/bulk-dismiss", async (req, res) => {
+        try {
+            if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+
+            const schema = z.object({
+                ids: z.array(z.number())
+            });
+
+            const { ids } = schema.parse(req.body);
+
+            // Access control handled in updateImportStagingStatusBulk via user's accounts
+            await storage.updateImportStagingStatusBulk(ids, req.user.id, "dismissed");
+
+            res.status(204).send();
+        } catch (error) {
+            console.error("Bulk dismiss error:", error);
+            if (error instanceof z.ZodError) {
+                return res.status(400).json({ error: error.errors });
+            }
+            res.status(500).json({ error: "Failed to bulk dismiss transactions" });
+        }
+    });
+
     app.get("/api/transactions/:id", async (req, res) => {
         try {
             if (!req.user) return res.status(401).json({ error: "Unauthorized" });

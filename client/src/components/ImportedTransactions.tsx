@@ -12,6 +12,7 @@ import { Check, X, Loader2, RefreshCw, Pencil, Undo } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface ImportedTransactionsProps {
     accountId?: number | null;
@@ -35,7 +36,13 @@ export function ImportedTransactions({ accountId, isOpen, onOpenChange }: Import
     const queryClient = useQueryClient();
     const { toast } = useToast();
     const [statusFilter, setStatusFilter] = useState<string>("pending");
+    const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
     const titleAccountName = accountId ? accounts.find(a => a.id === accountId)?.name : null;
+
+    // Reset selection when filter changes
+    useMemo(() => {
+        setSelectedIds(new Set());
+    }, [statusFilter, accountId, isOpen]);
 
     // Fetch staged transactions
     const { data: transactions = [], isLoading } = useQuery<StagedTransaction[]>({
@@ -43,10 +50,6 @@ export function ImportedTransactions({ accountId, isOpen, onOpenChange }: Import
         queryFn: async () => {
             const params = new URLSearchParams();
             if (accountId) params.append("accountId", accountId.toString());
-            // If we want "all" in UI, we can pass 'all', or specific status
-            // The requirement says "show all transactions... with new column for status".
-            // But usually for workflow it's easier to filter.
-            // Let's support Tabs for status.
             params.append("status", statusFilter);
 
             const res = await apiRequest("GET", `/api/transactions/staging?${params.toString()}`);
@@ -61,11 +64,26 @@ export function ImportedTransactions({ accountId, isOpen, onOpenChange }: Import
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["/api/transactions/staging"] });
-            queryClient.invalidateQueries({ queryKey: ["/api/transactions"] }); // Refresh main list
+            queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
             toast({ title: "Transaction Approved" });
         },
         onError: () => {
             toast({ title: "Failed to approve transaction", variant: "destructive" });
+        },
+    });
+
+    const bulkApproveMutation = useMutation({
+        mutationFn: async (updates: { id: number; categoryId: number; description?: string }[]) => {
+            await apiRequest("POST", "/api/transactions/staging/bulk-approve", { updates });
+        },
+        onSuccess: (data, variables) => {
+            queryClient.invalidateQueries({ queryKey: ["/api/transactions/staging"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
+            toast({ title: `Approved ${variables.length} transactions` });
+            setSelectedIds(new Set());
+        },
+        onError: () => {
+            toast({ title: "Failed to approve transactions", variant: "destructive" });
         },
     });
 
@@ -76,6 +94,20 @@ export function ImportedTransactions({ accountId, isOpen, onOpenChange }: Import
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["/api/transactions/staging"] });
             toast({ title: "Transaction Dismissed" });
+        },
+    });
+
+    const bulkDismissMutation = useMutation({
+        mutationFn: async (ids: number[]) => {
+            await apiRequest("POST", "/api/transactions/staging/bulk-dismiss", { ids });
+        },
+        onSuccess: (data, variables) => {
+            queryClient.invalidateQueries({ queryKey: ["/api/transactions/staging"] });
+            toast({ title: `Dismissed ${variables.length} transactions` });
+            setSelectedIds(new Set());
+        },
+        onError: () => {
+            toast({ title: "Failed to dismiss transactions", variant: "destructive" });
         },
     });
 
@@ -121,6 +153,67 @@ export function ImportedTransactions({ accountId, isOpen, onOpenChange }: Import
         }
     }
 
+    const toggleSelectAll = (checked: boolean | 'indeterminate') => {
+        if (checked === true) {
+            setSelectedIds(new Set(transactions.map(t => t.id)));
+        } else {
+            setSelectedIds(new Set());
+        }
+    };
+
+    const toggleSelect = (id: number) => {
+        const next = new Set(selectedIds);
+        if (next.has(id)) {
+            next.delete(id);
+        } else {
+            next.add(id);
+        }
+        setSelectedIds(next);
+    };
+
+    const handleBulkApprove = () => {
+        const updates = [];
+        for (const id of selectedIds) {
+            const tx = transactions.find(t => t.id === id);
+            if (!tx) continue;
+
+            const edit = edits[id] || {};
+            const categoryId = edit.categoryId || tx.suggestedCategoryId;
+
+            if (!categoryId) {
+                toast({
+                    title: `Cannot approve transaction "${tx.description}"`,
+                    description: "Please select a category first.",
+                    variant: "destructive"
+                });
+                return;
+            }
+
+            updates.push({
+                id,
+                categoryId,
+                description: edit.description
+            });
+        }
+
+        if (updates.length > 0) {
+            if (confirm(`Approve ${updates.length} transactions?`)) {
+                bulkApproveMutation.mutate(updates);
+            }
+        }
+    };
+
+    const handleBulkDismiss = () => {
+        if (selectedIds.size > 0) {
+            if (confirm(`Dismiss ${selectedIds.size} transactions?`)) {
+                bulkDismissMutation.mutate(Array.from(selectedIds));
+            }
+        }
+    };
+
+    const isPendingTab = statusFilter === 'pending';
+    const areAllSelected = transactions.length > 0 && selectedIds.size === transactions.length;
+
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-5xl max-h-[85vh] flex flex-col">
@@ -140,7 +233,22 @@ export function ImportedTransactions({ accountId, isOpen, onOpenChange }: Import
                     </TabsList>
                 </Tabs>
 
-                <div className="flex-1 overflow-auto min-h-[300px] mt-4">
+                {/* Bulk Actions Indicator */}
+                {selectedIds.size > 0 && isPendingTab && (
+                    <div className="flex items-center justify-between bg-primary/10 p-2 px-4 rounded-md border border-primary/20 text-sm">
+                        <span className="font-medium text-primary">{selectedIds.size} selected</span>
+                        <div className="flex gap-2">
+                            <Button size="sm" onClick={handleBulkApprove} disabled={bulkApproveMutation.isPending}>
+                                <Check className="mr-1 h-4 w-4" /> Approve Selected
+                            </Button>
+                            <Button size="sm" variant="destructive" onClick={handleBulkDismiss} disabled={bulkDismissMutation.isPending}>
+                                <X className="mr-1 h-4 w-4" /> Dismiss Selected
+                            </Button>
+                        </div>
+                    </div>
+                )}
+
+                <div className="flex-1 overflow-auto min-h-[300px] mt-2">
                     {isLoading ? (
                         <div className="flex justify-center items-center h-full">
                             <Loader2 className="h-8 w-8 animate-spin" />
@@ -153,6 +261,14 @@ export function ImportedTransactions({ accountId, isOpen, onOpenChange }: Import
                         <Table>
                             <TableHeader>
                                 <TableRow>
+                                    {isPendingTab && (
+                                        <TableHead className="w-[40px]">
+                                            <Checkbox
+                                                checked={areAllSelected}
+                                                onCheckedChange={toggleSelectAll}
+                                            />
+                                        </TableHead>
+                                    )}
                                     <TableHead className="w-[100px]">Date</TableHead>
                                     {!accountId && <TableHead className="w-[150px]">Account</TableHead>}
                                     <TableHead className="w-[250px]">Description</TableHead>
@@ -169,9 +285,18 @@ export function ImportedTransactions({ accountId, isOpen, onOpenChange }: Import
                                     const selectedId = edits[tx.id]?.categoryId || suggestedId;
                                     const accountName = accounts.find(a => a.id === tx.accountId)?.name || "Unknown";
                                     const isEditable = tx.status === 'pending';
+                                    const isSelected = selectedIds.has(tx.id);
 
                                     return (
-                                        <TableRow key={tx.id} className={tx.status === 'dismissed' ? 'opacity-60' : ''}>
+                                        <TableRow key={tx.id} className={tx.status === 'dismissed' ? 'opacity-60' : ''} data-state={isSelected ? "selected" : undefined}>
+                                            {isPendingTab && (
+                                                <TableCell>
+                                                    <Checkbox
+                                                        checked={isSelected}
+                                                        onCheckedChange={() => toggleSelect(tx.id)}
+                                                    />
+                                                </TableCell>
+                                            )}
                                             <TableCell>{format(new Date(tx.date), "dd/MM/yyyy")}</TableCell>
                                             {!accountId && (
                                                 <TableCell className="text-muted-foreground text-xs">{accountName}</TableCell>

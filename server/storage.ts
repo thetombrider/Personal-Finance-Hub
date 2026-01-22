@@ -172,6 +172,7 @@ export interface IStorage {
   deleteImportStaging(id: number, userId: string): Promise<void>;
   clearImportStaging(accountId: number, userId: string): Promise<void>;
   updateImportStagingStatus(id: number, userId: string, status: string): Promise<void>;
+  updateImportStagingStatusBulk(ids: number[], userId: string, status: string): Promise<void>;
 
   // Webhooks
   getWebhook(id: string): Promise<Webhook | undefined>;
@@ -305,6 +306,7 @@ export class DatabaseStorage implements IStorage {
   deleteImportStaging = (id: number, userId: string) => this.importStagingRepo.deleteImportStaging(id, userId);
   clearImportStaging = (accountId: number, userId: string) => this.importStagingRepo.clearImportStaging(accountId, userId);
   updateImportStagingStatus = (id: number, userId: string, status: string) => this.importStagingRepo.updateImportStagingStatus(id, userId, status);
+  updateImportStagingStatusBulk = (ids: number[], userId: string, status: string) => this.importStagingRepo.updateImportStagingStatusBulk(ids, userId, status);
 
   // Webhook operations - delegate to WebhookRepository
   getWebhook = (id: string) => this.webhookRepo.getWebhook(id);

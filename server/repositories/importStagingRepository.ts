@@ -106,4 +106,21 @@ export class ImportStagingRepository {
             throw new Error(`Authorization failed: Import staging ${id} not found or does not belong to user`);
         }
     }
+
+    /**
+     * Update multiple staging records status with ownership verification.
+     * @param ids - Array of staging record IDs
+     * @param userId - The user ID for ownership check
+     * @param status - The new status
+     */
+    async updateImportStagingStatusBulk(ids: number[], userId: string, status: string): Promise<void> {
+        if (ids.length === 0) return;
+
+        const userAccounts = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.userId, userId));
+
+        // Atomic bulk update with ownership check
+        await db.update(importStaging)
+            .set({ status })
+            .where(and(inArray(importStaging.id, ids), inArray(importStaging.accountId, userAccounts)));
+    }
 }
