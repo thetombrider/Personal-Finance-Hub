@@ -137,6 +137,52 @@ export function registerTransactionRoutes(app: Express) {
         }
     });
 
+    app.post("/api/transactions/staging/:id/link", async (req, res) => {
+        try {
+            if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+
+            const id = parseNumericParam(req.params.id);
+            if (id === null) return res.status(400).json({ error: "Invalid id" });
+
+            const { transactionId } = req.body;
+            if (!transactionId) return res.status(400).json({ error: "Missing transactionId" });
+
+            const targetTransactionId = parseNumericParam(transactionId);
+            if (targetTransactionId === null) return res.status(400).json({ error: "Invalid transactionId" });
+
+            // 1. Verify ownership of staged transaction
+            const allStaged = await storage.getImportStaging(req.user.id);
+            const staged = allStaged.find(s => s.id === id);
+
+            if (!staged) {
+                return res.status(404).json({ error: "Staged transaction not found" });
+            }
+
+            // 2. Verify ownership of target transaction
+            const targetTransaction = await storage.getTransaction(targetTransactionId);
+            if (!targetTransaction) {
+                return res.status(404).json({ error: "Target transaction not found" });
+            }
+
+            const account = await storage.getAccount(targetTransaction.accountId);
+            if (!account || !checkOwnership(account.userId, req.user.id)) {
+                return res.status(403).json({ error: "Forbidden: Target transaction not owned by user" });
+            }
+
+            // 3. Link them
+            // Update transaction externalId
+            await storage.updateTransaction(targetTransactionId, { externalId: staged.externalId });
+
+            // Mark staged as reconciled
+            await storage.updateImportStagingStatus(id, req.user.id, "reconciled");
+
+            res.json({ success: true });
+        } catch (error) {
+            console.error("Link transaction error:", error);
+            res.status(500).json({ error: "Failed to link transaction" });
+        }
+    });
+
     app.post("/api/transactions/staging/:id/restore", async (req, res) => {
         try {
             if (!req.user) return res.status(401).json({ error: "Unauthorized" });

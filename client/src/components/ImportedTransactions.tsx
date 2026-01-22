@@ -12,6 +12,7 @@ import { Check, X, Loader2, RefreshCw, Pencil, Undo } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ManualReconciliationModal } from "./transactions/ManualReconciliationModal";
 import { Checkbox } from "@/components/ui/checkbox";
 
 interface ImportedTransactionsProps {
@@ -37,6 +38,7 @@ export function ImportedTransactions({ accountId, isOpen, onOpenChange }: Import
     const { toast } = useToast();
     const [statusFilter, setStatusFilter] = useState<string>("pending");
     const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+    const [reconcileTx, setReconcileTx] = useState<StagedTransaction | null>(null);
     const titleAccountName = accountId ? accounts.find(a => a.id === accountId)?.name : null;
 
     // Reset selection when filter changes
@@ -215,193 +217,210 @@ export function ImportedTransactions({ accountId, isOpen, onOpenChange }: Import
     const areAllSelected = transactions.length > 0 && selectedIds.size === transactions.length;
 
     return (
-        <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-5xl max-h-[85vh] flex flex-col">
-                <DialogHeader>
-                    <DialogTitle>Review Imported Transactions{titleAccountName ? ` - ${titleAccountName}` : ""}</DialogTitle>
-                    <DialogDescription>
-                        Review and categorize transactions fetched from your bank.
-                    </DialogDescription>
-                </DialogHeader>
+        <>
+            <Dialog open={isOpen} onOpenChange={onOpenChange}>
+                <DialogContent className="max-w-5xl max-h-[85vh] flex flex-col">
+                    <DialogHeader>
+                        <DialogTitle>Review Imported Transactions{titleAccountName ? ` - ${titleAccountName}` : ""}</DialogTitle>
+                        <DialogDescription>
+                            Review and categorize transactions fetched from your bank.
+                        </DialogDescription>
+                    </DialogHeader>
 
-                <Tabs value={statusFilter} onValueChange={setStatusFilter} className="w-full">
-                    <TabsList>
-                        <TabsTrigger value="pending">Pending</TabsTrigger>
-                        <TabsTrigger value="dismissed">Dismissed</TabsTrigger>
-                        <TabsTrigger value="reconciled">Reconciled</TabsTrigger>
-                        <TabsTrigger value="all">All</TabsTrigger>
-                    </TabsList>
-                </Tabs>
+                    <Tabs value={statusFilter} onValueChange={setStatusFilter} className="w-full">
+                        <TabsList>
+                            <TabsTrigger value="pending">Pending</TabsTrigger>
+                            <TabsTrigger value="dismissed">Dismissed</TabsTrigger>
+                            <TabsTrigger value="reconciled">Reconciled</TabsTrigger>
+                            <TabsTrigger value="all">All</TabsTrigger>
+                        </TabsList>
+                    </Tabs>
 
-                {/* Bulk Actions Indicator */}
-                {selectedIds.size > 0 && isPendingTab && (
-                    <div className="flex items-center justify-between bg-primary/10 p-2 px-4 rounded-md border border-primary/20 text-sm">
-                        <span className="font-medium text-primary">{selectedIds.size} selected</span>
-                        <div className="flex gap-2">
-                            <Button size="sm" onClick={handleBulkApprove} disabled={bulkApproveMutation.isPending}>
-                                <Check className="mr-1 h-4 w-4" /> Approve Selected
-                            </Button>
-                            <Button size="sm" variant="destructive" onClick={handleBulkDismiss} disabled={bulkDismissMutation.isPending}>
-                                <X className="mr-1 h-4 w-4" /> Dismiss Selected
-                            </Button>
+                    {/* Bulk Actions Indicator */}
+                    {selectedIds.size > 0 && isPendingTab && (
+                        <div className="flex items-center justify-between bg-primary/10 p-2 px-4 rounded-md border border-primary/20 text-sm">
+                            <span className="font-medium text-primary">{selectedIds.size} selected</span>
+                            <div className="flex gap-2">
+                                <Button size="sm" onClick={handleBulkApprove} disabled={bulkApproveMutation.isPending}>
+                                    <Check className="mr-1 h-4 w-4" /> Approve Selected
+                                </Button>
+                                <Button size="sm" variant="destructive" onClick={handleBulkDismiss} disabled={bulkDismissMutation.isPending}>
+                                    <X className="mr-1 h-4 w-4" /> Dismiss Selected
+                                </Button>
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )}
 
-                <div className="flex-1 overflow-auto min-h-[300px] mt-2">
-                    {isLoading ? (
-                        <div className="flex justify-center items-center h-full">
-                            <Loader2 className="h-8 w-8 animate-spin" />
-                        </div>
-                    ) : transactions.length === 0 ? (
-                        <div className="flex justify-center items-center h-full text-muted-foreground">
-                            No transactions found for this filter.
-                        </div>
-                    ) : (
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    {isPendingTab && (
-                                        <TableHead className="w-[40px]">
-                                            <Checkbox
-                                                checked={areAllSelected}
-                                                onCheckedChange={toggleSelectAll}
-                                            />
-                                        </TableHead>
-                                    )}
-                                    <TableHead className="w-[100px]">Date</TableHead>
-                                    {!accountId && <TableHead className="w-[150px]">Account</TableHead>}
-                                    <TableHead className="w-[250px]">Description</TableHead>
-                                    <TableHead className="w-[100px] text-right">Amount</TableHead>
-                                    <TableHead className="w-[200px]">Category</TableHead>
-                                    <TableHead className="w-[100px]">Status</TableHead>
-                                    <TableHead className="w-[100px] text-right">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {transactions.map(tx => {
-                                    const amount = parseFloat(tx.amount);
-                                    const suggestedId = tx.suggestedCategoryId;
-                                    const selectedId = edits[tx.id]?.categoryId || suggestedId;
-                                    const accountName = accounts.find(a => a.id === tx.accountId)?.name || "Unknown";
-                                    const isEditable = tx.status === 'pending';
-                                    const isSelected = selectedIds.has(tx.id);
+                    <div className="flex-1 overflow-auto min-h-[300px] mt-2">
+                        {isLoading ? (
+                            <div className="flex justify-center items-center h-full">
+                                <Loader2 className="h-8 w-8 animate-spin" />
+                            </div>
+                        ) : transactions.length === 0 ? (
+                            <div className="flex justify-center items-center h-full text-muted-foreground">
+                                No transactions found for this filter.
+                            </div>
+                        ) : (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        {isPendingTab && (
+                                            <TableHead className="w-[40px]">
+                                                <Checkbox
+                                                    checked={areAllSelected}
+                                                    onCheckedChange={toggleSelectAll}
+                                                />
+                                            </TableHead>
+                                        )}
+                                        <TableHead className="w-[100px]">Date</TableHead>
+                                        {!accountId && <TableHead className="w-[150px]">Account</TableHead>}
+                                        <TableHead className="w-[250px]">Description</TableHead>
+                                        <TableHead className="w-[100px] text-right">Amount</TableHead>
+                                        <TableHead className="w-[200px]">Category</TableHead>
+                                        <TableHead className="w-[100px]">Status</TableHead>
+                                        <TableHead className="w-[140px] text-right">Actions</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {transactions.map(tx => {
+                                        const amount = parseFloat(tx.amount);
+                                        const suggestedId = tx.suggestedCategoryId;
+                                        const selectedId = edits[tx.id]?.categoryId || suggestedId;
+                                        const accountName = accounts.find(a => a.id === tx.accountId)?.name || "Unknown";
+                                        const isEditable = tx.status === 'pending';
+                                        const isSelected = selectedIds.has(tx.id);
 
-                                    return (
-                                        <TableRow key={tx.id} className={tx.status === 'dismissed' ? 'opacity-60' : ''} data-state={isSelected ? "selected" : undefined}>
-                                            {isPendingTab && (
-                                                <TableCell>
-                                                    <Checkbox
-                                                        checked={isSelected}
-                                                        onCheckedChange={() => toggleSelect(tx.id)}
-                                                    />
-                                                </TableCell>
-                                            )}
-                                            <TableCell>{format(new Date(tx.date), "dd/MM/yyyy")}</TableCell>
-                                            {!accountId && (
-                                                <TableCell className="text-muted-foreground text-xs">{accountName}</TableCell>
-                                            )}
-                                            <TableCell>
-                                                {isEditable ? (
-                                                    <Input
-                                                        value={edits[tx.id]?.description ?? tx.description}
-                                                        onChange={(e) => handleEdit(tx.id, "description", e.target.value)}
-                                                        className="h-8"
-                                                    />
-                                                ) : (
-                                                    <span className="text-sm">{tx.description}</span>
+                                        return (
+                                            <TableRow key={tx.id} className={tx.status === 'dismissed' ? 'opacity-60' : ''} data-state={isSelected ? "selected" : undefined}>
+                                                {isPendingTab && (
+                                                    <TableCell>
+                                                        <Checkbox
+                                                            checked={isSelected}
+                                                            onCheckedChange={() => toggleSelect(tx.id)}
+                                                        />
+                                                    </TableCell>
                                                 )}
-                                            </TableCell>
-                                            <TableCell className={`text-right font-medium ${amount < 0 ? "text-rose-600" : "text-emerald-600"}`}>
-                                                {formatCurrency(parseFloat(tx.amount))}
-                                            </TableCell>
-                                            <TableCell>
-                                                {isEditable ? (
-                                                    <div className="flex items-center gap-2">
-                                                        <Select
-                                                            value={selectedId?.toString() || ""}
-                                                            onValueChange={(val) => handleEdit(tx.id, "categoryId", parseInt(val))}
-                                                        >
-                                                            <SelectTrigger className="h-8 w-full">
-                                                                <SelectValue placeholder="Select Category" />
-                                                            </SelectTrigger>
-                                                            <SelectContent className="max-h-[200px]">
-                                                                {categories.map(c => (
-                                                                    <SelectItem key={c.id} value={c.id.toString()}>
-                                                                        {c.name}
-                                                                    </SelectItem>
-                                                                ))}
-                                                            </SelectContent>
-                                                        </Select>
-                                                        {suggestedId && !edits[tx.id]?.categoryId && (
-                                                            <div className="text-xs text-blue-500 font-bold" title="AI Suggestion">AI</div>
+                                                <TableCell>{format(new Date(tx.date), "dd/MM/yyyy")}</TableCell>
+                                                {!accountId && (
+                                                    <TableCell className="text-muted-foreground text-xs">{accountName}</TableCell>
+                                                )}
+                                                <TableCell>
+                                                    {isEditable ? (
+                                                        <Input
+                                                            value={edits[tx.id]?.description ?? tx.description}
+                                                            onChange={(e) => handleEdit(tx.id, "description", e.target.value)}
+                                                            className="h-8"
+                                                        />
+                                                    ) : (
+                                                        <span className="text-sm">{tx.description}</span>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell className={`text-right font-medium ${amount < 0 ? "text-rose-600" : "text-emerald-600"}`}>
+                                                    {formatCurrency(parseFloat(tx.amount))}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {isEditable ? (
+                                                        <div className="flex items-center gap-2">
+                                                            <Select
+                                                                value={selectedId?.toString() || ""}
+                                                                onValueChange={(val) => handleEdit(tx.id, "categoryId", parseInt(val))}
+                                                            >
+                                                                <SelectTrigger className="h-8 w-full">
+                                                                    <SelectValue placeholder="Select Category" />
+                                                                </SelectTrigger>
+                                                                <SelectContent className="max-h-[200px]">
+                                                                    {categories.map(c => (
+                                                                        <SelectItem key={c.id} value={c.id.toString()}>
+                                                                            {c.name}
+                                                                        </SelectItem>
+                                                                    ))}
+                                                                </SelectContent>
+                                                            </Select>
+                                                            {suggestedId && !edits[tx.id]?.categoryId && (
+                                                                <div className="text-xs text-blue-500 font-bold" title="AI Suggestion">AI</div>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-sm">
+                                                            {categories.find(c => c.id === (tx.suggestedCategoryId ?? 0))?.name || '-'}
+                                                        </span>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Badge variant={
+                                                        tx.status === 'reconciled' ? 'default' :
+                                                            tx.status === 'dismissed' ? 'destructive' : 'secondary'
+                                                    }>
+                                                        {tx.status}
+                                                    </Badge>
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <div className="flex justify-end gap-1">
+                                                        {tx.status === 'pending' && (
+                                                            <>
+                                                                <Button
+                                                                    size="icon"
+                                                                    variant="ghost"
+                                                                    className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                                                    onClick={() => handleApprove(tx)}
+                                                                    disabled={approveMutation.isPending}
+                                                                    title="Approve"
+                                                                >
+                                                                    <Check className="h-4 w-4" />
+                                                                </Button>
+                                                                <Button
+                                                                    size="icon"
+                                                                    variant="ghost"
+                                                                    className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                                                    onClick={() => setReconcileTx(tx)}
+                                                                    title="Manual Link"
+                                                                >
+                                                                    <Link className="h-4 w-4" />
+                                                                </Button>
+                                                                <Button
+                                                                    size="icon"
+                                                                    variant="ghost"
+                                                                    className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                                    onClick={() => handleDismiss(tx)}
+                                                                    disabled={dismissMutation.isPending}
+                                                                    title="Dismiss"
+                                                                >
+                                                                    <X className="h-4 w-4" />
+                                                                </Button>
+                                                            </>
+                                                        )}
+                                                        {tx.status === 'dismissed' && (
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                className="h-8"
+                                                                onClick={() => restoreMutation.mutate(tx.id)}
+                                                                disabled={restoreMutation.isPending}
+                                                            >
+                                                                <Undo className="h-4 w-4 mr-1" /> Restore
+                                                            </Button>
                                                         )}
                                                     </div>
-                                                ) : (
-                                                    <span className="text-sm">
-                                                        {categories.find(c => c.id === (tx.suggestedCategoryId ?? 0))?.name || '-'}
-                                                    </span>
-                                                )}
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge variant={
-                                                    tx.status === 'reconciled' ? 'default' :
-                                                        tx.status === 'dismissed' ? 'destructive' : 'secondary'
-                                                }>
-                                                    {tx.status}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <div className="flex justify-end gap-2">
-                                                    {tx.status === 'pending' && (
-                                                        <>
-                                                            <Button
-                                                                size="icon"
-                                                                variant="ghost"
-                                                                className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
-                                                                onClick={() => handleApprove(tx)}
-                                                                disabled={approveMutation.isPending}
-                                                                title="Approve"
-                                                            >
-                                                                <Check className="h-4 w-4" />
-                                                            </Button>
-                                                            <Button
-                                                                size="icon"
-                                                                variant="ghost"
-                                                                className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                                                onClick={() => handleDismiss(tx)}
-                                                                disabled={dismissMutation.isPending}
-                                                                title="Dismiss"
-                                                            >
-                                                                <X className="h-4 w-4" />
-                                                            </Button>
-                                                        </>
-                                                    )}
-                                                    {tx.status === 'dismissed' && (
-                                                        <Button
-                                                            size="sm"
-                                                            variant="outline"
-                                                            className="h-8"
-                                                            onClick={() => restoreMutation.mutate(tx.id)}
-                                                            disabled={restoreMutation.isPending}
-                                                        >
-                                                            <Undo className="h-4 w-4 mr-1" /> Restore
-                                                        </Button>
-                                                    )}
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    )
-                                })}
-                            </TableBody>
-                        </Table>
-                    )}
-                </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        )
+                                    })}
+                                </TableBody>
+                            </Table>
+                        )}
+                    </div>
 
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <ManualReconciliationModal
+                isOpen={!!reconcileTx}
+                onClose={() => setReconcileTx(null)}
+                stagedTransaction={reconcileTx}
+            />
+        </>
     );
 }
