@@ -14,8 +14,9 @@ FinTrack is a comprehensive personal finance management application designed to 
 - **📝 Transactions**: Record income and expenses, categorize them, and import transactions via CSV.
   - **Bulk Editing**: Select multiple transactions and edit category, account, date, and tags simultaneously.
   - **Tag Management**: Organize transactions with flexible, colored tags for cross-category tracking (e.g., "Vacation", "Tax Deductible").
-  - **Advanced Filtering**: Filter by categories, accounts, date ranges, and tags with URL-based state persistence.
-  - **Pagination**: Navigate large transaction lists with 50 rows per page and sticky headers.
+  - **Advanced Filtering**: Filter by categories, accounts, date ranges, tags, and "Not Bank Reconciled" status with URL-based state persistence.
+  - **Pagination & Sorting**: Navigate large transaction lists with 50 rows per page, sticky headers, and column sorting.
+  - **Staging Area**: Bulk accept/dismiss actions and manual reconciliation for staged transactions.
 
 ### Budgeting & Planning
 - **📉 Budgeting**: Advanced budgeting system with semester views, baseline (expected) monthly budgets, and tracking of recurring and planned expenses.
@@ -29,11 +30,11 @@ FinTrack is a comprehensive personal finance management application designed to 
 
 ### Reports & Analytics
 - **📊 Reports**: Access detailed reports with granular breakdowns and interactive drilldowns.
-  - **Income Statement**: Monthly income and expense tracking with drilldown capabilities to view underlying transactions.
+  - **Net Worth History**: Dedicated report tracking net worth assets, liabilities, and evolution over time with charts and historical data tables.
+  - **Monthly Report**: Unified view for drilling down into Accounts, Categories, or Tags by month.
+  - **Income Statement**: Monthly income and expense tracking with drilldown capabilities.
   - **Balance Sheet**: Track assets, liabilities, and net worth over time.
-  - **Category Analysis**: Click on any category or monthly value to see detailed transaction breakdowns in a modal.
-  - **Account Reports**: Analyze account balances and transaction history with interactive drilldowns.
-  - **Reorganized Navigation**: Reports section includes sublinks for Accounts and Categories for easier access.
+  - **Drilldowns**: Interactive click-throughs on reports to view underlying transaction details.
 
 ### Customization & Settings
 - **⚙️ Settings**: Comprehensive customization options for your financial hub.
@@ -79,6 +80,7 @@ The application requires certain environment variables to be set. You can define
 | `DATABASE_URL` | Connection string for PostgreSQL (e.g., `postgres://user:pass@host:5432/db`) |
 | `DISABLE_SIGNUP` | Set to `true` to disable new user registrations |
 | `SSO_ONLY` | Set to `true` to disable local user registration and login|
+| `DISABLE_SSO` | Set to `true` to disable OIDC/SSO functionality even if configured |
 | `OIDC_ISSUER_URL` | (Optional) OIDC Issuer URL |
 | `OIDC_CLIENT_ID` | (Optional) OIDC Client ID |
 | `OIDC_CLIENT_SECRET` | (Optional) OIDC Client Secret |
