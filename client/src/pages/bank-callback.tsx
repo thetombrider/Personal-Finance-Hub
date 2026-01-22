@@ -170,9 +170,14 @@ export default function BankCallbackPage() {
                 updateProgress(`Linked ${action.name}`);
 
                 // Step B: Sync Transactions
+                // Book directly if this is a newly created account (no existing transactions by definition)
+                const shouldBookDirectly = action.type === 'create';
+
                 setStatusMessage(`Syncing transactions for ${action.name}...`);
                 try {
-                    const syncRes = await apiRequest("POST", `/api/gocardless/sync/${accountId}`);
+                    const syncRes = await apiRequest("POST", `/api/gocardless/sync/${accountId}`, {
+                        bookDirectly: shouldBookDirectly
+                    });
                     const syncData = await syncRes.json();
 
                     if (syncData.warning === "transaction_access_denied") {

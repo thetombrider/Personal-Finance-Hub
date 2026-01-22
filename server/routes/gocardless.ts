@@ -156,7 +156,10 @@ export function registerGoCardlessRoutes(app: Express) {
                 return res.status(400).json({ error: "Account is not linked to GoCardless" });
             }
 
-            const result = await gocardlessService.syncTransactions(req.user.id, accountId);
+            // Parse optional bookDirectly flag from body
+            const bookDirectly = req.body?.bookDirectly === true;
+
+            const result = await gocardlessService.syncTransactions(req.user.id, accountId, bookDirectly);
             await gocardlessService.syncBalances(accountId);
             res.json(result);
         } catch (error: any) {

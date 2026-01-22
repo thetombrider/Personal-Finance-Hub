@@ -225,7 +225,7 @@ class GoCardlessService {
         });
     }
 
-    async syncTransactions(userId: string, localAccountId: number) {
+    async syncTransactions(userId: string, localAccountId: number, bookDirectly: boolean = false) {
         const localAccount = await storage.getAccount(localAccountId);
         if (!localAccount || !localAccount.gocardlessAccountId) {
             throw new Error("Account not found or not linked to GoCardless");
@@ -380,19 +380,47 @@ class GoCardlessService {
                 // Update in-memory list
                 match.externalId = tx.transactionId;
             } else {
-                // Create new in STAGING
-                console.log(`Staging new tx for GoCardless tx ${tx.transactionId}`);
+                if (bookDirectly) {
+                    // BOOK DIRECTLY: Insert into transactions table
+                    // Find or create "Uncategorized" category
+                    let uncategorizedCategory = categories.find(c => c.name.toLowerCase() === "uncategorized");
+                    if (!uncategorizedCategory) {
+                        console.log(`[GoCardless] Creating "Uncategorized" category for user ${userId}`);
+                        uncategorizedCategory = await storage.createCategory({
+                            name: "Uncategorized",
+                            type: amount < 0 ? "expense" : "income",
+                            color: "#9CA3AF", // Gray
+                            userId: userId
+                        });
+                        categories.push(uncategorizedCategory); // Add to in-memory list for subsequent iterations
+                    }
 
-                await storage.createImportStaging({
-                    accountId: localAccountId,
-                    date: date,
-                    amount: amount.toFixed(2), // Store signed amount
-                    description: description,
-                    externalId: tx.transactionId,
-                    rawData: tx,
-                    suggestedCategoryId: await aiService.categorizeTransaction(description, categories)
-                });
-                addedCount++;
+                    console.log(`[GoCardless] Booking directly: ${tx.transactionId}`);
+                    await storage.createTransaction({
+                        accountId: localAccountId,
+                        date: date,
+                        amount: Math.abs(amount).toFixed(2), // Store as ABSOLUTE value
+                        description: description,
+                        categoryId: uncategorizedCategory.id,
+                        type: amount < 0 ? "expense" : "income",
+                        externalId: tx.transactionId
+                    });
+                    addedCount++;
+                } else {
+                    // STAGING: Create new in staging table
+                    console.log(`Staging new tx for GoCardless tx ${tx.transactionId}`);
+
+                    await storage.createImportStaging({
+                        accountId: localAccountId,
+                        date: date,
+                        amount: amount.toFixed(2), // Store signed amount
+                        description: description,
+                        externalId: tx.transactionId,
+                        rawData: tx,
+                        suggestedCategoryId: await aiService.categorizeTransaction(description, categories)
+                    });
+                    addedCount++;
+                }
             }
         }
 
