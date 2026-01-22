@@ -64,7 +64,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   // Initialize expanded state based on current location
   useEffect(() => {
-    if (location.startsWith("/reports") || location.startsWith("/accounts") || location.startsWith("/categories")) {
+    if (location.startsWith("/reports")) {
       setExpandedItems(prev => ({ ...prev, "Reports": true }));
     }
     if (location.startsWith("/budget")) {
@@ -104,8 +104,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       subItems: [
         { href: "/reports/income-statement", label: "Income Statement" },
         { href: "/reports/balance-sheet", label: "Balance Sheet" },
-        { href: "/accounts", label: "Accounts" },
-        { href: "/categories", label: "Categories" },
+        { href: "/reports/monthly", label: "Monthly Report" },
       ]
     },
     { href: "/portfolio", label: "Portfolio", icon: TrendingUp },

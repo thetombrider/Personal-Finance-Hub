@@ -172,7 +172,16 @@ export default function BankCallbackPage() {
                 // Step B: Sync Transactions
                 setStatusMessage(`Syncing transactions for ${action.name}...`);
                 try {
-                    await apiRequest("POST", `/api/gocardless/sync/${accountId}`);
+                    const syncRes = await apiRequest("POST", `/api/gocardless/sync/${accountId}`);
+                    const syncData = await syncRes.json();
+
+                    if (syncData.warning === "transaction_access_denied") {
+                        toast({
+                            title: "Limited Access",
+                            description: `Connected to ${action.name}, but transaction history could not be retrieved. Balance availability depends on bank support.`,
+                            variant: "default", // or warning if available, using default for now
+                        });
+                    }
                 } catch (e) {
                     console.error(`Failed to sync account ${accountId}`, e);
                     // Don't fail the whole process if sync fails
@@ -190,7 +199,7 @@ export default function BankCallbackPage() {
                 description: "Bank accounts linked and synced successfully.",
             });
             queryClient.invalidateQueries({ queryKey: ["/api/accounts"] });
-            setLocation("/accounts");
+            setLocation("/settings/accounts");
         } catch (error) {
             console.error(error);
             toast({
@@ -231,7 +240,7 @@ export default function BankCallbackPage() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="flex justify-end pt-4">
-                        <Button onClick={() => setLocation("/accounts")}>Go to Accounts</Button>
+                        <Button onClick={() => setLocation("/settings/accounts")}>Go to Accounts</Button>
                     </CardContent>
                 </Card>
             </div>
@@ -290,7 +299,7 @@ export default function BankCallbackPage() {
                     })}
 
                     <div className="flex justify-end gap-2 pt-4">
-                        <Button variant="outline" onClick={() => setLocation("/accounts")} disabled={processing}>
+                        <Button variant="outline" onClick={() => setLocation("/settings/accounts")} disabled={processing}>
                             Cancel
                         </Button>
                         <Button onClick={handleSave} disabled={processing}>

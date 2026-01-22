@@ -9,8 +9,7 @@ import AuthPage from "@/pages/AuthPage";
 import Landing from "@/pages/Landing";
 
 import Dashboard from "@/pages/Dashboard";
-import Accounts from "@/pages/Accounts";
-import Categories from "@/pages/Categories";
+import MonthlyReport from "@/pages/Reports/MonthlyReport";
 import Transactions from "@/pages/Transactions";
 import ImportTransactions from "@/pages/ImportTransactions";
 import Portfolio from "@/pages/Portfolio";
@@ -51,8 +50,7 @@ function Router() {
     <FinanceProvider>
       <Switch>
         <Route path="/" component={Dashboard} />
-        <Route path="/accounts" component={Accounts} />
-        <Route path="/categories" component={Categories} />
+        <Route path="/reports/monthly" component={MonthlyReport} />
         <Route path="/transactions" component={Transactions} />
         <Route path="/import" component={ImportTransactions} />
         <Route path="/budget/overview" component={Budget} />

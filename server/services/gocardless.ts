@@ -232,22 +232,92 @@ class GoCardlessService {
         }
 
         const gcAccountId = localAccount.gocardlessAccountId;
+        const isInitialSync = !localAccount.lastSynced;
 
         // Fetch last 180 days to support retroactive reconciliation
         const dateFrom = new Date();
         dateFrom.setDate(dateFrom.getDate() - 180);
         const dateFromStr = dateFrom.toISOString().split('T')[0];
 
-        const data = await this.getTransactions(gcAccountId, dateFromStr);
+        // Parallel fetch: Transactions AND Current Balance (needed for initial sync calculation)
+        const [transactionsData, balancesData] = await Promise.all([
+            this.getTransactions(gcAccountId, dateFromStr).catch(error => {
+                // Handle 403 Access Forbidden (e.g. user denied transaction access or account type doesn't support it)
+                if (error.response && error.response.status === 403) {
+                    console.warn(`[GoCardless] Transaction access forbidden (403) for account ${gcAccountId}. Proceeding with empty transactions.`);
+                    return { transactions: { booked: [] }, accessDenied: true };
+                }
+                throw error;
+            }),
+            isInitialSync ? this.getBalances(gcAccountId).catch(e => {
+                console.warn("[GoCardless] Failed to fetch balances during sync:", e);
+                return null;
+            }) : Promise.resolve(null)
+        ]);
 
-        if (!data || !data.transactions) {
+        if (!transactionsData || !transactionsData.transactions) {
             console.warn("No transaction data returned from GoCardless");
             return { added: 0, total: 0 };
         }
 
-        const booked = data.transactions.booked || [];
+        const booked = transactionsData.transactions.booked || [];
 
-        // Optimization: Fetch all data once before loop to avoid O(N*M) DB calls
+        // --- STARTING BALANCE CALCULATION (Initial Sync Only) ---
+        if (isInitialSync && balancesData?.balances) {
+            try {
+                // 1. Get Current Balance
+                const balanceObj = balancesData.balances.find((b: any) => b.balanceType === "interimAvailable")
+                    || balancesData.balances.find((b: any) => b.balanceType === "expected")
+                    || balancesData.balances.find((b: any) => b.balanceType === "closingBooked");
+
+                if (balanceObj && balanceObj.balanceAmount) {
+                    const currentBalance = parseFloat(balanceObj.balanceAmount.amount);
+                    let startingBalance = 0;
+                    let method = "CALCULATED";
+
+                    // 2. Try to find balanceBefore available in the OLDEST transaction
+                    // Sort booked to find the oldest one (API usually returns newest first, but let's be safe)
+                    const sortedTransactions = [...booked].sort((a, b) => {
+                        const dateA = new Date(a.bookingDate || a.valueDate).getTime();
+                        const dateB = new Date(b.bookingDate || b.valueDate).getTime();
+                        return dateA - dateB;
+                    });
+
+                    const oldestTx = sortedTransactions[0];
+
+                    // Check if transaction has balance info (Some banks provide this in proprietary fields or standard structure)
+                    // Note: Nordigen/GoCardless standardizes this as 'balanceAfterTransaction' usually, but it's optional.
+                    if (oldestTx && (oldestTx as any).balanceAfterTransaction && (oldestTx as any).balanceAfterTransaction.amount) {
+                        const balanceAfter = parseFloat((oldestTx as any).balanceAfterTransaction.amount.amount);
+                        const txAmount = parseFloat(oldestTx.transactionAmount.amount);
+                        // Starting balance = Balance After Oldest Tx - Oldest Tx Amount
+                        // Wait, 'starting balance' for our app means the balance *before* the first imported transaction.
+                        // So if we have t1, t2, t3...
+                        // Starting Balance should be: Balance(t0) = Balance(t1_after) - Amount(t1)
+                        startingBalance = balanceAfter - txAmount;
+                        method = "DIRECT_FROM_METADATA";
+                    } else {
+                        // 3. Fallback: Back-calculation
+                        // Starting Balance = Current Balance - Sum(All Imported Transactions)
+                        const sumTransactions = booked.reduce((sum: number, tx: any) => {
+                            return sum + parseFloat(tx.transactionAmount.amount);
+                        }, 0);
+
+                        startingBalance = currentBalance - sumTransactions;
+                    }
+
+                    console.log(`[GoCardless] Initial Sync: Setting starting balance for account ${localAccountId}.`);
+                    console.log(`[GoCardless] Method: ${method}, Current: ${currentBalance}, SumTx: ${booked.length > 0 ? booked.reduce((s: number, t: any) => s + parseFloat(t.transactionAmount.amount), 0) : 0}, Calculated Start: ${startingBalance}`);
+
+                    await storage.updateAccount(localAccountId, {
+                        startingBalance: startingBalance.toFixed(2)
+                    });
+                }
+            } catch (error) {
+                console.error("[GoCardless] Failed to calculate starting balance:", error);
+            }
+        }
+
         // Optimization: Fetch all data once before loop to avoid O(N*M) DB calls
         const allTransactions = await storage.getTransactions(userId);
         const accountTransactions = allTransactions.filter(t => t.accountId === localAccountId);
@@ -329,7 +399,11 @@ class GoCardlessService {
         // Update lastSynced timestamp
         await storage.updateAccount(localAccountId, { lastSynced: new Date().toISOString() });
 
-        return { added: addedCount, total: booked.length };
+        return {
+            added: addedCount,
+            total: booked.length,
+            warning: (transactionsData as any)?.accessDenied ? "transaction_access_denied" : undefined
+        };
     }
 
     async syncBalances(localAccountId: number) {
