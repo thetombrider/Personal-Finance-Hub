@@ -9,10 +9,11 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Edit2, Trash2, Plus, CalendarClock } from "lucide-react";
+import { Edit2, Trash2, Plus, CalendarClock, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { type Category, type PlannedExpense } from "@shared/schema";
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
+import { useState } from "react";
 
 interface PlannedTransactionsTableProps {
     transactions: PlannedExpense[];
@@ -24,6 +25,8 @@ interface PlannedTransactionsTableProps {
     emptyMessage: string;
 }
 
+type SortKey = keyof PlannedExpense | 'category';
+
 export function PlannedTransactionsTable({
     transactions,
     categories,
@@ -33,6 +36,49 @@ export function PlannedTransactionsTable({
     title,
     emptyMessage,
 }: PlannedTransactionsTableProps) {
+    const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'asc' | 'desc' } | null>(null);
+
+    const handleSort = (key: SortKey) => {
+        let direction: 'asc' | 'desc' = 'asc';
+        if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+            direction = 'desc';
+        }
+        setSortConfig({ key, direction });
+    };
+
+    const sortedTransactions = [...transactions].sort((a, b) => {
+        if (!sortConfig) return 0;
+
+        const { key, direction } = sortConfig;
+
+        if (key === 'category') {
+            const catA = getCategoryName(a.categoryId).toLowerCase();
+            const catB = getCategoryName(b.categoryId).toLowerCase();
+            if (catA < catB) return direction === 'asc' ? -1 : 1;
+            if (catA > catB) return direction === 'asc' ? 1 : -1;
+            return 0;
+        }
+
+        const valA = a[key as keyof PlannedExpense];
+        const valB = b[key as keyof PlannedExpense];
+
+        if (typeof valA === 'string' && typeof valB === 'string') {
+            return direction === 'asc'
+                ? valA.localeCompare(valB)
+                : valB.localeCompare(valA);
+        }
+
+        if (valA < valB) return direction === 'asc' ? -1 : 1;
+        if (valA > valB) return direction === 'asc' ? 1 : -1;
+        return 0;
+    });
+
+    const SortIcon = ({ column }: { column: SortKey }) => {
+        if (sortConfig?.key !== column) return <ArrowUpDown className="ml-2 h-4 w-4" />;
+        return sortConfig.direction === 'asc'
+            ? <ArrowUp className="ml-2 h-4 w-4" />
+            : <ArrowDown className="ml-2 h-4 w-4" />;
+    };
 
     const getCategoryName = (id: number) => {
         return categories.find(c => c.id === id)?.name || "Unknown";
@@ -68,15 +114,35 @@ export function PlannedTransactionsTable({
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Date</TableHead>
-                                <TableHead>Name</TableHead>
-                                <TableHead>Category</TableHead>
-                                <TableHead className="text-right">Amount</TableHead>
+                                <TableHead onClick={() => handleSort('date')} className="cursor-pointer hover:bg-muted/50">
+                                    <div className="flex items-center">
+                                        Date
+                                        <SortIcon column="date" />
+                                    </div>
+                                </TableHead>
+                                <TableHead onClick={() => handleSort('name')} className="cursor-pointer hover:bg-muted/50">
+                                    <div className="flex items-center">
+                                        Name
+                                        <SortIcon column="name" />
+                                    </div>
+                                </TableHead>
+                                <TableHead onClick={() => handleSort('category')} className="cursor-pointer hover:bg-muted/50">
+                                    <div className="flex items-center">
+                                        Category
+                                        <SortIcon column="category" />
+                                    </div>
+                                </TableHead>
+                                <TableHead className="text-right cursor-pointer hover:bg-muted/50" onClick={() => handleSort('amount')}>
+                                    <div className="flex items-center justify-end">
+                                        Amount
+                                        <SortIcon column="amount" />
+                                    </div>
+                                </TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {transactions.map((transaction) => (
+                            {sortedTransactions.map((transaction) => (
                                 <TableRow key={transaction.id}>
                                     <TableCell className="capitalize">
                                         {format(new Date(transaction.date), "dd MMMM yyyy", { locale: enUS })}
