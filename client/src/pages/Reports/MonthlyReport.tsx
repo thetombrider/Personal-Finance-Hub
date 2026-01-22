@@ -171,18 +171,11 @@ export default function MonthlyReport() {
             filters = { categoryId: category.id.toString(), dateFrom: fromDate, dateTo: toDate };
         } else if (viewMode === 'tags') {
             if (rowName === 'No Tag') {
-                // Special handling for No Tag if the backend supports it, otherwise finding 'no tag' is tricky via basic filters
-                // Usually boolean filter like 'hasTags: false'
-                // For now, let's just title it correctly, maybe we can't filter purely by 'no tag' easily in common drilldown yet which seems to check specific IDs?
-                // Let's assume there is currently NO specialized filter for "no tag" in TransactionDrilldown/list
-                // We will just show null filter or maybe specific hack if supported.
-                // If not supported, we might just show time range.
-                filters = { dateFrom: fromDate, dateTo: toDate };
-                // Ideally: { tagIds: [] } or { hasNoTags: true }
+                filters = { untagged: true, dateFrom: fromDate, dateTo: toDate };
             } else {
                 const tag = tags.find(t => t.name === rowName);
                 if (!tag) return;
-                filters = { tagId: tag.id.toString(), dateFrom: fromDate, dateTo: toDate };
+                filters = { tagIds: [tag.id], dateFrom: fromDate, dateTo: toDate };
             }
         }
 
@@ -212,11 +205,11 @@ export default function MonthlyReport() {
             filters = { categoryId: category.id.toString(), dateFrom: fromDate, dateTo: toDate };
         } else if (viewMode === 'tags') {
             if (rowName === 'No Tag') {
-                filters = { dateFrom: fromDate, dateTo: toDate };
+                filters = { untagged: true, dateFrom: fromDate, dateTo: toDate };
             } else {
                 const tag = tags.find(t => t.name === rowName);
                 if (!tag) return;
-                filters = { tagId: tag.id.toString(), dateFrom: fromDate, dateTo: toDate };
+                filters = { tagIds: [tag.id], dateFrom: fromDate, dateTo: toDate };
             }
         }
 
@@ -391,9 +384,7 @@ export default function MonthlyReport() {
                                                             {viewMode === 'tags' && rowName !== 'No Tag' && tag && (
                                                                 <div className="h-3 w-3 rounded-full ml-auto" style={{ backgroundColor: tag.color }} />
                                                             )}
-                                                            {viewMode === 'tags' && rowName === 'No Tag' && (
-                                                                <Badge variant="outline" className="ml-2 text-xs font-normal">Uncategorized</Badge>
-                                                            )}
+
                                                         </div>
                                                     </TableCell>
                                                     {visibleMonths.map(m => {

@@ -20,6 +20,8 @@ interface TransactionDrilldownProps {
         status?: string;
         dateFrom?: Date;
         dateTo?: Date;
+        tagIds?: number[];
+        untagged?: boolean;
     };
 }
 

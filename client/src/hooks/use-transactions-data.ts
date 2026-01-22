@@ -18,6 +18,8 @@ export interface TransactionFiltersState {
     setFilterType: (type: string) => void;
     filterTagIds: number[];
     setFilterTagIds: (ids: number[]) => void;
+    filterUntagged: boolean;
+    setFilterUntagged: (value: boolean) => void;
     dateFrom: Date | undefined;
     setDateFrom: (date: Date | undefined) => void;
     dateTo: Date | undefined;
@@ -39,6 +41,7 @@ interface UseTransactionsDataProps {
         dateFrom: Date;
         dateTo: Date;
         tagIds: number[];
+        untagged: boolean;
         searchQuery: string;
     }>;
     itemsPerPage?: number;
@@ -51,6 +54,7 @@ export function useTransactionsData({ transactions, accounts, categories, checks
     const [filterStatus, setFilterStatus] = useState<string>(initialFilters?.status || 'all');
     const [filterType, setFilterType] = useState<string>(initialFilters?.type || 'all');
     const [filterTagIds, setFilterTagIds] = useState<number[]>(initialFilters?.tagIds || []);
+    const [filterUntagged, setFilterUntagged] = useState<boolean>(initialFilters?.untagged || false);
     const [dateFrom, setDateFrom] = useState<Date | undefined>(initialFilters?.dateFrom);
     const [dateTo, setDateTo] = useState<Date | undefined>(initialFilters?.dateTo);
 
@@ -102,6 +106,13 @@ export function useTransactionsData({ transactions, accounts, categories, checks
             }
             if (filterStatus === 'recurring' && !matchedTransactions.has(t.id)) {
                 return false;
+            }
+
+            // Untagged filter
+            if (filterUntagged) {
+                if (t.tags && t.tags.length > 0) {
+                    return false;
+                }
             }
 
             // Tag filter
@@ -189,6 +200,7 @@ export function useTransactionsData({ transactions, accounts, categories, checks
         setFilterStatus('all');
         setFilterType('all');
         setFilterTagIds([]);
+        setFilterUntagged(false);
         setDateFrom(undefined);
         setDateTo(undefined);
         setCurrentPage(1);
@@ -208,6 +220,7 @@ export function useTransactionsData({ transactions, accounts, categories, checks
             filterStatus, setFilterStatus,
             filterType, setFilterType,
             filterTagIds, setFilterTagIds,
+            filterUntagged, setFilterUntagged,
             dateFrom, setDateFrom,
             dateTo, setDateTo,
             hasActiveFilters,
