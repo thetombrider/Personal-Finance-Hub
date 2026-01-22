@@ -104,6 +104,9 @@ export function useTransactionsData({ transactions, accounts, categories, checks
             if (filterStatus === 'bank' && !t.externalId) {
                 return false;
             }
+            if (filterStatus === 'not-bank' && t.externalId) {
+                return false;
+            }
             if (filterStatus === 'recurring' && !matchedTransactions.has(t.id)) {
                 return false;
             }

@@ -284,6 +284,7 @@ export function TransactionFilters({
                                             <SelectContent>
                                                 <SelectItem value="all">All</SelectItem>
                                                 <SelectItem value="bank">Bank Reconciled</SelectItem>
+                                                <SelectItem value="not-bank">Not Bank Reconciled</SelectItem>
                                                 <SelectItem value="recurring">Recurring Expenses</SelectItem>
                                             </SelectContent>
                                         </Select>

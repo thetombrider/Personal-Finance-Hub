@@ -10,6 +10,7 @@ import Landing from "@/pages/Landing";
 
 import Dashboard from "@/pages/Dashboard";
 import MonthlyReport from "@/pages/Reports/MonthlyReport";
+import NetWorthReport from "@/pages/Reports/NetWorthReport";
 import Transactions from "@/pages/Transactions";
 import ImportTransactions from "@/pages/ImportTransactions";
 import Portfolio from "@/pages/Portfolio";
@@ -51,6 +52,7 @@ function Router() {
       <Switch>
         <Route path="/" component={Dashboard} />
         <Route path="/reports/monthly" component={MonthlyReport} />
+        <Route path="/reports/net-worth" component={NetWorthReport} />
         <Route path="/transactions" component={Transactions} />
         <Route path="/import" component={ImportTransactions} />
         <Route path="/budget/overview" component={Budget} />

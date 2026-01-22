@@ -105,6 +105,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         { href: "/reports/income-statement", label: "Income Statement" },
         { href: "/reports/balance-sheet", label: "Balance Sheet" },
         { href: "/reports/monthly", label: "Monthly Report" },
+        { href: "/reports/net-worth", label: "Net Worth" },
       ]
     },
     { href: "/portfolio", label: "Portfolio", icon: TrendingUp },
