@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { useFinance } from "@/context/FinanceContext";
 import { apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
-import { Check, X, Loader2, RefreshCw, Pencil, Undo } from "lucide-react";
+import { Check, X, Loader2, RefreshCw, Pencil, Undo, Link } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
