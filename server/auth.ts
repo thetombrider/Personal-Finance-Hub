@@ -70,14 +70,18 @@ export function setupAuth(app: Express) {
     const oidcTokenUrl = process.env.OIDC_TOKEN_URL?.trim() || `${oidcIssuer}/protocol/openid-connect/token`;
     const oidcUserInfoUrl = process.env.OIDC_USERINFO_URL?.trim() || `${oidcIssuer}/protocol/openid-connect/userinfo`;
 
-    const oidcEnabled = !!(oidcIssuer && oidcClientId && oidcClientSecret && oidcCallbackUrl);
+    const oidcEnabled = process.env.DISABLE_SSO !== "true" && !!(oidcIssuer && oidcClientId && oidcClientSecret && oidcCallbackUrl);
 
-    // Validate SSO_ONLY configuration
+    // Validate SSO_ONLY and DISABLE_SSO configuration
+    if (process.env.SSO_ONLY === "true" && process.env.DISABLE_SSO === "true") {
+        throw new Error("Invalid configuration: Cannot have both SSO_ONLY and DISABLE_SSO enabled.");
+    }
+
     if (process.env.SSO_ONLY === "true" && !oidcEnabled) {
         throw new Error(
-            "SSO_ONLY is enabled but OIDC is not properly configured. " +
+            "SSO_ONLY is enabled but OIDC is not properly configured used or is disabled. " +
             "Please set OIDC_ISSUER_URL, OIDC_CLIENT_ID, OIDC_CLIENT_SECRET, and OIDC_CALLBACK_URL " +
-            "environment variables, or disable SSO_ONLY."
+            "environment variables, OR disable SSO_ONLY, OR enable SSO (remove DISABLE_SSO)."
         );
     }
 
@@ -345,7 +349,7 @@ export function setupAuth(app: Express) {
     app.get("/api/auth/config", (_req, res) => {
         res.json({
             disableSignup: process.env.DISABLE_SIGNUP === "true",
-            oidcEnabled: !!(process.env.OIDC_ISSUER_URL && process.env.OIDC_CLIENT_ID && process.env.OIDC_CLIENT_SECRET && process.env.OIDC_CALLBACK_URL),
+            oidcEnabled: oidcEnabled,
             ssoOnly: process.env.SSO_ONLY === "true"
         });
     });
