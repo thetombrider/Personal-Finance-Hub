@@ -20,6 +20,8 @@ interface TransactionFiltersProps {
     setDateFrom: (date: Date | undefined) => void;
     dateTo: Date | undefined;
     setDateTo: (date: Date | undefined) => void;
+    filterAccountType: string;
+    setFilterAccountType: (type: string) => void;
     filterAccountId: string;
     setFilterAccountId: (id: string) => void;
     filterCategoryId: string;
@@ -61,6 +63,7 @@ export function TransactionFilters({
     searchQuery, setSearchQuery,
     dateFrom, setDateFrom,
     dateTo, setDateTo,
+    filterAccountType, setFilterAccountType,
     filterAccountId, setFilterAccountId,
     filterCategoryId, setFilterCategoryId,
     filterStatus, setFilterStatus,
@@ -318,19 +321,35 @@ export function TransactionFilters({
                                 )}
 
                                 {selectedFilter === 'account' && (
-                                    <div>
-                                        <Label className="text-sm font-medium mb-2 block">Select Account</Label>
-                                        <Select value={filterAccountId} onValueChange={setFilterAccountId}>
-                                            <SelectTrigger data-testid="select-filter-account">
-                                                <SelectValue placeholder="All Accounts" />
-                                            </SelectTrigger>
-                                            <SelectContent className="max-h-[200px]">
-                                                <SelectItem value="all">All Accounts</SelectItem>
-                                                {accounts.map(acc => (
-                                                    <SelectItem key={acc.id} value={acc.id.toString()}>{acc.name}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <Label className="text-sm font-medium mb-2 block">Account Type</Label>
+                                            <Select value={filterAccountType} onValueChange={setFilterAccountType}>
+                                                <SelectTrigger data-testid="select-filter-account-type">
+                                                    <SelectValue placeholder="All Types" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="all">All Types</SelectItem>
+                                                    <SelectItem value="linked">Linked Accounts</SelectItem>
+                                                    <SelectItem value="manual">Manual Accounts</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+
+                                        <div>
+                                            <Label className="text-sm font-medium mb-2 block">Select Account</Label>
+                                            <Select value={filterAccountId} onValueChange={setFilterAccountId}>
+                                                <SelectTrigger data-testid="select-filter-account">
+                                                    <SelectValue placeholder="All Accounts" />
+                                                </SelectTrigger>
+                                                <SelectContent className="max-h-[200px]">
+                                                    <SelectItem value="all">All Accounts</SelectItem>
+                                                    {accounts.map(acc => (
+                                                        <SelectItem key={acc.id} value={acc.id.toString()}>{acc.name}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
                                     </div>
                                 )}
 

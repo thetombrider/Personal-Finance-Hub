@@ -14,6 +14,8 @@ export interface TransactionFiltersState {
     setFilterCategoryId: (id: string) => void;
     filterStatus: string;
     setFilterStatus: (status: string) => void;
+    filterAccountType: string;
+    setFilterAccountType: (type: string) => void;
     filterType: string;
     setFilterType: (type: string) => void;
     filterTagIds: number[];
@@ -35,6 +37,7 @@ interface UseTransactionsDataProps {
     checks?: RecurringExpenseCheck[];
     initialFilters?: Partial<{
         accountId: string;
+        accountType: string;
         categoryId: string;
         type: string;
         status: string;
@@ -50,6 +53,7 @@ interface UseTransactionsDataProps {
 export function useTransactionsData({ transactions, accounts, categories, checks, initialFilters, itemsPerPage: customItemsPerPage = 50 }: UseTransactionsDataProps) {
     const [searchQuery, setSearchQuery] = useState(initialFilters?.searchQuery || '');
     const [filterAccountId, setFilterAccountId] = useState<string>(initialFilters?.accountId || 'all');
+    const [filterAccountType, setFilterAccountType] = useState<string>(initialFilters?.accountType || 'all');
     const [filterCategoryId, setFilterCategoryId] = useState<string>(initialFilters?.categoryId || 'all');
     const [filterStatus, setFilterStatus] = useState<string>(initialFilters?.status || 'all');
     const [filterType, setFilterType] = useState<string>(initialFilters?.type || 'all');
@@ -88,6 +92,16 @@ export function useTransactionsData({ transactions, accounts, categories, checks
             // Account filter
             if (filterAccountId !== 'all' && t.accountId !== parseInt(filterAccountId)) {
                 return false;
+            }
+
+            // Account Type filter
+            if (filterAccountType !== 'all') {
+                const account = accounts.find(a => a.id === t.accountId);
+                if (filterAccountType === 'linked') {
+                    if (!account?.bankConnectionId) return false;
+                } else if (filterAccountType === 'manual') {
+                    if (account?.bankConnectionId) return false;
+                }
             }
 
             // Category filter
@@ -147,7 +161,7 @@ export function useTransactionsData({ transactions, accounts, categories, checks
 
             return true;
         });
-    }, [transactions, searchQuery, filterAccountId, filterCategoryId, filterStatus, filterType, filterTagIds, dateFrom, dateTo, matchedTransactions]);
+    }, [transactions, searchQuery, filterAccountId, filterAccountType, filterCategoryId, filterStatus, filterType, filterTagIds, dateFrom, dateTo, matchedTransactions, accounts]);
 
     const sortedTransactions = useMemo(() => {
         const sorted = [...filteredTransactions].sort((a, b) => {
@@ -199,6 +213,7 @@ export function useTransactionsData({ transactions, accounts, categories, checks
     const clearFilters = () => {
         setSearchQuery('');
         setFilterAccountId('all');
+        setFilterAccountType('all');
         setFilterCategoryId('all');
         setFilterStatus('all');
         setFilterType('all');
@@ -209,7 +224,7 @@ export function useTransactionsData({ transactions, accounts, categories, checks
         setCurrentPage(1);
     };
 
-    const hasActiveFilters = !!(searchQuery || filterAccountId !== 'all' || filterCategoryId !== 'all' || filterStatus !== 'all' || filterType !== 'all' || filterTagIds.length > 0 || dateFrom || dateTo);
+    const hasActiveFilters = !!(searchQuery || filterAccountId !== 'all' || filterAccountType !== 'all' || filterCategoryId !== 'all' || filterStatus !== 'all' || filterType !== 'all' || filterTagIds.length > 0 || dateFrom || dateTo);
 
     return {
         filteredTransactions,
@@ -219,6 +234,7 @@ export function useTransactionsData({ transactions, accounts, categories, checks
         filterState: {
             searchQuery, setSearchQuery,
             filterAccountId, setFilterAccountId,
+            filterAccountType, setFilterAccountType,
             filterCategoryId, setFilterCategoryId,
             filterStatus, setFilterStatus,
             filterType, setFilterType,
