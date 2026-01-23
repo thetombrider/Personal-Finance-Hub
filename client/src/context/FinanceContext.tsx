@@ -91,12 +91,24 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   const accounts = useMemo(() => {
     return rawAccounts.map((account: any) => {
       const accountTransactions = transactions.filter((t: Transaction) => t.accountId === account.id);
-      const total = accountTransactions.reduce((sum: number, t: Transaction) => {
-        return sum + (t.type === 'income' ? parseFloat(t.amount) : -parseFloat(t.amount));
-      }, 0);
+      const income = accountTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + parseFloat(t.amount), 0);
+      const expense = accountTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + parseFloat(t.amount), 0);
+      const starting = parseFloat(account.startingBalance || "0");
+      const total = income - expense;
+      const balance = starting + total;
+
+      if (account.type === 'credit') {
+        console.log(`[FinanceContext] Credit Account Debug: ${account.name}`);
+        console.log(`  Starting: ${starting}`);
+        console.log(`  Income (Payments): ${income}`);
+        console.log(`  Expense (Using): ${expense}`);
+        console.log(`  Calculated Balance: ${balance}`);
+        console.log(`  Transactions Count: ${accountTransactions.length}`);
+      }
+
       return {
         ...account,
-        balance: parseFloat(account.startingBalance || "0") + total
+        balance
       } as Account;
     });
   }, [rawAccounts, transactions]);
