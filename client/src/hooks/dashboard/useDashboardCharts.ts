@@ -363,7 +363,7 @@ export function useDashboardCharts({
                     totalDisplay: name === 'Investments' && portfolioSummary ? portfolioSummary.totalCurrentValue : stats.value
                 };
             })
-            .filter(item => item.base > 0 || item.gain > 0 || item.loss > 0)
+            .filter(item => item.base !== 0 || item.gain !== 0 || item.loss !== 0)
             .sort((a, b) => {
                 // Sort by total magnitude
                 const valA = a.base + a.gain + a.loss;
