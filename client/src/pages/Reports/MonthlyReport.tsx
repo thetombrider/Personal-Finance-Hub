@@ -58,14 +58,14 @@ export default function MonthlyReport() {
     const canGoBack = page < totalPages - 1;
     const canGoForward = page > 0;
 
+    // Helper to check if transaction is a transfer
+    const isTransfer = (t: any) => {
+        const category = categories.find(c => c.id === t.categoryId);
+        return category?.type === 'transfer';
+    };
+
     const rowData = useMemo(() => {
         const data: Record<string, Record<string, number>> = {};
-
-        // Helper to check if transaction is a transfer
-        const isTransfer = (t: any) => {
-            const category = categories.find(c => c.id === t.categoryId);
-            return category?.type === 'transfer';
-        };
 
         if (viewMode === 'accounts') {
             accounts.forEach(acc => {
@@ -486,6 +486,8 @@ export default function MonthlyReport() {
                                                     transactions.forEach(t => {
                                                         const tDate = parseISO(t.date);
                                                         if (format(tDate, 'yyyy-MM') === m.key) {
+                                                            if (reportType === 'spending' && isTransfer(t)) return;
+
                                                             const amount = parseFloat(t.amount) || 0;
                                                             if (t.type === 'income') monthTotal += amount;
                                                             else monthTotal -= amount;
@@ -513,6 +515,8 @@ export default function MonthlyReport() {
                                                             // Optimization: just check if the monthKey is in the monthsList
                                                             const tMonthKey = format(tDate, 'yyyy-MM');
                                                             if (monthsList.some(m => m.key === tMonthKey)) {
+                                                                if (reportType === 'spending' && isTransfer(t)) return;
+
                                                                 const amount = parseFloat(t.amount) || 0;
                                                                 if (t.type === 'income') grandTotal += amount;
                                                                 else grandTotal -= amount;
