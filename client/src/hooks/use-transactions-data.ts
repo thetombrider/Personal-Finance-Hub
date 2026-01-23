@@ -26,6 +26,8 @@ export interface TransactionFiltersState {
     setDateFrom: (date: Date | undefined) => void;
     dateTo: Date | undefined;
     setDateTo: (date: Date | undefined) => void;
+    filterExcludeTransfers: boolean;
+    setFilterExcludeTransfers: (value: boolean) => void;
     hasActiveFilters: boolean;
     clearFilters: () => void;
 }
@@ -45,6 +47,7 @@ interface UseTransactionsDataProps {
         dateTo: Date;
         tagIds: number[];
         untagged: boolean;
+        excludeTransfers: boolean;
         searchQuery: string;
     }>;
     itemsPerPage?: number;
@@ -59,6 +62,7 @@ export function useTransactionsData({ transactions, accounts, categories, checks
     const [filterType, setFilterType] = useState<string>(initialFilters?.type || 'all');
     const [filterTagIds, setFilterTagIds] = useState<number[]>(initialFilters?.tagIds || []);
     const [filterUntagged, setFilterUntagged] = useState<boolean>(initialFilters?.untagged || false);
+    const [filterExcludeTransfers, setFilterExcludeTransfers] = useState<boolean>(initialFilters?.excludeTransfers || false);
     const [dateFrom, setDateFrom] = useState<Date | undefined>(initialFilters?.dateFrom);
     const [dateTo, setDateTo] = useState<Date | undefined>(initialFilters?.dateTo);
 
@@ -159,9 +163,25 @@ export function useTransactionsData({ transactions, accounts, categories, checks
                 }
             }
 
+            if (dateTo) {
+                const endOfDay = new Date(dateTo);
+                endOfDay.setHours(23, 59, 59, 999);
+                if (transactionDate > endOfDay) {
+                    return false;
+                }
+            }
+
+            // Exclude Transfers filter
+            if (filterExcludeTransfers) {
+                const category = categories.find(c => c.id === t.categoryId);
+                if (category?.type === 'transfer') {
+                    return false;
+                }
+            }
+
             return true;
         });
-    }, [transactions, searchQuery, filterAccountId, filterAccountType, filterCategoryId, filterStatus, filterType, filterTagIds, dateFrom, dateTo, matchedTransactions, accounts]);
+    }, [transactions, searchQuery, filterAccountId, filterAccountType, filterCategoryId, filterStatus, filterType, filterTagIds, filterExcludeTransfers, dateFrom, dateTo, matchedTransactions, accounts, categories]);
 
     const sortedTransactions = useMemo(() => {
         const sorted = [...filteredTransactions].sort((a, b) => {
@@ -219,12 +239,13 @@ export function useTransactionsData({ transactions, accounts, categories, checks
         setFilterType('all');
         setFilterTagIds([]);
         setFilterUntagged(false);
+        setFilterExcludeTransfers(false);
         setDateFrom(undefined);
         setDateTo(undefined);
         setCurrentPage(1);
     };
 
-    const hasActiveFilters = !!(searchQuery || filterAccountId !== 'all' || filterAccountType !== 'all' || filterCategoryId !== 'all' || filterStatus !== 'all' || filterType !== 'all' || filterTagIds.length > 0 || dateFrom || dateTo);
+    const hasActiveFilters = !!(searchQuery || filterAccountId !== 'all' || filterAccountType !== 'all' || filterCategoryId !== 'all' || filterStatus !== 'all' || filterType !== 'all' || filterTagIds.length > 0 || filterExcludeTransfers || dateFrom || dateTo);
 
     return {
         filteredTransactions,
@@ -240,6 +261,7 @@ export function useTransactionsData({ transactions, accounts, categories, checks
             filterType, setFilterType,
             filterTagIds, setFilterTagIds,
             filterUntagged, setFilterUntagged,
+            filterExcludeTransfers, setFilterExcludeTransfers,
             dateFrom, setDateFrom,
             dateTo, setDateTo,
             hasActiveFilters,

@@ -21,7 +21,9 @@ interface TransactionDrilldownProps {
         dateFrom?: Date;
         dateTo?: Date;
         tagIds?: number[];
+
         untagged?: boolean;
+        excludeTransfers?: boolean;
     };
 }
 
@@ -178,7 +180,7 @@ export function TransactionDrilldown({ isOpen, onClose, title, initialFilters }:
                 } : null : null}
                 accounts={accounts}
                 categories={categories}
-                isEditing={!!editingId}
+                mode={editingId ? "edit" : "create"}
             />
 
         </Dialog>

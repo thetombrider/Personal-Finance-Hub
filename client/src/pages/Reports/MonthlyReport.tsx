@@ -17,6 +17,7 @@ type ViewMode = 'accounts' | 'categories' | 'tags';
 export default function MonthlyReport() {
     const { accounts, categories, tags, transactions, formatCurrency, isLoading } = useFinance();
     const [viewMode, setViewMode] = useState<ViewMode>('accounts');
+    const [reportType, setReportType] = useState<'spending' | 'net_flow'>('spending');
     const [timeRange, setTimeRange] = useState('12');
     const [page, setPage] = useState(0);
 
@@ -75,7 +76,8 @@ export default function MonthlyReport() {
             });
 
             transactions.forEach(t => {
-                if (isTransfer(t)) return; // Exclude transfers
+                const isTransferMatch = isTransfer(t);
+                if (reportType === 'spending' && isTransferMatch) return; // Exclude transfers only in spending mode
 
                 const account = accounts.find(a => a.id === t.accountId);
                 if (!account) return;
@@ -93,7 +95,7 @@ export default function MonthlyReport() {
                 }
             });
         } else if (viewMode === 'categories') {
-            const relevantCategories = categories.filter(c => c.type !== 'transfer');
+            const relevantCategories = categories.filter(c => reportType === 'net_flow' || c.type !== 'transfer');
 
             relevantCategories.forEach(cat => {
                 data[cat.name] = {};
@@ -103,12 +105,25 @@ export default function MonthlyReport() {
             });
 
             transactions.forEach(t => {
-                if (isTransfer(t)) return; // Exclude transfers
+                const isTransferMatch = isTransfer(t);
+                // In categories view, if we are in spending mode, we exclude transfers.
+                // If in net_flow mode, we include them. But where do they go?
+                // They go to their respective categories. Since we filtered relevantCategories above to exclude transfers in the row setup,
+                // we need to make sure we include transfer categories in the rows if reportType is net_flow.
+                if (reportType === 'spending' && isTransferMatch) return;
 
                 const category = categories.find(c => c.id === t.categoryId);
                 if (!category) return;
-                // Double check if category is in our data map (it should be since we filtered relevantCategories)
-                if (!data[category.name]) return;
+
+                // If net_flow and is transfer, we need to make sure the row exists or we add it dynamically?
+                // The current row setup (lines 96-103) filters categories. We should fix that first.
+                // But wait, I can't easily change the row setup inside this loop block without changing the above block.
+                // I'll need to update the relevantCategories logic.
+                if (!data[category.name]) {
+                    // logic to handle if row doesn't exist (e.g. transfer category in net_flow mode but not in initial relevantCategories)
+                    // See below for a better approach to fix the row setup.
+                    return;
+                }
 
                 const tDate = parseISO(t.date);
                 const monthKey = format(tDate, 'yyyy-MM');
@@ -138,7 +153,8 @@ export default function MonthlyReport() {
             });
 
             transactions.forEach(t => {
-                if (isTransfer(t)) return; // Exclude transfers
+                const isTransferMatch = isTransfer(t);
+                if (reportType === 'spending' && isTransferMatch) return; // Exclude transfers in spending mode
 
                 const tDate = parseISO(t.date);
                 const monthKey = format(tDate, 'yyyy-MM');
@@ -161,7 +177,7 @@ export default function MonthlyReport() {
         }
 
         return data;
-    }, [transactions, accounts, categories, tags, monthsList, viewMode]);
+    }, [transactions, accounts, categories, tags, monthsList, viewMode, reportType]);
 
     const handleDrilldown = (rowName: string, monthKey: string) => {
         const [year, month] = monthKey.split('-').map(Number);
@@ -188,6 +204,12 @@ export default function MonthlyReport() {
                 if (!tag) return;
                 filters = { tagIds: [tag.id], dateFrom: fromDate, dateTo: toDate };
             }
+        }
+
+
+        // Add excludeTransfers to filters if in spending mode
+        if (reportType === 'spending') {
+            filters = { ...filters, excludeTransfers: true };
         }
 
         setDrilldownConfig({
@@ -224,6 +246,12 @@ export default function MonthlyReport() {
             }
         }
 
+
+        // Add excludeTransfers to filters if in spending mode
+        if (reportType === 'spending') {
+            filters = { ...filters, excludeTransfers: true };
+        }
+
         setDrilldownConfig({
             isOpen: true,
             title: `${rowName} - Total (${timeRange} months)`,
@@ -243,6 +271,7 @@ export default function MonthlyReport() {
             filters: {
                 dateFrom: fromDate,
                 dateTo: toDate,
+                excludeTransfers: reportType === 'spending',
             },
         });
     }
@@ -260,6 +289,7 @@ export default function MonthlyReport() {
             filters: {
                 dateFrom: fromDate,
                 dateTo: toDate,
+                excludeTransfers: reportType === 'spending',
             },
         });
     }
@@ -298,6 +328,16 @@ export default function MonthlyReport() {
                                 <SelectItem value="accounts">By Account</SelectItem>
                                 <SelectItem value="categories">By Category</SelectItem>
                                 <SelectItem value="tags">By Tag</SelectItem>
+                            </SelectContent>
+                        </Select>
+
+                        <Select value={reportType} onValueChange={(v: 'spending' | 'net_flow') => setReportType(v)}>
+                            <SelectTrigger className="w-[240px]">
+                                <SelectValue placeholder="Report Type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="spending">Spending (No Transfers)</SelectItem>
+                                <SelectItem value="net_flow">Net Flow (All)</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
