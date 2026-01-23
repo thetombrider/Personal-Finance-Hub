@@ -266,9 +266,10 @@ class GoCardlessService {
         if (isInitialSync && balancesData?.balances) {
             try {
                 // 1. Get Current Balance
-                const balanceObj = balancesData.balances.find((b: any) => b.balanceType === "interimAvailable")
+                const balanceObj = balancesData.balances.find((b: any) => b.balanceType === "closingBooked")
+                    || balancesData.balances.find((b: any) => b.balanceType === "interimBooked")
                     || balancesData.balances.find((b: any) => b.balanceType === "expected")
-                    || balancesData.balances.find((b: any) => b.balanceType === "closingBooked");
+                    || balancesData.balances.find((b: any) => b.balanceType === "interimAvailable");
 
                 if (balanceObj && balanceObj.balanceAmount) {
                     const currentBalance = parseFloat(balanceObj.balanceAmount.amount);
@@ -443,9 +444,10 @@ class GoCardlessService {
             if (balances && balances.balances) {
                 // Find the interimAvailable or closingBooked balance
                 // GoCardless returns an array of balances with different types
-                const balanceObj = balances.balances.find((b: any) => b.balanceType === "interimAvailable")
+                const balanceObj = balances.balances.find((b: any) => b.balanceType === "closingBooked")
+                    || balances.balances.find((b: any) => b.balanceType === "interimBooked")
                     || balances.balances.find((b: any) => b.balanceType === "expected")
-                    || balances.balances.find((b: any) => b.balanceType === "closingBooked");
+                    || balances.balances.find((b: any) => b.balanceType === "interimAvailable");
 
                 if (balanceObj && balanceObj.balanceAmount) {
                     const amount = parseFloat(balanceObj.balanceAmount.amount);
