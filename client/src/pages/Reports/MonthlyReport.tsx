@@ -60,6 +60,12 @@ export default function MonthlyReport() {
     const rowData = useMemo(() => {
         const data: Record<string, Record<string, number>> = {};
 
+        // Helper to check if transaction is a transfer
+        const isTransfer = (t: any) => {
+            const category = categories.find(c => c.id === t.categoryId);
+            return category?.type === 'transfer';
+        };
+
         if (viewMode === 'accounts') {
             accounts.forEach(acc => {
                 data[acc.name] = {};
@@ -69,6 +75,8 @@ export default function MonthlyReport() {
             });
 
             transactions.forEach(t => {
+                if (isTransfer(t)) return; // Exclude transfers
+
                 const account = accounts.find(a => a.id === t.accountId);
                 if (!account) return;
 
@@ -85,9 +93,7 @@ export default function MonthlyReport() {
                 }
             });
         } else if (viewMode === 'categories') {
-            const relevantCategories = categories.filter(c =>
-                c.name.toLowerCase() !== 'trasferimenti'
-            );
+            const relevantCategories = categories.filter(c => c.type !== 'transfer');
 
             relevantCategories.forEach(cat => {
                 data[cat.name] = {};
@@ -97,8 +103,11 @@ export default function MonthlyReport() {
             });
 
             transactions.forEach(t => {
+                if (isTransfer(t)) return; // Exclude transfers
+
                 const category = categories.find(c => c.id === t.categoryId);
-                if (!category || category.name.toLowerCase() === 'trasferimenti') return;
+                if (!category) return;
+                // Double check if category is in our data map (it should be since we filtered relevantCategories)
                 if (!data[category.name]) return;
 
                 const tDate = parseISO(t.date);
@@ -129,6 +138,8 @@ export default function MonthlyReport() {
             });
 
             transactions.forEach(t => {
+                if (isTransfer(t)) return; // Exclude transfers
+
                 const tDate = parseISO(t.date);
                 const monthKey = format(tDate, 'yyyy-MM');
                 const amount = parseFloat(t.amount) || 0;
