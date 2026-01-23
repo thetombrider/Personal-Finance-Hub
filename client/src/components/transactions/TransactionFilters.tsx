@@ -184,6 +184,83 @@ export function TransactionFilters({
                             <div className="flex-1 p-4">
                                 {selectedFilter === 'date' && (
                                     <div className="space-y-4">
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <div>
+                                                <Label className="text-sm font-medium mb-2 block">Year</Label>
+                                                <Select
+                                                    value={dateFrom ? dateFrom.getFullYear().toString() : undefined}
+                                                    onValueChange={(val) => {
+                                                        const year = parseInt(val);
+                                                        // Always default to full year when selecting a year
+                                                        const start = new Date(year, 0, 1);
+                                                        const end = new Date(year, 11, 31);
+                                                        setDateFrom(start);
+                                                        setDateTo(end);
+                                                    }}
+                                                >
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Year" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i + 1).map(year => (
+                                                            <SelectItem key={year} value={year.toString()}>
+                                                                {year}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div>
+                                                <Label className="text-sm font-medium mb-2 block">Month</Label>
+                                                <Select
+                                                    value={(() => {
+                                                        if (!dateFrom || !dateTo) return undefined;
+                                                        // If strictly same month and year
+                                                        if (dateFrom.getMonth() === dateTo.getMonth() &&
+                                                            dateFrom.getFullYear() === dateTo.getFullYear()) {
+                                                            return dateFrom.getMonth().toString();
+                                                        }
+                                                        // If strictly full year
+                                                        if (dateFrom.getMonth() === 0 && dateFrom.getDate() === 1 &&
+                                                            dateTo.getMonth() === 11 && dateTo.getDate() === 31) {
+                                                            return "all";
+                                                        }
+                                                        return undefined;
+                                                    })()}
+                                                    onValueChange={(val) => {
+                                                        const currentYear = dateFrom ? dateFrom.getFullYear() : new Date().getFullYear();
+                                                        if (val === "all") {
+                                                            const start = new Date(currentYear, 0, 1);
+                                                            const end = new Date(currentYear, 11, 31);
+                                                            setDateFrom(start);
+                                                            setDateTo(end);
+                                                        } else {
+                                                            const month = parseInt(val);
+                                                            const start = new Date(currentYear, month, 1);
+                                                            // end of month: day 0 of next month
+                                                            const end = new Date(currentYear, month + 1, 0);
+                                                            setDateFrom(start);
+                                                            setDateTo(end);
+                                                        }
+                                                    }}
+                                                >
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Month" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="all">All Year</SelectItem>
+                                                        {Array.from({ length: 12 }, (_, i) => i).map(month => (
+                                                            <SelectItem key={month} value={month.toString()}>
+                                                                {format(new Date(2024, month, 1), "MMMM")}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                        </div>
+
+                                        <div className="border-t my-2"></div>
+
                                         <div>
                                             <Label className="text-sm font-medium mb-2 block">From</Label>
                                             <Popover>
