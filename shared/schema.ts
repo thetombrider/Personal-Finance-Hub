@@ -27,6 +27,8 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
   oidcId: varchar("oidc_id").unique(),
   appearanceSettings: jsonb("appearance_settings").$type<{ font: string }>(),
+  onboardingCompleted: boolean("onboarding_completed").default(false),
+  onboardingSkipped: boolean("onboarding_skipped").default(false),
 });
 
 export type UpsertUser = typeof users.$inferInsert;

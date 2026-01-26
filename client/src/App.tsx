@@ -24,9 +24,19 @@ import EmailReports from "@/pages/settings/EmailReports";
 import Settings from "@/pages/settings/Settings";
 import { FinanceProvider } from "@/context/FinanceContext";
 import BankCallbackPage from "@/pages/bank-callback";
+import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
+import { useState, useEffect } from "react";
 
 function Router() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // Show onboarding for new users who haven't completed or skipped
+  useEffect(() => {
+    if (user && !user.onboardingCompleted && !user.onboardingSkipped) {
+      setShowOnboarding(true);
+    }
+  }, [user]);
 
   if (isLoading) {
     return (
@@ -49,6 +59,12 @@ function Router() {
 
   return (
     <FinanceProvider>
+      {showOnboarding && (
+        <OnboardingWizard
+          isOpen={showOnboarding}
+          onOpenChange={setShowOnboarding}
+        />
+      )}
       <Switch>
         <Route path="/" component={Dashboard} />
         <Route path="/reports/monthly" component={MonthlyReport} />

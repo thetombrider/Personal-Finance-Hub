@@ -299,6 +299,10 @@ export function setupAuth(app: Express) {
             if (req.body.profileImageUrl !== undefined) updateData.profileImageUrl = req.body.profileImageUrl;
             if (req.body.appearanceSettings !== undefined) updateData.appearanceSettings = req.body.appearanceSettings;
 
+            // Update onboarding status
+            if (req.body.onboardingCompleted !== undefined) updateData.onboardingCompleted = req.body.onboardingCompleted;
+            if (req.body.onboardingSkipped !== undefined) updateData.onboardingSkipped = req.body.onboardingSkipped;
+
             // Update password
             if (req.body.password) {
                 updateData.password = await hashPassword(req.body.password);

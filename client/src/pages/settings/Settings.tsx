@@ -11,6 +11,7 @@ import Layout from "@/components/Layout";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
 
 
 import {
@@ -42,7 +43,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, Trash2, RefreshCw, AlertCircle, CheckCircle2, Download, ChevronDown, FileText, Landmark, Tags, ArrowRightLeft, PieChart, CalendarClock, TrendingUp } from "lucide-react";
+import { Plus, Trash2, RefreshCw, AlertCircle, CheckCircle2, Download, ChevronDown, FileText, Landmark, Tags, ArrowRightLeft, PieChart, CalendarClock, TrendingUp, BookOpen } from "lucide-react";
 
 const formSchema = z.object({
     firstName: z.string().optional(),
@@ -68,6 +69,7 @@ export default function Settings() {
     const [isLoading, setIsLoading] = useState(false);
     const [isBankModalOpen, setIsBankModalOpen] = useState(false);
     const [renewingInstitutionId, setRenewingInstitutionId] = useState<string | null>(null);
+    const [showTourModal, setShowTourModal] = useState(false);
 
     const { data: authConfig } = useQuery<{ oidcEnabled: boolean }>({
         queryKey: ["/api/auth/config"],
@@ -359,6 +361,39 @@ export default function Settings() {
 
                         <div className="space-y-6">
                             <div>
+                                <h3 className="text-lg font-medium">App Tour</h3>
+                                <p className="text-sm text-muted-foreground">
+                                    Revisit the onboarding tour to learn about FinTrack's features.
+                                </p>
+                            </div>
+                            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg bg-background">
+                                <div>
+                                    <h4 className="font-medium">Restart App Tour</h4>
+                                    <p className="text-sm text-muted-foreground">
+                                        Walk through the onboarding wizard again to refresh your knowledge.
+                                    </p>
+                                </div>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={async () => {
+                                        // Reset onboarding flags and show wizard
+                                        await apiRequest("PUT", "/api/user", {
+                                            onboardingCompleted: false,
+                                            onboardingSkipped: false
+                                        });
+                                        await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+                                        setShowTourModal(true);
+                                    }}
+                                >
+                                    <BookOpen className="mr-2 h-4 w-4" />
+                                    Start Tour
+                                </Button>
+                            </div>
+                        </div>
+
+                        <div className="space-y-6">
+                            <div>
                                 <h3 className="text-lg font-medium">Data Management</h3>
                                 <p className="text-sm text-muted-foreground">
                                     Export your data or permanently delete your account.
@@ -470,6 +505,13 @@ export default function Settings() {
                     </form>
                 </Form>
             </div>
+
+            {showTourModal && (
+                <OnboardingWizard
+                    isOpen={showTourModal}
+                    onOpenChange={setShowTourModal}
+                />
+            )}
         </Layout>
     );
 }
