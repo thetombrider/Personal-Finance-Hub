@@ -309,6 +309,7 @@ export default function Budget() {
                                 categories={data.categories}
                                 budgetData={data.budgetData}
                                 monthRange={monthRange}
+                                onDrilldown={handleBudgetDrilldown}
                             />
                         </section>
                     )}
@@ -444,6 +445,6 @@ export default function Budget() {
                     data={drilldownConfig.data}
                 />
             </div>
-        </Layout >
+        </Layout>
     );
 }
