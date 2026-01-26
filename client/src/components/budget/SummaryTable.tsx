@@ -13,9 +13,10 @@ interface SummaryTableProps {
     categories: Category[];
     budgetData: Record<number, Record<number, { total: number }>>;
     monthRange: [number, number]; // [start, end] indices (0-11)
+    onDrilldown?: (categoryId: number, month: number) => void;
 }
 
-export function SummaryTable({ categories, budgetData, monthRange }: SummaryTableProps) {
+export function SummaryTable({ categories, budgetData, monthRange, onDrilldown }: SummaryTableProps) {
     const allMonths = [
         "Jan", "Feb", "Mar", "Apr", "May", "Jun",
         "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
@@ -75,7 +76,11 @@ export function SummaryTable({ categories, budgetData, monthRange }: SummaryTabl
                                 const monthDataIndex = startMonthIndex + index + 1;
                                 const amount = budgetData[category.id]?.[monthDataIndex]?.total || 0;
                                 return (
-                                    <TableCell key={index} className="text-right text-muted-foreground p-2">
+                                    <TableCell
+                                        key={index}
+                                        className={`text-right text-muted-foreground p-2 ${onDrilldown ? "cursor-pointer hover:bg-muted font-medium hover:text-primary hover:underline transition-colors" : ""}`}
+                                        onClick={() => onDrilldown?.(category.id, monthDataIndex - 1)} // Passing 0-based month index
+                                    >
                                         {amount > 0 ? formatCurrency(amount) : "-"}
                                     </TableCell>
                                 );
@@ -119,7 +124,11 @@ export function SummaryTable({ categories, budgetData, monthRange }: SummaryTabl
                                 const monthDataIndex = startMonthIndex + index + 1;
                                 const amount = budgetData[category.id]?.[monthDataIndex]?.total || 0;
                                 return (
-                                    <TableCell key={index} className="text-right text-muted-foreground p-2">
+                                    <TableCell
+                                        key={index}
+                                        className={`text-right text-muted-foreground p-2 ${onDrilldown ? "cursor-pointer hover:bg-muted font-medium hover:text-primary hover:underline transition-colors" : ""}`}
+                                        onClick={() => onDrilldown?.(category.id, monthDataIndex - 1)} // Passing 0-based month index
+                                    >
                                         {amount > 0 ? formatCurrency(amount) : "-"}
                                     </TableCell>
                                 );

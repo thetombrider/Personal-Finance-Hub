@@ -20,6 +20,8 @@ import { AddPlannedExpenseForm } from "@/components/budget/AddPlannedExpenseForm
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useFinance } from "@/context/FinanceContext";
 import { RecurringTransactionsMonitoring } from "@/components/budget/RecurringTransactionsMonitoring";
+import { BudgetDrilldown } from "@/components/budget/BudgetDrilldown";
+import { format } from "date-fns";
 
 interface YearlyBudgetData {
     categories: any[];
@@ -45,6 +47,22 @@ export default function Budget() {
     // Track which type we are adding (income or expense)
     const [addRecurringType, setAddRecurringType] = useState<'income' | 'expense'>('expense');
     const [addPlannedType, setAddPlannedType] = useState<'income' | 'expense'>('expense');
+
+    // Drilldown state
+    const [drilldownConfig, setDrilldownConfig] = useState<{
+        open: boolean;
+        title: string;
+        data: {
+            baseline: number;
+            planned: PlannedExpense[];
+            recurring: RecurringExpense[];
+            total: number;
+        };
+    }>({
+        open: false,
+        title: "",
+        data: { baseline: 0, planned: [], recurring: [], total: 0 }
+    });
 
     // Default redirect if just /budget
 
@@ -150,6 +168,76 @@ export default function Budget() {
 
     const getCategoryType = (categoryId: number) => {
         return categories.find(c => c.id === categoryId)?.type || 'expense';
+    };
+
+    const handleBudgetDrilldown = (categoryId: number, monthIndex: number) => {
+        // monthIndex is 0-11
+        if (!data) return;
+
+        const category = categories.find(c => c.id === categoryId);
+        if (!category) return;
+
+        const monthDataIndex = monthIndex + 1; // 1-12 based
+        const cellData = data.budgetData[categoryId]?.[monthDataIndex];
+
+        if (!cellData) return;
+
+        // Filter planned expenses for this specific month
+        const planned = data.plannedExpenses.filter(e => {
+            const d = new Date(e.date);
+            return e.categoryId === categoryId && d.getMonth() === monthIndex && d.getFullYear() === currentYear;
+        });
+
+        // Filter recurring expenses active in this month
+        // We need check checks logic?
+        // Actually, the server likely aggregates this. 
+        // But for drilldown, we just want to show *which* recurring expenses contribute.
+        // The server response `recurring` key in `budgetData` is the sum.
+        // We'll filter the recurring list by category.
+        // Note: Actual recurring attribution is complex due to start/end dates.
+        // For simplicity, we show recurring expenses of this category that are active in this month.
+
+        const monthStart = new Date(currentYear, monthIndex, 1);
+        const monthEnd = new Date(currentYear, monthIndex + 1, 0);
+
+        const recurring = data.recurringExpenses.filter(e => {
+            if (e.categoryId !== categoryId) return false;
+            // Check if active
+            const start = new Date(e.startDate);
+            const end = e.endDate ? new Date(e.endDate) : null;
+
+            // Simple check: active if start <= monthEnd AND (!end || end >= monthStart)
+            // And also check interval? For now assume monthly items or items that hit this month.
+            // If interval is yearly, we'd need to check the specific month. 
+            // BUT, the budget calculation on server does this precise logic.
+            // Replicating it 100% here might be tricky without shared logic.
+            // However, most relevant is to show the user WHAT recurring expenses exist.
+
+            if (start > monthEnd) return false;
+            if (end && end < monthStart) return false;
+
+            // If yearly, only show if it matches the month
+            if (e.interval === 'yearly') {
+                // e.startDate determines the month
+                // if e.g. 15th Jan, it repeats every Jan.
+                if (start.getMonth() !== monthIndex) return false;
+            }
+
+            return true;
+        });
+
+        const monthName = format(new Date(currentYear, monthIndex, 1), "MMMM");
+
+        setDrilldownConfig({
+            open: true,
+            title: `${category.name} - ${monthName} ${currentYear}`,
+            data: {
+                baseline: cellData.baseline,
+                planned: planned,
+                recurring: recurring,
+                total: cellData.total
+            }
+        });
     };
 
     if (isLoading || !data) {
@@ -347,7 +435,15 @@ export default function Budget() {
                         />
                     </DialogContent>
                 </Dialog>
+
+                {/* Drilldown Modal */}
+                <BudgetDrilldown
+                    isOpen={drilldownConfig.open}
+                    onClose={() => setDrilldownConfig(prev => ({ ...prev, open: false }))}
+                    title={drilldownConfig.title}
+                    data={drilldownConfig.data}
+                />
             </div>
-        </Layout>
+        </Layout >
     );
 }
