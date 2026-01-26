@@ -102,22 +102,30 @@ export function registerReportRoutes(app: Express) {
             console.log("[scheduler] Sending weekly report...");
             try {
                 // Get all users with email addresses and send reports
-                // For now, keeping the original single-user behavior but using email from user record
-                const email = "tommasominuto@gmail.com";
-                const user = await storage.getUserByEmail(email);
-                if (!user) {
-                    console.error("[scheduler] User not found for email:", email);
-                    return;
+                // Get all users with email addresses and send reports
+                const users = await storage.getAllUsers();
+                console.log(`[scheduler] Found ${users.length} users to process.`);
+
+                for (const user of users) {
+                    if (!user.email) {
+                        console.log(`[scheduler] Skipping user ${user.username} (no email)`);
+                        continue;
+                    }
+
+                    try {
+                        const data = await reportService.getWeeklyReportData(user.id);
+                        const html = reportService.generateHtml(data);
+                        const now = new Date();
+                        await sendEmail(
+                            user.email,
+                            `📊 Report Settimanale FinTrack - ${now.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })}`,
+                            html
+                        );
+                        console.log(`[scheduler] Weekly report sent successfully to ${user.email}`);
+                    } catch (err) {
+                        console.error(`[scheduler] Failed to send report to ${user.email}:`, err);
+                    }
                 }
-                const data = await reportService.getWeeklyReportData(user.id);
-                const html = reportService.generateHtml(data);
-                const now = new Date();
-                await sendEmail(
-                    email,
-                    `📊 Report Settimanale FinTrack - ${now.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })}`,
-                    html
-                );
-                console.log(`[scheduler] Weekly report sent successfully to ${email}`);
             } catch (error) {
                 console.error("[scheduler] Failed to send weekly report:", error);
             }

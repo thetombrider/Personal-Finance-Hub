@@ -74,6 +74,7 @@ export interface IStorage {
   getUserByOidcId(oidcId: string): Promise<User | undefined>;
   createUser(user: UpsertUser): Promise<User>;
   updateUser(id: string, user: Partial<UpsertUser>): Promise<User | undefined>;
+  getAllUsers(): Promise<User[]>;
 
   // Accounts
   getAccounts(userId: string): Promise<Account[]>;
@@ -215,6 +216,7 @@ export class DatabaseStorage implements IStorage {
   getUserByOidcId = (oidcId: string) => this.userRepo.getUserByOidcId(oidcId);
   createUser = (user: UpsertUser) => this.userRepo.createUser(user);
   updateUser = (id: string, user: Partial<UpsertUser>) => this.userRepo.updateUser(id, user);
+  getAllUsers = () => this.userRepo.getAllUsers();
 
   // Account operations - delegate to AccountRepository
   getAccounts = (userId: string) => this.accountRepo.getAccounts(userId);

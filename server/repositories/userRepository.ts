@@ -41,4 +41,8 @@ export class UserRepository {
         const [user] = await db.update(users).set(userData).where(eq(users.id, id)).returning();
         return user;
     }
+
+    async getAllUsers(): Promise<User[]> {
+        return await db.select().from(users);
+    }
 }
