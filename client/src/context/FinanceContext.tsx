@@ -2,6 +2,8 @@ import { createContext, useContext, ReactNode, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import * as api from "@/lib/api";
+import { invalidationHelpers } from "@/lib/queryInvalidation";
+import { formatCurrency as formatCurrencyUtil } from "@/lib/formatters";
 import type { TransferData } from "@/lib/api";
 import type { InsertAccount, InsertCategory, InsertTransaction, Account as DbAccount, Category as DbCategory, Transaction as DbTransaction, Tag as DbTag, InsertTag } from "@shared/schema";
 
@@ -105,14 +107,14 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   const createAccountMutation = useMutation({
     mutationFn: api.createAccount,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      invalidationHelpers.accounts(queryClient);
     },
   });
 
   const createAccountsBulkMutation = useMutation({
     mutationFn: api.createAccountsBulk,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      invalidationHelpers.accounts(queryClient);
     },
   });
 
@@ -120,15 +122,14 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     mutationFn: ({ id, account }: { id: number; account: Partial<InsertAccount> }) =>
       api.updateAccount(id, account),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      invalidationHelpers.accounts(queryClient);
     },
   });
 
   const deleteAccountMutation = useMutation({
     mutationFn: api.deleteAccount,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["accounts"] });
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      invalidationHelpers.accounts(queryClient);
     },
   });
 
@@ -136,14 +137,14 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   const createCategoryMutation = useMutation({
     mutationFn: api.createCategory,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      invalidationHelpers.categories(queryClient);
     },
   });
 
   const createCategoriesBulkMutation = useMutation({
     mutationFn: api.createCategoriesBulk,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      invalidationHelpers.categories(queryClient);
     },
   });
 
@@ -151,14 +152,14 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     mutationFn: ({ id, category }: { id: number; category: Partial<InsertCategory> }) =>
       api.updateCategory(id, category),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      invalidationHelpers.categories(queryClient);
     },
   });
 
   const deleteCategoryMutation = useMutation({
     mutationFn: api.deleteCategory,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      invalidationHelpers.categories(queryClient);
     },
   });
 
@@ -169,7 +170,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tags"] });
+      invalidationHelpers.tags(queryClient);
     },
   });
 
@@ -179,7 +180,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tags"] });
+      invalidationHelpers.tags(queryClient);
     },
   });
 
@@ -188,9 +189,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       await apiRequest("DELETE", `/api/tags/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tags"] });
-      // Tags might have been removed from transactions so refresh them too
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      invalidationHelpers.tags(queryClient);
     },
   });
 
@@ -199,7 +198,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       await apiRequest("POST", "/api/tags/batch", { transactionIds, tagIds });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      invalidationHelpers.transactions(queryClient);
     },
   });
 
@@ -208,7 +207,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       await apiRequest("POST", "/api/tags/batch-delete", { transactionIds, tagIds });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      invalidationHelpers.transactions(queryClient);
     },
   });
 
@@ -226,21 +225,21 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       return newTx;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      invalidationHelpers.transactions(queryClient);
     },
   });
 
   const createTransactionsBulkMutation = useMutation({
     mutationFn: api.createTransactionsBulk,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      invalidationHelpers.transactions(queryClient);
     },
   });
 
   const createTransferMutation = useMutation({
     mutationFn: api.createTransfer,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      invalidationHelpers.transactions(queryClient);
     },
   });
 
@@ -254,7 +253,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      invalidationHelpers.transactions(queryClient);
     },
   });
 
@@ -263,29 +262,28 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       await api.updateTransactionsBulk(ids, updates);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["accounts"] }); // Balance might change if amount changed (though amount is disabled for now)
+      invalidationHelpers.transactions(queryClient);
     },
   });
 
   const deleteTransactionMutation = useMutation({
     mutationFn: api.deleteTransaction,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      invalidationHelpers.transactions(queryClient);
     },
   });
 
   const deleteTransactionsBulkMutation = useMutation({
     mutationFn: api.deleteTransactionsBulk,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      invalidationHelpers.transactions(queryClient);
     },
   });
 
   const clearTransactionsMutation = useMutation({
     mutationFn: api.clearTransactions,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      invalidationHelpers.transactions(queryClient);
     },
   });
 
@@ -378,8 +376,8 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     return accounts.find((a: Account) => a.id === id)?.balance || 0;
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(amount);
+  const formatCurrencyValue = (amount: number) => {
+    return formatCurrencyUtil(amount);
   };
 
   return (
@@ -389,7 +387,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       addCategory, addCategories, updateCategory, deleteCategory,
       addTag, updateTag, deleteTag, batchAssignTags, batchRemoveTags,
       addTransaction, addTransactions, addTransfer, updateTransaction, updateTransactions, deleteTransaction, deleteTransactions, clearTransactions,
-      getAccountBalance, formatCurrency
+      getAccountBalance, formatCurrency: formatCurrencyValue
     }}>
       {children}
     </FinanceContext.Provider>

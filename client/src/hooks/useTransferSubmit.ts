@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import { useFinance } from "@/context/FinanceContext";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { findTransferCategory } from "@/lib/categoryUtils";
 import type { Category } from "@shared/schema";
 
 interface TransferFormValues {
@@ -23,12 +24,8 @@ export function useTransferSubmit(options: UseTransferSubmitOptions = {}) {
 
     const findOrCreateTransferCategory = useCallback(async (): Promise<number | null> => {
         // Look for existing transfer category
-        const transferCategory = categories.find(
-            (c: Category) =>
-                c.name.toLowerCase() === "trasferimenti" ||
-                c.name.toLowerCase() === "transfer" ||
-                c.name.toLowerCase() === "transfers"
-        );
+        // Look for existing transfer category
+        const transferCategory = findTransferCategory(categories);
 
         if (transferCategory) {
             return transferCategory.id;

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useFinance, Tag } from "@/context/FinanceContext";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Check, ChevronsUpDown, Plus } from "lucide-react";
@@ -52,11 +52,14 @@ export function TagInput({ selectedTagIds, onTagsChange, className, placeholder 
         <div className={cn("flex flex-col gap-2", className)}>
             <Popover open={open} onOpenChange={setOpen}>
                 <PopoverTrigger asChild>
-                    <Button
-                        variant="outline"
+                    <div
                         role="combobox"
                         aria-expanded={open}
-                        className="w-full justify-between h-auto min-h-[2.5rem] py-2 px-3 hover:bg-transparent"
+                        className={cn(
+                            buttonVariants({ variant: "outline" }),
+                            "w-full justify-between h-auto min-h-[2.5rem] py-2 px-3 hover:bg-transparent cursor-pointer"
+                        )}
+                        onClick={() => setOpen(!open)}
                     >
                         <div className="flex flex-wrap gap-1 items-center w-full">
                             {selectedTags.length === 0 && <span className="text-muted-foreground font-normal">{placeholder}</span>}
@@ -69,7 +72,7 @@ export function TagInput({ selectedTagIds, onTagsChange, className, placeholder 
                             ))}
                         </div>
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
+                    </div>
                 </PopoverTrigger>
                 <PopoverContent className="w-[300px] p-0" align="start">
                     <Command>

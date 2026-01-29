@@ -30,7 +30,7 @@ import { format } from "date-fns";
 import { apiRequest } from "@/lib/queryClient";
 
 export default function Dashboard() {
-  const { accounts, transactions, categories, formatCurrency, addTransaction, addCategory, addTransfer } = useFinance();
+  const { accounts, transactions, categories, formatCurrency, addTransaction } = useFinance();
   const [, setLocation] = useLocation();
   const [categoryTrendId, setCategoryTrendId] = useState<string>("");
   const [privacyMode, setPrivacyMode] = useState(false);

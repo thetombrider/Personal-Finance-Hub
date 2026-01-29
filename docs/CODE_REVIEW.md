@@ -13,8 +13,6 @@ This document identifies structural issues, code duplications, and refactoring o
 
 ## Table of Contents
 
-1. [Query Deduplication](#1-query-deduplication)
-2. [Hook Extraction Candidates](#2-hook-extraction-candidates)
 3. [Logic Duplication](#3-logic-duplication)
 4. [Logging Standardization](#4-logging-standardization)
 5. [Error Handling](#5-error-handling)
@@ -23,62 +21,6 @@ This document identifies structural issues, code duplications, and refactoring o
 8. [Type Safety Issues](#8-type-safety-issues)
 9. [Implementation Examples](#9-implementation-examples)
 10. [Refactoring Checklist](#10-refactoring-checklist)
-
----
-
-## 1. Query Deduplication
-
-### Duplicated Queries That Need Hooks
-
-| Query Purpose | Duplicated In | Extract To |
-|---------------|---------------|------------|
-| Pending staging transaction count | `Dashboard.tsx`, `Transactions.tsx` | `hooks/queries/usePendingStagingCount.ts` |
-| Budget data by year | `Dashboard.tsx`, `Budget.tsx` | `hooks/queries/useBudgetData.ts` |
-| Missing recurring transactions | `Dashboard.tsx`, `MissingRecurringTransactionsModal.tsx` | `hooks/queries/useMissingRecurringTransactions.ts` |
-| Reconciliation checks | `Transactions.tsx`, `TransactionDrilldown.tsx` | `hooks/queries/useReconciliationChecks.ts` |
-| Auth configuration | `AuthPage.tsx`, `Settings.tsx` | `hooks/queries/useAuthConfig.ts` |
-| Bank connections | `ManageAccounts.tsx` (should be shared) | `hooks/queries/useBankConnections.ts` |
-
-### How to Fix
-
-1. Create a new file in `client/src/hooks/queries/`
-2. Move the `useQuery` call from the component into the hook
-3. Export the hook
-4. Replace inline queries in components with the hook import
-5. Ensure query keys are consistent
-
----
-
-## 2. Hook Extraction Candidates
-
-### High Priority (Eliminate Duplication)
-
-```
-client/src/hooks/
-├── queries/
-│   ├── usePendingStagingCount.ts      # Staging tx count
-│   ├── useBudgetData.ts               # Budget by year
-│   ├── useMissingRecurringTransactions.ts
-│   ├── useReconciliationChecks.ts
-│   ├── useReconciliationStatus.ts     # Status for month/year
-│   ├── useAuthConfig.ts
-│   └── useBankConnections.ts
-├── mutations/
-│   ├── useBudgetMutations.ts          # Budget CRUD
-│   ├── useStagingMutations.ts         # Approve/dismiss/restore
-│   ├── useTradeMutations.ts           # Trade CRUD
-│   └── useWebhookMutations.ts         # Webhook CRUD
-└── useTransferSubmit.ts               # Transfer creation logic
-```
-
-### FinanceContext Mutation Split
-
-The `FinanceContext.tsx` (407 lines) contains 18 mutations. Consider splitting:
-
-- `useAccountMutations` - 4 mutations (create, createBulk, update, delete)
-- `useCategoryMutations` - 4 mutations
-- `useTagMutations` - 5 mutations (includes batch assign/remove)
-- `useTransactionMutations` - 7 mutations
 
 ---
 

@@ -1,4 +1,5 @@
 import { useFinance, Transaction } from "@/context/FinanceContext";
+import { useTransferSubmit } from "@/hooks/useTransferSubmit";
 
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
@@ -18,10 +19,11 @@ import { BulkTagDialog } from "@/components/transactions/BulkTagDialog";
 import { ImportedTransactions } from "@/components/ImportedTransactions";
 import { RefreshCw, List, Tag } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import { invalidationHelpers } from "@/lib/queryInvalidation";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Transactions() {
-  const { transactions, accounts, categories, tags, addTransaction, addCategory, addTransfer, updateTransaction, updateTransactions, deleteTransaction, deleteTransactions, formatCurrency, isLoading } = useFinance();
+  const { transactions, accounts, categories, tags, addTransaction, updateTransaction, updateTransactions, deleteTransaction, deleteTransactions, formatCurrency, isLoading } = useFinance();
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isTransferDialogOpen, setIsTransferDialogOpen] = useState(false);
@@ -63,9 +65,7 @@ export default function Transactions() {
       }
     }
 
-    queryClient.invalidateQueries({ queryKey: ["accounts"] });
-    queryClient.invalidateQueries({ queryKey: ["transactions"] });
-    queryClient.invalidateQueries({ queryKey: ["/api/transactions/staging"] });
+    invalidationHelpers.transactions(queryClient);
 
     setIsSyncingAll(false);
     toast({
@@ -87,7 +87,7 @@ export default function Transactions() {
     paginationState
   } = useTransactionsData({ transactions, accounts, categories, checks });
 
-  const transferCategory = categories.find(c => c.name.toLowerCase() === "trasferimenti" || c.name.toLowerCase() === "transfer");
+
 
   const onSubmit = async (data: TransactionFormValues | BulkTransactionFormValues, dirtyFields?: Partial<Record<keyof TransactionFormValues, boolean>>) => {
     if (formMode === 'bulk-edit') {
@@ -137,41 +137,9 @@ export default function Transactions() {
     setEditFormData(null);
   };
 
-  const onTransferSubmit = async (data: TransferFormValues) => {
-    let transferCategoryId = transferCategory?.id;
-
-    // If transfer category doesn't exist, create it
-    if (!transferCategory) {
-      try {
-        const newCategory = await addCategory({
-          name: "Transfers",
-          type: "transfer",
-          color: "#94a3b8",
-          icon: "ArrowLeftRight",
-        });
-        transferCategoryId = newCategory.id;
-      } catch (error) {
-        alert("Failed to create transfer category. Please create it manually in settings.");
-        return;
-      }
-    }
-
-    if (!transferCategoryId) {
-      alert("Category 'Transfers' not found. Please create it first in settings.");
-      return;
-    }
-
-    await addTransfer({
-      amount: data.amount.toString(),
-      description: data.description,
-      fromAccountId: data.fromAccountId,
-      toAccountId: data.toAccountId,
-      categoryId: transferCategoryId,
-      date: format(data.date, "yyyy-MM-dd'T'HH:mm:ss"),
-    });
-
-    setIsTransferDialogOpen(false);
-  };
+  const { submitTransfer } = useTransferSubmit({
+    onSuccess: () => setIsTransferDialogOpen(false),
+  });
 
   const handleEdit = (transaction: Transaction) => {
     setEditingId(transaction.id);
@@ -443,7 +411,7 @@ export default function Transactions() {
         <TransferForm
           isOpen={isTransferDialogOpen}
           onOpenChange={setIsTransferDialogOpen}
-          onSubmit={onTransferSubmit}
+          onSubmit={async (data) => { await submitTransfer(data); }}
           accounts={accounts}
         />
 
