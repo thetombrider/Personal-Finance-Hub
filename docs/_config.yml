@@ -31,8 +31,10 @@ back_to_top_text: "Back to top"
 
 # Plugins
 plugins:
+  - jekyll-remote-theme
   - jekyll-seo-tag
   - jekyll-sitemap
+  - jekyll-include-cache
 
 # Exclude from build
 exclude:
