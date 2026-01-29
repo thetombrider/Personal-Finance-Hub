@@ -1,5 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
+import { logger } from "./lib/logger";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 
@@ -23,16 +24,16 @@ app.use(
 
 app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 
-export function log(message: string, source = "express") {
-  const formattedTime = new Date().toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: true,
-  });
-
-  console.log(`${formattedTime} [${source}] ${message}`);
-}
+// function log(message: string, source = "express") {
+//   const formattedTime = new Date().toLocaleTimeString("en-US", {
+//     hour: "numeric",
+//     minute: "2-digit",
+//     second: "2-digit",
+//     hour12: true,
+//   });
+// 
+//   console.log(`${formattedTime} [${source}] ${message}`);
+// }
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -41,7 +42,7 @@ app.use((req, res, next) => {
     const duration = Date.now() - start;
     if (path.startsWith("/api")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      log(logLine);
+      logger.api.info(logLine);
     }
   });
 
@@ -57,7 +58,7 @@ app.use((req, res, next) => {
       const message = err.message || "Internal Server Error";
 
       res.status(status).json({ message });
-      console.error("Express error:", err);
+      logger.api.error("Express error:", err);
     });
 
     // importantly only setup vite in development and after
@@ -80,18 +81,18 @@ app.use((req, res, next) => {
         host: "0.0.0.0",
       },
       () => {
-        log(`Server started successfully on port ${port}`);
-        log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+        logger.api.info(`Server started successfully on port ${port}`);
+        logger.api.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
       },
     );
 
     httpServer.on('error', (err) => {
-      console.error('Server error:', err);
+      logger.api.error('Server error:', err);
       process.exit(1);
     });
 
   } catch (error) {
-    console.error('Failed to start server:', error);
+    logger.api.error('Failed to start server:', error);
     process.exit(1);
   }
 })();

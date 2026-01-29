@@ -2,6 +2,7 @@ import { subMonths } from "date-fns";
 import type { Express } from "express";
 import { storage } from "../storage";
 import { reconciliationService } from "../services/reconciliation";
+import { logger } from "../lib/logger";
 import "./types";
 
 export function registerReconciliationRoutes(app: Express) {
@@ -24,7 +25,7 @@ export function registerReconciliationRoutes(app: Express) {
             await reconciliationService.checkRecurringExpenses(req.user.id, parsedYear, parsedMonth);
             res.json({ success: true });
         } catch (error) {
-            console.error("Reconciliation check error:", error);
+            logger.reconciliation.error("Reconciliation check error:", error);
             res.status(500).json({ error: "Failed to run reconciliation check" });
         }
     });
@@ -43,7 +44,7 @@ export function registerReconciliationRoutes(app: Express) {
             const checks = await storage.getRecurringExpenseChecks(req.user.id, year, month);
             res.json(checks);
         } catch (error) {
-            console.error("Reconciliation status error:", error);
+            logger.reconciliation.error("Reconciliation status error:", error);
             res.status(500).json({ error: "Failed to fetch reconciliation status" });
         }
     });
@@ -54,7 +55,7 @@ export function registerReconciliationRoutes(app: Express) {
             const checks = await storage.getAllRecurringExpenseChecks(req.user.id);
             res.json(checks);
         } catch (error) {
-            console.error("Fetch all checks error:", error);
+            logger.reconciliation.error("Fetch all checks error:", error);
             res.status(500).json({ error: "Failed to fetch checks" });
         }
     });
@@ -80,7 +81,7 @@ export function registerReconciliationRoutes(app: Express) {
 
             res.json({ count: results.length, missing: results });
         } catch (error) {
-            console.error("Missing checks error:", error);
+            logger.reconciliation.error("Missing checks error:", error);
             res.status(500).json({ error: "Failed to fetch missing checks" });
         }
     });

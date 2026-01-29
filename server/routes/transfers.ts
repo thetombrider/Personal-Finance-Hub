@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { storage } from "../storage";
 import { z } from "zod";
 import { checkOwnership } from "./middleware";
+import { logger } from "../lib/logger";
 import "./types";
 
 export function registerTransferRoutes(app: Express) {
@@ -39,11 +40,12 @@ export function registerTransferRoutes(app: Express) {
             const result = await storage.createTransfer(validated);
             res.status(201).json(result);
         } catch (error) {
+
             if (error instanceof z.ZodError) {
-                console.error("Transfer validation error:", error.errors);
+                logger.transfers.error("Transfer validation error:", error.errors);
                 return res.status(400).json({ error: error.errors });
             }
-            console.error("Failed to create transfer:", error);
+            logger.transfers.error("Failed to create transfer:", error);
             res.status(500).json({ error: "Failed to create transfer" });
         }
     });

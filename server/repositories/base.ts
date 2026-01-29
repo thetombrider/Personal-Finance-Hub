@@ -4,6 +4,7 @@
  */
 
 import { db } from "../db";
+import { logger } from "../lib/logger";
 import crypto from "crypto";
 
 // Encryption setup for sensitive fields
@@ -12,7 +13,7 @@ const ALGORITHM = 'aes-256-cbc';
 // In production, APP_SECRET must be set - fail fast if missing
 const isProduction = process.env.NODE_ENV === 'production';
 if (isProduction && !process.env.APP_SECRET) {
-    console.error('[FATAL] APP_SECRET environment variable is required in production mode');
+    logger.db.error('[FATAL] APP_SECRET environment variable is required in production mode');
     process.exit(1);
 }
 
@@ -54,7 +55,7 @@ export function decrypt(text: string): string {
     // Check if the input matches encrypted format
     if (!isEncryptedFormat(text)) {
         // Not encrypted format - return as-is (legacy plaintext data)
-        console.warn('[decrypt] Input does not match encrypted format, treating as plaintext (length: %d)', text.length);
+        logger.db.warn(`[decrypt] Input does not match encrypted format, treating as plaintext (length: ${text.length})`);
         return text;
     }
 
@@ -69,7 +70,7 @@ export function decrypt(text: string): string {
     } catch (e) {
         // Log error with context (not the actual secret data)
         const errorMessage = e instanceof Error ? e.message : 'Unknown error';
-        console.error('[decrypt] Decryption failed for encrypted input (length: %d): %s', text.length, errorMessage);
+        logger.db.error(`[decrypt] Decryption failed for encrypted input (length: ${text.length}): ${errorMessage}`);
 
         // Always throw on failure to prevent silent data corruption or masked errors
         if (isProduction) {

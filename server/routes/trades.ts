@@ -3,6 +3,7 @@ import { storage } from "../storage";
 import { insertTradeSchema } from "@shared/schema";
 import { z } from "zod";
 import { parseNumericParam, checkOwnership } from "./middleware";
+import { logger } from "../lib/logger";
 import "./types";
 
 export function registerTradeRoutes(app: Express) {
@@ -110,7 +111,7 @@ export function registerTradeRoutes(app: Express) {
             if (error instanceof z.ZodError) {
                 return res.status(400).json({ error: error.errors });
             }
-            console.error("Failed to create trades:", error);
+            logger.api.error("Failed to create trades:", error);
             res.status(500).json({ error: "Failed to create trades" });
         }
     });

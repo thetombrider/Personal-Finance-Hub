@@ -1,8 +1,11 @@
 import { db } from "./db";
 import { accounts, categories } from "@shared/schema";
+import { createLogger } from "./lib/logger";
+
+const log = createLogger("Seed");
 
 async function seed() {
-  console.log("Seeding database...");
+  log.info("Seeding database...");
 
   // Seed accounts
   const defaultAccounts = [
@@ -32,11 +35,11 @@ async function seed() {
     await db.insert(categories).values(category).onConflictDoNothing();
   }
 
-  console.log("Database seeded successfully!");
+  log.info("Database seeded successfully!");
   process.exit(0);
 }
 
 seed().catch((error) => {
-  console.error("Error seeding database:", error);
+  log.error("Error seeding database:", error);
   process.exit(1);
 });

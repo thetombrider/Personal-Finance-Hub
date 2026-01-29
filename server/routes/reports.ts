@@ -4,6 +4,7 @@ import { storage } from "../storage";
 import { marketDataService } from "../services/marketData";
 import { sendEmail } from "../resend";
 import cron, { ScheduledTask } from "node-cron";
+import { logger } from "../lib/logger";
 import "./types";
 
 // Module-level variable to prevent duplicate cron scheduling
@@ -36,7 +37,7 @@ export function registerReportRoutes(app: Express) {
             const data = await reportService.getMonthlyIncomeStatement(req.user.id, year, month);
             res.json(data);
         } catch (error) {
-            console.error("Failed to fetch income statement:", error);
+            logger.api.error("Failed to fetch income statement:", error);
             res.status(500).json({ error: "Failed to fetch income statement" });
         }
     });
@@ -47,7 +48,7 @@ export function registerReportRoutes(app: Express) {
             const data = await reportService.getBalanceSheet(req.user.id);
             res.json(data);
         } catch (error) {
-            console.error("Failed to fetch balance sheet:", error);
+            logger.api.error("Failed to fetch balance sheet:", error);
             res.status(500).json({ error: "Failed to fetch balance sheet" });
         }
     });
@@ -75,10 +76,10 @@ export function registerReportRoutes(app: Express) {
 
             const result = await sendEmail(email, subject, html);
 
-            console.log(`[email] Weekly report sent to ${email}`);
+            logger.api.info(`Weekly report sent to ${email}`);
             res.json({ success: true, result });
         } catch (error: any) {
-            console.error("Error sending weekly report:", error);
+            logger.api.error("Error sending weekly report:", error);
             res.status(500).json({ error: error.message || "Failed to send report" });
         }
     });
@@ -90,7 +91,7 @@ export function registerReportRoutes(app: Express) {
             const html = reportService.generateHtml(data);
             res.send(html);
         } catch (error) {
-            console.error("Error generating report preview:", error);
+            logger.api.error("Error generating report preview:", error);
             res.status(500).json({ error: "Failed to generate report" });
         }
     });
@@ -99,16 +100,16 @@ export function registerReportRoutes(app: Express) {
     // Guard against duplicate scheduling
     if (!weeklyReportJob) {
         weeklyReportJob = cron.schedule('0 9 * * 0', async () => {
-            console.log("[scheduler] Sending weekly report...");
+            logger.scheduler.info("Sending weekly report...");
             try {
                 // Get all users with email addresses and send reports
                 // Get all users with email addresses and send reports
                 const users = await storage.getAllUsers();
-                console.log(`[scheduler] Found ${users.length} users to process.`);
+                logger.scheduler.info(`Found ${users.length} users to process.`);
 
                 for (const user of users) {
                     if (!user.email) {
-                        console.log(`[scheduler] Skipping user ${user.username} (no email)`);
+                        logger.scheduler.info(`Skipping user ${user.username} (no email)`);
                         continue;
                     }
 
@@ -121,13 +122,13 @@ export function registerReportRoutes(app: Express) {
                             `📊 Report Settimanale FinTrack - ${now.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })}`,
                             html
                         );
-                        console.log(`[scheduler] Weekly report sent successfully to ${user.email}`);
+                        logger.scheduler.info(`Weekly report sent successfully to ${user.email}`);
                     } catch (err) {
-                        console.error(`[scheduler] Failed to send report to ${user.email}:`, err);
+                        logger.scheduler.error(`Failed to send report to ${user.email}:`, err);
                     }
                 }
             } catch (error) {
-                console.error("[scheduler] Failed to send weekly report:", error);
+                logger.scheduler.error("Failed to send weekly report:", error);
             }
         }, {
             timezone: "Europe/Rome"

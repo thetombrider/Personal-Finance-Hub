@@ -3,6 +3,7 @@ import { tagRepository } from "../repositories/tagRepository";
 import { insertTagSchema } from "@shared/schema";
 import { z } from "zod";
 import { parseNumericParam, checkOwnership } from "./middleware";
+import { logger } from "../lib/logger";
 
 import { TransactionRepository } from "../repositories/transactionRepository";
 
@@ -40,7 +41,7 @@ export function registerTagRoutes(app: Express) {
                 return res.status(400).json({ error: error.errors });
             }
             // Handle unique constraint violation gracefully if possible, or generic error
-            console.error(error);
+            logger.api.error("Failed to create tag:", error);
             res.status(500).json({ error: "Failed to create tag" });
         }
     });
@@ -133,7 +134,7 @@ export function registerTagRoutes(app: Express) {
             if (error instanceof z.ZodError) {
                 return res.status(400).json({ error: error.errors });
             }
-            console.error(error);
+            logger.api.error("Failed to update transaction tags:", error);
             res.status(500).json({ error: "Failed to update transaction tags" });
         }
     });

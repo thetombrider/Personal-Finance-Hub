@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { storage } from "../storage";
 import * as XLSX from "xlsx";
+import { logger } from "../lib/logger";
 import "./types";
 
 /**
@@ -69,7 +70,7 @@ export function registerDataRoutes(app: Express) {
             res.send(buffer);
         } catch (error) {
             // Structured logging - avoid logging full error object which may contain sensitive data
-            console.error("Export error:", error instanceof Error ? error.message : "Unknown error");
+            logger.api.error("Export error:", error instanceof Error ? error.message : "Unknown error");
             res.status(500).json({ error: "Failed to export data" });
         }
     });

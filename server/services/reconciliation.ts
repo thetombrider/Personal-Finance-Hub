@@ -1,12 +1,13 @@
 
 import { storage } from "../storage";
+import { logger } from "../lib/logger";
 import { RecurringExpense, Transaction, RecurringExpenseCheck } from "@shared/schema";
 import { format, addMonths, setDate, parseISO, subDays, addDays, isSameMonth, getYear, getMonth } from "date-fns";
 
 export class ReconciliationService {
 
     async checkRecurringExpenses(userId: string, year: number, month: number): Promise<void> {
-        console.log(`Starting reconciliation for user ${userId} for ${month}/${year}`);
+        logger.reconciliation.info(`Starting reconciliation for user ${userId} for ${month}/${year}`);
         try {
             const recurringExpenses = await storage.getRecurringExpenses(userId);
             const activeExpenses = recurringExpenses.filter(e => e.active);
@@ -24,13 +25,13 @@ export class ReconciliationService {
             // Fetch transactions for the specific range
             const relevantTransactions = await storage.getTransactionsByDateRange(userId, fetchStart, fetchEnd);
 
-            console.log(`Processing ${activeExpenses.length} active recurring expenses against ${relevantTransactions.length} transactions`);
+            logger.reconciliation.info(`Processing ${activeExpenses.length} active recurring expenses against ${relevantTransactions.length} transactions`);
 
             for (const expense of activeExpenses) {
                 await this.checkExpense(expense, year, month, relevantTransactions, userId);
             }
         } catch (error) {
-            console.error("Error in checkRecurringExpenses:", error);
+            logger.reconciliation.error("Error in checkRecurringExpenses:", error);
             throw error;
         }
     }
@@ -141,7 +142,7 @@ export class ReconciliationService {
             }, userId);
 
         } catch (error) {
-            console.error(`Failed to check expense ${expense.id} (${expense.name}):`, error);
+            logger.reconciliation.error(`Failed to check expense ${expense.id} (${expense.name}):`, error);
             // Continue processing other expenses instead of failing the whole batch
         }
     }

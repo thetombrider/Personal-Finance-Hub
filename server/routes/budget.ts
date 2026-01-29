@@ -5,6 +5,7 @@ import { marketDataService } from "../services/marketData";
 import { insertMonthlyBudgetSchema, insertRecurringExpenseSchema, insertPlannedExpenseSchema } from "@shared/schema";
 import { z } from "zod";
 import { parseNumericParam, checkOwnership } from "./middleware";
+import { logger } from "../lib/logger";
 import "./types";
 
 export function registerBudgetRoutes(app: Express) {
@@ -89,7 +90,7 @@ export function registerBudgetRoutes(app: Express) {
                 recurringExpenses: filteredRecurringExpenses
             });
         } catch (error) {
-            console.error("Failed to fetch yearly budget data:", error);
+            logger.api.error("Failed to fetch yearly budget data:", error);
             res.status(500).json({ error: "Failed to fetch yearly budget data" });
         }
     });
@@ -105,7 +106,7 @@ export function registerBudgetRoutes(app: Express) {
             const budgetData = await reportService.getMonthlyBudget(req.user.id, year, month);
             res.json(budgetData);
         } catch (error) {
-            console.error("Failed to fetch budget data:", error);
+            logger.api.error("Failed to fetch budget data:", error);
             res.status(500).json({ error: "Failed to fetch budget data" });
         }
     });
@@ -125,7 +126,7 @@ export function registerBudgetRoutes(app: Express) {
             if (error instanceof Error && error.message.startsWith('Authorization failed')) {
                 return res.status(403).json({ error: error.message });
             }
-            console.error("Failed to save monthly budget:", error);
+            logger.api.error("Failed to save monthly budget:", error);
             res.status(500).json({ error: "Failed to save monthly budget" });
         }
     });
@@ -157,9 +158,9 @@ export function registerBudgetRoutes(app: Express) {
             const expense = await storage.createRecurringExpense(validated);
             res.status(201).json(expense);
         } catch (error) {
-            console.error("Error creating recurring expense:", error);
+            logger.api.error("Error creating recurring expense:", error);
             if (error instanceof z.ZodError) {
-                console.error("Validation errors:", JSON.stringify(error.errors, null, 2));
+                logger.api.error("Validation errors:", JSON.stringify(error.errors, null, 2));
                 return res.status(400).json({ error: error.errors });
             }
             res.status(500).json({ error: "Failed to create recurring expense" });

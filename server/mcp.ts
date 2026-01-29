@@ -4,6 +4,9 @@ import { z } from "zod-mcp";
 import { db } from "./db";
 import { accounts, transactions } from "@shared/schema";
 import { eq, desc } from "drizzle-orm";
+import { createLogger } from "./lib/logger";
+
+const logger = createLogger("MCP");
 
 const server = new MCPServer({
     name: "Personal Finance MCP",
@@ -17,7 +20,7 @@ server.use((async (req: any, res: any, next: any) => {
     const apiKey = process.env.MCP_API_KEY;
 
     if (!apiKey) {
-        console.warn("MCP_API_KEY is not set. Authentication is disabled (NOT RECOMMENDED).");
+        logger.warn("MCP_API_KEY is not set. Authentication is disabled (NOT RECOMMENDED).");
         return next();
     }
 
@@ -126,5 +129,5 @@ server.tool(
 );
 
 server.listen(3001).then(() => {
-    console.log("MCP Server running on port 3001");
+    logger.info("MCP Server running on port 3001");
 });

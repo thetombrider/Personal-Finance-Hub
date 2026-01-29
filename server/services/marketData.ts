@@ -1,5 +1,6 @@
 import { storage } from "../storage";
 import YahooFinance from 'yahoo-finance2';
+import { logger } from "../lib/logger";
 
 const yahooFinance = new YahooFinance();
 
@@ -46,7 +47,7 @@ export class MarketDataService {
             if (from === 'USD' && to === 'EUR') return 0.92;
 
         } catch (error) {
-            console.error(`Error fetching ${from}/${to} rate:`, error);
+            logger.stock.error(`Error fetching ${from}/${to} rate:`, error);
         }
 
         // Return default fallback
@@ -82,7 +83,7 @@ export class MarketDataService {
                 currency: match.currency // Might be undefined in search results
             }));
         } catch (error) {
-            console.error("Error searching symbols:", error);
+            logger.stock.error("Error searching symbols:", error);
             return [];
         }
     }
@@ -133,13 +134,13 @@ export class MarketDataService {
                         });
                     }
                 } catch (e) {
-                    console.error("Failed to update holding price in DB", e);
+                    logger.stock.error("Failed to update holding price in DB", e);
                 }
 
                 return { data: quoteData };
             }
         } catch (err) {
-            console.error(`Failed to fetch price for ${upperSymbol}:`, err);
+            logger.stock.error(`Failed to fetch price for ${upperSymbol}:`, err);
         }
 
         return null;

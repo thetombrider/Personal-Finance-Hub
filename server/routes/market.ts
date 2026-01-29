@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { marketDataService } from "../services/marketData";
+import { logger } from "../lib/logger";
 
 export function registerMarketRoutes(app: Express) {
     // ============ ALPHA VANTAGE STOCK API ============
@@ -15,7 +16,7 @@ export function registerMarketRoutes(app: Express) {
                 res.status(404).json({ error: "Stock not found" });
             }
         } catch (error) {
-            console.error("Stock API error:", error);
+            logger.stock.error("Stock API error:", error);
             res.status(500).json({ error: "Failed to fetch stock data" });
         }
     });

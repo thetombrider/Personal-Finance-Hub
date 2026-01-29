@@ -12,9 +12,6 @@ This document identifies structural issues, code duplications, and refactoring o
 ---
 
 ## Table of Contents
-
-3. [Logic Duplication](#3-logic-duplication)
-4. [Logging Standardization](#4-logging-standardization)
 5. [Error Handling](#5-error-handling)
 6. [Date Formatting](#6-date-formatting)
 7. [Toast Patterns](#7-toast-patterns)

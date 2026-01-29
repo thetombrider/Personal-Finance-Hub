@@ -3,6 +3,7 @@ import { storage } from "../storage";
 import { gocardlessService } from "../services/gocardless";
 import { z } from "zod";
 import { parseNumericParam, checkOwnership } from "./middleware";
+import { logger } from "../lib/logger";
 import "./types";
 
 /**
@@ -48,7 +49,7 @@ export function registerGoCardlessRoutes(app: Express) {
             const banks = await gocardlessService.listInstitutions(country);
             res.json(banks);
         } catch (error) {
-            console.error("Error fetching banks:", error);
+            logger.gocardless.error("Error fetching banks:", error);
             res.status(500).json({ error: "Failed to fetch banks" });
         }
     });
@@ -66,7 +67,7 @@ export function registerGoCardlessRoutes(app: Express) {
 
             // Security: Validate redirect URL to prevent open redirect attacks
             if (!isValidRedirectUrl(redirectUrl, req.get("host"))) {
-                console.warn(`[GoCardless] Blocked redirect: ${redirectUrl}`);
+                logger.gocardless.warn(`Blocked redirect: ${redirectUrl}`);
                 return res.status(400).json({
                     error: "Invalid redirect URL",
                     details: "Redirect URL must be a relative path or point to an allowed host.",
@@ -76,9 +77,9 @@ export function registerGoCardlessRoutes(app: Express) {
             const result = await gocardlessService.createRequisition(req.user.id, institutionId, redirectUrl);
             res.json(result);
         } catch (error: any) {
-            console.error("Error creating bank connection:", error);
+            logger.gocardless.error("Error creating bank connection:", error);
             if (error.response?.data) {
-                console.error("GoCardless error details:", error.response.data);
+                logger.gocardless.error("GoCardless error details:", error.response.data);
             }
             res.status(500).json({ error: "Failed to create bank connection" });
         }
@@ -95,7 +96,7 @@ export function registerGoCardlessRoutes(app: Express) {
             const result = await gocardlessService.handleCallback(requisitionId);
             res.json(result);
         } catch (error: any) {
-            console.error("Error completing bank connection:", error);
+            logger.gocardless.error("Error completing bank connection:", error);
             const status = error.status || 500;
             res.status(status).json({
                 error: error.message || "Failed to complete bank connection",
@@ -110,7 +111,7 @@ export function registerGoCardlessRoutes(app: Express) {
             const connections = await storage.getBankConnections(req.user.id);
             res.json(connections);
         } catch (error) {
-            console.error("Error fetching connections:", error);
+            logger.gocardless.error("Error fetching connections:", error);
             res.status(500).json({ error: "Failed to fetch bank connections" });
         }
     });
@@ -132,7 +133,7 @@ export function registerGoCardlessRoutes(app: Express) {
             await storage.deleteBankConnection(id);
             res.status(204).send();
         } catch (error) {
-            console.error("Error deleting connection:", error);
+            logger.gocardless.error("Error deleting connection:", error);
             res.status(500).json({ error: "Failed to delete bank connection" });
         }
     });
@@ -163,7 +164,7 @@ export function registerGoCardlessRoutes(app: Express) {
             await gocardlessService.syncBalances(accountId);
             res.json(result);
         } catch (error: any) {
-            console.error("Error syncing transactions:", error);
+            logger.gocardless.error("Error syncing transactions:", error);
             if (error.status === 429) {
                 return res.status(429).json({ error: "Rate limit reached. Please try again later." });
             }
@@ -199,7 +200,7 @@ export function registerGoCardlessRoutes(app: Express) {
             const result = await gocardlessService.createRequisition(req.user.id, connection.institutionId, redirectUrl);
             res.json(result);
         } catch (error: any) {
-            console.error("Error renewing connection:", error);
+            logger.gocardless.error("Error renewing connection:", error);
             res.status(500).json({ error: error.message || "Failed to renew connection" });
         }
     });
@@ -235,7 +236,7 @@ export function registerGoCardlessRoutes(app: Express) {
 
             res.json(updated);
         } catch (error: any) {
-            console.error("Error linking account:", error);
+            logger.gocardless.error("Error linking account:", error);
             if (error instanceof z.ZodError) {
                 return res.status(400).json({ error: error.errors });
             }

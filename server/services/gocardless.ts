@@ -5,6 +5,7 @@ const NordigenClient = (nordigenData as any).NordigenClient || (nordigenData as 
 import { storage } from "../storage";
 import { type BankConnection, type InsertBankConnection } from "@shared/schema";
 import { aiService } from "./openai";
+import { logger } from "../lib/logger";
 import crypto from "crypto";
 
 
@@ -13,7 +14,7 @@ const SECRET_ID = process.env.GOCARDLESS_SECRET_ID;
 const SECRET_KEY = process.env.GOCARDLESS_SECRET_KEY;
 
 if (!SECRET_ID || !SECRET_KEY) {
-    console.error("GOCARDLESS_SECRET_ID or GOCARDLESS_SECRET_KEY not set in environment. GoCardless integration will be unavailable.");
+    logger.gocardless.error("GOCARDLESS_SECRET_ID or GOCARDLESS_SECRET_KEY not set in environment. GoCardless integration will be unavailable.");
 }
 
 class GoCardlessService {
@@ -37,7 +38,7 @@ class GoCardlessService {
                 await this.client.generateToken();
             }
         } catch (e) {
-            console.error("Failed to generate GoCardless token:", e);
+            logger.gocardless.error("Failed to generate GoCardless token:", e);
             throw new Error("Failed to authenticate with GoCardless");
         }
     }
@@ -48,20 +49,20 @@ class GoCardlessService {
         } catch (error: any) {
             // Check for 401 Unauthorized which indicates expired token
             if (error.response && error.response.status === 401) {
-                console.log("[GoCardless] Token expired (401). Refreshing...");
+                logger.gocardless.info("Token expired (401). Refreshing...");
                 try {
                     this.client.token = null; // Force clear token
                     await this.ensureToken(); // Generate new token
-                    console.log("[GoCardless] Token refreshed successfully. Retrying operation...");
+                    logger.gocardless.info("Token refreshed successfully. Retrying operation...");
                     return await operation(); // Retry once
                 } catch (refreshError) {
-                    console.error("[GoCardless] Failed to refresh token:", refreshError);
+                    logger.gocardless.error("Failed to refresh token:", refreshError);
                     throw refreshError; // Re-throw the refresh error
                 }
             }
 
             // Log full error details for debugging
-            console.error("[GoCardless] API Request Failed:", {
+            logger.gocardless.error("API Request Failed:", {
                 status: error.response?.status,
                 data: error.response?.data,
                 message: error.message
@@ -127,15 +128,16 @@ class GoCardlessService {
 
     // Called when user returns from bank
     async handleCallback(requisitionId: string) {
-        console.time(`[GoCardless] handleCallback:${requisitionId}`);
+        const startTime = Date.now();
+        logger.gocardless.info(`handleCallback:${requisitionId} started`);
         await this.ensureToken();
 
         try {
             return await this.executeWithRetry(async () => {
                 // 1. Get requisition status
-                console.timeLog(`[GoCardless] handleCallback:${requisitionId}`, "Fetching requisition status...");
+                logger.gocardless.info(`handleCallback:${requisitionId} Fetching requisition status...`, { elapsed: `${Date.now() - startTime}ms` });
                 const requisitionData = await this.client.requisition.getRequisitionById(requisitionId);
-                console.timeLog(`[GoCardless] handleCallback:${requisitionId}`, "Requisition status fetched");
+                logger.gocardless.info(`handleCallback:${requisitionId} Requisition status fetched`, { elapsed: `${Date.now() - startTime}ms` });
 
                 // 2. Update DB
                 const connection = await storage.getBankConnectionByRequisitionId(requisitionId);
@@ -148,7 +150,7 @@ class GoCardlessService {
 
                 if (requisitionData.status === "LN") { // Linked
                     // Fetch details for each account to return useful info (name, owner, etc)
-                    console.timeLog(`[GoCardless] handleCallback:${requisitionId}`, "Fetching account details...");
+                    logger.gocardless.info(`handleCallback:${requisitionId} Fetching account details...`, { elapsed: `${Date.now() - startTime}ms` });
                     const accountIds = requisitionData.accounts;
                     const accountsWithDetails = await Promise.all(accountIds.map(async (id: string) => {
                         try {
@@ -162,11 +164,11 @@ class GoCardlessService {
                                 ownerName: details.account.ownerName
                             };
                         } catch (e) {
-                            console.error(`Failed to fetch details for account ${id}`, e);
+                            logger.gocardless.error(`Failed to fetch details for account ${id}`, e);
                             return { id, name: `Bank Account (${id.substring(0, 8)}...)` };
                         }
                     }));
-                    console.timeLog(`[GoCardless] handleCallback:${requisitionId}`, "Account details fetched");
+                    logger.gocardless.info(`handleCallback:${requisitionId} Account details fetched`, { elapsed: `${Date.now() - startTime}ms` });
 
                     return {
                         accounts: accountsWithDetails,
@@ -181,7 +183,7 @@ class GoCardlessService {
                 }
             });
         } finally {
-            console.timeEnd(`[GoCardless] handleCallback:${requisitionId}`);
+            logger.gocardless.info(`handleCallback:${requisitionId} finished`, { totalDuration: `${Date.now() - startTime}ms` });
         }
     }
 
@@ -244,19 +246,19 @@ class GoCardlessService {
             this.getTransactions(gcAccountId, dateFromStr).catch(error => {
                 // Handle 403 Access Forbidden (e.g. user denied transaction access or account type doesn't support it)
                 if (error.response && error.response.status === 403) {
-                    console.warn(`[GoCardless] Transaction access forbidden (403) for account ${gcAccountId}. Proceeding with empty transactions.`);
+                    logger.gocardless.warn(`Transaction access forbidden (403) for account ${gcAccountId}. Proceeding with empty transactions.`);
                     return { transactions: { booked: [] }, accessDenied: true };
                 }
                 throw error;
             }),
             isInitialSync ? this.getBalances(gcAccountId).catch(e => {
-                console.warn("[GoCardless] Failed to fetch balances during sync:", e);
+                logger.gocardless.warn("Failed to fetch balances during sync:", e);
                 return null;
             }) : Promise.resolve(null)
         ]);
 
         if (!transactionsData || !transactionsData.transactions) {
-            console.warn("No transaction data returned from GoCardless");
+            logger.gocardless.warn("No transaction data returned from GoCardless");
             return { added: 0, total: 0 };
         }
 
@@ -307,15 +309,15 @@ class GoCardlessService {
                         startingBalance = currentBalance - sumTransactions;
                     }
 
-                    console.log(`[GoCardless] Initial Sync: Setting starting balance for account ${localAccountId}.`);
-                    console.log(`[GoCardless] Method: ${method}, Current: ${currentBalance}, SumTx: ${booked.length > 0 ? booked.reduce((s: number, t: any) => s + parseFloat(t.transactionAmount.amount), 0) : 0}, Calculated Start: ${startingBalance}`);
+                    logger.gocardless.info(`Initial Sync: Setting starting balance for account ${localAccountId}.`);
+                    logger.gocardless.info(`Method: ${method}, Current: ${currentBalance}, SumTx: ${booked.length > 0 ? booked.reduce((s: number, t: any) => s + parseFloat(t.transactionAmount.amount), 0) : 0}, Calculated Start: ${startingBalance}`);
 
                     await storage.updateAccount(localAccountId, {
                         startingBalance: startingBalance.toFixed(2)
                     });
                 }
             } catch (error) {
-                console.error("[GoCardless] Failed to calculate starting balance:", error);
+                logger.gocardless.error("Failed to calculate starting balance:", error);
             }
         }
 
@@ -372,7 +374,7 @@ class GoCardlessService {
             if (potentialMatches.length > 0) {
                 // Link to the first match
                 const match = potentialMatches[0];
-                console.log(`Linking GoCardless tx ${tx.transactionId} to existing tx ${match.id} (Legacy ID: ${match.externalId})`);
+                logger.gocardless.info(`Linking GoCardless tx ${tx.transactionId} to existing tx ${match.id} (Legacy ID: ${match.externalId})`);
 
                 await storage.updateTransaction(match.id, {
                     externalId: tx.transactionId
@@ -386,7 +388,7 @@ class GoCardlessService {
                     // Find or create "Uncategorized" category
                     let uncategorizedCategory = categories.find(c => c.name.toLowerCase() === "uncategorized");
                     if (!uncategorizedCategory) {
-                        console.log(`[GoCardless] Creating "Uncategorized" category for user ${userId}`);
+                        logger.gocardless.info(`Creating "Uncategorized" category for user ${userId}`);
                         uncategorizedCategory = await storage.createCategory({
                             name: "Uncategorized",
                             type: amount < 0 ? "expense" : "income",
@@ -396,7 +398,7 @@ class GoCardlessService {
                         categories.push(uncategorizedCategory); // Add to in-memory list for subsequent iterations
                     }
 
-                    console.log(`[GoCardless] Booking directly: ${tx.transactionId}`);
+                    logger.gocardless.info(`Booking directly: ${tx.transactionId}`);
                     await storage.createTransaction({
                         accountId: localAccountId,
                         date: date,
@@ -409,7 +411,7 @@ class GoCardlessService {
                     addedCount++;
                 } else {
                     // STAGING: Create new in staging table
-                    console.log(`Staging new tx for GoCardless tx ${tx.transactionId}`);
+                    logger.gocardless.info(`Staging new tx for GoCardless tx ${tx.transactionId}`);
 
                     await storage.createImportStaging({
                         accountId: localAccountId,
@@ -452,11 +454,11 @@ class GoCardlessService {
                 if (balanceObj && balanceObj.balanceAmount) {
                     const amount = parseFloat(balanceObj.balanceAmount.amount);
                     // await storage.updateAccount(localAccountId, { balance: amount.toString() });
-                    console.log(`Updated balance for account ${localAccountId} to ${amount} (Skipped: balance column missing)`);
+                    logger.gocardless.info(`Updated balance for account ${localAccountId} to ${amount} (Skipped: balance column missing)`);
                 }
             }
         } catch (error) {
-            console.error(`Failed to sync balance for account ${localAccountId}:`, error);
+            logger.gocardless.error(`Failed to sync balance for account ${localAccountId}:`, error);
             // Don't fail the whole sync if balance fails
         }
     }

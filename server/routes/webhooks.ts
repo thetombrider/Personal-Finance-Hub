@@ -5,6 +5,7 @@ import { TallyProcessor } from "../services/tally";
 import { GenericWebhookProcessor } from "../services/generic-webhook";
 import { insertWebhookSchema } from "@shared/schema";
 import { z } from "zod";
+import { logger } from "../lib/logger";
 import "./types";
 
 // Initialize webhook service with processors
@@ -156,7 +157,7 @@ export function registerWebhookRoutes(app: Express) {
     // Main webhook receiver endpoint
     app.post("/api/webhooks/:id", async (req, res) => {
         try {
-            console.log(`Webhook received for ID: ${req.params.id}`);
+            logger.webhook.info(`Webhook received for ID: ${req.params.id}`);
 
             // Get raw body for signature verification
             const rawBody = (req as any).rawBody || JSON.stringify(req.body);
@@ -175,7 +176,7 @@ export function registerWebhookRoutes(app: Express) {
 
             res.status(result.status).json(result.body);
         } catch (error) {
-            console.error("Webhook receiver error:", error);
+            logger.webhook.error("Webhook receiver error:", error);
             res.status(500).json({ error: "Internal server error" });
         }
     });
@@ -185,7 +186,7 @@ export function registerWebhookRoutes(app: Express) {
     // Keep the old endpoint for backward compatibility
     // This will be removed in a future version
     app.post("/api/webhooks/tally", async (req, res) => {
-        console.warn("DEPRECATED: /api/webhooks/tally is deprecated. Please use /api/webhooks/:id instead.");
+        logger.webhook.warn("DEPRECATED: /api/webhooks/tally is deprecated. Please use /api/webhooks/:id instead.");
 
         // For legacy support, we need to find or create a default webhook for this
         // This is a simplified fallback - in production, users should migrate to new URLs

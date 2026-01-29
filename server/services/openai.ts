@@ -1,4 +1,5 @@
 import { Category } from "@shared/schema";
+import { logger } from "../lib/logger";
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 
@@ -8,7 +9,7 @@ export class OpenAIService {
     constructor() {
         this.isConfigured = !!OPENROUTER_API_KEY;
         if (!this.isConfigured) {
-            console.warn("OPENROUTER_API_KEY not set. AI categorization will be disabled.");
+            logger.openai.warn("OPENROUTER_API_KEY not set. AI categorization will be disabled.");
         }
     }
 
@@ -67,7 +68,7 @@ Reply ONLY with the ID of the best matching category. If unsure, reply 'null'.`;
 
             return null;
         } catch (error) {
-            console.error("AI Categorization error:", error);
+            logger.openai.error("AI Categorization error:", error);
             return null;
         }
     }

@@ -3,6 +3,7 @@ import { storage } from "../storage";
 import { insertTransactionSchema } from "@shared/schema";
 import { z } from "zod";
 import { parseNumericParam, checkOwnership } from "./middleware";
+import { logger } from "../lib/logger";
 import "./types";
 
 export function registerTransactionRoutes(app: Express) {
@@ -111,7 +112,7 @@ export function registerTransactionRoutes(app: Express) {
 
             res.status(201).json(transaction);
         } catch (error) {
-            console.error("Approve error:", error);
+            logger.api.error("Approve error:", error);
             res.status(500).json({ error: "Failed to approve transaction" });
         }
     });
@@ -178,7 +179,7 @@ export function registerTransactionRoutes(app: Express) {
 
             res.json({ success: true });
         } catch (error) {
-            console.error("Link transaction error:", error);
+            logger.api.error("Link transaction error:", error);
             res.status(500).json({ error: "Failed to link transaction" });
         }
     });
@@ -264,7 +265,7 @@ export function registerTransactionRoutes(app: Express) {
 
             res.status(201).json(newTransactions);
         } catch (error) {
-            console.error("Bulk approve error:", error);
+            logger.api.error("Bulk approve error:", error);
             if (error instanceof z.ZodError) {
                 return res.status(400).json({ error: error.errors });
             }
@@ -287,7 +288,7 @@ export function registerTransactionRoutes(app: Express) {
 
             res.status(204).send();
         } catch (error) {
-            console.error("Bulk dismiss error:", error);
+            logger.api.error("Bulk dismiss error:", error);
             if (error instanceof z.ZodError) {
                 return res.status(400).json({ error: error.errors });
             }
