@@ -6,3 +6,5 @@ vite.config.ts.*
 *.tar.gz
 *.env
 *.lock
+docs/_site
+docs/_site/*
