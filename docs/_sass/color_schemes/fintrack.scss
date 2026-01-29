@@ -1,0 +1,16 @@
+// Custom color scheme to match FinTrack app
+// Based on the app's dark theme with JetBrains Mono font
+
+$body-background-color: hsl(0, 0%, 3.9%);      // --background dark
+$sidebar-color: hsl(0, 0%, 3.9%);              // --sidebar dark
+$body-text-color: hsl(0, 0%, 98%);             // --foreground dark
+$body-heading-color: hsl(0, 0%, 98%);          // --foreground dark
+$nav-child-link-color: hsl(0, 0%, 63.9%);      // --muted-foreground dark
+$link-color: hsl(220, 70%, 60%);               // Slightly brighter for links
+$btn-primary-color: hsl(0, 0%, 98%);           // --primary dark
+$base-button-color: hsl(0, 0%, 14.9%);         // --secondary dark
+$code-background-color: hsl(0, 0%, 8%);        // Slightly lighter than bg
+$border-color: hsl(0, 0%, 14.9%);              // --border dark
+$table-background-color: hsl(0, 0%, 5%);       // Slightly different for tables
+$search-background-color: hsl(0, 0%, 8%);      // Search input background
+$feedback-color: hsl(0, 0%, 14.9%);            // --accent dark

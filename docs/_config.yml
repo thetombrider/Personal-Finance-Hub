@@ -6,7 +6,7 @@ url: "https://thetombrider.github.io"
 
 # Theme
 remote_theme: just-the-docs/just-the-docs@v0.8.2
-color_scheme: dark
+color_scheme: fintrack
 
 # Search
 search_enabled: true

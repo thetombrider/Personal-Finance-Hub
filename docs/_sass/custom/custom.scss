@@ -1,0 +1,231 @@
+// Custom styles to match FinTrack app appearance
+// JetBrains Mono font, no border radius, clean borders
+
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+// Typography - JetBrains Mono throughout
+body {
+    font-family: 'JetBrains Mono', monospace !important;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.site-title,
+.nav-list-item,
+.aux-nav-list-item {
+    font-family: 'JetBrains Mono', monospace !important;
+    letter-spacing: -0.025em;
+}
+
+code,
+pre,
+kbd,
+samp {
+    font-family: 'JetBrains Mono', monospace !important;
+}
+
+// Remove all border radius (matching app's radius: 0rem)
+*,
+*::before,
+*::after {
+    border-radius: 0 !important;
+}
+
+// Buttons
+.btn {
+    border-radius: 0 !important;
+    font-family: 'JetBrains Mono', monospace !important;
+    font-weight: 500;
+    border: 1px solid hsl(0, 0%, 14.9%);
+    transition: all 0.15s ease;
+
+    &:hover {
+        border-color: hsl(0, 0%, 30%);
+    }
+}
+
+.btn-primary {
+    background-color: hsl(0, 0%, 98%) !important;
+    color: hsl(0, 0%, 9%) !important;
+    border: none !important;
+
+    &:hover {
+        background-color: hsl(0, 0%, 85%) !important;
+    }
+}
+
+// Search
+.search-input {
+    font-family: 'JetBrains Mono', monospace !important;
+    border: 1px solid hsl(0, 0%, 14.9%) !important;
+    background-color: hsl(0, 0%, 8%) !important;
+
+    &:focus {
+        border-color: hsl(0, 0%, 30%) !important;
+        box-shadow: none !important;
+    }
+}
+
+.search-results {
+    border: 1px solid hsl(0, 0%, 14.9%) !important;
+    background-color: hsl(0, 0%, 5%) !important;
+}
+
+// Navigation
+.site-nav {
+    border-right: 1px solid hsl(0, 0%, 14.9%);
+}
+
+.nav-list-link {
+    font-family: 'JetBrains Mono', monospace !important;
+
+    &:hover {
+        background-color: hsl(0, 0%, 14.9%) !important;
+    }
+
+    &.active {
+        background-color: hsl(0, 0%, 14.9%) !important;
+    }
+}
+
+// Tables
+table {
+    border: 1px solid hsl(0, 0%, 14.9%) !important;
+
+    th,
+    td {
+        border: 1px solid hsl(0, 0%, 14.9%) !important;
+        font-family: 'JetBrains Mono', monospace !important;
+    }
+
+    th {
+        background-color: hsl(0, 0%, 8%) !important;
+    }
+
+    tr:nth-child(even) {
+        background-color: hsl(0, 0%, 5%) !important;
+    }
+}
+
+// Code blocks
+pre,
+code {
+    border: 1px solid hsl(0, 0%, 14.9%) !important;
+    background-color: hsl(0, 0%, 8%) !important;
+}
+
+pre {
+    padding: 1rem !important;
+}
+
+code {
+    padding: 0.125rem 0.25rem !important;
+}
+
+// Inline code in headings and paragraphs
+p code,
+li code,
+td code,
+h1 code,
+h2 code,
+h3 code,
+h4 code {
+    background-color: hsl(0, 0%, 14.9%) !important;
+    border: none !important;
+    color: hsl(0, 0%, 90%) !important;
+}
+
+// Content area
+.main-content {
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        border-bottom: 1px solid hsl(0, 0%, 14.9%);
+        padding-bottom: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    h1 {
+        border-bottom-width: 2px;
+    }
+}
+
+// Callouts/Notes (Just the Docs callouts)
+.note,
+.warning,
+.important {
+    border-left: 4px solid;
+    padding: 1rem;
+    margin: 1rem 0;
+    background-color: hsl(0, 0%, 8%) !important;
+}
+
+.note {
+    border-left-color: hsl(220, 70%, 50%) !important;
+}
+
+.warning {
+    border-left-color: hsl(45, 100%, 50%) !important;
+}
+
+.important {
+    border-left-color: hsl(0, 70%, 50%) !important;
+}
+
+// Footer
+.site-footer {
+    border-top: 1px solid hsl(0, 0%, 14.9%);
+}
+
+// Breadcrumbs
+.breadcrumb-nav-list-item {
+    font-family: 'JetBrains Mono', monospace !important;
+}
+
+// TOC
+.toc-list {
+    border-left: 1px solid hsl(0, 0%, 14.9%);
+}
+
+// Links
+a {
+    color: hsl(220, 70%, 60%);
+    text-decoration: none;
+
+    &:hover {
+        color: hsl(220, 70%, 70%);
+        text-decoration: underline;
+    }
+}
+
+// Aux nav (GitHub link)
+.aux-nav {
+    font-family: 'JetBrains Mono', monospace !important;
+}
+
+// Back to top
+.back-to-top {
+    font-family: 'JetBrains Mono', monospace !important;
+    border: 1px solid hsl(0, 0%, 14.9%) !important;
+    background-color: hsl(0, 0%, 8%) !important;
+
+    &:hover {
+        background-color: hsl(0, 0%, 14.9%) !important;
+    }
+}
+
+// Copy code button
+.copy-code-button {
+    font-family: 'JetBrains Mono', monospace !important;
+    border: 1px solid hsl(0, 0%, 14.9%) !important;
+}
