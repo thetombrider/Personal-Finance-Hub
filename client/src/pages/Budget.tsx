@@ -68,7 +68,7 @@ export default function Budget() {
     // Default redirect if just /budget
 
 
-    const { data, isLoading } = useBudgetData(currentYear);
+    const { data, isLoading, error } = useBudgetData(currentYear);
 
     const monthRange: [number, number] = viewHalf === 'first' ? [0, 6] : [6, 12];
 
@@ -206,6 +206,7 @@ export default function Budget() {
             // BUT, the budget calculation on server does this precise logic.
             // Replicating it 100% here might be tricky without shared logic.
             // However, most relevant is to show the user WHAT recurring expenses exist.
+            // 
 
             if (start > monthEnd) return false;
             if (end && end < monthStart) return false;
@@ -233,6 +234,17 @@ export default function Budget() {
             }
         });
     };
+
+    if (error) {
+        return (
+            <Layout>
+                <div className="flex flex-col items-center justify-center h-96 gap-4">
+                    <div className="text-destructive font-semibold text-lg">Failed to load budget data</div>
+                    <Button variant="outline" onClick={() => window.location.reload()}>Try Again</Button>
+                </div>
+            </Layout>
+        );
+    }
 
     if (isLoading || !data) {
         return (

@@ -238,7 +238,7 @@ export default function Dashboard() {
           initialData={null}
           accounts={accounts}
           categories={categories}
-          isEditing={false}
+
         />
 
         <TransferForm
