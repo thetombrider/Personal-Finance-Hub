@@ -13,6 +13,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import * as api from "@/lib/api";
 import { format } from "date-fns";
 import type { Holding, Account } from "@shared/schema";
+import { useTradeMutations } from "@/hooks/mutations";
+
 
 interface AddTradeModalProps {
     isOpen: boolean;
@@ -75,25 +77,7 @@ export function AddTradeModal({ isOpen, onOpenChange, accounts, holdings, defaul
         }
     }, [isOpen, defaultType]);
 
-    const createHoldingMutation = useMutation({
-        mutationFn: api.createHolding,
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ["holdings"] }),
-    });
-
-    const createTradeMutation = useMutation({
-        mutationFn: api.createTrade,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["trades"] });
-            queryClient.invalidateQueries({ queryKey: ["transactions"] });
-            queryClient.invalidateQueries({ queryKey: ["accounts"] });
-            queryClient.invalidateQueries({ queryKey: ["portfolio-stats"] }); // Also refresh portfolio stats
-            toast({ title: "Purchase registered", description: "The transaction was saved successfully." });
-            onOpenChange(false);
-        },
-        onError: () => {
-            toast({ title: "Error", description: "Could not save transaction.", variant: "destructive" });
-        },
-    });
+    const { createTrade, createHolding } = useTradeMutations();
 
     const handleSearch = async () => {
         if (!searchQuery.trim()) return;
@@ -160,14 +144,14 @@ export function AddTradeModal({ isOpen, onOpenChange, accounts, holdings, defaul
             : grossAmount - fees;
 
         try {
-            const holding = await createHoldingMutation.mutateAsync({
+            const holding = await createHolding.mutateAsync({
                 ticker,
                 name: name || ticker,
                 assetType: isManual ? "ETF" : (selectedStock?.type || "ETF"),
                 currency: "EUR",
             });
 
-            await createTradeMutation.mutateAsync({
+            await createTrade.mutateAsync({
                 holdingId: holding.id,
                 date: tradeForm.date.includes("T") ? tradeForm.date : `${tradeForm.date}T12:00:00`,
                 quantity: quantity.toString(),
@@ -175,10 +159,16 @@ export function AddTradeModal({ isOpen, onOpenChange, accounts, holdings, defaul
                 totalAmount: totalAmount.toFixed(2),
                 fees: fees.toFixed(2),
                 type: tradeForm.type,
-                accountId: parseInt(tradeForm.accountId) || undefined
+                accountId: parseInt(tradeForm.accountId)
             });
+
+
+            // Success handled by hook's invalidation + toast here if needed
+            toast({ title: "Purchase registered", description: "The transaction was saved successfully." });
+            onOpenChange(false);
         } catch (error) {
             console.error("Error creating trade:", error);
+            toast({ title: "Error", description: "Could not save transaction.", variant: "destructive" });
         }
     };
 
@@ -194,6 +184,7 @@ export function AddTradeModal({ isOpen, onOpenChange, accounts, holdings, defaul
             <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
                     <DialogTitle>New Trade</DialogTitle>
+                    <div className="text-sm text-muted-foreground">Add a new trade to your portfolio.</div>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                     <Tabs value={entryMode} onValueChange={(v) => setEntryMode(v as "search" | "manual")}>
@@ -434,11 +425,11 @@ export function AddTradeModal({ isOpen, onOpenChange, accounts, holdings, defaul
                             !tradeForm.quantity ||
                             !tradeForm.pricePerUnit ||
                             !tradeForm.accountId ||
-                            createTradeMutation.isPending
+                            createTrade.isPending
                         }
                         data-testid="button-submit-trade"
                     >
-                        {createTradeMutation.isPending ? "Saving..." : "Save Transaction"}
+                        {createTrade.isPending ? "Saving..." : "Save Transaction"}
                     </Button>
                 </DialogFooter>
             </DialogContent>

@@ -7,6 +7,8 @@ import { usePortfolioStats } from "@/hooks/usePortfolioStats";
 import { useDashboardStats } from "@/hooks/dashboard/useDashboardStats";
 import { useDashboardCharts } from "@/hooks/dashboard/useDashboardCharts";
 import { usePendingStagingCount, useBudgetData, useMissingRecurringTransactions } from "@/hooks/queries";
+import { useTransferSubmit } from "@/hooks/useTransferSubmit";
+
 
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { StatsGrid } from "@/components/dashboard/StatsGrid";
@@ -70,41 +72,11 @@ export default function Dashboard() {
     setIsTransactionOpen(false);
   };
 
-  const onTransferSubmit = async (data: TransferFormValues) => {
-    const transferCategory = categories.find(c => c.name.toLowerCase() === "trasferimenti" || c.name.toLowerCase() === "transfer");
-    let transferCategoryId = transferCategory?.id;
 
-    if (!transferCategory) {
-      try {
-        const newCategory = await addCategory({
-          name: "Transfers",
-          type: "transfer",
-          color: "#94a3b8",
-          icon: "ArrowLeftRight",
-        });
-        transferCategoryId = newCategory.id;
-      } catch (error) {
-        alert("Failed to create transfer category. Please create it manually in settings.");
-        return;
-      }
-    }
+  const { submitTransfer } = useTransferSubmit({
+    onSuccess: () => setIsTransferOpen(false),
+  });
 
-    if (!transferCategoryId) {
-      alert("Category 'Transfers' not found. Please create it first in settings.");
-      return;
-    }
-
-    await addTransfer({
-      amount: data.amount.toString(),
-      description: data.description,
-      fromAccountId: data.fromAccountId,
-      toAccountId: data.toAccountId,
-      categoryId: transferCategoryId,
-      date: format(data.date, "yyyy-MM-dd'T'HH:mm:ss"),
-    });
-
-    setIsTransferOpen(false);
-  };
 
   // Custom Hooks
   const stats = useDashboardStats({
@@ -244,7 +216,8 @@ export default function Dashboard() {
         <TransferForm
           isOpen={isTransferOpen}
           onOpenChange={setIsTransferOpen}
-          onSubmit={onTransferSubmit}
+          onSubmit={async (data) => { await submitTransfer(data); }}
+
           accounts={accounts}
         />
 

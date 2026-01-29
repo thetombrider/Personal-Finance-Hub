@@ -14,6 +14,8 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ManualReconciliationModal } from "./transactions/ManualReconciliationModal";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useStagingMutations } from "@/hooks/mutations";
+
 
 interface ImportedTransactionsProps {
     accountId?: number | null;
@@ -60,68 +62,17 @@ export function ImportedTransactions({ accountId, isOpen, onOpenChange }: Import
         enabled: isOpen,
     });
 
-    const approveMutation = useMutation({
-        mutationFn: async (data: { id: number; categoryId: number; description: string }) => {
-            await apiRequest("POST", `/api/transactions/staging/${data.id}/approve`, data);
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["/api/transactions/staging"] });
-            queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
-            toast({ title: "Transaction Approved" });
-        },
-        onError: () => {
-            toast({ title: "Failed to approve transaction", variant: "destructive" });
-        },
-    });
+    const {
+        approveTransaction,
+        bulkApprove,
+        dismissTransaction,
+        bulkDismiss,
+        restoreTransaction,
+        isApproving,
+        isDismissing,
+        isRestoring
+    } = useStagingMutations();
 
-    const bulkApproveMutation = useMutation({
-        mutationFn: async (updates: { id: number; categoryId: number; description?: string }[]) => {
-            await apiRequest("POST", "/api/transactions/staging/bulk-approve", { updates });
-        },
-        onSuccess: (data, variables) => {
-            queryClient.invalidateQueries({ queryKey: ["/api/transactions/staging"] });
-            queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
-            toast({ title: `Approved ${variables.length} transactions` });
-            setSelectedIds(new Set());
-        },
-        onError: () => {
-            toast({ title: "Failed to approve transactions", variant: "destructive" });
-        },
-    });
-
-    const dismissMutation = useMutation({
-        mutationFn: async (id: number) => {
-            await apiRequest("DELETE", `/api/transactions/staging/${id}`);
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["/api/transactions/staging"] });
-            toast({ title: "Transaction Dismissed" });
-        },
-    });
-
-    const bulkDismissMutation = useMutation({
-        mutationFn: async (ids: number[]) => {
-            await apiRequest("POST", "/api/transactions/staging/bulk-dismiss", { ids });
-        },
-        onSuccess: (data, variables) => {
-            queryClient.invalidateQueries({ queryKey: ["/api/transactions/staging"] });
-            toast({ title: `Dismissed ${variables.length} transactions` });
-            setSelectedIds(new Set());
-        },
-        onError: () => {
-            toast({ title: "Failed to dismiss transactions", variant: "destructive" });
-        },
-    });
-
-    const restoreMutation = useMutation({
-        mutationFn: async (id: number) => {
-            await apiRequest("POST", `/api/transactions/staging/${id}/restore`);
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["/api/transactions/staging"] });
-            toast({ title: "Transaction Restored" });
-        },
-    });
 
     // Local state for edits
     const [edits, setEdits] = useState<Record<number, { categoryId?: number; description?: string }>>({});
@@ -142,16 +93,17 @@ export function ImportedTransactions({ accountId, isOpen, onOpenChange }: Import
             return;
         }
 
-        approveMutation.mutate({
-            id: tx.id,
+        approveTransaction.mutate({
             categoryId,
             description: edit.description || tx.description,
+            stagingId: tx.id // Ensure consistency if payload requires it
         });
+
     };
 
     const handleDismiss = (tx: StagedTransaction) => {
         if (confirm("Dismiss this transaction? It will be hidden from the pending list.")) {
-            dismissMutation.mutate(tx.id);
+            dismissTransaction.mutate(tx.id);
         }
     }
 
@@ -192,15 +144,16 @@ export function ImportedTransactions({ accountId, isOpen, onOpenChange }: Import
             }
 
             updates.push({
-                id,
+                stagingId: id,
                 categoryId,
                 description: edit.description
             });
+
         }
 
         if (updates.length > 0) {
             if (confirm(`Approve ${updates.length} transactions?`)) {
-                bulkApproveMutation.mutate(updates);
+                bulkApprove.mutate(updates);
             }
         }
     };
@@ -208,7 +161,7 @@ export function ImportedTransactions({ accountId, isOpen, onOpenChange }: Import
     const handleBulkDismiss = () => {
         if (selectedIds.size > 0) {
             if (confirm(`Dismiss ${selectedIds.size} transactions?`)) {
-                bulkDismissMutation.mutate(Array.from(selectedIds));
+                bulkDismiss.mutate(Array.from(selectedIds));
             }
         }
     };
@@ -241,10 +194,10 @@ export function ImportedTransactions({ accountId, isOpen, onOpenChange }: Import
                         <div className="flex items-center justify-between bg-primary/10 p-2 px-4 rounded-md border border-primary/20 text-sm">
                             <span className="font-medium text-primary">{selectedIds.size} selected</span>
                             <div className="flex gap-2">
-                                <Button size="sm" onClick={handleBulkApprove} disabled={bulkApproveMutation.isPending}>
+                                <Button size="sm" onClick={handleBulkApprove} disabled={bulkApprove.isPending}>
                                     <Check className="mr-1 h-4 w-4" /> Approve Selected
                                 </Button>
-                                <Button size="sm" variant="destructive" onClick={handleBulkDismiss} disabled={bulkDismissMutation.isPending}>
+                                <Button size="sm" variant="destructive" onClick={handleBulkDismiss} disabled={bulkDismiss.isPending}>
                                     <X className="mr-1 h-4 w-4" /> Dismiss Selected
                                 </Button>
                             </div>
@@ -363,7 +316,7 @@ export function ImportedTransactions({ accountId, isOpen, onOpenChange }: Import
                                                                     variant="ghost"
                                                                     className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
                                                                     onClick={() => handleApprove(tx)}
-                                                                    disabled={approveMutation.isPending}
+                                                                    disabled={isApproving}
                                                                     title="Approve"
                                                                 >
                                                                     <Check className="h-4 w-4" />
@@ -382,7 +335,7 @@ export function ImportedTransactions({ accountId, isOpen, onOpenChange }: Import
                                                                     variant="ghost"
                                                                     className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
                                                                     onClick={() => handleDismiss(tx)}
-                                                                    disabled={dismissMutation.isPending}
+                                                                    disabled={isDismissing}
                                                                     title="Dismiss"
                                                                 >
                                                                     <X className="h-4 w-4" />
@@ -394,8 +347,8 @@ export function ImportedTransactions({ accountId, isOpen, onOpenChange }: Import
                                                                 size="sm"
                                                                 variant="outline"
                                                                 className="h-8"
-                                                                onClick={() => restoreMutation.mutate(tx.id)}
-                                                                disabled={restoreMutation.isPending}
+                                                                onClick={() => restoreTransaction.mutate(tx.id)}
+                                                                disabled={isRestoring}
                                                             >
                                                                 <Undo className="h-4 w-4 mr-1" /> Restore
                                                             </Button>

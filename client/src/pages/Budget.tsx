@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useBudgetData } from "@/hooks/queries";
+import { useBudgetMutations } from "@/hooks/mutations";
+
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -73,51 +75,7 @@ export default function Budget() {
     const monthRange: [number, number] = viewHalf === 'first' ? [0, 6] : [6, 12];
 
     // Mutations
-    const updateBaselineMutation = useMutation({
-        mutationFn: async ({ categoryId, month, amount }: { categoryId: number, month: number, amount: number }) => {
-            const res = await fetch('/api/budget', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    categoryId,
-                    year: currentYear,
-                    month,
-                    amount: amount.toString()
-                })
-            });
-            if (!res.ok) {
-                const errorData = await res.json();
-                throw new Error(errorData.error || 'Failed to update baseline');
-            }
-            return res.json();
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['budget', currentYear] });
-            toast({ title: "Budget updated", description: "Baseline budget saved." });
-        }
-    });
-
-    const deleteRecurringMutation = useMutation({
-        mutationFn: async (id: number) => {
-            const res = await fetch(`/api/budget/recurring/${id}`, { method: 'DELETE' });
-            if (!res.ok) throw new Error('Failed to delete recurring expense');
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['budget'] });
-            toast({ title: "Recurring expense deleted" });
-        }
-    });
-
-    const deletePlannedMutation = useMutation({
-        mutationFn: async (id: number) => {
-            const res = await fetch(`/api/budget/planned/${id}`, { method: 'DELETE' });
-            if (!res.ok) throw new Error('Failed to delete planned expense');
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['budget', currentYear] });
-            toast({ title: "Planned expense deleted" });
-        }
-    });
+    const { updateBudgetCell, deleteRecurringExpense, deletePlannedExpense } = useBudgetMutations();
 
     useEffect(() => {
         if (location === "/budget") {
@@ -131,8 +89,10 @@ export default function Budget() {
 
     // Handlers
     const handleUpdateBaseline = async (categoryId: number, month: number, amount: number) => {
-        await updateBaselineMutation.mutateAsync({ categoryId, month, amount });
+        await updateBudgetCell.mutateAsync({ categoryId, month, year: currentYear, planned: amount });
+
     };
+
 
     const handleAddRecurring = (type: 'income' | 'expense') => {
         setEditingRecurring(null);
@@ -343,7 +303,7 @@ export default function Budget() {
                                     categories={data.categories}
                                     onAdd={() => handleAddRecurring('income')}
                                     onEdit={handleEditRecurring}
-                                    onDelete={(id) => deleteRecurringMutation.mutate(id)}
+                                    onDelete={(id) => deleteRecurringExpense.mutate(id)}
                                 />
                                 <RecurringTransactionsTable
                                     title="Recurring Expenses"
@@ -352,7 +312,7 @@ export default function Budget() {
                                     categories={data.categories}
                                     onAdd={() => handleAddRecurring('expense')}
                                     onEdit={handleEditRecurring}
-                                    onDelete={(id) => deleteRecurringMutation.mutate(id)}
+                                    onDelete={(id) => deleteRecurringExpense.mutate(id)}
                                 />
                             </section>
 
@@ -381,7 +341,7 @@ export default function Budget() {
                                 categories={data.categories}
                                 onAdd={() => handleAddPlanned('income')}
                                 onEdit={handleEditPlanned}
-                                onDelete={(id) => deletePlannedMutation.mutate(id)}
+                                onDelete={(id) => deletePlannedExpense.mutate(id)}
                             />
                             <PlannedTransactionsTable
                                 title="Planned Expenses"
@@ -390,7 +350,7 @@ export default function Budget() {
                                 categories={data.categories}
                                 onAdd={() => handleAddPlanned('expense')}
                                 onEdit={handleEditPlanned}
-                                onDelete={(id) => deletePlannedMutation.mutate(id)}
+                                onDelete={(id) => deletePlannedExpense.mutate(id)}
                             />
                         </section>
                     )}

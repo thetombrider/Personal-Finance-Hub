@@ -27,6 +27,8 @@ import {
 import { format, parseISO } from "date-fns";
 import { it } from "date-fns/locale";
 import type { Holding, Trade } from "@shared/schema";
+import { useTradeMutations } from "@/hooks/mutations";
+
 
 interface StockDetailModalProps {
   isOpen: boolean;
@@ -64,12 +66,13 @@ export function StockDetailModal({
     setTicker(holding.ticker);
   }, [holding.ticker]);
 
+  /*
   const updateHoldingMutation = useMutation({
     mutationFn: (newTicker: string) => api.updateHolding(holding.id, { ticker: newTicker }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["holdings"] });
-      queryClient.invalidateQueries({ queryKey: ["trades"] }); // Invalidate trades as descriptions change
-      queryClient.invalidateQueries({ queryKey: ["transactions"] }); // Invalidate transactions as descriptions change
+      queryClient.invalidateQueries({ queryKey: ["trades"] }); 
+      queryClient.invalidateQueries({ queryKey: ["transactions"] }); 
       toast({ title: "Holding updated", description: "Ticker updated successfully." });
       setIsEditing(false);
     },
@@ -81,11 +84,27 @@ export function StockDetailModal({
       });
     },
   });
+  */
+
+  const { updateHolding } = useTradeMutations();
 
   const handleSave = () => {
     if (!ticker.trim()) return;
-    updateHoldingMutation.mutate(ticker.toUpperCase());
+    updateHolding.mutate({ id: holding.id, ticker: ticker.toUpperCase() }, {
+      onSuccess: () => {
+        toast({ title: "Holding updated", description: "Ticker updated successfully." });
+        setIsEditing(false);
+      },
+      onError: (error) => {
+        toast({
+          title: "Error updating holding",
+          description: error.message,
+          variant: "destructive"
+        });
+      }
+    });
   };
+
 
   const handleCancel = () => {
     setTicker(holding.ticker);
@@ -153,7 +172,7 @@ export function StockDetailModal({
                   className="w-32 font-bold text-xl uppercase"
                   autoFocus
                 />
-                <Button size="icon" variant="ghost" onClick={handleSave} disabled={updateHoldingMutation.isPending}>
+                <Button size="icon" variant="ghost" onClick={handleSave} disabled={updateHolding.isPending}>
                   <Check className="h-4 w-4 text-green-600" />
                 </Button>
                 <Button size="icon" variant="ghost" onClick={handleCancel}>
@@ -179,6 +198,7 @@ export function StockDetailModal({
               </div>
             )}
           </div>
+          <div className="text-sm text-muted-foreground mt-1">Detailed view of your holding and trade history.</div>
         </DialogHeader>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 my-4">
