@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { usePortfolioStats } from "@/hooks/usePortfolioStats";
 import { useDashboardStats } from "@/hooks/dashboard/useDashboardStats";
 import { useDashboardCharts } from "@/hooks/dashboard/useDashboardCharts";
+import { usePendingStagingCount, useBudgetData, useMissingRecurringTransactions } from "@/hooks/queries";
 
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { StatsGrid } from "@/components/dashboard/StatsGrid";
@@ -40,57 +41,26 @@ export default function Dashboard() {
   const [isReviewStagingOpen, setIsReviewStagingOpen] = useState(false);
   const [isMissingRecurringOpen, setIsMissingRecurringOpen] = useState(false);
 
+  // Hooks imported from @/hooks/queries - see imports below
+
+
+
+
+
+  // Data Queries
   const currentYear = new Date().getFullYear();
-  const { data: currentYearBudget } = useQuery({
-    queryKey: ['budget', currentYear],
-    queryFn: async () => {
-      const res = await fetch(`/api/budget/${currentYear}`);
-      if (!res.ok) throw new Error('Failed to fetch budget');
-      return res.json();
-    }
-  });
-
-  const { data: previousYearBudget } = useQuery({
-    queryKey: ['budget', currentYear - 1],
-    queryFn: async () => {
-      const res = await fetch(`/api/budget/${currentYear - 1}`);
-      if (!res.ok) throw new Error('Failed to fetch budget');
-      return res.json();
-    }
-  });
-
-  const { data: nextYearBudget } = useQuery({
-    queryKey: ['budget', currentYear + 1],
-    queryFn: async () => {
-      const res = await fetch(`/api/budget/${currentYear + 1}`);
-      if (!res.ok) throw new Error('Failed to fetch budget');
-      return res.json();
-    }
-  });
-
-  const { data: pendingStagingCount = 0 } = useQuery({
-    queryKey: ["/api/transactions/staging", "count"],
-    queryFn: async () => {
-      const res = await apiRequest("GET", "/api/transactions/staging?status=pending");
-      const data = await res.json();
-      return Array.isArray(data) ? data.length : 0;
-    }
-  });
-
-  const { data: missingRecurringCount = 0 } = useQuery({
-    queryKey: ["/api/reconciliation/missing", "count"],
-    queryFn: async () => {
-      const res = await apiRequest("GET", "/api/reconciliation/missing");
-      const data = await res.json();
-      return data.count || 0;
-    }
-  });
+  const { data: currentYearBudget } = useBudgetData(currentYear);
+  const { data: previousYearBudget } = useBudgetData(currentYear - 1);
+  const { data: nextYearBudget } = useBudgetData(currentYear + 1);
+  const { data: pendingStagingCount = 0 } = usePendingStagingCount();
+  const { data: missingRecurringData } = useMissingRecurringTransactions();
+  const missingRecurringCount = missingRecurringData?.count || 0;
 
   const { portfolioSummary, trades, holdings } = usePortfolioStats();
 
   const investmentAccounts = accounts.filter(a => a.type === "investment");
 
-  const onTransactionSubmit = async (data: TransactionFormValues) => {
+  const onTransactionSubmit = async (data: TransactionFormValues | any, dirtyFields?: any) => {
     const formattedData = {
       ...data,
       amount: data.amount.toString(),

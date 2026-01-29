@@ -26,7 +26,7 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { BankLinkModal } from "@/components/bank-link-modal";
-import { useQuery } from "@tanstack/react-query";
+import { useAuthConfig } from "@/hooks/queries/useAuthConfig";
 import { format, addDays, isPast } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -71,9 +71,7 @@ export default function Settings() {
     const [renewingInstitutionId, setRenewingInstitutionId] = useState<string | null>(null);
     const [showTourModal, setShowTourModal] = useState(false);
 
-    const { data: authConfig } = useQuery<{ oidcEnabled: boolean }>({
-        queryKey: ["/api/auth/config"],
-    });
+    const { data: authConfig } = useAuthConfig();
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -84,7 +82,7 @@ export default function Settings() {
             username: user?.username || "",
             password: "",
             confirmPassword: "",
-            font: user?.appearanceSettings?.font || "JetBrains Mono",
+            font: (user?.appearanceSettings?.font || "JetBrains Mono") as any,
         },
     });
 

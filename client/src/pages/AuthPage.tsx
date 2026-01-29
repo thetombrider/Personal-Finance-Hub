@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
+import { useAuthConfig } from "@/hooks/queries/useAuthConfig";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,9 +45,7 @@ export default function AuthPage() {
     }
   };
 
-  const { data: authConfig } = useQuery<{ disableSignup: boolean; oidcEnabled: boolean; ssoOnly: boolean }>({
-    queryKey: ["/api/auth/config"],
-  });
+  const { data: authConfig } = useAuthConfig();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4">

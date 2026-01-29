@@ -12,7 +12,7 @@ const server = new MCPServer({
 });
 
 // Authentication Middleware
-server.use(async (req: any, res: any, next: any) => {
+server.use((async (req: any, res: any, next: any) => {
     const authHeader = req.headers["authorization"];
     const apiKey = process.env.MCP_API_KEY;
 
@@ -27,7 +27,7 @@ server.use(async (req: any, res: any, next: any) => {
     }
 
     next();
-});
+}) as any);
 
 // Tool: Get Accounts
 server.tool(

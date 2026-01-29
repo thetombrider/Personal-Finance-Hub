@@ -34,6 +34,7 @@ import { useQuery } from "@tanstack/react-query";
 import { format, addDays, isPast } from "date-fns";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useBankConnections } from "@/hooks/queries/useBankConnections";
 
 const accountSchema = z.object({
   name: z.string().min(2, "Name is required"),
@@ -54,9 +55,7 @@ export default function ManageAccounts() {
   const [renewingInstitutionId, setRenewingInstitutionId] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const { data: connections = [], refetch: refetchConnections } = useQuery<any[]>({
-    queryKey: ["/api/gocardless/connections"],
-  });
+  const { data: connections = [], refetch: refetchConnections } = useBankConnections();
 
   const form = useForm<AccountFormValues>({
     resolver: zodResolver(accountSchema),
@@ -440,7 +439,7 @@ export default function ManageAccounts() {
                             variant="outline"
                             size="sm"
                             onClick={() => {
-                              setRenewingInstitutionId(status.institutionId);
+                              setRenewingInstitutionId(status.institutionId || null);
                               setIsLinkModalOpen(true);
                             }}
                             className="text-indigo-600 border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 h-8"

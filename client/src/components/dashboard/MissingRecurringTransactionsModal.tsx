@@ -2,6 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
+import { useMissingRecurringTransactions } from "@/hooks/queries";
 import { useLocation } from "wouter";
 import { CalendarClock, ArrowRight } from "lucide-react";
 
@@ -25,15 +26,7 @@ interface MissingRecurringTransactionsModalProps {
 export function MissingRecurringTransactionsModal({ isOpen, onOpenChange }: MissingRecurringTransactionsModalProps) {
     const [, setLocation] = useLocation();
 
-    const { data, isLoading } = useQuery({
-        queryKey: ["/api/reconciliation/missing"],
-        queryFn: async () => {
-            const res = await apiRequest("GET", "/api/reconciliation/missing");
-            const json = await res.json();
-            return json as { count: number; missing: MissingRecurringTransaction[] };
-        },
-        enabled: isOpen,
-    });
+    const { data, isLoading } = useMissingRecurringTransactions(isOpen);
 
     const getExpectedDate = (year: number, month: number, dayOfMonth: number | null): Date | null => {
         if (!dayOfMonth) return null;
@@ -50,6 +43,7 @@ export function MissingRecurringTransactionsModal({ isOpen, onOpenChange }: Miss
     const getDaysOverdue = (year: number, month: number, dayOfMonth: number | null) => {
         if (!dayOfMonth) return null;
         const expectedDate = getExpectedDate(year, month, dayOfMonth);
+        if (!expectedDate) return null;
         const now = new Date();
         const diffTime = now.getTime() - expectedDate.getTime();
         const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
@@ -112,7 +106,7 @@ export function MissingRecurringTransactionsModal({ isOpen, onOpenChange }: Miss
                                                     )}
                                                 </td>
                                                 <td className="px-4 py-3 text-right text-sm">
-                                                    {formatExpectedDate(item.year, item.month, item.dayOfMonth)}
+                                                    <span>Expected: {item.dayOfMonth ? getExpectedDate(item.year, item.month, item.dayOfMonth)?.toLocaleDateString() : 'N/A'}</span>
                                                 </td>
                                                 <td className="px-4 py-3 text-right font-mono text-sm">
                                                     {item.amount ? `€${parseFloat(item.amount).toFixed(2)}` : '—'}

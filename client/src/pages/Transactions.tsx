@@ -9,6 +9,7 @@ import { RecurringExpenseCheck } from "@shared/schema";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { useTransactionsData } from "@/hooks/use-transactions-data";
+import { usePendingStagingCount, useReconciliationChecks } from "@/hooks/queries";
 import { TransactionForm, type TransactionFormValues, type BulkTransactionFormValues } from "@/components/transactions/TransactionForm";
 import { TransferForm, TransferFormValues } from "@/components/transactions/TransferForm";
 import { TransactionFilters } from "@/components/transactions/TransactionFilters";
@@ -36,14 +37,7 @@ export default function Transactions() {
   const [syncProgress, setSyncProgress] = useState(0);
   const { toast } = useToast();
 
-  const { data: pendingStagingCount = 0 } = useQuery({
-    queryKey: ["/api/transactions/staging", "count"],
-    queryFn: async () => {
-      const res = await apiRequest("GET", "/api/transactions/staging?status=pending");
-      const data = await res.json();
-      return Array.isArray(data) ? data.length : 0;
-    }
-  });
+  const { data: pendingStagingCount = 0 } = usePendingStagingCount();
 
   const handleSyncAll = async () => {
     const linkedAccounts = accounts.filter(a => a.gocardlessAccountId);
@@ -81,14 +75,7 @@ export default function Transactions() {
     });
   };
 
-  const { data: checks } = useQuery<RecurringExpenseCheck[]>({
-    queryKey: ['reconciliation', 'all'],
-    queryFn: async () => {
-      const res = await fetch('/api/reconciliation/checks');
-      if (!res.ok) throw new Error('Failed to fetch checks');
-      return res.json();
-    }
-  });
+  const { data: checks } = useReconciliationChecks();
 
   const {
     filteredTransactions,

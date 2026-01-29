@@ -58,8 +58,8 @@ export function RecurringTransactionsTable({
             return 0;
         }
 
-        const valA = a[key as keyof RecurringExpense];
-        const valB = b[key as keyof RecurringExpense];
+        const valA = a[key as keyof RecurringExpense] ?? "";
+        const valB = b[key as keyof RecurringExpense] ?? "";
 
         if (typeof valA === 'boolean' && typeof valB === 'boolean') {
             // active (true) -> inactive (false) for asc? usually we want true first or logic

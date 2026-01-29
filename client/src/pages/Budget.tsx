@@ -3,6 +3,7 @@ import Layout from "@/components/Layout";
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useBudgetData } from "@/hooks/queries";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -67,14 +68,7 @@ export default function Budget() {
     // Default redirect if just /budget
 
 
-    const { data, isLoading } = useQuery<YearlyBudgetData>({
-        queryKey: ['budget', currentYear],
-        queryFn: async () => {
-            const res = await fetch(`/api/budget/${currentYear}`);
-            if (!res.ok) throw new Error('Failed to fetch budget');
-            return res.json();
-        }
-    });
+    const { data, isLoading } = useBudgetData(currentYear);
 
     const monthRange: [number, number] = viewHalf === 'first' ? [0, 6] : [6, 12];
 

@@ -175,7 +175,7 @@ export function ImportedTransactions({ accountId, isOpen, onOpenChange }: Import
 
     const handleBulkApprove = () => {
         const updates = [];
-        for (const id of selectedIds) {
+        for (const id of Array.from(selectedIds)) {
             const tx = transactions.find(t => t.id === id);
             if (!tx) continue;
 

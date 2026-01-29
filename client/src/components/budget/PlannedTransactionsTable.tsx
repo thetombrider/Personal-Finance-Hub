@@ -59,8 +59,8 @@ export function PlannedTransactionsTable({
             return 0;
         }
 
-        const valA = a[key as keyof PlannedExpense];
-        const valB = b[key as keyof PlannedExpense];
+        const valA = a[key as keyof PlannedExpense] ?? "";
+        const valB = b[key as keyof PlannedExpense] ?? "";
 
         if (typeof valA === 'string' && typeof valB === 'string') {
             return direction === 'asc'

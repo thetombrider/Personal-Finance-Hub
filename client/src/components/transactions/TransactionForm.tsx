@@ -41,7 +41,7 @@ export type BulkTransactionFormValues = z.infer<typeof bulkTransactionSchema>;
 interface TransactionFormProps {
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
-    onSubmit: (data: TransactionFormValues | BulkTransactionFormValues, dirtyFields?: Partial<Record<keyof TransactionFormValues, boolean>>) => Promise<void>;
+    onSubmit: (data: TransactionFormValues | BulkTransactionFormValues, dirtyFields?: any) => Promise<void>;
     initialData?: TransactionFormValues | null;
     accounts: Account[];
     categories: Category[];
