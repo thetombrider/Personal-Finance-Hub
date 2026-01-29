@@ -111,9 +111,11 @@ export function TransferForm({
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent className="max-h-[200px]">
-                                                {accounts.map(acc => (
-                                                    <SelectItem key={acc.id} value={acc.id.toString()}>{acc.name}</SelectItem>
-                                                ))}
+                                                {accounts
+                                                    .filter(acc => acc.id !== form.watch("toAccountId"))
+                                                    .map(acc => (
+                                                        <SelectItem key={acc.id} value={acc.id.toString()}>{acc.name}</SelectItem>
+                                                    ))}
                                             </SelectContent>
                                         </Select>
                                         <FormMessage />
@@ -133,9 +135,11 @@ export function TransferForm({
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent className="max-h-[200px]">
-                                                {accounts.map(acc => (
-                                                    <SelectItem key={acc.id} value={acc.id.toString()}>{acc.name}</SelectItem>
-                                                ))}
+                                                {accounts
+                                                    .filter(acc => acc.id !== form.watch("fromAccountId"))
+                                                    .map(acc => (
+                                                        <SelectItem key={acc.id} value={acc.id.toString()}>{acc.name}</SelectItem>
+                                                    ))}
                                             </SelectContent>
                                         </Select>
                                         <FormMessage />
