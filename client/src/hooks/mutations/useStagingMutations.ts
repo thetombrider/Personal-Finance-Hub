@@ -35,7 +35,7 @@ export function useStagingMutations() {
 
     const restoreTransaction = useMutation({
         mutationFn: async (stagingId: number) => {
-            const res = await apiRequest("PUT", `/api/transactions/staging/${stagingId}/restore`);
+            const res = await apiRequest("POST", `/api/transactions/staging/${stagingId}/restore`);
             return res.json();
         },
         onSuccess: invalidateStagingQueries,
@@ -43,7 +43,13 @@ export function useStagingMutations() {
 
     const bulkApprove = useMutation({
         mutationFn: async (transactions: ApproveTransactionData[]) => {
-            const res = await apiRequest("POST", "/api/transactions/staging/bulk-approve", { transactions });
+            // Map the data to match server schema: { updates: { id, categoryId, description }[] }
+            const updates = transactions.map(t => ({
+                id: t.stagingId,
+                categoryId: t.categoryId,
+                description: t.description
+            }));
+            const res = await apiRequest("POST", "/api/transactions/staging/bulk-approve", { updates });
             return res.json();
         },
         onSuccess: invalidateStagingQueries,
