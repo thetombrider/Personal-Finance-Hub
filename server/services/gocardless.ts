@@ -445,17 +445,37 @@ class GoCardlessService {
         try {
             const balances = await this.getBalances(localAccount.gocardlessAccountId);
             if (balances && balances.balances) {
-                // Find the interimAvailable or closingBooked balance
-                // GoCardless returns an array of balances with different types
-                const balanceObj = balances.balances.find((b: any) => b.balanceType === "closingBooked")
-                    || balances.balances.find((b: any) => b.balanceType === "interimBooked")
-                    || balances.balances.find((b: any) => b.balanceType === "expected")
-                    || balances.balances.find((b: any) => b.balanceType === "interimAvailable");
+                // Log all available balance types for debugging
+                logger.gocardless.info(`Balance types for account ${localAccountId}:`,
+                    balances.balances.map((b: any) => `${b.balanceType}: ${b.balanceAmount?.amount}`)
+                );
+
+                // For credit cards per GoCardless docs:
+                //   closingBooked = "invoiced, but not yet paid entries" (actual statement debt)
+                //   expected = invoiced + booked + pending (includes pending charges)
+                // For regular accounts:
+                //   closingBooked = settled balance at end of period
+                //   interimBooked = current booked balance during business day
+                const isCreditCard = localAccount.type === "credit";
+
+                let balanceObj;
+                if (isCreditCard) {
+                    // Credit cards: closingBooked = invoiced debt (statement balance)
+                    balanceObj = balances.balances.find((b: any) => b.balanceType === "closingBooked")
+                        || balances.balances.find((b: any) => b.balanceType === "expected")
+                        || balances.balances.find((b: any) => b.balanceType === "interimBooked");
+                } else {
+                    // Regular accounts: prioritize closing/settled balance
+                    balanceObj = balances.balances.find((b: any) => b.balanceType === "closingBooked")
+                        || balances.balances.find((b: any) => b.balanceType === "interimBooked")
+                        || balances.balances.find((b: any) => b.balanceType === "expected")
+                        || balances.balances.find((b: any) => b.balanceType === "interimAvailable");
+                }
 
                 if (balanceObj && balanceObj.balanceAmount) {
                     const amount = parseFloat(balanceObj.balanceAmount.amount);
                     await storage.updateAccount(localAccountId, { bankBalance: amount.toFixed(2) });
-                    logger.gocardless.info(`Updated bank balance for account ${localAccountId} to ${amount}`);
+                    logger.gocardless.info(`Updated bank balance for account ${localAccountId} (type: ${localAccount.type}) to ${amount} using ${balanceObj.balanceType}`);
                 }
             }
         } catch (error) {

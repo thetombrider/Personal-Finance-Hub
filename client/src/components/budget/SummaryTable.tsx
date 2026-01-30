@@ -155,11 +155,16 @@ export function SummaryTable({ categories, budgetData, monthRange, onDrilldown }
 
                     {/* NET ROW */}
                     <TableRow className="bg-muted/80 font-bold border-t-4 border-double">
-                        <TableCell>Expected Balance</TableCell>
+                        <TableCell>
+                            <div className="flex flex-col">
+                                <span>Expected Balance</span>
+                                <span className="text-xs font-normal text-muted-foreground">(Net of Investments)</span>
+                            </div>
+                        </TableCell>
                         {visibleMonths.map((_, index) => {
                             const monthDataIndex = startMonthIndex + index + 1;
                             const income = categories.filter(c => c.type === 'income').reduce((sum, cat) => sum + (budgetData[cat.id]?.[monthDataIndex]?.total || 0), 0);
-                            const expense = categories.filter(c => c.type === 'expense').reduce((sum, cat) => sum + (budgetData[cat.id]?.[monthDataIndex]?.total || 0), 0);
+                            const expense = categories.filter(c => c.type === 'expense' && !c.excludeFromProjections).reduce((sum, cat) => sum + (budgetData[cat.id]?.[monthDataIndex]?.total || 0), 0);
                             const net = income - expense;
                             return (
                                 <TableCell key={index} className={`text-right p-2 text-xs sm:text-sm ${net >= 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -171,7 +176,7 @@ export function SummaryTable({ categories, budgetData, monthRange, onDrilldown }
                             {/* Annual Net */}
                             {(() => {
                                 const totalIncome = categories.filter(c => c.type === 'income').reduce((sum, cat) => sum + calculateCategoryTotal(cat.id), 0);
-                                const totalExpense = categories.filter(c => c.type === 'expense').reduce((sum, cat) => sum + calculateCategoryTotal(cat.id), 0);
+                                const totalExpense = categories.filter(c => c.type === 'expense' && !c.excludeFromProjections).reduce((sum, cat) => sum + calculateCategoryTotal(cat.id), 0);
                                 const totalNet = totalIncome - totalExpense;
                                 return (
                                     <span className={totalNet >= 0 ? 'text-green-600' : 'text-red-600'}>
