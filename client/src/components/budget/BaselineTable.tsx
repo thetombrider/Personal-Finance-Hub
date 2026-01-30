@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import {
     Table,
@@ -11,6 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { type Category } from "@shared/schema";
 import { Loader2 } from "lucide-react";
+import { BudgetSuggestionPopover } from "./BudgetSuggestionPopover";
 
 interface BaselineTableProps {
     categories: Category[];
@@ -46,14 +46,20 @@ export function BaselineTable({ categories, budgetData, onUpdateBaseline, monthR
         setInputs((prev) => ({ ...prev, [getKey(catId, month)]: value }));
     };
 
-    const handleBlur = async (catId: number, month: number) => {
+    const handleBlur = async (catId: number, month: number, explicitValue?: number) => {
         const key = getKey(catId, month);
         const valueStr = inputs[key];
 
-        if (valueStr === undefined) return;
+        if (valueStr === undefined && explicitValue === undefined) return;
 
         const currentSavedValue = budgetData[catId]?.[month]?.baseline || 0;
-        const newValue = valueStr === "" ? 0 : parseFloat(valueStr);
+        let newValue = 0;
+
+        if (explicitValue !== undefined) {
+            newValue = explicitValue;
+        } else {
+            newValue = valueStr === "" ? 0 : parseFloat(valueStr);
+        }
 
         if (isNaN(newValue)) {
             setInputs(prev => {
@@ -86,10 +92,71 @@ export function BaselineTable({ categories, budgetData, onUpdateBaseline, monthR
         }
     };
 
+    const handleApplySuggestion = async (catId: number, month: number, amount: number) => {
+        // Update local input state immediately for visual feedback
+        setInputs((prev) => ({ ...prev, [getKey(catId, month)]: amount.toString() }));
+        // Trigger save
+        await handleBlur(catId, month, amount);
+    };
+
     const handleKeyDown = (e: React.KeyboardEvent, catId: number, month: number) => {
         if (e.key === "Enter") {
             (e.currentTarget as HTMLInputElement).blur();
         }
+    };
+
+    const renderRows = (type: 'income' | 'expense') => {
+        return categories.filter(c => c.type === type).map((category) => (
+            <TableRow key={category.id}>
+                <TableCell className="font-medium">
+                    <div className="flex items-center gap-2">
+                        <div
+                            className="w-3 h-3 rounded-full min-w-[12px]"
+                            style={{ backgroundColor: category.color }}
+                        />
+                        <span className="truncate">{category.name}</span>
+                    </div>
+                </TableCell>
+                {visibleMonths.map((_, index) => {
+                    const month = startMonthIndex + index + 1;
+                    const key = getKey(category.id, month);
+                    const isUpdating = updating === key;
+                    const currentValue = parseFloat(getValue(category.id, month) || "0");
+
+                    return (
+                        <TableCell key={index} className="p-2 relative group">
+                            <div className="relative">
+                                <Input
+                                    type="number"
+                                    min="0"
+                                    step="50"
+                                    className={`text-right h-8 pl-8 pr-2 text-xs sm:text-sm border-transparent hover:border-input focus:border-primary w-full [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${getValue(category.id, month) === "" ? "placeholder:text-muted-foreground/30" : ""
+                                        }`}
+                                    placeholder="0"
+                                    value={getValue(category.id, month)}
+                                    onChange={(e) => handleChange(category.id, month, e.target.value)}
+                                    onBlur={() => handleBlur(category.id, month)}
+                                    onKeyDown={(e) => handleKeyDown(e, category.id, month)}
+                                    disabled={isUpdating}
+                                />
+                                {isUpdating && (
+                                    <div className="absolute inset-0 flex items-center justify-center bg-background/50">
+                                        <Loader2 className="h-3 w-3 animate-spin text-primary" />
+                                    </div>
+                                )}
+                                {!isUpdating && (
+                                    <BudgetSuggestionPopover
+                                        categoryId={category.id}
+                                        currentValue={currentValue}
+                                        onApply={(amount) => handleApplySuggestion(category.id, month, amount)}
+                                    />
+                                )}
+                            </div>
+                        </TableCell>
+                    );
+                })}
+            </TableRow>
+        ));
     };
 
     return (
@@ -114,97 +181,13 @@ export function BaselineTable({ categories, budgetData, onUpdateBaseline, monthR
                         <TableRow className="bg-muted/30">
                             <TableCell colSpan={visibleMonths.length + 1} className="font-bold py-2">Income</TableCell>
                         </TableRow>
-                        {categories.filter(c => c.type === 'income').map((category) => (
-                            <TableRow key={category.id}>
-                                <TableCell className="font-medium">
-                                    <div className="flex items-center gap-2">
-                                        <div
-                                            className="w-3 h-3 rounded-full min-w-[12px]"
-                                            style={{ backgroundColor: category.color }}
-                                        />
-                                        <span className="truncate">{category.name}</span>
-                                    </div>
-                                </TableCell>
-                                {visibleMonths.map((_, index) => {
-                                    const month = startMonthIndex + index + 1;
-                                    const key = getKey(category.id, month);
-                                    const isUpdating = updating === key;
-
-                                    return (
-                                        <TableCell key={index} className="p-2">
-                                            <div className="relative">
-                                                <Input
-                                                    type="number"
-                                                    min="0"
-                                                    step="50"
-                                                    className={`text-right h-8 px-2 text-xs sm:text-sm border-transparent hover:border-input focus:border-primary w-full ${getValue(category.id, month) === "" ? "placeholder:text-muted-foreground/30" : ""
-                                                        }`}
-                                                    placeholder="0"
-                                                    value={getValue(category.id, month)}
-                                                    onChange={(e) => handleChange(category.id, month, e.target.value)}
-                                                    onBlur={() => handleBlur(category.id, month)}
-                                                    onKeyDown={(e) => handleKeyDown(e, category.id, month)}
-                                                    disabled={isUpdating}
-                                                />
-                                                {isUpdating && (
-                                                    <div className="absolute inset-0 flex items-center justify-center bg-background/50">
-                                                        <Loader2 className="h-3 w-3 animate-spin text-primary" />
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </TableCell>
-                                    );
-                                })}
-                            </TableRow>
-                        ))}
+                        {renderRows('income')}
 
                         {/* EXPENSE SECTION */}
                         <TableRow className="bg-muted/30">
                             <TableCell colSpan={visibleMonths.length + 1} className="font-bold py-2 mt-4">Expenses</TableCell>
                         </TableRow>
-                        {categories.filter(c => c.type === 'expense').map((category) => (
-                            <TableRow key={category.id}>
-                                <TableCell className="font-medium">
-                                    <div className="flex items-center gap-2">
-                                        <div
-                                            className="w-3 h-3 rounded-full min-w-[12px]"
-                                            style={{ backgroundColor: category.color }}
-                                        />
-                                        <span className="truncate">{category.name}</span>
-                                    </div>
-                                </TableCell>
-                                {visibleMonths.map((_, index) => {
-                                    const month = startMonthIndex + index + 1;
-                                    const key = getKey(category.id, month);
-                                    const isUpdating = updating === key;
-
-                                    return (
-                                        <TableCell key={index} className="p-2">
-                                            <div className="relative">
-                                                <Input
-                                                    type="number"
-                                                    min="0"
-                                                    step="50"
-                                                    className={`text-right h-8 px-2 text-xs sm:text-sm border-transparent hover:border-input focus:border-primary w-full ${getValue(category.id, month) === "" ? "placeholder:text-muted-foreground/30" : ""
-                                                        }`}
-                                                    placeholder="0"
-                                                    value={getValue(category.id, month)}
-                                                    onChange={(e) => handleChange(category.id, month, e.target.value)}
-                                                    onBlur={() => handleBlur(category.id, month)}
-                                                    onKeyDown={(e) => handleKeyDown(e, category.id, month)}
-                                                    disabled={isUpdating}
-                                                />
-                                                {isUpdating && (
-                                                    <div className="absolute inset-0 flex items-center justify-center bg-background/50">
-                                                        <Loader2 className="h-3 w-3 animate-spin text-primary" />
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </TableCell>
-                                    );
-                                })}
-                            </TableRow>
-                        ))}
+                        {renderRows('expense')}
                     </TableBody>
                 </Table>
             </div>
