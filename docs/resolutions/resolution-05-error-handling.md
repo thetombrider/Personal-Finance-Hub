@@ -96,7 +96,7 @@ import { getErrorMessage } from "@/lib/errors";
 | `EmailReports.tsx` | Uses `catch (error: any)` |
 | `bank-callback.tsx` | Uses `catch (error: any)` |
 | `ImportTransactions.tsx` | Uses `catch (e)` |
-
+--> do a grep to update all error catches in the app
 ---
 
 ## Verification
@@ -108,8 +108,8 @@ npm run check
 ```
 
 ## Checklist
-- [ ] Created `client/src/lib/errors.ts`
-- [ ] Created `server/lib/responses.ts`
-- [ ] Updated all `catch (error: any)` patterns
-- [ ] Updated all inconsistent variable names
-- [ ] Verified build passes
+- [x] Created `client/src/lib/errors.ts`
+- [x] Created `server/lib/responses.ts`
+- [x] Updated all `catch (error: any)` patterns
+- [x] Updated all inconsistent variable names
+- [x] Verified build passes

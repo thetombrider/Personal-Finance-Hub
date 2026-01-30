@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Wallet, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { getErrorMessage } from "@/lib/errors";
 
 export default function AuthPage() {
   const [username, setUsername] = useState("");
@@ -34,10 +35,10 @@ export default function AuthPage() {
       await apiRequest("POST", `/api/${action}`, { username, password });
       await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       setLocation("/");
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Error",
-        description: error.message || "Authentication failed",
+        description: getErrorMessage(error),
         variant: "destructive",
       });
     } finally {

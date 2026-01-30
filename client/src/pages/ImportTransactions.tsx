@@ -11,6 +11,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import * as api from "@/lib/api";
 import type { Holding } from "@shared/schema";
+import { getErrorMessage } from "@/lib/errors";
 
 import { Step, ImportMode, Mapping, TradeMapping } from "@/components/import/types";
 import { cleanHeader, parseNumeric, getTransactionFromRow, getAccountFromRow, getCategoryFromRow, parseDate } from "@/components/import/utils";
@@ -276,10 +277,10 @@ export default function ImportTransactions() {
       } else if (importMode === 'trades') {
         await handleTradeImport();
       }
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Import Error",
-        description: error.message || "An unexpected error occurred during import.",
+        description: getErrorMessage(error),
         variant: "destructive"
       });
     }
@@ -392,8 +393,8 @@ export default function ImportTransactions() {
         try {
           holding = await api.createHolding({ ticker, name: data.name, assetType: "stock", currency: "EUR" });
           if (holding) currentHoldings.push(holding);
-        } catch (e) {
-          console.error(e);
+        } catch (error) {
+          console.error(error);
           continue;
         }
       }

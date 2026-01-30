@@ -14,6 +14,7 @@ import * as api from "@/lib/api";
 import { format } from "date-fns";
 import type { Holding, Account } from "@shared/schema";
 import { useTradeMutations } from "@/hooks/mutations";
+import { getErrorMessage } from "@/lib/errors";
 
 
 interface AddTradeModalProps {
@@ -85,8 +86,8 @@ export function AddTradeModal({ isOpen, onOpenChange, accounts, holdings, defaul
         try {
             const results = await api.searchStocks(searchQuery);
             setSearchResults(results);
-        } catch (error: any) {
-            toast({ title: "Search Error", description: error.message, variant: "destructive" });
+        } catch (error) {
+            toast({ title: "Search Error", description: getErrorMessage(error), variant: "destructive" });
         } finally {
             setIsSearching(false);
         }
@@ -101,8 +102,8 @@ export function AddTradeModal({ isOpen, onOpenChange, accounts, holdings, defaul
             const quote = await api.fetchStockQuote(stock.symbol);
             setCurrentQuote(quote);
             setTradeForm(prev => ({ ...prev, pricePerUnit: quote.price.toFixed(4) }));
-        } catch (error: any) {
-            toast({ title: "Error", description: error.message, variant: "destructive" });
+        } catch (error) {
+            toast({ title: "Error", description: getErrorMessage(error), variant: "destructive" });
         } finally {
             setIsLoadingQuote(false);
         }

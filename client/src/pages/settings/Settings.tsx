@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { getErrorMessage } from "@/lib/errors";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -131,11 +132,11 @@ export default function Settings() {
                 confirmPassword: "",
                 font: values.font,
             });
-        } catch (error: any) {
+        } catch (error) {
             toast({
                 variant: "destructive",
                 title: "Error",
-                description: error.message || "An error occurred during update.",
+                description: getErrorMessage(error),
             });
         } finally {
             setIsLoading(false);

@@ -8,3 +8,5 @@ vite.config.ts.*
 *.lock
 docs/_site
 docs/_site/*
+.jekyll-cache
+.jekyll-cache/*

@@ -9,6 +9,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
 import { type Account } from "@shared/schema";
 import { Progress } from "@/components/ui/progress";
+import { getErrorMessage } from "@/lib/errors";
 
 export default function BankCallbackPage() {
     const [, setLocation] = useLocation();
@@ -92,10 +93,10 @@ export default function BankCallbackPage() {
             accounts.forEach((acc: any) => newMappings[acc.id] = "new");
             setMappings(newMappings);
 
-        } catch (error: any) {
+        } catch (error) {
             toast({
                 title: "Connection Failed",
-                description: error.message || "Could not retrieve bank accounts.",
+                description: getErrorMessage(error),
                 variant: "destructive",
             });
         } finally {
@@ -187,8 +188,8 @@ export default function BankCallbackPage() {
                             variant: "default", // or warning if available, using default for now
                         });
                     }
-                } catch (e) {
-                    console.error(`Failed to sync account ${accountId}`, e);
+                } catch (error) {
+                    console.error(`Failed to sync account ${accountId}`, error);
                     // Don't fail the whole process if sync fails
                 }
                 updateProgress(`Synced ${action.name}`);
