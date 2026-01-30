@@ -8,6 +8,8 @@ import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/AuthPage";
 import Landing from "@/pages/Landing";
 
+import CalendarView from "@/pages/CalendarView";
+
 import Dashboard from "@/pages/Dashboard";
 import MonthlyReport from "@/pages/Reports/MonthlyReport";
 import NetWorthReport from "@/pages/Reports/NetWorthReport";
@@ -67,6 +69,7 @@ function Router() {
       )}
       <Switch>
         <Route path="/" component={Dashboard} />
+        <Route path="/calendar" component={CalendarView} />
         <Route path="/reports/monthly" component={MonthlyReport} />
         <Route path="/reports/net-worth" component={NetWorthReport} />
         <Route path="/transactions" component={Transactions} />

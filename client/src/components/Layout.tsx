@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, CreditCard, PieChart, Receipt, Menu, Settings, FileSpreadsheet, TrendingUp, LogOut, Calculator, ChevronDown, ChevronRight } from "lucide-react";
+import { LayoutDashboard, CreditCard, PieChart, Receipt, Menu, Settings, FileSpreadsheet, TrendingUp, LogOut, Calculator, ChevronDown, ChevronRight, Calendar } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -84,6 +84,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   const navItems = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/calendar", label: "Calendar", icon: Calendar },
     { href: "/transactions", label: "Transactions", icon: Receipt },
 
     {
