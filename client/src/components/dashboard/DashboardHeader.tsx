@@ -1,8 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, Plus, ArrowLeftRight, TrendingUp, List, CalendarClock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { SyncAccountsButton } from "@/components/SyncAccountsButton";
+import { Account } from "@shared/schema";
 
 interface DashboardHeaderProps {
+    accounts: Account[];
     privacyMode: boolean;
     setPrivacyMode: (value: boolean) => void;
     onNewTransaction: () => void;
@@ -15,6 +18,7 @@ interface DashboardHeaderProps {
 }
 
 export function DashboardHeader({
+    accounts,
     privacyMode,
     setPrivacyMode,
     onNewTransaction,
@@ -33,39 +37,38 @@ export function DashboardHeader({
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
-                <div className="flex items-center gap-2 mr-2 border-r pr-4">
-                    <Button variant="outline" size="sm" onClick={onNewTransaction} title="New Transaction">
-                        <Plus className="mr-2 h-4 w-4" /> Transaction
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={onNewTransfer} title="New Transfer">
-                        <ArrowLeftRight className="mr-2 h-4 w-4" /> Transfer
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={onNewTrade} title="New Portfolio Trade">
-                        <TrendingUp className="mr-2 h-4 w-4" /> Trade
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={onReviewStaging} title="Review Staging" className="relative">
-                        <List className="mr-2 h-4 w-4" /> Review
-                        {pendingStagingCount > 0 && (
-                            <Badge variant="destructive" className="ml-2 px-1.5 py-0.5 h-5 text-xs">
-                                {pendingStagingCount}
-                            </Badge>
-                        )}
-                    </Button>
-                    {missingRecurringCount !== undefined && missingRecurringCount > 0 && (
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={onReviewRecurring}
-                            title="Missing Recurring Transactions"
-                            className="relative border-amber-500 text-amber-600 hover:bg-amber-50 hover:text-amber-700 dark:border-amber-400 dark:text-amber-400 dark:hover:bg-amber-950/30"
-                        >
-                            <CalendarClock className="mr-2 h-4 w-4" /> Recurring
-                            <Badge className="ml-2 px-1.5 py-0.5 h-5 text-xs bg-amber-500 hover:bg-amber-600 text-white border-none">
-                                {missingRecurringCount}
-                            </Badge>
-                        </Button>
+                <Button variant="outline" size="sm" onClick={onNewTransaction} title="New Transaction">
+                    <Plus className="mr-2 h-4 w-4" /> Transaction
+                </Button>
+                <Button variant="outline" size="sm" onClick={onNewTransfer} title="New Transfer">
+                    <ArrowLeftRight className="mr-2 h-4 w-4" /> Transfer
+                </Button>
+                <Button variant="outline" size="sm" onClick={onNewTrade} title="New Portfolio Trade">
+                    <TrendingUp className="mr-2 h-4 w-4" /> Trade
+                </Button>
+                <Button variant="outline" size="sm" onClick={onReviewStaging} title="Review Staging" className="relative">
+                    <List className="mr-2 h-4 w-4" /> Review
+                    {pendingStagingCount > 0 && (
+                        <Badge variant="destructive" className="ml-2 px-1.5 py-0.5 h-5 text-xs">
+                            {pendingStagingCount}
+                        </Badge>
                     )}
-                </div>
+                </Button>
+                <SyncAccountsButton accounts={accounts} size="sm" className="w-9 px-0" />
+                {missingRecurringCount !== undefined && missingRecurringCount > 0 && (
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={onReviewRecurring}
+                        title="Missing Recurring Transactions"
+                        className="relative border-amber-500 text-amber-600 hover:bg-amber-50 hover:text-amber-700 dark:border-amber-400 dark:text-amber-400 dark:hover:bg-amber-950/30"
+                    >
+                        <CalendarClock className="mr-2 h-4 w-4" /> Recurring
+                        <Badge className="ml-2 px-1.5 py-0.5 h-5 text-xs bg-amber-500 hover:bg-amber-600 text-white border-none">
+                            {missingRecurringCount}
+                        </Badge>
+                    </Button>
+                )}
 
                 <Button
                     variant="outline"

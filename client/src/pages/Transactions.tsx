@@ -17,6 +17,7 @@ import { TransactionFilters } from "@/components/transactions/TransactionFilters
 import { TransactionsTable } from "@/components/transactions/TransactionsTable";
 import { BulkTagDialog } from "@/components/transactions/BulkTagDialog";
 import { ImportedTransactions } from "@/components/ImportedTransactions";
+import { SyncAccountsButton } from "@/components/SyncAccountsButton";
 import { RefreshCw, List, Tag } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { invalidationHelpers } from "@/lib/queryInvalidation";
@@ -40,45 +41,9 @@ export default function Transactions() {
 
   // New state for Sync All and Review Staging
   const [reviewAccountId, setReviewAccountId] = useState<number | null>(null);
-  const [isSyncingAll, setIsSyncingAll] = useState(false);
-  const [syncProgress, setSyncProgress] = useState(0);
   const { toast } = useToast();
 
   const { data: pendingStagingCount = 0 } = usePendingStagingCount();
-
-  const handleSyncAll = async () => {
-    const linkedAccounts = accounts.filter(a => a.gocardlessAccountId);
-    if (linkedAccounts.length === 0) {
-      showError(toast, "No linked accounts", "Link a bank account first.");
-      return;
-    }
-
-    setIsSyncingAll(true);
-    setSyncProgress(0);
-    let completed = 0;
-    let errors = 0;
-
-    for (const account of linkedAccounts) {
-      try {
-        await apiRequest("POST", `/api/gocardless/sync/${account.id}`);
-      } catch (error) {
-        console.error(`Failed to sync account ${account.name}`, error);
-        errors++;
-      } finally {
-        completed++;
-        setSyncProgress((completed / linkedAccounts.length) * 100);
-      }
-    }
-
-    invalidationHelpers.transactions(queryClient);
-
-    setIsSyncingAll(false);
-    if (errors > 0) {
-      showError(toast, "Sync Complete", `Synced ${linkedAccounts.length} accounts. ${errors} failed.`);
-    } else {
-      showSuccess(toast, "Sync Complete", `Synced ${linkedAccounts.length} accounts. All successful.`);
-    }
-  };
 
   const { data: checks } = useReconciliationChecks();
 
@@ -339,22 +304,7 @@ export default function Transactions() {
               )}
             </Button>
 
-            <Button
-              variant="outline"
-              size="icon"
-              className="relative overflow-hidden"
-              onClick={handleSyncAll}
-              disabled={isSyncingAll}
-              title={isSyncingAll ? `Syncing ${Math.round(syncProgress)}%` : "Sync All Accounts"}
-            >
-              {isSyncingAll && (
-                <div
-                  className="absolute inset-0 bg-primary/10 transition-all duration-300 ease-in-out"
-                  style={{ width: `${syncProgress}%` }}
-                />
-              )}
-              <RefreshCw size={16} className={isSyncingAll ? "animate-spin" : ""} />
-            </Button>
+            <SyncAccountsButton accounts={accounts} />
 
             <Button size="icon" onClick={() => { setIsDialogOpen(true); setEditingId(null); setFormMode('create'); setEditFormData(null); }} data-testid="button-add-transaction" title="Add Transaction">
               <Plus size={16} />

@@ -104,6 +104,7 @@ export default function Dashboard() {
     <Layout>
       <div className="space-y-8">
         <DashboardHeader
+          accounts={accounts}
           privacyMode={privacyMode}
           setPrivacyMode={setPrivacyMode}
           onNewTransaction={() => setIsTransactionOpen(true)}
