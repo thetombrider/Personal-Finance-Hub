@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { showSuccess, showError } from "@/lib/toastHelpers";
 import { useAuth } from "@/hooks/useAuth";
 import { Mail, Send, Eye, CheckCircle2, Loader2 } from "lucide-react";
 
@@ -37,16 +38,9 @@ export default function EmailReports() {
         throw new Error(error.error || "Error sending report");
       }
 
-      toast({
-        title: "Report sent!",
-        description: `Weekly report sent to ${email}`,
-      });
+      showSuccess(toast, "Report sent!", `Weekly report sent to ${email}`);
     } catch (error) {
-      toast({
-        title: "Error",
-        description: getErrorMessage(error),
-        variant: "destructive"
-      });
+      showError(toast, "Error", getErrorMessage(error));
     } finally {
       setIsSending(false);
     }
@@ -59,11 +53,7 @@ export default function EmailReports() {
       setPreviewHtml(html);
       setShowPreview(true);
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Unable to load preview",
-        variant: "destructive"
-      });
+      showError(toast, "Error", "Unable to load preview");
     }
   };
 

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import Layout from "@/components/Layout";
 import { useToast } from "@/hooks/use-toast";
+import { showSuccess, showError } from "@/lib/toastHelpers";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
@@ -118,10 +119,7 @@ export default function Settings() {
             await apiRequest("PUT", "/api/user", updateData);
             await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
 
-            toast({
-                title: "Settings updated",
-                description: "Your credentials have been updated successfully.",
-            });
+            showSuccess(toast, "Settings updated", "Your credentials have been updated successfully.");
 
             form.reset({
                 firstName: values.firstName,
@@ -133,11 +131,7 @@ export default function Settings() {
                 font: values.font,
             });
         } catch (error) {
-            toast({
-                variant: "destructive",
-                title: "Error",
-                description: getErrorMessage(error),
-            });
+            showError(toast, "Error", getErrorMessage(error));
         } finally {
             setIsLoading(false);
         }
@@ -479,11 +473,7 @@ export default function Settings() {
                                                             await apiRequest("DELETE", "/api/user");
                                                             window.location.href = "/auth";
                                                         } catch (error) {
-                                                            toast({
-                                                                variant: "destructive",
-                                                                title: "Error",
-                                                                description: "An error occurred while deleting the account.",
-                                                            });
+                                                            showError(toast, "Error", "An error occurred while deleting the account.");
                                                         }
                                                     }}
                                                 >

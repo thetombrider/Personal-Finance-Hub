@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Pencil, Check, X } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { showSuccess, showError } from "@/lib/toastHelpers";
 import * as api from "@/lib/api";
 import {
   LineChart,
@@ -92,15 +93,11 @@ export function StockDetailModal({
     if (!ticker.trim()) return;
     updateHolding.mutate({ id: holding.id, ticker: ticker.toUpperCase() }, {
       onSuccess: () => {
-        toast({ title: "Holding updated", description: "Ticker updated successfully." });
+        showSuccess(toast, "Holding updated", "Ticker updated successfully.");
         setIsEditing(false);
       },
       onError: (error) => {
-        toast({
-          title: "Error updating holding",
-          description: error.message,
-          variant: "destructive"
-        });
+        showError(toast, "Error updating holding", error.message);
       }
     });
   };

@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Wallet, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { showError } from "@/lib/toastHelpers";
 import { apiRequest } from "@/lib/queryClient";
 import { getErrorMessage } from "@/lib/errors";
 
@@ -22,11 +23,7 @@ export default function AuthPage() {
 
   const handleAuth = async (action: "login" | "register") => {
     if (!username || !password) {
-      toast({
-        title: "Error",
-        description: "Please enter username and password",
-        variant: "destructive",
-      });
+      showError(toast, "Error", "Please enter username and password");
       return;
     }
 
@@ -36,11 +33,7 @@ export default function AuthPage() {
       await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       setLocation("/");
     } catch (error) {
-      toast({
-        title: "Error",
-        description: getErrorMessage(error),
-        variant: "destructive",
-      });
+      showError(toast, "Error", getErrorMessage(error));
     } finally {
       setIsLoading(false);
     }

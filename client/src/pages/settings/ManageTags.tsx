@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useFinance, Tag } from "@/context/FinanceContext";
 import { useToast } from "@/hooks/use-toast";
+import { toastPatterns, showError } from "@/lib/toastHelpers";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,17 +60,10 @@ export default function ManageTags() {
             await addTag(data);
             setIsDialogOpen(false);
             form.reset();
-            toast({
-                title: "Tag created",
-                description: "The tag has been successfully created.",
-            });
+            toastPatterns.created(toast, "Tag", "The tag has been successfully created.");
         } catch (error) {
             console.error(error);
-            toast({
-                title: "Error",
-                description: "Failed to create tag. Please try again.",
-                variant: "destructive",
-            });
+            toastPatterns.failed(toast, "create tag", error);
         }
     };
 
@@ -89,26 +83,15 @@ export default function ManageTags() {
         try {
             // Basic validation
             if (!editForm.name || editForm.name.length < 2) {
-                toast({
-                    title: "Validation Error",
-                    description: "Tag name must be at least 2 characters.",
-                    variant: "destructive",
-                });
+                showError(toast, "Validation Error", "Tag name must be at least 2 characters.");
                 return;
             }
             await updateTag(id, editForm);
             setEditingId(null);
-            toast({
-                title: "Tag updated",
-                description: "The tag has been successfully updated.",
-            });
+            toastPatterns.updated(toast, "Tag", "The tag has been successfully updated.");
         } catch (error) {
             console.error("Failed to update tag", error);
-            toast({
-                title: "Error",
-                description: "Failed to update tag. Please try again.",
-                variant: "destructive",
-            });
+            toastPatterns.failed(toast, "update tag", error);
         }
     };
 

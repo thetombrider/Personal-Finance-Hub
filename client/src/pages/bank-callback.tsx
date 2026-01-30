@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { showSuccess, showError } from "@/lib/toastHelpers";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
 import { type Account } from "@shared/schema";
@@ -43,11 +44,7 @@ export default function BankCallbackPage() {
                 description = "The bank took too long to respond. This is common with some banks. Please try connecting again.";
             }
 
-            toast({
-                title,
-                description,
-                variant: "destructive",
-            });
+            showError(toast, title, description);
             setLoading(false);
             return;
         }
@@ -58,11 +55,7 @@ export default function BankCallbackPage() {
         }
 
         if (!requisitionId) {
-            toast({
-                title: "Error",
-                description: "Missing requisition ID.",
-                variant: "destructive",
-            });
+            showError(toast, "Error", "Missing requisition ID.");
             setLoading(false);
             return;
         }
@@ -94,11 +87,7 @@ export default function BankCallbackPage() {
             setMappings(newMappings);
 
         } catch (error) {
-            toast({
-                title: "Connection Failed",
-                description: getErrorMessage(error),
-                variant: "destructive",
-            });
+            showError(toast, "Connection Failed", getErrorMessage(error));
         } finally {
             setLoading(false);
         }
@@ -182,11 +171,7 @@ export default function BankCallbackPage() {
                     const syncData = await syncRes.json();
 
                     if (syncData.warning === "transaction_access_denied") {
-                        toast({
-                            title: "Limited Access",
-                            description: `Connected to ${action.name}, but transaction history could not be retrieved. Balance availability depends on bank support.`,
-                            variant: "default", // or warning if available, using default for now
-                        });
+                        showSuccess(toast, "Limited Access", `Connected to ${action.name}, but transaction history could not be retrieved. Balance availability depends on bank support.`);
                     }
                 } catch (error) {
                     console.error(`Failed to sync account ${accountId}`, error);
@@ -200,19 +185,12 @@ export default function BankCallbackPage() {
 
             await new Promise(resolve => setTimeout(resolve, 1000)); // Small delay to see 100%
 
-            toast({
-                title: "Success",
-                description: "Bank accounts linked and synced successfully.",
-            });
+            showSuccess(toast, "Success", "Bank accounts linked and synced successfully.");
             queryClient.invalidateQueries({ queryKey: ["/api/accounts"] });
             setLocation("/settings/accounts");
         } catch (error) {
             console.error(error);
-            toast({
-                title: "Error",
-                description: "Failed to link accounts.",
-                variant: "destructive",
-            });
+            showError(toast, "Error", "Failed to link accounts.");
             setProcessing(false);
         }
     };

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tags, Trash2, Plus, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { showSuccess, showError } from "@/lib/toastHelpers";
 import { cn } from "@/lib/utils";
 
 interface ProposedCategory {
@@ -101,7 +102,7 @@ export function SetupCategoriesStep() {
         const toCreate = proposedCategories.filter(c => !existingNames.has(c.name.toLowerCase()));
 
         if (toCreate.length === 0) {
-            toast({ title: "All categories already exist" });
+            showSuccess(toast, "All categories already exist");
             setCreated(true);
             return;
         }
@@ -116,12 +117,9 @@ export function SetupCategoriesStep() {
                 });
             }
             setCreated(true);
-            toast({
-                title: "Categories created!",
-                description: `${toCreate.length} categories have been added.`
-            });
+            showSuccess(toast, "Categories created!", `${toCreate.length} categories have been added.`);
         } catch (error) {
-            toast({ title: "Error creating categories", variant: "destructive" });
+            showError(toast, "Error creating categories");
         } finally {
             setIsSubmitting(false);
         }

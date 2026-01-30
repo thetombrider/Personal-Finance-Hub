@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogC
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Trash2, Download, Pencil, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { showSuccess, showError, toastPatterns } from "@/lib/toastHelpers";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
 import { it } from "date-fns/locale";
@@ -93,7 +94,7 @@ export function TransactionsHistory({ trades, holdings, accounts }: Transactions
         mutationFn: api.deleteTradesBulk,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["trades"] });
-            toast({ title: "Transactions deleted" });
+            toastPatterns.deleted(toast, "Transactions");
             setSelectedTradeIds(new Set());
         },
     });
@@ -103,11 +104,11 @@ export function TransactionsHistory({ trades, holdings, accounts }: Transactions
             api.updateTrade(id, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["trades"] });
-            toast({ title: "Transaction updated", description: "Changes saved." });
+            toastPatterns.updated(toast, "Transaction", "Changes saved.");
             setEditingTrade(null);
         },
         onError: () => {
-            toast({ title: "Error", description: "Could not update transaction.", variant: "destructive" });
+            showError(toast, "Error", "Could not update transaction.");
         },
     });
 
@@ -115,7 +116,7 @@ export function TransactionsHistory({ trades, holdings, accounts }: Transactions
         mutationFn: api.deleteTrade,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["trades"] });
-            toast({ title: "Transaction deleted" });
+            toastPatterns.deleted(toast, "Transaction");
             setTradeToDelete(null);
         },
     });
@@ -128,7 +129,7 @@ export function TransactionsHistory({ trades, holdings, accounts }: Transactions
 
     const exportTradesToCSV = () => {
         if (trades.length === 0) {
-            toast({ title: "No trades to export", variant: "destructive" });
+            showError(toast, "No trades to export");
             return;
         }
 
@@ -160,7 +161,7 @@ export function TransactionsHistory({ trades, holdings, accounts }: Transactions
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
 
-        toast({ title: "Export completed", description: `${trades.length} transactions exported` });
+        showSuccess(toast, "Export completed", `${trades.length} transactions exported`);
     };
 
     const openEditDialog = (trade: Trade & { holding?: Holding }) => {
@@ -186,15 +187,15 @@ export function TransactionsHistory({ trades, holdings, accounts }: Transactions
         const fees = parseFloat(editForm.fees) || 0;
 
         if (isNaN(quantity) || quantity <= 0) {
-            toast({ title: "Error", description: "Please enter a valid quantity.", variant: "destructive" });
+            showError(toast, "Error", "Please enter a valid quantity.");
             return;
         }
         if (isNaN(pricePerUnit) || pricePerUnit <= 0) {
-            toast({ title: "Error", description: "Please enter a valid price.", variant: "destructive" });
+            showError(toast, "Error", "Please enter a valid price.");
             return;
         }
         if (isNaN(fees) || fees < 0) {
-            toast({ title: "Error", description: "Please enter valid fees.", variant: "destructive" });
+            showError(toast, "Error", "Please enter valid fees.");
             return;
         }
 

@@ -8,6 +8,7 @@ import { Loader2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type Category, type PlannedExpense } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { showSuccess, showError } from "@/lib/toastHelpers";
 
 interface AddPlannedExpenseFormProps {
     onSuccess: () => void;
@@ -55,18 +56,18 @@ export function AddPlannedExpenseForm({ onSuccess, categories, year, initialData
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['budget', year] });
-            toast({ title: isEditing ? "Planned expense updated" : "Planned expense added" });
+            showSuccess(toast, isEditing ? "Planned expense updated" : "Planned expense added");
             onSuccess();
         },
         onError: (error) => {
             console.error("Mutation error:", error);
-            toast({ title: "Error", description: error.message || "Unable to save planned expense.", variant: "destructive" });
+            showError(toast, "Error", error.message || "Unable to save planned expense.");
         }
     });
 
     const handleSubmit = () => {
         if (!name || !amount || !categoryId || !date) {
-            toast({ title: "Error", description: "Fill in all required fields.", variant: "destructive" });
+            showError(toast, "Error", "Fill in all required fields.");
             return;
         }
 

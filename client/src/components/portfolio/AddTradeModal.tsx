@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { showSuccess, showError } from "@/lib/toastHelpers";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import * as api from "@/lib/api";
 import { format } from "date-fns";
@@ -87,7 +88,7 @@ export function AddTradeModal({ isOpen, onOpenChange, accounts, holdings, defaul
             const results = await api.searchStocks(searchQuery);
             setSearchResults(results);
         } catch (error) {
-            toast({ title: "Search Error", description: getErrorMessage(error), variant: "destructive" });
+            showError(toast, "Search Error", getErrorMessage(error));
         } finally {
             setIsSearching(false);
         }
@@ -103,7 +104,7 @@ export function AddTradeModal({ isOpen, onOpenChange, accounts, holdings, defaul
             setCurrentQuote(quote);
             setTradeForm(prev => ({ ...prev, pricePerUnit: quote.price.toFixed(4) }));
         } catch (error) {
-            toast({ title: "Error", description: getErrorMessage(error), variant: "destructive" });
+            showError(toast, "Error", getErrorMessage(error));
         } finally {
             setIsLoadingQuote(false);
         }
@@ -132,7 +133,7 @@ export function AddTradeModal({ isOpen, onOpenChange, accounts, holdings, defaul
         const name = isManual ? (manualName.trim() || manualTicker.trim().toUpperCase()) : selectedStock?.name;
 
         if (!ticker || !tradeForm.quantity || !tradeForm.pricePerUnit || !tradeForm.accountId) {
-            toast({ title: "Missing Data", description: "Please fill in all required fields.", variant: "destructive" });
+            showError(toast, "Missing Data", "Please fill in all required fields.");
             return;
         }
 
@@ -165,11 +166,11 @@ export function AddTradeModal({ isOpen, onOpenChange, accounts, holdings, defaul
 
 
             // Success handled by hook's invalidation + toast here if needed
-            toast({ title: "Purchase registered", description: "The transaction was saved successfully." });
+            showSuccess(toast, "Purchase registered", "The transaction was saved successfully.");
             onOpenChange(false);
         } catch (error) {
             console.error("Error creating trade:", error);
-            toast({ title: "Error", description: "Could not save transaction.", variant: "destructive" });
+            showError(toast, "Error", "Could not save transaction.");
         }
     };
 

@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
+import { toastPatterns, showError } from "@/lib/toastHelpers";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -217,10 +218,10 @@ export default function ManageWebhooks() {
             queryClient.invalidateQueries({ queryKey: ["/api/webhooks"] });
             setIsDialogOpen(false);
             form.reset();
-            toast({ title: "Webhook created", description: "Webhook created successfully." });
+            toastPatterns.created(toast, "Webhook", "Webhook created successfully.");
         },
         onError: (error: any) => {
-            toast({ variant: "destructive", title: "Error", description: error.message });
+            toastPatterns.failed(toast, "create webhook", error);
         }
     });
 
@@ -232,10 +233,10 @@ export default function ManageWebhooks() {
             setIsDialogOpen(false);
             setEditingWebhook(null);
             form.reset();
-            toast({ title: "Webhook updated" });
+            toastPatterns.updated(toast, "Webhook");
         },
         onError: (error: any) => {
-            toast({ variant: "destructive", title: "Error", description: error.message });
+            toastPatterns.failed(toast, "update webhook", error);
         }
     });
 
@@ -243,10 +244,10 @@ export default function ManageWebhooks() {
         mutationFn: (id: string) => apiRequest("DELETE", `/api/webhooks/${id}`),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["/api/webhooks"] });
-            toast({ title: "Webhook deleted" });
+            toastPatterns.deleted(toast, "Webhook");
         },
         onError: (error: any) => {
-            toast({ variant: "destructive", title: "Error", description: error.message });
+            toastPatterns.failed(toast, "delete webhook", error);
         }
     });
 
@@ -276,7 +277,7 @@ export default function ManageWebhooks() {
 
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text);
-        toast({ title: "Copied to clipboard" });
+        toastPatterns.copied(toast);
     };
 
     const toggleSecret = (id: string) => {

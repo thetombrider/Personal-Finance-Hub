@@ -10,6 +10,7 @@ import { Loader2, Search, Link } from "lucide-react";
 import { useFinance, Transaction } from "@/context/FinanceContext";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { showSuccess, showError } from "@/lib/toastHelpers";
 import { Badge } from "@/components/ui/badge";
 
 interface StagedTransaction {
@@ -82,13 +83,13 @@ export function ManualReconciliationModal({ isOpen, onClose, stagedTransaction }
             await apiRequest("POST", `/api/transactions/staging/${stagedTransaction.id}/link`, { transactionId });
         },
         onSuccess: () => {
-            toast({ title: "Transaction Linked", description: "The transaction has been successfully reconciled." });
+            showSuccess(toast, "Transaction Linked", "The transaction has been successfully reconciled.");
             queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
             queryClient.invalidateQueries({ queryKey: ["/api/transactions/staging"] });
             onClose();
         },
         onError: () => {
-            toast({ title: "Failed to link", variant: "destructive" });
+            showError(toast, "Failed to link");
         }
     });
 

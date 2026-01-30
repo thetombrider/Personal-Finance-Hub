@@ -10,6 +10,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
 import { Check, X, Loader2, RefreshCw, Pencil, Undo, Link } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { showError } from "@/lib/toastHelpers";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ManualReconciliationModal } from "./transactions/ManualReconciliationModal";
@@ -89,7 +90,7 @@ export function ImportedTransactions({ accountId, isOpen, onOpenChange }: Import
         let categoryId = edit.categoryId || tx.suggestedCategoryId;
 
         if (!categoryId) {
-            toast({ title: "Please select a category", variant: "destructive" });
+            showError(toast, "Please select a category");
             return;
         }
 
@@ -135,11 +136,7 @@ export function ImportedTransactions({ accountId, isOpen, onOpenChange }: Import
             const categoryId = edit.categoryId || tx.suggestedCategoryId;
 
             if (!categoryId) {
-                toast({
-                    title: `Cannot approve transaction "${tx.description}"`,
-                    description: "Please select a category first.",
-                    variant: "destructive"
-                });
+                showError(toast, `Cannot approve transaction "${tx.description}"`, "Please select a category first.");
                 return;
             }
 

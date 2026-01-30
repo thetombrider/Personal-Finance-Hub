@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { useFinance } from "@/context/FinanceContext";
 import { useToast } from "@/hooks/use-toast";
+import { toastPatterns, showError } from "@/lib/toastHelpers";
 import { format } from "date-fns";
 import { findTransferCategory } from "@/lib/categoryUtils";
 import type { Category } from "@shared/schema";
@@ -53,11 +54,7 @@ export function useTransferSubmit(options: UseTransferSubmitOptions = {}) {
 
                 if (!transferCategoryId) {
                     const error = new Error("Failed to get or create transfer category");
-                    toast({
-                        title: "Error",
-                        description: error.message,
-                        variant: "destructive",
-                    });
+                    showError(toast, "Error", error.message);
                     options.onError?.(error);
                     return false;
                 }
@@ -71,20 +68,13 @@ export function useTransferSubmit(options: UseTransferSubmitOptions = {}) {
                     date: format(data.date, "yyyy-MM-dd'T'HH:mm:ss"),
                 });
 
-                toast({
-                    title: "Transfer created",
-                    description: `Transferred ${data.amount} successfully`,
-                });
+                toastPatterns.created(toast, "Transfer", `Transferred ${data.amount} successfully`);
 
                 options.onSuccess?.();
                 return true;
             } catch (error) {
                 const err = error instanceof Error ? error : new Error("Transfer failed");
-                toast({
-                    title: "Error",
-                    description: err.message,
-                    variant: "destructive",
-                });
+                showError(toast, "Error", err.message);
                 options.onError?.(err);
                 return false;
             }

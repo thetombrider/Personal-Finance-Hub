@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Landmark, PiggyBank, CreditCard, TrendingUp, Wallet, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { showSuccess, showError } from "@/lib/toastHelpers";
 
 const accountTypes = [
     { value: "checking", label: "Checking", icon: Landmark },
@@ -32,7 +33,7 @@ export function SetupAccountStep() {
 
     const handleCreate = async () => {
         if (!name.trim()) {
-            toast({ title: "Please enter an account name", variant: "destructive" });
+            showError(toast, "Please enter an account name");
             return;
         }
 
@@ -46,9 +47,9 @@ export function SetupAccountStep() {
                 color,
             });
             setCreatedAccount(name);
-            toast({ title: "Account created!", description: `${name} has been added to your accounts.` });
+            showSuccess(toast, "Account created!", `${name} has been added to your accounts.`);
         } catch (error) {
-            toast({ title: "Error creating account", variant: "destructive" });
+            showError(toast, "Error creating account");
         } finally {
             setIsSubmitting(false);
         }

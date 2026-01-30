@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, Landmark, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { showError } from "@/lib/toastHelpers";
 import { apiRequest } from "@/lib/queryClient";
 
 interface BankLinkModalProps {
@@ -67,11 +68,7 @@ export function BankLinkModal({ isOpen, onClose, initialInstitutionId }: BankLin
             const data = await res.json();
             setInstitutions(data);
         } catch (error) {
-            toast({
-                title: "Error fetching banks",
-                description: "Could not load the list of banks.",
-                variant: "destructive",
-            });
+            showError(toast, "Error fetching banks", "Could not load the list of banks.");
         } finally {
             setLoading(false);
         }
@@ -105,11 +102,7 @@ export function BankLinkModal({ isOpen, onClose, initialInstitutionId }: BankLin
             }
         } catch (error) {
             console.error("Connection failed:", error);
-            toast({
-                title: "Connection Failed",
-                description: "Could not initiate bank connection.",
-                variant: "destructive",
-            });
+            showError(toast, "Connection Failed", "Could not initiate bank connection.");
             setConnecting(false);
             // If auto-connect failed, maybe fallback to list?
             if (initialInstitutionId) {

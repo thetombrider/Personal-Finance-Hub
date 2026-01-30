@@ -21,6 +21,7 @@ import { RefreshCw, List, Tag } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { invalidationHelpers } from "@/lib/queryInvalidation";
 import { useToast } from "@/hooks/use-toast";
+import { showSuccess, showError } from "@/lib/toastHelpers";
 
 export default function Transactions() {
   const { transactions, accounts, categories, tags, addTransaction, updateTransaction, updateTransactions, deleteTransaction, deleteTransactions, formatCurrency, isLoading } = useFinance();
@@ -44,7 +45,7 @@ export default function Transactions() {
   const handleSyncAll = async () => {
     const linkedAccounts = accounts.filter(a => a.gocardlessAccountId);
     if (linkedAccounts.length === 0) {
-      toast({ title: "No linked accounts", description: "Link a bank account first.", variant: "destructive" });
+      showError(toast, "No linked accounts", "Link a bank account first.");
       return;
     }
 
@@ -68,11 +69,11 @@ export default function Transactions() {
     invalidationHelpers.transactions(queryClient);
 
     setIsSyncingAll(false);
-    toast({
-      title: "Sync Complete",
-      description: `Synced ${linkedAccounts.length} accounts. ${errors > 0 ? `${errors} failed.` : "All successful."}`,
-      variant: errors > 0 ? "destructive" : "default"
-    });
+    if (errors > 0) {
+      showError(toast, "Sync Complete", `Synced ${linkedAccounts.length} accounts. ${errors} failed.`);
+    } else {
+      showSuccess(toast, "Sync Complete", `Synced ${linkedAccounts.length} accounts. All successful.`);
+    }
   };
 
   const { data: checks } = useReconciliationChecks();
@@ -112,7 +113,7 @@ export default function Transactions() {
       if (Object.keys(updates).length > 0) {
         await updateTransactions(Array.from(selectedIds), updates);
         setSelectedIds(new Set());
-        toast({ title: "Transactions updated", description: `${selectedIds.size} transactions updated successfully.` });
+        showSuccess(toast, "Transactions updated", `${selectedIds.size} transactions updated successfully.`);
       }
 
       setIsDialogOpen(false);

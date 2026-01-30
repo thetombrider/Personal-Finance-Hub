@@ -9,6 +9,7 @@ import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { showSuccess, showError } from "@/lib/toastHelpers";
 import * as api from "@/lib/api";
 import type { Holding } from "@shared/schema";
 import { getErrorMessage } from "@/lib/errors";
@@ -111,11 +112,7 @@ export default function ImportTransactions() {
                 initializeMapping(fields, importMode);
               }
             } else {
-              toast({
-                title: "Import Failed",
-                description: "The Excel file appears to be empty or invalid.",
-                variant: "destructive"
-              });
+              showError(toast, "Import Failed", "The Excel file appears to be empty or invalid.");
             }
           }
         };
@@ -237,11 +234,7 @@ export default function ImportTransactions() {
           if (missingAccount) reason += " Some rows have no valid Account mapping.";
           if (missingCategory) reason += " Some rows have no valid Category mapping.";
 
-          toast({
-            title: "Import Failed",
-            description: reason,
-            variant: "destructive"
-          });
+          showError(toast, "Import Failed", reason);
           return;
         }
 
@@ -249,40 +242,33 @@ export default function ImportTransactions() {
         const saved = await addTransactions(toSave);
         const skipped = toSave.length - (saved?.length || 0);
 
-        toast({
-          title: "Import Successful",
-          description: `Imported ${saved?.length || 0} transactions (${skipped} duplicates skipped).`,
-        });
+        showSuccess(toast, "Import Successful", `Imported ${saved?.length || 0} transactions (${skipped} duplicates skipped).`);
         setLocation('/transactions');
       } else if (importMode === 'accounts') {
         const newAccounts = csvData.map(row => getAccountFromRow(row, mapping)).filter(a => a.name);
         if (newAccounts.length === 0) {
-          toast({ title: "Import Failed", description: "No valid accounts found.", variant: "destructive" });
+          showError(toast, "Import Failed", "No valid accounts found.");
           return;
         }
         const saved = await addAccounts(newAccounts);
         const skipped = newAccounts.length - (saved?.length || 0);
-        toast({ title: "Import Successful", description: `Imported ${saved?.length || 0} accounts (${skipped} duplicates skipped).` });
+        showSuccess(toast, "Import Successful", `Imported ${saved?.length || 0} accounts (${skipped} duplicates skipped).`);
         setLocation('/accounts');
       } else if (importMode === 'categories') {
         const newCategories = csvData.map(row => getCategoryFromRow(row, mapping)).filter(c => c.name);
         if (newCategories.length === 0) {
-          toast({ title: "Import Failed", description: "No valid categories found.", variant: "destructive" });
+          showError(toast, "Import Failed", "No valid categories found.");
           return;
         }
         const saved = await addCategories(newCategories);
         const skipped = newCategories.length - (saved?.length || 0);
-        toast({ title: "Import Successful", description: `Imported ${saved?.length || 0} categories (${skipped} duplicates skipped).` });
+        showSuccess(toast, "Import Successful", `Imported ${saved?.length || 0} categories (${skipped} duplicates skipped).`);
         setLocation('/categories');
       } else if (importMode === 'trades') {
         await handleTradeImport();
       }
     } catch (error) {
-      toast({
-        title: "Import Error",
-        description: getErrorMessage(error),
-        variant: "destructive"
-      });
+      showError(toast, "Import Error", getErrorMessage(error));
     }
   };
 
@@ -371,11 +357,7 @@ export default function ImportTransactions() {
     }).filter(t => t._isValid);
 
     if (tradeRows.length === 0) {
-      toast({
-        title: "Import Failed",
-        description: "No valid trades found. Make sure ticker, quantity, and price are correctly mapped.",
-        variant: "destructive"
-      });
+      showError(toast, "Import Failed", "No valid trades found. Make sure ticker, quantity, and price are correctly mapped.");
       return;
     }
 
@@ -415,10 +397,7 @@ export default function ImportTransactions() {
 
     const saved = await api.createTradesBulk(validTrades);
     const skipped = validTrades.length - (saved?.length || 0);
-    toast({
-      title: "Import Successful",
-      description: `Imported ${saved?.length || 0} trades for ${tickerMap.size} holdings (${skipped} duplicates skipped).`,
-    });
+    showSuccess(toast, "Import Successful", `Imported ${saved?.length || 0} trades for ${tickerMap.size} holdings (${skipped} duplicates skipped).`);
     setLocation('/portfolio');
   };
 

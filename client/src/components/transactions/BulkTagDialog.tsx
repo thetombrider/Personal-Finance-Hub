@@ -5,6 +5,7 @@ import { TagInput } from "@/components/common/TagInput";
 import { useState } from "react";
 import { useFinance } from "@/context/FinanceContext";
 import { useToast } from "@/hooks/use-toast";
+import { showSuccess, showError } from "@/lib/toastHelpers";
 import { Tag } from "lucide-react";
 
 interface BulkTagDialogProps {
@@ -24,18 +25,11 @@ export function BulkTagDialog({ isOpen, onOpenChange, selectedIds }: BulkTagDial
         setIsLoading(true);
         try {
             await batchAssignTags(selectedIds, selectedTagIds);
-            toast({
-                title: "Tags added",
-                description: `Added ${selectedTagIds.length} tags to ${selectedIds.length} transactions.`,
-            });
+            showSuccess(toast, "Tags added", `Added ${selectedTagIds.length} tags to ${selectedIds.length} transactions.`);
             onOpenChange(false);
             setSelectedTagIds([]);
         } catch (error) {
-            toast({
-                title: "Error",
-                description: "Failed to add tags.",
-                variant: "destructive",
-            });
+            showError(toast, "Error", "Failed to add tags.");
         } finally {
             setIsLoading(false);
         }
@@ -46,18 +40,11 @@ export function BulkTagDialog({ isOpen, onOpenChange, selectedIds }: BulkTagDial
         setIsLoading(true);
         try {
             await batchRemoveTags(selectedIds, selectedTagIds);
-            toast({
-                title: "Tags removed",
-                description: `Removed ${selectedTagIds.length} tags from ${selectedIds.length} transactions.`,
-            });
+            showSuccess(toast, "Tags removed", `Removed ${selectedTagIds.length} tags from ${selectedIds.length} transactions.`);
             onOpenChange(false);
             setSelectedTagIds([]);
         } catch (error) {
-            toast({
-                title: "Error",
-                description: "Failed to remove tags.",
-                variant: "destructive",
-            });
+            showError(toast, "Error", "Failed to remove tags.");
         } finally {
             setIsLoading(false);
         }

@@ -35,6 +35,7 @@ import { format, addDays, isPast } from "date-fns";
 import { formatForDisplay, dateFormats } from "@/lib/dateFormatters";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { showSuccess, showError } from "@/lib/toastHelpers";
 import { useBankConnections } from "@/hooks/queries/useBankConnections";
 
 const accountSchema = z.object({
@@ -113,16 +114,9 @@ export default function ManageAccounts() {
     try {
       await apiRequest("PATCH", `/api/accounts/${accountId}`, { gocardlessAccountId: null, bankConnectionId: null });
       await queryClient.invalidateQueries({ queryKey: ["accounts"] });
-      toast({
-        title: "Account unlinked",
-        description: "The connection with the bank has been removed.",
-      });
+      showSuccess(toast, "Account unlinked", "The connection with the bank has been removed.");
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Unable to unlink the account.",
-      });
+      showError(toast, "Error", "Unable to unlink the account.");
     }
   };
 

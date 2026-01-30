@@ -9,6 +9,7 @@ import { Loader2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type Category, type RecurringExpense, type Account } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { showSuccess, showError } from "@/lib/toastHelpers";
 
 interface AddRecurringExpenseFormProps {
     onSuccess: () => void;
@@ -59,18 +60,18 @@ export function AddRecurringExpenseForm({ onSuccess, categories, accounts, initi
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['budget'] });
-            toast({ title: isEditing ? "Expense updated" : "Recurring expense added" });
+            showSuccess(toast, isEditing ? "Expense updated" : "Recurring expense added");
             onSuccess();
         },
         onError: (error) => {
             console.error("Mutation error:", error);
-            toast({ title: "Error", description: error.message || "Unable to save the recurring expense.", variant: "destructive" });
+            showError(toast, "Error", error.message || "Unable to save the recurring expense.");
         }
     });
 
     const handleSubmit = () => {
         if (!name || !amount || !categoryId || !accountId || !startDate) {
-            toast({ title: "Error", description: "Fill in all required fields.", variant: "destructive" });
+            showError(toast, "Error", "Fill in all required fields.");
             return;
         }
 
