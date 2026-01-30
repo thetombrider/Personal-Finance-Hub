@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, Edit2, Building2, PiggyBank, CreditCard, Banknote, Wallet, Link, RefreshCw, AlertCircle, CheckCircle2, MoreHorizontal, Unlink, Landmark } from "lucide-react";
+import { Plus, Trash2, Edit2, Building2, PiggyBank, CreditCard, Banknote, Wallet, Link, RefreshCw, AlertCircle, CheckCircle2, MoreHorizontal, Unlink, Landmark, Car, Home, Gem, Scale } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,7 +41,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 const accountSchema = z.object({
   name: z.string().min(2, "Name is required"),
-  type: z.enum(["checking", "savings", "credit", "investment", "cash"]),
+  type: z.enum(["checking", "savings", "credit", "investment", "cash", "vehicle", "real_estate", "valuable", "mortgage", "loan"]),
   startingBalance: z.coerce.number(),
   currency: z.string().default("EUR"),
   color: z.string().default("#3b82f6"),
@@ -132,6 +132,11 @@ export default function ManageAccounts() {
       case 'credit': return CreditCard;
       case 'cash': return Banknote;
       case 'investment': return Wallet;
+      case 'vehicle': return Car;
+      case 'real_estate': return Home;
+      case 'valuable': return Gem;
+      case 'mortgage': return Home; // Or differentiate color
+      case 'loan': return Scale;
       default: return Wallet;
     }
   };
@@ -293,6 +298,11 @@ export default function ManageAccounts() {
                                 <SelectItem value="credit">Credit Card</SelectItem>
                                 <SelectItem value="investment">Investment</SelectItem>
                                 <SelectItem value="cash">Cash</SelectItem>
+                                <SelectItem value="vehicle">Vehicle</SelectItem>
+                                <SelectItem value="real_estate">Real Estate</SelectItem>
+                                <SelectItem value="valuable">Valuable</SelectItem>
+                                <SelectItem value="mortgage">Mortgage</SelectItem>
+                                <SelectItem value="loan">Loan</SelectItem>
                               </SelectContent>
                             </Select>
                             <FormMessage />
@@ -316,6 +326,11 @@ export default function ManageAccounts() {
                         )}
                       />
                     </div>
+                    {(watchedType === "credit" || watchedType === "mortgage" || watchedType === "loan") && (
+                      <div className="bg-blue-50 text-blue-800 p-3 rounded-md text-sm mb-4">
+                        <strong>Note:</strong> For liabilities like {watchedType === "credit" ? "credit cards" : watchedType === "mortgage" ? "mortgages" : "loans"}, please enter a <strong>negative</strong> starting balance (e.g. -150000) to represent the debt.
+                      </div>
+                    )}
                     {watchedType === "credit" && (
                       <FormField
                         control={form.control}

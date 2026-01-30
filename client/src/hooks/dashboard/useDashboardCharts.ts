@@ -308,7 +308,12 @@ export function useDashboardCharts({
             'savings': 'Savings',
             'credit': 'Credit',
             'investment': 'Investments',
-            'cash': 'Cash'
+            'cash': 'Cash',
+            'vehicle': 'Assets',
+            'real_estate': 'Assets',
+            'valuable': 'Assets',
+            'mortgage': 'Liabilities',
+            'loan': 'Liabilities'
         };
 
         // Initialize map

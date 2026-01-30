@@ -8,7 +8,7 @@ import type { TransferData } from "@/lib/api";
 import type { InsertAccount, InsertCategory, InsertTransaction, Account as DbAccount, Category as DbCategory, Transaction as DbTransaction, Tag as DbTag, InsertTag } from "@shared/schema";
 
 // Types
-export type AccountType = "checking" | "savings" | "credit" | "investment" | "cash";
+export type AccountType = "checking" | "savings" | "credit" | "investment" | "cash" | "vehicle" | "real_estate" | "valuable" | "mortgage" | "loan";
 
 export interface Account extends Omit<DbAccount, "type"> {
   type: AccountType;

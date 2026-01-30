@@ -50,7 +50,7 @@ export const accounts = pgTable("accounts", {
 });
 
 export const insertAccountSchema = createInsertSchema(accounts).omit({ id: true }).extend({
-  type: z.enum(["checking", "savings", "credit", "investment", "cash"]),
+  type: z.enum(["checking", "savings", "credit", "investment", "cash", "vehicle", "real_estate", "valuable", "mortgage", "loan"]),
 });
 export type InsertAccount = z.infer<typeof insertAccountSchema>;
 export type Account = typeof accounts.$inferSelect;
