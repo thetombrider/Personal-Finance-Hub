@@ -91,7 +91,14 @@ export default function Settings() {
     async function onSubmit(values: z.infer<typeof formSchema>) {
         setIsLoading(true);
         try {
-            const updateData: any = {};
+            const updateData: {
+                username?: string;
+                firstName?: string;
+                lastName?: string;
+                email?: string | null;
+                password?: string;
+                appearanceSettings?: { font?: string };
+            } = {};
             if (values.username !== user?.username) {
                 updateData.username = values.username;
             }

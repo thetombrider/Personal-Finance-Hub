@@ -62,7 +62,8 @@ export default function Dashboard() {
 
   const investmentAccounts = accounts.filter(a => a.type === "investment");
 
-  const onTransactionSubmit = async (data: TransactionFormValues | any, dirtyFields?: any) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const onTransactionSubmit = async (data: TransactionFormValues | any) => {
     const formattedData = {
       ...data,
       amount: data.amount.toString(),

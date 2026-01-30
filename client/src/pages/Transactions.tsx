@@ -96,7 +96,8 @@ export default function Transactions() {
 
   const onSubmit = async (data: TransactionFormValues | BulkTransactionFormValues, dirtyFields?: Partial<Record<keyof TransactionFormValues, boolean>>) => {
     if (formMode === 'bulk-edit') {
-      const updates: any = {};
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const updates: Record<string, any> = {};
       if (dirtyFields) {
         Object.keys(dirtyFields).forEach(key => {
           if (dirtyFields[key as keyof TransactionFormValues]) {

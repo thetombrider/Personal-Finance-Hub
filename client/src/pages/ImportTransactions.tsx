@@ -19,6 +19,7 @@ import { cleanHeader, parseNumeric, getTransactionFromRow, getAccountFromRow, ge
 import ImportZone from "@/components/import/ImportZone";
 import MappingManager from "@/components/import/MappingManager";
 import FileReview from "@/components/import/FileReview";
+import type { CsvRow, CsvFileData, ReferenceCsvData, ParsedTrade } from "@/types/imports";
 
 export default function ImportTransactions() {
   const { accounts, categories, addTransactions, addAccounts, addCategories } = useFinance();
@@ -29,8 +30,8 @@ export default function ImportTransactions() {
   const [importMode, setImportMode] = useState<ImportMode>('transactions');
   const [file, setFile] = useState<File | null>(null);
   const [files, setFiles] = useState<File[]>([]);
-  const [csvData, setCsvData] = useState<any[]>([]);
-  const [allCsvData, setAllCsvData] = useState<{ name: string; headers: string[]; data: any[] }[]>([]);
+  const [csvData, setCsvData] = useState<CsvRow[]>([]);
+  const [allCsvData, setAllCsvData] = useState<CsvFileData[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
 
   const [selectedAccount, setSelectedAccount] = useState<number | null>(null);
@@ -73,7 +74,7 @@ export default function ImportTransactions() {
 
   const [primaryFile, setPrimaryFile] = useState<File | null>(null);
   const [referenceFile, setReferenceFile] = useState<File | null>(null);
-  const [referenceCsvData, setReferenceCsvData] = useState<{ headers: string[], data: any[] } | null>(null);
+  const [referenceCsvData, setReferenceCsvData] = useState<ReferenceCsvData | null>(null);
 
   const handleFileUpload = (files: File[], isReference: boolean = false) => {
     const uploadedFiles = files;
@@ -126,9 +127,9 @@ export default function ImportTransactions() {
             const data = results.data;
 
             if (isReference) {
-              setReferenceCsvData({ headers: fileHeaders, data });
+              setReferenceCsvData({ headers: fileHeaders, data: data as CsvRow[] });
             } else {
-              setCsvData(data);
+              setCsvData(data as CsvRow[]);
               setHeaders(fileHeaders);
               if (!isReference && step === 'upload') setStep('map');
 
@@ -361,10 +362,11 @@ export default function ImportTransactions() {
       return;
     }
 
-    const tickerMap = new Map<string, { name: string; trades: any[] }>();
+    const tickerMap = new Map<string, { name: string; trades: ParsedTrade[] }>();
     for (const trade of tradeRows) {
       if (!tickerMap.has(trade.ticker)) tickerMap.set(trade.ticker, { name: trade.name, trades: [] });
-      tickerMap.get(trade.ticker)!.trades.push(trade);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      tickerMap.get(trade.ticker)!.trades.push(trade as any);
     }
 
     const currentHoldings = await api.fetchHoldings();

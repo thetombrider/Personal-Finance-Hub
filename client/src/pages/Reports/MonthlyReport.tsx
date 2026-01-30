@@ -24,6 +24,7 @@ export default function MonthlyReport() {
     const [drilldownConfig, setDrilldownConfig] = useState<{
         isOpen: boolean;
         title: string;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         filters: any;
     } | null>(null);
 
@@ -59,6 +60,7 @@ export default function MonthlyReport() {
     const canGoForward = page > 0;
 
     // Helper to check if transaction is a transfer
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const isTransfer = (t: any) => {
         const category = categories.find(c => c.id === t.categoryId);
         return category?.type === 'transfer';

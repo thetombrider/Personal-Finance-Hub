@@ -46,7 +46,7 @@ export function ImportedTransactions({ accountId, isOpen, onOpenChange }: Import
     const [txToDismiss, setTxToDismiss] = useState<StagedTransaction | null>(null);
     const [showBulkApproveDialog, setShowBulkApproveDialog] = useState(false);
     const [showBulkDismissDialog, setShowBulkDismissDialog] = useState(false);
-    const [bulkApproveUpdates, setBulkApproveUpdates] = useState<any[]>([]);
+    const [bulkApproveUpdates, setBulkApproveUpdates] = useState<{ stagingId: number; categoryId: number; description?: string }[]>([]);
     const titleAccountName = accountId ? accounts.find(a => a.id === accountId)?.name : null;
 
     // Reset selection when filter changes
@@ -83,7 +83,7 @@ export function ImportedTransactions({ accountId, isOpen, onOpenChange }: Import
     // Local state for edits
     const [edits, setEdits] = useState<Record<number, { categoryId?: number; description?: string }>>({});
 
-    const handleEdit = (id: number, field: "categoryId" | "description", value: any) => {
+    const handleEdit = (id: number, field: "categoryId" | "description", value: string | number) => {
         setEdits(prev => ({
             ...prev,
             [id]: { ...prev[id], [field]: value }

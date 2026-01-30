@@ -41,16 +41,16 @@ export interface ParsedTransaction {
     _hasValidCategory: boolean;
 }
 
-// Trade data from import
+// Trade row data from CSV import
 export interface ParsedTrade {
     ticker: string;
     name: string;
-    trades: Array<{
-        date: string;
-        type: "buy" | "sell";
-        quantity: number;
-        pricePerUnit: number;
-        totalAmount: number;
-        fees?: number;
-    }>;
+    type: "buy" | "sell";
+    date: string;
+    quantity: string;
+    pricePerUnit: string;
+    totalAmount: string;
+    fees: string;
+    accountId: number | null;
+    _isValid: boolean;
 }

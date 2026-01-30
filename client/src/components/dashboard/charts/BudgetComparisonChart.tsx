@@ -1,9 +1,10 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import type { BudgetComparisonDataPoint } from "@/types/charts";
 
 interface BudgetComparisonChartProps {
-    data: any[];
+    data: BudgetComparisonDataPoint[];
     privacyMode: boolean;
     type: 'income' | 'expense';
 }

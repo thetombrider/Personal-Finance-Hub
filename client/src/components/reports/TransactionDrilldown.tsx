@@ -7,7 +7,7 @@ import { RecurringExpenseCheck } from "@shared/schema";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { format } from "date-fns";
-import { TransactionForm } from "@/components/transactions/TransactionForm";
+import { TransactionForm, TransactionFormValues } from "@/components/transactions/TransactionForm";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface TransactionDrilldownProps {
@@ -80,7 +80,8 @@ export function TransactionDrilldown({ isOpen, onClose, title, initialFilters }:
 
     // deleteTransaction is now destructured from the first useFinance() call above
 
-    const onEditSubmit = async (data: any) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const onEditSubmit = async (data: TransactionFormValues | any) => {
         if (editingId) {
             const formattedData = {
                 ...data,

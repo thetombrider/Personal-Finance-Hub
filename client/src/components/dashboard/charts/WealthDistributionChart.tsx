@@ -1,9 +1,10 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { BarChart, Bar, ResponsiveContainer, XAxis, YAxis, Tooltip, Cell } from "recharts";
+import type { NetWorthByTypeDataPoint } from "@/types/charts";
 
 interface WealthDistributionChartProps {
-    data: any[];
+    data: NetWorthByTypeDataPoint[];
     privacyMode: boolean;
     formatCurrency: (amount: number) => string;
 }
@@ -45,7 +46,7 @@ export function WealthDistributionChart({ data, privacyMode, formatCurrency }: W
                                     width={70}
                                 />
                                 <Tooltip
-                                    formatter={(value: any, name: string) => {
+                                    formatter={(value: number, name: string) => {
                                         const numValue = Number(value) || 0;
                                         if (name === 'loss') return [displayCurrency(numValue), 'Unrealized Loss'];
                                         if (name === 'gain') return [displayCurrency(numValue), 'Unrealized Gain'];

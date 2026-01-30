@@ -41,7 +41,9 @@ type WebhookLog = {
     processingTimeMs: number;
     createdAt: string;
     errorMessage?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     requestBody?: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     responseBody?: any;
 };
 
@@ -222,6 +224,7 @@ export default function ManageWebhooks() {
             form.reset();
             toastPatterns.created(toast, "Webhook", "Webhook created successfully.");
         },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onError: (error: any) => {
             toastPatterns.failed(toast, "create webhook", error);
         }
@@ -237,6 +240,7 @@ export default function ManageWebhooks() {
             form.reset();
             toastPatterns.updated(toast, "Webhook");
         },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onError: (error: any) => {
             toastPatterns.failed(toast, "update webhook", error);
         }
@@ -248,6 +252,7 @@ export default function ManageWebhooks() {
             queryClient.invalidateQueries({ queryKey: ["/api/webhooks"] });
             toastPatterns.deleted(toast, "Webhook");
         },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onError: (error: any) => {
             toastPatterns.failed(toast, "delete webhook", error);
         }

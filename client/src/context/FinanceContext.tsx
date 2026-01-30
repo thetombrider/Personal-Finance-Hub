@@ -91,6 +91,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
 
   // Compute balances
   const accounts = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return rawAccounts.map((account: any) => {
       const accountTransactions = transactions.filter((t: Transaction) => t.accountId === account.id);
       const total = accountTransactions.reduce((sum: number, t: Transaction) => {
