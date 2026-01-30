@@ -22,6 +22,7 @@ import { format } from "date-fns";
 import { formatDateTime, dateFormats } from "@/lib/dateFormatters";
 import { Plus, Trash2, Edit2, ScrollText, Copy, Check, Eye, EyeOff, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 // Types
 type Webhook = {
@@ -196,6 +197,7 @@ export default function ManageWebhooks() {
     const [editingWebhook, setEditingWebhook] = useState<Webhook | null>(null);
     const [viewingLogsId, setViewingLogsId] = useState<string | null>(null);
     const [showSecret, setShowSecret] = useState<Record<string, boolean>>({});
+    const [webhookToDelete, setWebhookToDelete] = useState<string | null>(null);
     const { toast } = useToast();
     const queryClient = useQueryClient();
 
@@ -269,9 +271,10 @@ export default function ManageWebhooks() {
         setIsDialogOpen(true);
     };
 
-    const handleDelete = (id: string) => {
-        if (confirm("Are you sure you want to delete this webhook? Associated logs will be deleted.")) {
-            deleteMutation.mutate(id);
+    const handleDelete = () => {
+        if (webhookToDelete) {
+            deleteMutation.mutate(webhookToDelete);
+            setWebhookToDelete(null);
         }
     };
 
@@ -453,7 +456,7 @@ export default function ManageWebhooks() {
                                                 <Button variant="ghost" size="icon" onClick={() => handleEdit(webhook)} title="Edit">
                                                     <Edit2 className="h-4 w-4" />
                                                 </Button>
-                                                <Button variant="ghost" size="icon" onClick={() => handleDelete(webhook.id)} className="text-red-500 hover:text-red-700 hover:bg-red-50" title="Delete">
+                                                <Button variant="ghost" size="icon" onClick={() => setWebhookToDelete(webhook.id)} className="text-red-500 hover:text-red-700 hover:bg-red-50" title="Delete">
                                                     <Trash2 className="h-4 w-4" />
                                                 </Button>
                                             </div>
@@ -481,6 +484,16 @@ export default function ManageWebhooks() {
             <GenericJSONGuideDialog
                 open={isGenericGuideOpen}
                 onOpenChange={setIsGenericGuideOpen}
+            />
+
+            <ConfirmDialog
+                open={webhookToDelete !== null}
+                onOpenChange={(open) => !open && setWebhookToDelete(null)}
+                onConfirm={handleDelete}
+                title="Delete Webhook"
+                description="Are you sure you want to delete this webhook? Associated logs will be deleted."
+                confirmText="Delete"
+                variant="destructive"
             />
         </Layout>
     );

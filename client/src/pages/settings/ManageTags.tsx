@@ -27,6 +27,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { TagBadge } from "@/components/common/TagBadge";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 const tagSchema = z.object({
     name: z.string().min(2, "Name is required"),
@@ -39,6 +40,7 @@ export default function ManageTags() {
     const { tags, addTag, updateTag, deleteTag, isLoading } = useFinance();
     const { toast } = useToast();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [tagToDelete, setTagToDelete] = useState<number | null>(null);
 
     // Inline editing state
     const [editingId, setEditingId] = useState<number | null>(null);
@@ -95,9 +97,10 @@ export default function ManageTags() {
         }
     };
 
-    const handleDelete = async (id: number) => {
-        if (confirm("Are you sure you want to delete this tag? It will be removed from all associated transactions.")) {
-            await deleteTag(id);
+    const handleDelete = async () => {
+        if (tagToDelete !== null) {
+            await deleteTag(tagToDelete);
+            setTagToDelete(null);
         }
     };
 
@@ -250,7 +253,7 @@ export default function ManageTags() {
                                                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => startEditing(tag)} data-testid={`button-edit-${tag.id}`}>
                                                             <Edit2 size={14} />
                                                         </Button>
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(tag.id)} data-testid={`button-delete-${tag.id}`}>
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => setTagToDelete(tag.id)} data-testid={`button-delete-${tag.id}`}>
                                                             <Trash2 size={14} />
                                                         </Button>
                                                     </div>
@@ -264,6 +267,16 @@ export default function ManageTags() {
                     </Table>
                 </div>
             </div>
+
+            <ConfirmDialog
+                open={tagToDelete !== null}
+                onOpenChange={(open) => !open && setTagToDelete(null)}
+                onConfirm={handleDelete}
+                title="Delete Tag"
+                description="Are you sure you want to delete this tag? It will be removed from all associated transactions."
+                confirmText="Delete"
+                variant="destructive"
+            />
         </Layout>
     );
 }

@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { format } from "date-fns";
 import { TransactionForm } from "@/components/transactions/TransactionForm";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface TransactionDrilldownProps {
     isOpen: boolean;
@@ -28,10 +29,11 @@ interface TransactionDrilldownProps {
 }
 
 export function TransactionDrilldown({ isOpen, onClose, title, initialFilters }: TransactionDrilldownProps) {
-    const { transactions, accounts, categories, updateTransaction, formatCurrency } = useFinance();
+    const { transactions, accounts, categories, updateTransaction, deleteTransaction, formatCurrency } = useFinance();
     const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
     const [editingId, setEditingId] = useState<number | null>(null);
     const [isEditOpen, setIsEditOpen] = useState(false);
+    const [transactionToDelete, setTransactionToDelete] = useState<number | null>(null);
 
     // Fetch checks for recurring expense matching logic (reuse from Transactions page)
     const { data: checks } = useQuery<RecurringExpenseCheck[]>({
@@ -66,19 +68,17 @@ export function TransactionDrilldown({ isOpen, onClose, title, initialFilters }:
         setIsEditOpen(true);
     };
 
-    const handleDelete = async (id: number) => {
-        // For now, disable delete in drilldown or implement it using context
-        // Implementing quick delete if needed
-        if (confirm('Are you sure you want to delete this transaction?')) {
-            // needing deleteTransaction from context
+    const handleDelete = async () => {
+        if (transactionToDelete !== null) {
+            await deleteTransaction(transactionToDelete);
+            setTransactionToDelete(null);
         }
     };
 
     // We can just omit Delete for now or implement it fully.
     // Let's pass a dummy onDelete or implement it if we import deleteTransaction.
 
-    // We need deleteTransaction from useFinance
-    const { deleteTransaction } = useFinance();
+    // deleteTransaction is now destructured from the first useFinance() call above
 
     const onEditSubmit = async (data: any) => {
         if (editingId) {
@@ -161,7 +161,7 @@ export function TransactionDrilldown({ isOpen, onClose, title, initialFilters }:
                         onPageChange={paginationState.setCurrentPage}
                         itemsPerPage={paginationState.itemsPerPage}
                         onEdit={handleEdit}
-                        onDelete={(id) => deleteTransaction(id)} // Enable delete
+                        onDelete={(id) => setTransactionToDelete(id)} // Enable delete
                     />
                 </div>
             </DialogContent>
@@ -181,6 +181,16 @@ export function TransactionDrilldown({ isOpen, onClose, title, initialFilters }:
                 accounts={accounts}
                 categories={categories}
                 mode={editingId ? "edit" : "create"}
+            />
+
+            <ConfirmDialog
+                open={transactionToDelete !== null}
+                onOpenChange={(open) => !open && setTransactionToDelete(null)}
+                onConfirm={handleDelete}
+                title="Delete Transaction"
+                description="Are you sure you want to delete this transaction?"
+                confirmText="Delete"
+                variant="destructive"
             />
 
         </Dialog>

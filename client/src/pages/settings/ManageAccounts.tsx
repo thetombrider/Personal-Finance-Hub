@@ -37,6 +37,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { showSuccess, showError } from "@/lib/toastHelpers";
 import { useBankConnections } from "@/hooks/queries/useBankConnections";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 const accountSchema = z.object({
   name: z.string().min(2, "Name is required"),
@@ -55,6 +56,8 @@ export default function ManageAccounts() {
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [renewingInstitutionId, setRenewingInstitutionId] = useState<string | null>(null);
+  const [accountToDelete, setAccountToDelete] = useState<number | null>(null);
+  const [accountToUnlink, setAccountToUnlink] = useState<number | null>(null);
   const { toast } = useToast();
 
   const { data: connections = [], refetch: refetchConnections } = useBankConnections();
@@ -103,21 +106,23 @@ export default function ManageAccounts() {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = async (id: number) => {
-    if (confirm("Are you sure you want to delete this account?")) {
-      await deleteAccount(id);
+  const handleDelete = async () => {
+    if (accountToDelete !== null) {
+      await deleteAccount(accountToDelete);
+      setAccountToDelete(null);
     }
   };
 
-  const handleUnlink = async (accountId: number) => {
-    if (!confirm("Do you want to unlink this account from the bank? Transactions will no longer be imported automatically.")) return;
+  const handleUnlink = async () => {
+    if (accountToUnlink === null) return;
     try {
-      await apiRequest("PATCH", `/api/accounts/${accountId}`, { gocardlessAccountId: null, bankConnectionId: null });
+      await apiRequest("PATCH", `/api/accounts/${accountToUnlink}`, { gocardlessAccountId: null, bankConnectionId: null });
       await queryClient.invalidateQueries({ queryKey: ["accounts"] });
       showSuccess(toast, "Account unlinked", "The connection with the bank has been removed.");
     } catch (error) {
       showError(toast, "Error", "Unable to unlink the account.");
     }
+    setAccountToUnlink(null);
   };
 
   const getIcon = (type: AccountType) => {
@@ -458,7 +463,7 @@ export default function ManageAccounts() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => handleUnlink(account.id)}
+                            onClick={() => setAccountToUnlink(account.id)}
                             className="h-8 w-8 text-orange-400 hover:text-orange-600 hover:bg-orange-50"
                             title="Unlink Bank"
                           >
@@ -469,7 +474,7 @@ export default function ManageAccounts() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => handleDelete(account.id)}
+                          onClick={() => setAccountToDelete(account.id)}
                           className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                           title="Delete"
                         >
@@ -493,6 +498,26 @@ export default function ManageAccounts() {
           refetchConnections();
         }}
         initialInstitutionId={renewingInstitutionId}
+      />
+
+      <ConfirmDialog
+        open={accountToDelete !== null}
+        onOpenChange={(open) => !open && setAccountToDelete(null)}
+        onConfirm={handleDelete}
+        title="Delete Account"
+        description="Are you sure you want to delete this account?"
+        confirmText="Delete"
+        variant="destructive"
+      />
+
+      <ConfirmDialog
+        open={accountToUnlink !== null}
+        onOpenChange={(open) => !open && setAccountToUnlink(null)}
+        onConfirm={handleUnlink}
+        title="Unlink Bank Account"
+        description="Do you want to unlink this account from the bank? Transactions will no longer be imported automatically."
+        confirmText="Unlink"
+        variant="destructive"
       />
     </Layout >
   );

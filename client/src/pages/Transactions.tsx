@@ -22,6 +22,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { invalidationHelpers } from "@/lib/queryInvalidation";
 import { useToast } from "@/hooks/use-toast";
 import { showSuccess, showError } from "@/lib/toastHelpers";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export default function Transactions() {
   const { transactions, accounts, categories, tags, addTransaction, updateTransaction, updateTransactions, deleteTransaction, deleteTransactions, formatCurrency, isLoading } = useFinance();
@@ -33,6 +34,9 @@ export default function Transactions() {
   const [formMode, setFormMode] = useState<'create' | 'edit' | 'bulk-edit'>('create');
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [editFormData, setEditFormData] = useState<TransactionFormValues | null>(null);
+  const [transactionToDelete, setTransactionToDelete] = useState<number | null>(null);
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
+  const [showFilteredDeleteDialog, setShowFilteredDeleteDialog] = useState(false);
 
   // New state for Sync All and Review Staging
   const [reviewAccountId, setReviewAccountId] = useState<number | null>(null);
@@ -164,26 +168,24 @@ export default function Transactions() {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = async (id: number) => {
-    if (confirm("Are you sure you want to delete this transaction?")) {
-      await deleteTransaction(id);
+  const handleDelete = async () => {
+    if (transactionToDelete !== null) {
+      await deleteTransaction(transactionToDelete);
+      setTransactionToDelete(null);
     }
   };
 
   const handleBulkDelete = async () => {
-    if (confirm(`Are you sure you want to delete ${selectedIds.size} transactions?`)) {
-      await deleteTransactions(Array.from(selectedIds));
-      setSelectedIds(new Set());
-    }
+    await deleteTransactions(Array.from(selectedIds));
+    setSelectedIds(new Set());
+    setShowBulkDeleteDialog(false);
   };
 
   const handleBulkDeleteFiltered = async () => {
-    const count = sortedTransactions.length;
-    if (confirm(`Are you sure you want to delete all ${count} filtered transactions?`)) {
-      const idsToDelete = sortedTransactions.map(t => t.id);
-      await deleteTransactions(idsToDelete);
-      setSelectedIds(new Set());
-    }
+    const idsToDelete = sortedTransactions.map(t => t.id);
+    await deleteTransactions(idsToDelete);
+    setSelectedIds(new Set());
+    setShowFilteredDeleteDialog(false);
   };
 
   const toggleSelection = (id: number) => {
@@ -298,14 +300,14 @@ export default function Transactions() {
                     <Edit2 size={16} /> Edit
                   </Button>
                 )}
-                <Button variant="destructive" className="gap-2 px-3" onClick={handleBulkDelete} data-testid="button-bulk-delete" title={`Delete ${selectedIds.size} transactions`}>
+                <Button variant="destructive" className="gap-2 px-3" onClick={() => setShowBulkDeleteDialog(true)} data-testid="button-bulk-delete" title={`Delete ${selectedIds.size} transactions`}>
                   <Trash2 size={16} /> Selected ({selectedIds.size})
                 </Button>
               </>
             )}
 
             {filterState.hasActiveFilters && sortedTransactions.length > 0 && (
-              <Button variant="destructive" className="gap-2 px-3" onClick={handleBulkDeleteFiltered} data-testid="button-bulk-delete-filtered" title={`Delete all ${sortedTransactions.length} filtered transactions`}>
+              <Button variant="destructive" className="gap-2 px-3" onClick={() => setShowFilteredDeleteDialog(true)} data-testid="button-bulk-delete-filtered" title={`Delete all ${sortedTransactions.length} filtered transactions`}>
                 <Trash2 size={16} /> All Filtered Results ({sortedTransactions.length})
               </Button>
             )}
@@ -396,7 +398,7 @@ export default function Transactions() {
           onPageChange={paginationState.setCurrentPage}
           itemsPerPage={paginationState.itemsPerPage}
           onEdit={handleEdit}
-          onDelete={handleDelete}
+          onDelete={(id) => setTransactionToDelete(id)}
         />
 
         <TransactionForm
@@ -430,6 +432,36 @@ export default function Transactions() {
           />
         )}
       </div>
+
+      <ConfirmDialog
+        open={transactionToDelete !== null}
+        onOpenChange={(open) => !open && setTransactionToDelete(null)}
+        onConfirm={handleDelete}
+        title="Delete Transaction"
+        description="Are you sure you want to delete this transaction?"
+        confirmText="Delete"
+        variant="destructive"
+      />
+
+      <ConfirmDialog
+        open={showBulkDeleteDialog}
+        onOpenChange={setShowBulkDeleteDialog}
+        onConfirm={handleBulkDelete}
+        title="Delete Transactions"
+        description={`Are you sure you want to delete ${selectedIds.size} transactions?`}
+        confirmText="Delete"
+        variant="destructive"
+      />
+
+      <ConfirmDialog
+        open={showFilteredDeleteDialog}
+        onOpenChange={setShowFilteredDeleteDialog}
+        onConfirm={handleBulkDeleteFiltered}
+        title="Delete All Filtered Transactions"
+        description={`Are you sure you want to delete all ${sortedTransactions.length} filtered transactions?`}
+        confirmText="Delete All"
+        variant="destructive"
+      />
     </Layout>
   );
 }

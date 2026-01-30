@@ -16,6 +16,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ManualReconciliationModal } from "./transactions/ManualReconciliationModal";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useStagingMutations } from "@/hooks/mutations";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 
 interface ImportedTransactionsProps {
@@ -42,6 +43,10 @@ export function ImportedTransactions({ accountId, isOpen, onOpenChange }: Import
     const [statusFilter, setStatusFilter] = useState<string>("pending");
     const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
     const [reconcileTx, setReconcileTx] = useState<StagedTransaction | null>(null);
+    const [txToDismiss, setTxToDismiss] = useState<StagedTransaction | null>(null);
+    const [showBulkApproveDialog, setShowBulkApproveDialog] = useState(false);
+    const [showBulkDismissDialog, setShowBulkDismissDialog] = useState(false);
+    const [bulkApproveUpdates, setBulkApproveUpdates] = useState<any[]>([]);
     const titleAccountName = accountId ? accounts.find(a => a.id === accountId)?.name : null;
 
     // Reset selection when filter changes
@@ -103,10 +108,15 @@ export function ImportedTransactions({ accountId, isOpen, onOpenChange }: Import
     };
 
     const handleDismiss = (tx: StagedTransaction) => {
-        if (confirm("Dismiss this transaction? It will be hidden from the pending list.")) {
-            dismissTransaction.mutate(tx.id);
-        }
+        setTxToDismiss(tx);
     }
+
+    const confirmDismiss = () => {
+        if (txToDismiss) {
+            dismissTransaction.mutate(txToDismiss.id);
+            setTxToDismiss(null);
+        }
+    };
 
     const toggleSelectAll = (checked: boolean | 'indeterminate') => {
         if (checked === true) {
@@ -149,18 +159,28 @@ export function ImportedTransactions({ accountId, isOpen, onOpenChange }: Import
         }
 
         if (updates.length > 0) {
-            if (confirm(`Approve ${updates.length} transactions?`)) {
-                bulkApprove.mutate(updates);
-            }
+            setBulkApproveUpdates(updates);
+            setShowBulkApproveDialog(true);
+        }
+    };
+
+    const confirmBulkApprove = () => {
+        if (bulkApproveUpdates.length > 0) {
+            bulkApprove.mutate(bulkApproveUpdates);
+            setBulkApproveUpdates([]);
+            setShowBulkApproveDialog(false);
         }
     };
 
     const handleBulkDismiss = () => {
         if (selectedIds.size > 0) {
-            if (confirm(`Dismiss ${selectedIds.size} transactions?`)) {
-                bulkDismiss.mutate(Array.from(selectedIds));
-            }
+            setShowBulkDismissDialog(true);
         }
+    };
+
+    const confirmBulkDismiss = () => {
+        bulkDismiss.mutate(Array.from(selectedIds));
+        setShowBulkDismissDialog(false);
     };
 
     const isPendingTab = statusFilter === 'pending';
@@ -370,6 +390,35 @@ export function ImportedTransactions({ accountId, isOpen, onOpenChange }: Import
                 isOpen={!!reconcileTx}
                 onClose={() => setReconcileTx(null)}
                 stagedTransaction={reconcileTx}
+            />
+
+            <ConfirmDialog
+                open={txToDismiss !== null}
+                onOpenChange={(open) => !open && setTxToDismiss(null)}
+                onConfirm={confirmDismiss}
+                title="Dismiss Transaction"
+                description="Dismiss this transaction? It will be hidden from the pending list."
+                confirmText="Dismiss"
+                variant="destructive"
+            />
+
+            <ConfirmDialog
+                open={showBulkApproveDialog}
+                onOpenChange={setShowBulkApproveDialog}
+                onConfirm={confirmBulkApprove}
+                title="Approve Transactions"
+                description={`Approve ${bulkApproveUpdates.length} transactions?`}
+                confirmText="Approve"
+            />
+
+            <ConfirmDialog
+                open={showBulkDismissDialog}
+                onOpenChange={setShowBulkDismissDialog}
+                onConfirm={confirmBulkDismiss}
+                title="Dismiss Transactions"
+                description={`Dismiss ${selectedIds.size} transactions?`}
+                confirmText="Dismiss"
+                variant="destructive"
             />
         </>
     );

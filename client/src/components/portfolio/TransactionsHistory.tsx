@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Trash2, Download, Pencil, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { showSuccess, showError, toastPatterns } from "@/lib/toastHelpers";
@@ -32,6 +33,7 @@ export function TransactionsHistory({ trades, holdings, accounts }: Transactions
     const [selectedTradeIds, setSelectedTradeIds] = useState<Set<number>>(new Set());
     const [editingTrade, setEditingTrade] = useState<(Trade & { holding?: Holding }) | null>(null);
     const [tradeToDelete, setTradeToDelete] = useState<(Trade & { holding?: Holding }) | null>(null);
+    const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
 
     const [editForm, setEditForm] = useState({
         quantity: "",
@@ -122,9 +124,8 @@ export function TransactionsHistory({ trades, holdings, accounts }: Transactions
     });
 
     const handleBulkDeleteTrades = async () => {
-        if (confirm(`Are you sure you want to delete ${selectedTradeIds.size} transactions?`)) {
-            await deleteTradesBulkMutation.mutateAsync(Array.from(selectedTradeIds));
-        }
+        await deleteTradesBulkMutation.mutateAsync(Array.from(selectedTradeIds));
+        setShowBulkDeleteDialog(false);
     };
 
     const exportTradesToCSV = () => {
@@ -236,7 +237,7 @@ export function TransactionsHistory({ trades, holdings, accounts }: Transactions
                         </div>
                         <div className="flex items-center gap-2">
                             {selectedTradeIds.size > 0 && (
-                                <Button variant="destructive" size="sm" onClick={handleBulkDeleteTrades}>
+                                <Button variant="destructive" size="sm" onClick={() => setShowBulkDeleteDialog(true)}>
                                     <Trash2 className="h-4 w-4 mr-2" /> Delete ({selectedTradeIds.size})
                                 </Button>
                             )}
@@ -574,6 +575,16 @@ export function TransactionsHistory({ trades, holdings, accounts }: Transactions
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            <ConfirmDialog
+                open={showBulkDeleteDialog}
+                onOpenChange={setShowBulkDeleteDialog}
+                onConfirm={handleBulkDeleteTrades}
+                title="Delete Transactions"
+                description={`Are you sure you want to delete ${selectedTradeIds.size} transactions?`}
+                confirmText="Delete"
+                variant="destructive"
+            />
         </>
     );
 }

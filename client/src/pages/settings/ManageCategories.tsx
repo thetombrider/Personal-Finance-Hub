@@ -12,6 +12,7 @@ import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 
 const categorySchema = z.object({
@@ -25,6 +26,7 @@ type CategoryFormValues = z.infer<typeof categorySchema>;
 export default function ManageCategories() {
   const { categories, addCategory, updateCategory, deleteCategory, isLoading } = useFinance();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<number | null>(null);
 
   // Inline editing state
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -76,9 +78,10 @@ export default function ManageCategories() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (confirm("Are you sure you want to delete this category?")) {
-      await deleteCategory(id);
+  const handleDelete = async () => {
+    if (categoryToDelete !== null) {
+      await deleteCategory(categoryToDelete);
+      setCategoryToDelete(null);
     }
   };
 
@@ -278,7 +281,7 @@ export default function ManageCategories() {
                           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => startEditing(category)} data-testid={`button-edit-${category.id}`}>
                             <Edit2 size={14} />
                           </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(category.id)} data-testid={`button-delete-${category.id}`}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => setCategoryToDelete(category.id)} data-testid={`button-delete-${category.id}`}>
                             <Trash2 size={14} />
                           </Button>
                         </div>
@@ -291,6 +294,16 @@ export default function ManageCategories() {
           </Table>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={categoryToDelete !== null}
+        onOpenChange={(open) => !open && setCategoryToDelete(null)}
+        onConfirm={handleDelete}
+        title="Delete Category"
+        description="Are you sure you want to delete this category?"
+        confirmText="Delete"
+        variant="destructive"
+      />
     </Layout>
   );
 }
