@@ -2,7 +2,7 @@ import { useFinance, Account, AccountType } from "@/context/FinanceContext";
 import Layout from "@/components/Layout";
 
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, Edit2, Building2, PiggyBank, CreditCard, Banknote, Wallet, Link, RefreshCw, AlertCircle, CheckCircle2, MoreHorizontal, Unlink, Landmark, Car, Home, Gem, Scale } from "lucide-react";
@@ -253,6 +253,9 @@ export default function ManageAccounts() {
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>{editingId ? "Edit Account" : "New Account"}</DialogTitle>
+                  <DialogDescription>
+                    {editingId ? "Make changes to your account details here." : "Add a new account to track your assets or liabilities."}
+                  </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

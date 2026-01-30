@@ -3,6 +3,7 @@ import { storage } from "../storage";
 import { insertAccountSchema } from "@shared/schema";
 import { z } from "zod";
 import { parseNumericParam, checkOwnership } from "./middleware";
+import { logger } from "../lib/logger";
 import "./types"; // Import for type augmentation
 
 export function registerAccountRoutes(app: Express) {
@@ -49,8 +50,10 @@ export function registerAccountRoutes(app: Express) {
             res.status(201).json(account);
         } catch (error) {
             if (error instanceof z.ZodError) {
+                logger.api.warn("Account validation failed", { error: error.errors });
                 return res.status(400).json({ error: error.errors });
             }
+            logger.api.error("Failed to create account", error);
             res.status(500).json({ error: "Failed to create account" });
         }
     });

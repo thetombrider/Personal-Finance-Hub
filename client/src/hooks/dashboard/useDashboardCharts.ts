@@ -309,11 +309,11 @@ export function useDashboardCharts({
             'credit': 'Credit',
             'investment': 'Investments',
             'cash': 'Cash',
-            'vehicle': 'Assets',
-            'real_estate': 'Assets',
-            'valuable': 'Assets',
-            'mortgage': 'Liabilities',
-            'loan': 'Liabilities'
+            'vehicle': 'Vehicle',
+            'real_estate': 'Real Estate',
+            'valuable': 'Valuables',
+            'mortgage': 'Mortgage',
+            'loan': 'Loan'
         };
 
         // Initialize map

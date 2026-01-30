@@ -10,7 +10,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { type Category } from "@shared/schema";
 import { Loader2 } from "lucide-react";
-import { BudgetSuggestionPopover } from "./BudgetSuggestionPopover";
+
+import { BudgetSmartMenu } from "./BudgetSmartMenu";
 
 interface BaselineTableProps {
     categories: Category[];
@@ -99,6 +100,35 @@ export function BaselineTable({ categories, budgetData, onUpdateBaseline, monthR
         await handleBlur(catId, month, amount);
     };
 
+    const handleExtendNext = async (catId: number, currentMonthIndex: number, amount: number) => {
+        // currentMonthIndex is 0-11
+        // We want to update next month (currentMonthIndex + 1)
+        // Check bounds
+        if (currentMonthIndex >= 11) return;
+
+        const nextMonth = currentMonthIndex + 2; // +1 for next index, +1 because onUpdateBaseline takes 1-12
+
+        // Optimistic UI: Pre-fill input
+        setInputs((prev) => ({ ...prev, [getKey(catId, nextMonth)]: amount.toString() }));
+
+        await handleBlur(catId, nextMonth, amount);
+    };
+
+    const handleExtendYear = async (catId: number, currentMonthIndex: number, amount: number) => {
+        if (currentMonthIndex >= 11) return;
+
+        // Loop from next month to end of year (month 12)
+        const updates = [];
+        for (let m = currentMonthIndex + 2; m <= 12; m++) {
+            // Optimistic UI
+            setInputs((prev) => ({ ...prev, [getKey(catId, m)]: amount.toString() }));
+            updates.push(handleBlur(catId, m, amount));
+        }
+
+        // Run all updates
+        await Promise.all(updates);
+    };
+
     const handleKeyDown = (e: React.KeyboardEvent, catId: number, month: number) => {
         if (e.key === "Enter") {
             (e.currentTarget as HTMLInputElement).blur();
@@ -136,7 +166,20 @@ export function BaselineTable({ categories, budgetData, onUpdateBaseline, monthR
                                     value={getValue(category.id, month)}
                                     onChange={(e) => handleChange(category.id, month, e.target.value)}
                                     onBlur={() => handleBlur(category.id, month)}
-                                    onKeyDown={(e) => handleKeyDown(e, category.id, month)}
+                                    onKeyDown={(e) => {
+                                        handleKeyDown(e, category.id, month);
+                                        // Extend shortcuts
+                                        if ((e.metaKey || e.ctrlKey) && e.key === "ArrowRight") {
+                                            e.preventDefault();
+                                            if (e.shiftKey) {
+                                                // Cmd + Shift + ArrowRight -> Fill Rest of Year
+                                                handleExtendYear(category.id, month - 1, currentValue);
+                                            } else {
+                                                // Cmd + ArrowRight -> Extend Next
+                                                handleExtendNext(category.id, month - 1, currentValue);
+                                            }
+                                        }
+                                    }}
                                     disabled={isUpdating}
                                 />
                                 {isUpdating && (
@@ -145,10 +188,18 @@ export function BaselineTable({ categories, budgetData, onUpdateBaseline, monthR
                                     </div>
                                 )}
                                 {!isUpdating && (
-                                    <BudgetSuggestionPopover
+                                    <BudgetSmartMenu
                                         categoryId={category.id}
+                                        monthIndex={index} // 0-based index relative to visibleMonths? No, relative to YEAR? 
+                                        // visibleMonths is just a slice of names.
+                                        // The data logic needs true month index.
+                                        // 'month' variable in loop is 1-12 based?
+                                        // month = startMonthIndex + index + 1
+                                        // So true index 0-11 is (month - 1).
                                         currentValue={currentValue}
                                         onApply={(amount) => handleApplySuggestion(category.id, month, amount)}
+                                        onExtendNext={() => handleExtendNext(category.id, month - 1, currentValue)}
+                                        onExtendYear={() => handleExtendYear(category.id, month - 1, currentValue)}
                                     />
                                 )}
                             </div>
