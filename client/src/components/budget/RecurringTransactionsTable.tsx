@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Edit2, Trash2, Plus, RefreshCw, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { type Category, type RecurringExpense } from "@shared/schema";
-import { format } from "date-fns";
+import { formatForDisplay } from "@/lib/dateFormatters";
 import { useState } from "react";
 
 interface RecurringTransactionsTableProps {
@@ -187,7 +187,7 @@ export function RecurringTransactionsTable({
                                                 transaction.interval === 'quarterly' ? 'Quarterly' :
                                                     transaction.interval === 'yearly' ? 'Yearly' : transaction.interval}
                                     </TableCell>
-                                    <TableCell>{format(new Date(transaction.startDate), "dd/MM/yyyy")}</TableCell>
+                                    <TableCell>{formatForDisplay(new Date(transaction.startDate))}</TableCell>
                                     <TableCell>
                                         <Badge variant={transaction.active ? "default" : "outline"}>
                                             {transaction.active ? "Active" : "Inactive"}

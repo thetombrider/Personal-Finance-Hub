@@ -11,8 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Edit2, Trash2, Plus, CalendarClock, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { type Category, type PlannedExpense } from "@shared/schema";
-import { format } from "date-fns";
-import { enUS } from "date-fns/locale";
+import { formatForDisplay } from "@/lib/dateFormatters";
 import { useState } from "react";
 
 interface PlannedTransactionsTableProps {
@@ -145,7 +144,7 @@ export function PlannedTransactionsTable({
                             {sortedTransactions.map((transaction) => (
                                 <TableRow key={transaction.id}>
                                     <TableCell className="capitalize">
-                                        {format(new Date(transaction.date), "dd MMMM yyyy", { locale: enUS })}
+                                        {formatForDisplay(new Date(transaction.date))}
                                     </TableCell>
                                     <TableCell className="font-medium">{transaction.name}</TableCell>
                                     <TableCell>

@@ -18,6 +18,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
+import { formatDateTime, dateFormats } from "@/lib/dateFormatters";
 import { Plus, Trash2, Edit2, ScrollText, Copy, Check, Eye, EyeOff, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -63,7 +64,7 @@ function LogDetailsDialog({ log, open, onOpenChange }: { log: WebhookLog | null,
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <h4 className="font-semibold mb-1">Date</h4>
-                            <p className="text-sm">{format(new Date(log.createdAt), "dd/MM/yyyy HH:mm:ss")}</p>
+                            <p className="text-sm">{format(new Date(log.createdAt), dateFormats.dateTimeSeconds)}</p>
                         </div>
                         <div>
                             <h4 className="font-semibold mb-1">Status</h4>
@@ -153,7 +154,7 @@ function WebhookLogsDialog({ webhookId, webhookName, open, onOpenChange }: { web
                                 ) : (
                                     logs.map((log) => (
                                         <TableRow key={log.id}>
-                                            <TableCell>{format(new Date(log.createdAt), "dd/MM/yyyy HH:mm:ss")}</TableCell>
+                                            <TableCell>{format(new Date(log.createdAt), dateFormats.dateTimeSeconds)}</TableCell>
                                             <TableCell>
                                                 <Badge variant={log.status === "success" ? "secondary" : "destructive"} className={log.status === "success" ? "bg-green-100 text-green-800" : ""}>
                                                     {log.status}
@@ -431,7 +432,7 @@ export default function ManageWebhooks() {
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="text-xs text-muted-foreground">
-                                            {webhook.lastUsedAt ? format(new Date(webhook.lastUsedAt), "dd/MM/yyyy HH:mm") : "Never"}
+                                            {webhook.lastUsedAt ? formatDateTime(new Date(webhook.lastUsedAt)) : "Never"}
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex items-center justify-end gap-1">

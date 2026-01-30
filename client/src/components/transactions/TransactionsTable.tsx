@@ -3,7 +3,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ArrowUp, ArrowDown, ArrowUpDown, Edit2, Trash2, Landmark, CheckCircle2, ChevronLeft, ChevronRight } from "lucide-react";
-import { format } from "date-fns";
+import { formatForDisplay } from "@/lib/dateFormatters";
 import { cn } from "@/lib/utils";
 import { Transaction, Account, Category } from "@/context/FinanceContext";
 import { SortField, SortDirection } from "@/hooks/use-transactions-data";
@@ -191,7 +191,7 @@ export function TransactionsTable({
                                                 data-testid={`checkbox-transaction-${transaction.id}`}
                                             />
                                         </TableCell>
-                                        <TableCell data-testid={`text-date-${transaction.id}`}>{format(new Date(transaction.date), "MMM d, yyyy")}</TableCell>
+                                        <TableCell data-testid={`text-date-${transaction.id}`}>{formatForDisplay(new Date(transaction.date))}</TableCell>
                                         <TableCell className="font-medium" data-testid={`text-description-${transaction.id}`}>
                                             <div className="flex items-center gap-2">
                                                 {transaction.description}

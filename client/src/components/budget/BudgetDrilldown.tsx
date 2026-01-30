@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
 import { PlannedExpense, RecurringExpense } from "@shared/schema";
-import { format } from "date-fns";
+import { formatForDisplay } from "@/lib/dateFormatters";
 import { ArrowDown, ArrowUp, CalendarDays, ExternalLink } from "lucide-react";
 
 interface BudgetDrilldownProps {
@@ -100,7 +100,7 @@ export function BudgetDrilldown({ isOpen, onClose, title, data }: BudgetDrilldow
                                         {data.planned.map((item) => (
                                             <TableRow key={item.id}>
                                                 <TableCell className="py-2 text-muted-foreground text-xs">
-                                                    {format(new Date(item.date), "MMM d")}
+                                                    {formatForDisplay(new Date(item.date))}
                                                 </TableCell>
                                                 <TableCell className="py-2">{item.name}</TableCell>
                                                 <TableCell className="text-right py-2 font-mono">

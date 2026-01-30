@@ -32,6 +32,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { format, addDays, isPast } from "date-fns";
+import { formatForDisplay, dateFormats } from "@/lib/dateFormatters";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useBankConnections } from "@/hooks/queries/useBankConnections";
@@ -406,7 +407,7 @@ export default function ManageAccounts() {
                       {(account as any).lastSynced ? (
                         <div className="flex flex-col">
                           <span className="text-sm font-medium">
-                            {format(new Date((account as any).lastSynced), "dd MMM yyyy")}
+                            {formatForDisplay(new Date((account as any).lastSynced))}
                           </span>
                           <span className="text-xs text-muted-foreground">
                             {format(new Date((account as any).lastSynced), "HH:mm")}
