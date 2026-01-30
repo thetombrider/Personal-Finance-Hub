@@ -4,7 +4,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { formatCurrency } from "@/lib/utils";
 import { PlannedExpense, RecurringExpense } from "@shared/schema";
 import { formatForDisplay } from "@/lib/dateFormatters";
-import { ArrowDown, ArrowUp, CalendarDays, ExternalLink } from "lucide-react";
+import { ArrowDown, ArrowUp, CalendarDays, ExternalLink, Pencil, Check, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useState, useEffect } from "react";
 
 interface BudgetDrilldownProps {
     isOpen: boolean;
@@ -16,9 +19,29 @@ interface BudgetDrilldownProps {
         recurring: RecurringExpense[];
         total: number;
     };
+    onUpdateBaseline?: (amount: number) => void;
 }
 
-export function BudgetDrilldown({ isOpen, onClose, title, data }: BudgetDrilldownProps) {
+export function BudgetDrilldown({ isOpen, onClose, title, data, onUpdateBaseline }: BudgetDrilldownProps) {
+    const [isEditingBaseline, setIsEditingBaseline] = useState(false);
+    const [editBaselineValue, setEditBaselineValue] = useState("");
+
+    // Reset state when data changes or modal opens
+    useEffect(() => {
+        if (isOpen) {
+            setEditBaselineValue(data.baseline.toString());
+            setIsEditingBaseline(false);
+        }
+    }, [isOpen, data.baseline]);
+
+    const handleSaveBaseline = () => {
+        const amount = parseFloat(editBaselineValue);
+        if (!isNaN(amount) && onUpdateBaseline) {
+            onUpdateBaseline(amount);
+            setIsEditingBaseline(false);
+        }
+    };
+
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="max-w-[800px] max-h-[80vh] flex flex-col">
@@ -38,10 +61,57 @@ export function BudgetDrilldown({ isOpen, onClose, title, data }: BudgetDrilldow
                             </span>
                             Baseline Budget
                         </h3>
-                        <div className="bg-card border rounded-md p-3 flex justify-between items-center">
-                            <span className="text-sm">Monthly Baseline</span>
-                            <span className="font-mono font-medium">{formatCurrency(data.baseline)}</span>
-                        </div>
+                        {/* Edit Mode Logic */}
+                        {isEditingBaseline ? (
+                            <div className="bg-card border rounded-md p-3 flex justify-between items-center gap-2">
+                                <span className="text-sm text-muted-foreground">New Baseline:</span>
+                                <div className="flex items-center gap-2">
+                                    <Input
+                                        type="number"
+                                        value={editBaselineValue}
+                                        onChange={(e) => setEditBaselineValue(e.target.value)}
+                                        className="h-8 w-32 text-right"
+                                        autoFocus
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter") handleSaveBaseline();
+                                            if (e.key === "Escape") {
+                                                setIsEditingBaseline(false);
+                                                setEditBaselineValue(data.baseline.toString());
+                                            }
+                                        }}
+                                    />
+                                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50" onClick={handleSaveBaseline}>
+                                        <Check size={16} />
+                                    </Button>
+                                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive hover:bg-red-50" onClick={() => {
+                                        setIsEditingBaseline(false);
+                                        setEditBaselineValue(data.baseline.toString());
+                                    }}>
+                                        <X size={16} />
+                                    </Button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="bg-card border rounded-md p-3 flex justify-between items-center group">
+                                <span className="text-sm">Monthly Baseline</span>
+                                <div className="flex items-center gap-4">
+                                    <span className="font-mono font-medium">{formatCurrency(data.baseline)}</span>
+                                    {onUpdateBaseline && (
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            onClick={() => {
+                                                setEditBaselineValue(data.baseline.toString());
+                                                setIsEditingBaseline(true);
+                                            }}
+                                        >
+                                            <Pencil size={12} className="text-muted-foreground" />
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Recurring Expenses Section */}

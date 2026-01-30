@@ -56,6 +56,8 @@ export default function Budget() {
     const [drilldownConfig, setDrilldownConfig] = useState<{
         open: boolean;
         title: string;
+        categoryId?: number;
+        monthIndex?: number;
         data: {
             baseline: number;
             planned: PlannedExpense[];
@@ -187,6 +189,8 @@ export default function Budget() {
         setDrilldownConfig({
             open: true,
             title: `${category.name} - ${monthName} ${currentYear}`,
+            categoryId,
+            monthIndex,
             data: {
                 baseline: cellData.baseline,
                 planned: planned,
@@ -194,6 +198,69 @@ export default function Budget() {
                 total: cellData.total
             }
         });
+    };
+
+    const handleDrilldownUpdateBaseline = async (amount: number) => {
+        if (drilldownConfig.categoryId === undefined || drilldownConfig.monthIndex === undefined) return;
+
+        // 1. Trigger mutation (optimistic update ideally, but here just await)
+        // Note: handleUpdateBaseline takes 0-based month index? No:
+        // handleUpdateBaseline uses updateBudgetCell.mutateAsync, which expects `month` (1-12 usually? Let's check handleUpdateBaseline impl)
+        // handleUpdateBaseline calls updateBudgetCell.mutateAsync({ ... month })
+        // and useBudgetMutations sends it as is.
+        // Let's verify handleUpdateBaseline signature: `(categoryId: number, month: number, amount: number)`
+        // In BaselineTable it is called with `month + 1` (line 64 in BaselineTable usually, or passed directly).
+        // Wait, `handleUpdateBaseline` in Budget.tsx calls `updateBudgetCell`.
+        // `handleUpdateBaseline` signature is `(categoryId: number, month: number, amount: number)`.
+        // BUT `updateBudgetCell` mutation expects `month` which the server expects 1-12.
+        // Let's check `BaselineTable.tsx` usage if I could... but I can check `handleUpdateBaseline` in `Budget.tsx`:
+        // It takes `month`.
+
+        // In `props.onDrilldown(category.id, monthDataIndex - 1)` calling from SummaryTable. 
+        // So `monthIndex` in local state is 0-11.
+        // `handleUpdateBaseline` likely expects 1-12 because it sends to server without +1?
+        // Let's re-read handleUpdateBaseline in Budget.tsx
+        // Line 92: `const handleUpdateBaseline = async (categoryId: number, month: number, amount: number) => { await updateBudgetCell.mutateAsync({ categoryId, month, ... }) }`
+        // It passes `month` directly.
+        // Server `routes/budget.ts` line 50: uses `mb.month` which is 1-12.
+        // So we need to pass 1-12 to `handleUpdateBaseline`.
+
+        const month1Based = drilldownConfig.monthIndex + 1;
+
+        // Update via mutation
+        // Actually, `BaselineTable` calls `onUpdateBaseline` with 1-based index? 
+        // Let's assume yes, or I can just call mutation directly here.
+        // reusing handleUpdateBaseline seems cleaner if it handles errors/toasts? It doesn't seem to have toasts, just invalidate.
+
+        await handleUpdateBaseline(drilldownConfig.categoryId, month1Based, amount);
+
+        // Update local state to reflect change immediately in the open modal
+        setDrilldownConfig(prev => ({
+            ...prev,
+            data: {
+                ...prev.data,
+                baseline: amount,
+                total: amount + prev.data.planned.reduce((sum, p) => sum + Number(p.amount), 0) + prev.data.recurring.reduce((sum, r) => sum + Number(r.amount), 0) // rough recalc
+                // Actually `prev.data.total` includes all components.
+                // recalulating total:
+                // total = new_baseline + (old_total - old_baseline)
+            }
+        }));
+
+        // Refetch will fix eventually on invalidate, but we want instant feedback in modal.
+        // We can do a more precise calc:
+        const newTotal = amount
+            + drilldownConfig.data.planned.reduce((sum, item) => sum + Number(item.amount), 0)
+            + drilldownConfig.data.recurring.reduce((sum, item) => sum + Number(item.amount), 0);
+
+        setDrilldownConfig(prev => ({
+            ...prev,
+            data: {
+                ...prev.data,
+                baseline: amount,
+                total: newTotal
+            }
+        }));
     };
 
     if (error) {
@@ -412,6 +479,7 @@ export default function Budget() {
                     onClose={() => setDrilldownConfig(prev => ({ ...prev, open: false }))}
                     title={drilldownConfig.title}
                     data={drilldownConfig.data}
+                    onUpdateBaseline={handleDrilldownUpdateBaseline}
                 />
             </div>
         </Layout>
