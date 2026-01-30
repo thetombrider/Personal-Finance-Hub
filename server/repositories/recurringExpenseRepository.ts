@@ -194,6 +194,8 @@ export class RecurringExpenseRepository {
             dayOfMonth: recurringExpenses.dayOfMonth,
             accountId: recurringExpenses.accountId,
             accountName: accounts.name,
+            endDate: recurringExpenses.endDate,
+            startDate: recurringExpenses.startDate,
         })
             .from(recurringExpenseChecks)
             .innerJoin(recurringExpenses, eq(recurringExpenseChecks.recurringExpenseId, recurringExpenses.id))

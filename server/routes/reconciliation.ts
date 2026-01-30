@@ -75,7 +75,39 @@ export function registerReconciliationRoutes(app: Express) {
                 // Run check to ensure data is fresh
                 await reconciliationService.checkRecurringExpenses(req.user.id, year, month);
                 const checks = await storage.getRecurringExpenseChecksWithDetails(req.user.id, year, month);
-                const missing = checks.filter(c => c.status === "MISSING");
+
+                const missing = checks.filter(c => {
+                    if (c.status !== "MISSING") return false;
+
+                    // Filter by endDate (existing logic)
+                    const endDateStr = (c as any).endDate;
+                    if (endDateStr) {
+                        const endDate = new Date(endDateStr);
+                        const endYear = endDate.getFullYear();
+                        const endMonth = endDate.getMonth() + 1;
+
+                        // If check year/month is after end date, exclude it
+                        if (year > endYear || (year === endYear && month > endMonth)) {
+                            return false;
+                        }
+                    }
+
+                    // Filter out checks that are before the start date
+                    const startDateStr = (c as any).startDate;
+                    if (startDateStr) {
+                        const startDate = new Date(startDateStr);
+                        const startYear = startDate.getFullYear();
+                        const startMonth = startDate.getMonth() + 1;
+
+                        // If check year/month is before start date, exclude it
+                        if (year < startYear || (year === startYear && month < startMonth)) {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                });
+
                 results.push(...missing);
             }
 

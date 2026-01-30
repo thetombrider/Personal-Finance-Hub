@@ -25,8 +25,16 @@ export function AddRecurringExpenseForm({ onSuccess, categories, accounts, initi
     const [amount, setAmount] = useState(initialData?.amount?.toString() || "");
     const [categoryId, setCategoryId] = useState<string>(initialData?.categoryId?.toString() || "");
     const [accountId, setAccountId] = useState<string>(initialData?.accountId?.toString() || "");
-    const [startDate, setStartDate] = useState(initialData?.startDate ? new Date(initialData.startDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
-    const [endDate, setEndDate] = useState(initialData?.endDate ? new Date(initialData.endDate).toISOString().split('T')[0] : "");
+    // Initialize dates safely by taking the date part of the string (YYYY-MM-DD)
+    // This avoids timezone shifting issues that occur when parsing to Date and back to ISO
+    const [startDate, setStartDate] = useState(initialData?.startDate
+        ? (typeof initialData.startDate === 'string' ? initialData.startDate.substring(0, 10) : new Date(initialData.startDate).toISOString().split('T')[0])
+        : new Date().toISOString().split('T')[0]
+    );
+    const [endDate, setEndDate] = useState(initialData?.endDate
+        ? (typeof initialData.endDate === 'string' ? initialData.endDate.substring(0, 10) : new Date(initialData.endDate).toISOString().split('T')[0])
+        : ""
+    );
     const [matchPattern, setMatchPattern] = useState(initialData?.matchPattern || "");
     const [active, setActive] = useState(initialData?.active ?? true);
     const [interval, setInterval] = useState(initialData?.interval || "monthly");
