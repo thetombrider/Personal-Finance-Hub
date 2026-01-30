@@ -65,13 +65,37 @@ export function registerBudgetRoutes(app: Express) {
             recurringExpenses.forEach(re => {
                 const startDate = new Date(re.startDate);
                 const startYear = startDate.getFullYear();
-                const startMonth = startDate.getMonth() + 1;
+                const startMonth = startDate.getMonth() + 1; // 1-12
+                const endDate = re.endDate ? new Date(re.endDate) : null;
+                const endYear = endDate ? endDate.getFullYear() : null;
+                const endMonth = endDate ? endDate.getMonth() + 1 : null;
 
                 for (let m = 1; m <= 12; m++) {
-                    if (startYear < year || (startYear === year && startMonth <= m)) {
-                        if (budgetData[re.categoryId]) {
-                            budgetData[re.categoryId][m].recurring += parseFloat(re.amount.toString());
+                    // Check if this month is within the active period
+                    const monthStart = new Date(year, m - 1, 1);
+                    const monthEnd = new Date(year, m, 0); // Last day of month
+
+                    // Skip if before start date
+                    if (startYear > year || (startYear === year && startMonth > m)) {
+                        continue;
+                    }
+
+                    // Skip if after end date
+                    if (endDate && (endYear! < year || (endYear === year && endMonth! < m))) {
+                        continue;
+                    }
+
+                    // Handle interval
+                    if (re.interval === 'yearly') {
+                        // Only add in the month matching the start month
+                        if (m !== startMonth) {
+                            continue;
                         }
+                    }
+                    // 'monthly' items apply every month (no additional check needed)
+
+                    if (budgetData[re.categoryId]) {
+                        budgetData[re.categoryId][m].recurring += parseFloat(re.amount.toString());
                     }
                 }
             });
