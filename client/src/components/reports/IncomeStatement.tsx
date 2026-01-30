@@ -6,6 +6,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, TrendingUp, TrendingDown } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 import { TransactionDrilldown } from "./TransactionDrilldown";
+import { useBudgetData } from "@/hooks/queries";
+import { BudgetDrilldown } from "@/components/budget/BudgetDrilldown";
+import { PlannedExpense, RecurringExpense } from "@shared/schema";
 
 export interface IncomeStatementItem {
     category: {
@@ -46,6 +49,102 @@ export function IncomeStatement() {
             return res.json();
         }
     });
+
+    // Fetch budget data for drilldown
+    const { data: budgetData } = useBudgetData(year);
+
+    const [budgetDrilldownConfig, setBudgetDrilldownConfig] = useState<{
+        open: boolean;
+        title: string;
+        data: {
+            baseline: number;
+            planned: PlannedExpense[];
+            recurring: RecurringExpense[];
+            total: number;
+        };
+    }>({
+        open: false,
+        title: "",
+        data: { baseline: 0, planned: [], recurring: [], total: 0 }
+    });
+
+    const handleBudgetDrilldown = (categoryId: number, categoryName: string) => {
+        if (!budgetData) return;
+
+        let baseline = 0;
+        let total = 0;
+        let planned: PlannedExpense[] = [];
+        let recurring: RecurringExpense[] = [];
+
+        if (month !== 0) {
+            // Specific month (1-12)
+            const cell = budgetData.budgetData[categoryId]?.[month];
+            if (cell) {
+                baseline = cell.baseline;
+                total = cell.total;
+            }
+
+            // Filter planned
+            planned = budgetData.plannedExpenses.filter(e => {
+                const d = new Date(e.date);
+                return e.categoryId === categoryId && d.getMonth() === (month - 1) && d.getFullYear() === year;
+            });
+
+            // Filter recurring
+            const monthStart = new Date(year, month - 1, 1);
+            const monthEnd = new Date(year, month, 0, 23, 59, 59);
+
+            recurring = budgetData.recurringExpenses.filter(e => {
+                if (e.categoryId !== categoryId) return false;
+                const start = new Date(e.startDate);
+                const end = e.endDate ? new Date(e.endDate) : null;
+
+                if (start > monthEnd) return false;
+                // If end date is set, it must be on or after month start
+                if (end && end < monthStart) return false;
+
+                // If yearly, only include if matches month
+                if (e.interval === 'yearly' && start.getMonth() !== (month - 1)) return false;
+
+                return true;
+            });
+        } else {
+            // Full Year
+            // Sum baseline and total over all 12 months
+            for (let m = 1; m <= 12; m++) {
+                const cell = budgetData.budgetData[categoryId]?.[m];
+                if (cell) {
+                    baseline += cell.baseline;
+                    total += cell.total;
+                }
+            }
+
+            // All planned for year
+            planned = budgetData.plannedExpenses.filter(e =>
+                e.categoryId === categoryId && new Date(e.date).getFullYear() === year
+            );
+
+            // Recurring active in year
+            const yearStart = new Date(year, 0, 1);
+            const yearEnd = new Date(year, 11, 31, 23, 59, 59);
+
+            recurring = budgetData.recurringExpenses.filter(e => {
+                if (e.categoryId !== categoryId) return false;
+                const start = new Date(e.startDate);
+                const end = e.endDate ? new Date(e.endDate) : null;
+
+                if (start > yearEnd) return false;
+                if (end && end < yearStart) return false;
+                return true;
+            });
+        }
+
+        setBudgetDrilldownConfig({
+            open: true,
+            title: `${categoryName} - ${month === 0 ? year : format(new Date(year, month - 1), 'MMMM yyyy')} Budget`,
+            data: { baseline, planned, recurring, total }
+        });
+    };
 
     const months = [
         { value: 0, label: "Full Year" },
@@ -155,6 +254,7 @@ export function IncomeStatement() {
                                     key={item.category.id}
                                     item={item}
                                     onDrilldown={() => handleDrilldown(item.category.name, item.category.id, undefined)}
+                                    onBudgetDrilldown={() => handleBudgetDrilldown(item.category.id, item.category.name)}
                                 />
                             ))}
                             <SummaryRow
@@ -170,6 +270,7 @@ export function IncomeStatement() {
                                     key={item.category.id}
                                     item={item}
                                     onDrilldown={() => handleDrilldown(item.category.name, item.category.id, undefined)}
+                                    onBudgetDrilldown={() => handleBudgetDrilldown(item.category.id, item.category.name)}
                                 />
                             ))}
                             <SummaryRow
@@ -206,11 +307,18 @@ export function IncomeStatement() {
                     initialFilters={drilldownConfig.filters}
                 />
             )}
+
+            <BudgetDrilldown
+                isOpen={budgetDrilldownConfig.open}
+                onClose={() => setBudgetDrilldownConfig(prev => ({ ...prev, open: false }))}
+                title={budgetDrilldownConfig.title}
+                data={budgetDrilldownConfig.data}
+            />
         </div>
     );
 }
 
-function IncomeStatementRow({ item, onDrilldown }: { item: IncomeStatementItem, onDrilldown: () => void }) {
+function IncomeStatementRow({ item, onDrilldown, onBudgetDrilldown }: { item: IncomeStatementItem, onDrilldown: () => void, onBudgetDrilldown: () => void }) {
     const diff = item.difference;
     // Backend now returns Difference = Actual - Budget for ALL items.
     // Income: Actual > Budget (Positive Diff) => GOOD (Green)
@@ -236,7 +344,11 @@ function IncomeStatementRow({ item, onDrilldown }: { item: IncomeStatementItem, 
             >
                 {formatCurrency(item.actual)}
             </div>
-            <div className="col-span-2 text-right text-muted-foreground">
+            <div
+                className="col-span-2 text-right text-muted-foreground cursor-pointer hover:underline hover:text-primary transition-colors"
+                onClick={onBudgetDrilldown}
+                title="View budget details"
+            >
                 {formatCurrency(item.budget)}
             </div>
             <div className={cn("col-span-2 text-right font-medium", isGood ? "text-green-600" : "text-red-600")}>
