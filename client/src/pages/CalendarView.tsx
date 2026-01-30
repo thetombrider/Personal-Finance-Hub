@@ -3,12 +3,17 @@ import Layout from "@/components/Layout";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths, isSameDay, isAfter, isBefore, startOfWeek, endOfWeek, isSameMonth, getDate } from "date-fns";
 import { useFinance, Transaction } from "@/context/FinanceContext";
 import { useBudgetData } from "@/hooks/queries";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import type { PlannedExpense, RecurringExpense } from "@shared/schema";
+import { TransactionForm, TransactionFormValues, BulkTransactionFormValues } from "@/components/transactions/TransactionForm";
+import { AddRecurringExpenseForm } from "@/components/budget/AddRecurringExpenseForm";
+import { AddPlannedExpenseForm } from "@/components/budget/AddPlannedExpenseForm";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface CalendarDayData {
     date: Date;
@@ -25,8 +30,53 @@ export default function CalendarView() {
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [isSheetOpen, setIsSheetOpen] = useState(false);
 
-    const { transactions, formatCurrency, categories, accounts } = useFinance();
+    // Edit modal states
+    const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+    const [isEditTransactionOpen, setIsEditTransactionOpen] = useState(false);
+    const [editingRecurring, setEditingRecurring] = useState<RecurringExpense | null>(null);
+    const [isEditRecurringOpen, setIsEditRecurringOpen] = useState(false);
+    const [editingPlanned, setEditingPlanned] = useState<PlannedExpense | null>(null);
+    const [isEditPlannedOpen, setIsEditPlannedOpen] = useState(false);
+
+    const { transactions, formatCurrency, categories, accounts, updateTransaction } = useFinance();
     const { data: budgetData } = useBudgetData(currentMonth.getFullYear());
+    const queryClient = useQueryClient();
+
+    // Edit handlers
+    const handleEditTransaction = (t: Transaction) => {
+        setEditingTransaction(t);
+        setIsEditTransactionOpen(true);
+    };
+
+    const handleEditRecurring = (r: RecurringExpense) => {
+        setEditingRecurring(r);
+        setIsEditRecurringOpen(true);
+    };
+
+    const handleEditPlanned = (p: PlannedExpense) => {
+        setEditingPlanned(p);
+        setIsEditPlannedOpen(true);
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const onTransactionEditSubmit = async (data: TransactionFormValues | BulkTransactionFormValues) => {
+        if (editingTransaction) {
+            const txData = data as TransactionFormValues;
+            const formattedData = {
+                ...txData,
+                amount: txData.amount.toString(),
+                date: format(txData.date, "yyyy-MM-dd'T'HH:mm:ss"),
+            };
+            await updateTransaction(editingTransaction.id, formattedData);
+            setIsEditTransactionOpen(false);
+            setEditingTransaction(null);
+        }
+    };
+
+    // Get category type for recurring/planned
+    const getCategoryType = (categoryId: number) => {
+        return categories.find(c => c.id === categoryId)?.type || 'expense';
+    };
 
     const calendarData = useMemo(() => {
         const monthStart = startOfMonth(currentMonth);
@@ -271,7 +321,7 @@ export default function CalendarView() {
                                                     const category = categories.find(c => c.id === t.categoryId);
                                                     const account = accounts.find(a => a.id === t.accountId);
                                                     return (
-                                                        <div key={t.id} className="p-3 rounded-lg border bg-card/50 flex items-center justify-between">
+                                                        <div key={t.id} onClick={() => handleEditTransaction(t)} className="p-3 rounded-lg border bg-card/50 flex items-center justify-between cursor-pointer hover:bg-accent/50 transition-colors">
                                                             <div className="flex flex-col gap-1">
                                                                 <span className="font-medium text-sm">{t.description}</span>
                                                                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -310,7 +360,7 @@ export default function CalendarView() {
                                                 {selectedDayData.recurring.map(r => {
                                                     const category = categories.find(c => c.id === r.categoryId);
                                                     return (
-                                                        <div key={r.id} className="p-3 rounded-lg border border-indigo-100 dark:border-indigo-900 bg-indigo-50/50 dark:bg-indigo-950/20 flex items-center justify-between opacity-80">
+                                                        <div key={r.id} onClick={() => handleEditRecurring(r)} className="p-3 rounded-lg border border-indigo-100 dark:border-indigo-900 bg-indigo-50/50 dark:bg-indigo-950/20 flex items-center justify-between cursor-pointer hover:bg-indigo-100/50 dark:hover:bg-indigo-900/30 transition-colors">
                                                             <div className="flex flex-col gap-1">
                                                                 <span className="font-medium text-sm">{r.name}</span>
                                                                 <div className="text-xs text-muted-foreground">
@@ -343,7 +393,7 @@ export default function CalendarView() {
                                                 {selectedDayData.planned.map(p => {
                                                     const category = categories.find(c => c.id === p.categoryId);
                                                     return (
-                                                        <div key={p.id} className="p-3 rounded-lg border border-amber-100 dark:border-amber-900 bg-amber-50/50 dark:bg-amber-950/20 flex items-center justify-between opacity-80">
+                                                        <div key={p.id} onClick={() => handleEditPlanned(p)} className="p-3 rounded-lg border border-amber-100 dark:border-amber-900 bg-amber-50/50 dark:bg-amber-950/20 flex items-center justify-between cursor-pointer hover:bg-amber-100/50 dark:hover:bg-amber-900/30 transition-colors">
                                                             <div className="flex flex-col gap-1">
                                                                 <span className="font-medium text-sm">{p.name || category?.name || 'Planned'}</span>
                                                                 <div className="text-xs text-muted-foreground">
@@ -373,6 +423,71 @@ export default function CalendarView() {
                         </ScrollArea>
                     </SheetContent>
                 </Sheet>
+
+                {/* Transaction Edit Modal */}
+                <TransactionForm
+                    isOpen={isEditTransactionOpen}
+                    onOpenChange={setIsEditTransactionOpen}
+                    onSubmit={onTransactionEditSubmit}
+                    initialData={editingTransaction ? {
+                        amount: parseFloat(editingTransaction.amount),
+                        description: editingTransaction.description,
+                        accountId: editingTransaction.accountId,
+                        categoryId: editingTransaction.categoryId,
+                        date: new Date(editingTransaction.date),
+                        type: editingTransaction.type as "income" | "expense",
+                        tagIds: editingTransaction.tags?.map(t => t.id) || [],
+                    } : null}
+                    accounts={accounts}
+                    categories={categories}
+                    mode="edit"
+                />
+
+                {/* Recurring Edit Modal */}
+                <Dialog open={isEditRecurringOpen} onOpenChange={setIsEditRecurringOpen}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Edit Recurring Transaction</DialogTitle>
+                            <DialogDescription>
+                                Update the recurring transaction details.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <AddRecurringExpenseForm
+                            onSuccess={() => {
+                                setIsEditRecurringOpen(false);
+                                setEditingRecurring(null);
+                                queryClient.invalidateQueries({ queryKey: ['budget'] });
+                            }}
+                            categories={categories}
+                            accounts={accounts}
+                            initialData={editingRecurring || undefined}
+                            type={editingRecurring ? getCategoryType(editingRecurring.categoryId) as 'income' | 'expense' : 'expense'}
+                        />
+                    </DialogContent>
+                </Dialog>
+
+                {/* Planned Edit Modal */}
+                <Dialog open={isEditPlannedOpen} onOpenChange={setIsEditPlannedOpen}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Edit Planned Transaction</DialogTitle>
+                            <DialogDescription>
+                                Update the planned transaction details.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <AddPlannedExpenseForm
+                            onSuccess={() => {
+                                setIsEditPlannedOpen(false);
+                                setEditingPlanned(null);
+                                queryClient.invalidateQueries({ queryKey: ['budget', currentMonth.getFullYear()] });
+                            }}
+                            categories={categories}
+                            year={currentMonth.getFullYear()}
+                            initialData={editingPlanned || undefined}
+                            type={editingPlanned ? getCategoryType(editingPlanned.categoryId) as 'income' | 'expense' : 'expense'}
+                        />
+                    </DialogContent>
+                </Dialog>
             </div>
         </Layout>
     );

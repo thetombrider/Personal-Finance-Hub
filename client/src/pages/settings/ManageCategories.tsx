@@ -201,10 +201,10 @@ export default function ManageCategories() {
                             />
                           </FormControl>
                           <div className="space-y-1 leading-none">
-                            <FormLabel>È un investimento</FormLabel>
+                            <FormLabel>This is an investment</FormLabel>
                             <p className="text-xs text-muted-foreground">
-                              Spese che convertono contanti in asset (azioni, ETF, oro).
-                              Non riducono il patrimonio nelle proiezioni.
+                              Expenses that convert cash into assets (stocks, ETFs, gold).
+                              These do not reduce net worth in projections.
                             </p>
                           </div>
                         </FormItem>
