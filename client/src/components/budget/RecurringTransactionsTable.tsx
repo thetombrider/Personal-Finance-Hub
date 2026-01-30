@@ -121,6 +121,18 @@ export function RecurringTransactionsTable({
                     <Table>
                         <TableHeader>
                             <TableRow>
+                                <TableHead onClick={() => handleSort('startDate')} className="cursor-pointer hover:bg-muted/50">
+                                    <div className="flex items-center">
+                                        Start Date
+                                        <SortIcon column="startDate" />
+                                    </div>
+                                </TableHead>
+                                <TableHead onClick={() => handleSort('endDate')} className="cursor-pointer hover:bg-muted/50">
+                                    <div className="flex items-center">
+                                        End Date
+                                        <SortIcon column="endDate" />
+                                    </div>
+                                </TableHead>
                                 <TableHead onClick={() => handleSort('name')} className="cursor-pointer hover:bg-muted/50">
                                     <div className="flex items-center">
                                         Name
@@ -145,18 +157,6 @@ export function RecurringTransactionsTable({
                                         <SortIcon column="interval" />
                                     </div>
                                 </TableHead>
-                                <TableHead onClick={() => handleSort('startDate')} className="cursor-pointer hover:bg-muted/50">
-                                    <div className="flex items-center">
-                                        Start Date
-                                        <SortIcon column="startDate" />
-                                    </div>
-                                </TableHead>
-                                <TableHead onClick={() => handleSort('endDate')} className="cursor-pointer hover:bg-muted/50">
-                                    <div className="flex items-center">
-                                        End Date
-                                        <SortIcon column="endDate" />
-                                    </div>
-                                </TableHead>
                                 <TableHead onClick={() => handleSort('active')} className="cursor-pointer hover:bg-muted/50">
                                     <div className="flex items-center">
                                         Status
@@ -169,6 +169,12 @@ export function RecurringTransactionsTable({
                         <TableBody>
                             {sortedTransactions.map((transaction) => (
                                 <TableRow key={transaction.id}>
+                                    <TableCell>{formatForDisplay(new Date(transaction.startDate))}</TableCell>
+                                    <TableCell>
+                                        {transaction.endDate
+                                            ? formatForDisplay(new Date(transaction.endDate))
+                                            : <span className="text-muted-foreground">-</span>}
+                                    </TableCell>
                                     <TableCell className="font-medium">{transaction.name}</TableCell>
                                     <TableCell>
                                         <Badge
@@ -192,12 +198,6 @@ export function RecurringTransactionsTable({
                                             transaction.interval === 'weekly' ? 'Weekly' :
                                                 transaction.interval === 'quarterly' ? 'Quarterly' :
                                                     transaction.interval === 'yearly' ? 'Yearly' : transaction.interval}
-                                    </TableCell>
-                                    <TableCell>{formatForDisplay(new Date(transaction.startDate))}</TableCell>
-                                    <TableCell>
-                                        {transaction.endDate
-                                            ? formatForDisplay(new Date(transaction.endDate))
-                                            : <span className="text-muted-foreground">-</span>}
                                     </TableCell>
                                     <TableCell>
                                         <Badge variant={transaction.active ? "default" : "outline"}>
