@@ -454,8 +454,8 @@ class GoCardlessService {
 
                 if (balanceObj && balanceObj.balanceAmount) {
                     const amount = parseFloat(balanceObj.balanceAmount.amount);
-                    // await storage.updateAccount(localAccountId, { balance: amount.toString() });
-                    logger.gocardless.info(`Updated balance for account ${localAccountId} to ${amount} (Skipped: balance column missing)`);
+                    await storage.updateAccount(localAccountId, { bankBalance: amount.toFixed(2) });
+                    logger.gocardless.info(`Updated bank balance for account ${localAccountId} to ${amount}`);
                 }
             }
         } catch (error) {

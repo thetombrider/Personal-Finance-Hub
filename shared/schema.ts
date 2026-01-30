@@ -46,6 +46,7 @@ export const accounts = pgTable("accounts", {
   bankConnectionId: integer("bank_connection_id").references(() => bankConnections.id, { onDelete: "set null" }),
   userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }),
   lastSynced: timestamp("last_synced", { mode: "string" }),
+  bankBalance: decimal("bank_balance", { precision: 12, scale: 2 }),
 });
 
 export const insertAccountSchema = createInsertSchema(accounts).omit({ id: true }).extend({

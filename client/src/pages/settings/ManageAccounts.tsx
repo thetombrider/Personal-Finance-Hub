@@ -365,6 +365,7 @@ export default function ManageAccounts() {
                 <TableHead className="w-[300px]">Account</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Current Balance</TableHead>
+                <TableHead>Bank Balance</TableHead>
                 <TableHead>Last Sync</TableHead>
                 <TableHead>Connection Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -401,6 +402,34 @@ export default function ManageAccounts() {
                       )}>
                         {formatCurrency(account.balance)}
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      {(account as any).bankBalance ? (() => {
+                        const bankBal = parseFloat((account as any).bankBalance);
+                        const userBal = account.balance;
+                        const diff = Math.abs(bankBal - userBal);
+                        const hasDiscrepancy = diff > 0.01; // Allow for rounding differences
+                        return (
+                          <div className="flex flex-col">
+                            <div className={cn(
+                              "font-semibold",
+                              bankBal < 0 ? "text-red-500" : "text-emerald-600"
+                            )}>
+                              {formatCurrency(bankBal)}
+                            </div>
+                            {hasDiscrepancy && (
+                              <span className={cn(
+                                "text-xs font-medium",
+                                bankBal > userBal ? "text-orange-500" : "text-orange-500"
+                              )}>
+                                Δ {formatCurrency(diff)}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })() : (
+                        <span className="text-muted-foreground text-xs text-center block w-10">-</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       {(account as any).lastSynced ? (
