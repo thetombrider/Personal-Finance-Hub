@@ -1,9 +1,10 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import type { CashFlowDataPoint } from "@/types/charts";
 
 interface CashFlowChartProps {
-    data: any[];
+    data: CashFlowDataPoint[];
     privacyMode: boolean;
     formatCurrency: (amount: number) => string;
 }

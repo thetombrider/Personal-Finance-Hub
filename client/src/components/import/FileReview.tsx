@@ -2,15 +2,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { ImportMode, Mapping, TradeMapping } from "./types";
 import { getAccountFromRow, getCategoryFromRow, getTransactionFromRow, cleanHeader, parseNumeric, parseDate } from "./utils";
+import type { Account, Category } from "@shared/schema";
+import type { CsvRow, ReferenceCsvData } from "@/types/imports";
 
 interface FileReviewProps {
     importMode: ImportMode;
-    csvData: any[];
-    referenceCsvData: { headers: string[], data: any[] } | null;
+    csvData: CsvRow[];
+    referenceCsvData: ReferenceCsvData | null;
     mapping: Mapping;
     tradeMapping: TradeMapping;
-    accounts: any[];
-    categories: any[];
+    accounts: Account[];
+    categories: Category[];
     useDualAmountColumns: boolean;
     selectedAccount: number | null;
     onBack: () => void;

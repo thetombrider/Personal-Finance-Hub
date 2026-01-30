@@ -2,15 +2,16 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowUpRight, ArrowDownRight, Wallet, TrendingUp, Activity, PiggyBank, CreditCard } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import type { PortfolioSummary, CreditUsageData } from "@/types/charts";
 
 interface StatsGridProps {
     totalBalance: number;
     totalCash: number;
     totalSavings: number;
-    portfolioSummary: any;
+    portfolioSummary: PortfolioSummary | null;
     globalMonthlyStats: { income: number; expense: number };
     totalCredit: number;
-    creditUsageThisMonth: any;
+    creditUsageThisMonth: CreditUsageData | null;
     accountsCount: number;
     privacyMode: boolean;
     formatCurrency: (amount: number) => string;

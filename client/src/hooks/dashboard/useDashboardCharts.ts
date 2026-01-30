@@ -2,17 +2,18 @@ import { useMemo, useCallback } from "react";
 import { format, subMonths, startOfMonth, endOfMonth, getYear, parseISO, isSameMonth, getDaysInMonth, getDate } from "date-fns";
 import { Trade } from "@shared/schema";
 import { Account, Transaction, Category } from "@/context/FinanceContext";
+import type { PortfolioSummary, YearlyBudget } from "@/types/charts";
 
 interface UseDashboardChartsProps {
     transactions: Transaction[];
     accounts: Account[];
     categories: Category[];
     trades: Trade[];
-    portfolioSummary: any; // Using any for now or the interface from useDashboardStats if shared
+    portfolioSummary: PortfolioSummary | null;
     categoryTrendId: string;
-    currentYearBudget: any;
-    previousYearBudget: any;
-    nextYearBudget: any;
+    currentYearBudget: YearlyBudget | null | undefined;
+    previousYearBudget: YearlyBudget | null | undefined;
+    nextYearBudget: YearlyBudget | null | undefined;
     currentYear: number;
     totalBalance: number;
 }

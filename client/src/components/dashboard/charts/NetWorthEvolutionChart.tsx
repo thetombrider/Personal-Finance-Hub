@@ -2,9 +2,10 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { TrendingUp } from "lucide-react";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import type { NetWorthDataPoint } from "@/types/charts";
 
 interface NetWorthEvolutionChartProps {
-    data: any[];
+    data: NetWorthDataPoint[];
     totalBalance: number;
     privacyMode: boolean;
     formatCurrency: (amount: number) => string;

@@ -2,9 +2,10 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { MoveUpRight } from "lucide-react";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import type { NetWorthProjectionDataPoint } from "@/types/charts";
 
 interface NetWorthProjectionChartProps {
-    data: any[];
+    data: NetWorthProjectionDataPoint[];
     privacyMode: boolean;
     formatCurrency: (amount: number) => string;
 }

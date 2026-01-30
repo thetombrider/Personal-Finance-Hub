@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { ImportMode, Mapping, TradeMapping } from "./types";
+import type { Account } from "@shared/schema";
 
 interface MappingManagerProps {
     importMode: ImportMode;
@@ -12,7 +13,7 @@ interface MappingManagerProps {
     setMapping: (m: Mapping) => void;
     tradeMapping: TradeMapping;
     setTradeMapping: (m: TradeMapping) => void;
-    accounts: any[];
+    accounts: Account[];
     useDualAmountColumns: boolean;
     setUseDualAmountColumns: (val: boolean) => void;
     selectedAccount: number | null;
@@ -53,7 +54,7 @@ export default function MappingManager({
                         <SelectTrigger className="w-full md:w-[300px]"><SelectValue placeholder="Select fallback account" /></SelectTrigger>
                         <SelectContent>
                             <SelectItem value="none">-- Select Fallback Account --</SelectItem>
-                            {accounts.map((a: any) => <SelectItem key={a.id} value={a.id.toString()}>{a.name}</SelectItem>)}
+                            {accounts.map((a) => <SelectItem key={a.id} value={a.id.toString()}>{a.name}</SelectItem>)}
                         </SelectContent>
                     </Select>
                 </div>

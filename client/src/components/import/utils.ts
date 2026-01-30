@@ -1,9 +1,10 @@
 import { format, isValid } from "date-fns";
-import type { InsertAccount, InsertCategory } from "@shared/schema";
+import type { InsertAccount, InsertCategory, Account, Category } from "@shared/schema";
 import { Mapping } from "./types";
+import type { CsvRow } from "@/types/imports";
 
 // Helper to parse European/US numbers
-export const parseNumeric = (value: any): number => {
+export const parseNumeric = (value: string | number | null | undefined): number => {
     if (!value) return 0;
     let str = value.toString().trim();
     const isNegative = str.startsWith('-');
@@ -24,7 +25,7 @@ export const parseNumeric = (value: any): number => {
 
 export const cleanHeader = (header: string) => header.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
 
-export const parseDate = (value: any) => {
+export const parseDate = (value: string | number | Date | null | undefined) => {
     if (!value) return format(new Date(), "yyyy-MM-dd'T'HH:mm:ss");
 
     // Handle Date objects (from Excel with cellDates: true)
@@ -61,10 +62,10 @@ export const parseDate = (value: any) => {
 };
 
 export const getTransactionFromRow = (
-    row: any,
+    row: CsvRow,
     mapping: Mapping,
-    accounts: any[],
-    categories: any[],
+    accounts: Account[],
+    categories: Category[],
     useDualAmountColumns: boolean,
     selectedAccount: number | null
 ) => {
@@ -79,7 +80,7 @@ export const getTransactionFromRow = (
     } else {
         amount = parseNumeric(row[mapping.amount]);
         if (mapping.type && mapping.type !== 'none' && row[mapping.type]) {
-            const typeVal = row[mapping.type].toLowerCase();
+            const typeVal = row[mapping.type].toString().toLowerCase();
             if (typeVal.includes('income') || typeVal.includes('credit') || typeVal.includes('entrata')) type = "income";
         } else {
             if (amount < 0) { type = "expense"; amount = Math.abs(amount); }
@@ -131,16 +132,16 @@ export const getTransactionFromRow = (
     };
 };
 
-export const getAccountFromRow = (row: any, mapping: Mapping): InsertAccount => {
+export const getAccountFromRow = (row: CsvRow, mapping: Mapping): InsertAccount => {
     const name = row[mapping.accountName]?.toString().trim() || "Unnamed Account";
-    let type: "checking" | "savings" | "credit" | "investment" | "cash" = "checking"; const rawType = row[mapping.accountType]?.toLowerCase() || "";
+    let type: "checking" | "savings" | "credit" | "investment" | "cash" = "checking"; const rawType = row[mapping.accountType]?.toString().toLowerCase() || "";
     if (rawType.includes('save') || rawType.includes('risparmio') || rawType.includes('deposito')) type = "savings";
     else if (rawType.includes('credit') || rawType.includes('credito')) type = "credit";
     else if (rawType.includes('invest')) type = "investment";
     else if (rawType.includes('cash') || rawType.includes('contanti')) type = "cash";
 
     const balance = mapping.accountBalance ? parseNumeric(row[mapping.accountBalance]) : 0;
-    const currency = mapping.accountCurrency ? row[mapping.accountCurrency] : "EUR";
+    const currency = mapping.accountCurrency && row[mapping.accountCurrency] ? row[mapping.accountCurrency].toString() : "EUR";
 
     const color = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
 
@@ -154,10 +155,10 @@ export const getAccountFromRow = (row: any, mapping: Mapping): InsertAccount => 
     };
 };
 
-export const getCategoryFromRow = (row: any, mapping: Mapping): InsertCategory => {
+export const getCategoryFromRow = (row: CsvRow, mapping: Mapping): InsertCategory => {
 
     const name = row[mapping.categoryName]?.toString().trim() || "Unnamed Category";
-    const rawType = row[mapping.categoryType]?.toLowerCase() || "";
+    const rawType = row[mapping.categoryType]?.toString().toLowerCase() || "";
     let type: "income" | "expense" = "expense"; if (rawType.includes('income') || rawType.includes('entrata')) type = "income";
 
     const color = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');

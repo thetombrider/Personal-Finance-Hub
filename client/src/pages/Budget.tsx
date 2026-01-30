@@ -25,9 +25,10 @@ import { useFinance } from "@/context/FinanceContext";
 import { RecurringTransactionsMonitoring } from "@/components/budget/RecurringTransactionsMonitoring";
 import { BudgetDrilldown } from "@/components/budget/BudgetDrilldown";
 import { format } from "date-fns";
+import type { Category } from "@shared/schema";
 
 interface YearlyBudgetData {
-    categories: any[];
+    categories: Category[];
     budgetData: Record<number, Record<number, { baseline: number; planned: number; recurring: number; total: number }>>;
     plannedExpenses: PlannedExpense[];
     recurringExpenses: RecurringExpense[];

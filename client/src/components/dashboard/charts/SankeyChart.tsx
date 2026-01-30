@@ -2,9 +2,10 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ResponsiveContainer, Sankey, Tooltip, Rectangle, Layer } from "recharts";
 import { useMemo } from "react";
+import type { SankeyData } from "@/types/charts";
 
 interface SankeyChartProps {
-    data: { nodes: any[]; links: any[] };
+    data: SankeyData;
     title: string;
     description?: string;
     privacyMode: boolean;
@@ -44,6 +45,7 @@ export function SankeyChart({ data, title, description, privacyMode, formatCurre
         };
     }, [data]);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const CustomTooltip = ({ active, payload }: any) => {
         if (active && payload && payload.length) {
             const data = payload[0];
@@ -78,6 +80,7 @@ export function SankeyChart({ data, title, description, privacyMode, formatCurre
     // Custom Node to support CSS variables for color if needed, but 'fill' in data usually works. 
     // Recharts Sankey Node is SVG Rect.
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const renderNode = (props: any) => {
         const { x, y, width, height, index, payload, containerWidth } = props;
         const sourceLinks = props.sourceLinks || payload.sourceLinks;

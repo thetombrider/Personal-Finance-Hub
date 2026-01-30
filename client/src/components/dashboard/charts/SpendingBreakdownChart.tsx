@@ -1,9 +1,10 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import type { CategoryDataPoint } from "@/types/charts";
 
 interface SpendingBreakdownChartProps {
-    data: any[];
+    data: CategoryDataPoint[];
     privacyMode: boolean;
     formatCurrency: (amount: number) => string;
 }

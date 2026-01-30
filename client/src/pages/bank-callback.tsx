@@ -11,12 +11,13 @@ import { useQuery } from "@tanstack/react-query";
 import { type Account } from "@shared/schema";
 import { Progress } from "@/components/ui/progress";
 import { getErrorMessage } from "@/lib/errors";
+import type { BankAccountData } from "@/types/imports";
 
 export default function BankCallbackPage() {
     const [, setLocation] = useLocation();
     const { toast } = useToast();
     const [loading, setLoading] = useState(true);
-    const [bankAccounts, setBankAccounts] = useState<any[]>([]);
+    const [bankAccounts, setBankAccounts] = useState<BankAccountData[]>([]);
     const [mappings, setMappings] = useState<Record<string, string>>({}); // bankAccountId -> localAccountId (or "new")
     const [processing, setProcessing] = useState(false);
     const [bankConnectionId, setBankConnectionId] = useState<number | null>(null);
@@ -83,7 +84,7 @@ export default function BankCallbackPage() {
 
             // Default mappings: "new"
             const newMappings: Record<string, string> = {};
-            accounts.forEach((acc: any) => newMappings[acc.id] = "new");
+            accounts.forEach((acc: BankAccountData) => newMappings[acc.id] = "new");
             setMappings(newMappings);
 
         } catch (error) {
@@ -105,7 +106,7 @@ export default function BankCallbackPage() {
             for (const [bankAckId, localAckId] of Object.entries(mappings)) {
                 if (localAckId === 'skip') continue;
 
-                const bankAcc = bankAccounts.find((a: any) => a.id === bankAckId);
+                const bankAcc = bankAccounts.find((a) => a.id === bankAckId);
                 const name = bankAcc ? bankAcc.name : "Bank Account";
 
                 actions.push({
@@ -133,7 +134,7 @@ export default function BankCallbackPage() {
                 setStatusMessage(`Linking ${action.name}...`);
 
                 if (action.type === 'create') {
-                    const bankAcc = bankAccounts.find((a: any) => a.id === action.bankId);
+                    const bankAcc = bankAccounts.find((a) => a.id === action.bankId);
                     const currency = bankAcc ? bankAcc.currency : "EUR";
 
                     const res = await apiRequest("POST", "/api/accounts", {

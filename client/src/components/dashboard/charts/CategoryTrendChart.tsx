@@ -3,9 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ComposedChart, Bar, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { Category } from "@/context/FinanceContext";
+import type { CategoryTrendDataPoint } from "@/types/charts";
 
 interface CategoryTrendChartProps {
-    data: any[];
+    data: CategoryTrendDataPoint[];
     categoryTrendId: string;
     setCategoryTrendId: (value: string) => void;
     categories: Category[];
