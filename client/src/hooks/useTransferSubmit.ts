@@ -39,6 +39,7 @@ export function useTransferSubmit(options: UseTransferSubmitOptions = {}) {
                 type: "transfer",
                 color: "#94a3b8",
                 icon: "ArrowLeftRight",
+                excludeFromProjections: false,
             });
             return newCategory.id;
         } catch (error) {

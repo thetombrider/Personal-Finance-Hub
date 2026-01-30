@@ -393,7 +393,8 @@ class GoCardlessService {
                             name: "Uncategorized",
                             type: amount < 0 ? "expense" : "income",
                             color: "#9CA3AF", // Gray
-                            userId: userId
+                            userId: userId,
+                            excludeFromProjections: false,
                         });
                         categories.push(uncategorizedCategory); // Add to in-memory list for subsequent iterations
                     }

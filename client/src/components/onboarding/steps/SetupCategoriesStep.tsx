@@ -114,6 +114,7 @@ export function SetupCategoriesStep() {
                     name: cat.name,
                     type: cat.type,
                     color: cat.color,
+                    excludeFromProjections: false,
                 });
             }
             setCreated(true);

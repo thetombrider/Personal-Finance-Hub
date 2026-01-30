@@ -61,10 +61,12 @@ export const categories = pgTable("categories", {
   color: varchar("color", { length: 7 }).notNull(),
   icon: text("icon"),
   userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }),
+  excludeFromProjections: boolean("exclude_from_projections").default(false),
 });
 
 export const insertCategorySchema = createInsertSchema(categories).omit({ id: true }).extend({
   type: z.enum(["income", "expense", "transfer"]),
+  excludeFromProjections: z.boolean().optional().default(false),
 });
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
 export type Category = typeof categories.$inferSelect;

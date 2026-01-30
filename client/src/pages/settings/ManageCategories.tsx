@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, Edit2, Check, X, Circle } from "lucide-react";
+import { Plus, Trash2, Edit2, Check, X, Circle, TrendingUp } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,12 +13,14 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 
 
 const categorySchema = z.object({
   name: z.string().min(2, "Name is required"),
   type: z.enum(["income", "expense", "transfer"]),
   color: z.string().default("#3b82f6"),
+  excludeFromProjections: z.boolean().default(false),
 });
 
 type CategoryFormValues = z.infer<typeof categorySchema>;
@@ -34,6 +36,7 @@ export default function ManageCategories() {
     name: "",
     type: "expense",
     color: "#3b82f6",
+    excludeFromProjections: false,
   });
 
   const form = useForm<CategoryFormValues>({
@@ -42,6 +45,7 @@ export default function ManageCategories() {
       name: "",
       type: "expense",
       color: "#3b82f6",
+      excludeFromProjections: false,
     },
   });
 
@@ -57,6 +61,7 @@ export default function ManageCategories() {
       name: category.name,
       type: category.type,
       color: category.color,
+      excludeFromProjections: category.excludeFromProjections ?? false,
     });
   };
 
@@ -115,7 +120,7 @@ export default function ManageCategories() {
           <Dialog open={isDialogOpen} onOpenChange={(open) => {
             setIsDialogOpen(open);
             if (!open) {
-              form.reset({ name: "", type: "expense", color: "#3b82f6" });
+              form.reset({ name: "", type: "expense", color: "#3b82f6", excludeFromProjections: false });
             }
           }}>
             <DialogTrigger asChild>
@@ -183,6 +188,30 @@ export default function ManageCategories() {
                     />
                   </div>
 
+                  {form.watch("type") === "expense" && (
+                    <FormField
+                      control={form.control}
+                      name="excludeFromProjections"
+                      render={({ field }) => (
+                        <FormItem className="flex items-start space-x-3 space-y-0 py-2 border-t pt-4">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>È un investimento</FormLabel>
+                            <p className="text-xs text-muted-foreground">
+                              Spese che convertono contanti in asset (azioni, ETF, oro).
+                              Non riducono il patrimonio nelle proiezioni.
+                            </p>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                  )}
+
                   <DialogFooter>
                     <Button type="submit" data-testid="button-submit-category">Create Category</Button>
                   </DialogFooter>
@@ -198,6 +227,7 @@ export default function ManageCategories() {
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Type</TableHead>
+                <TableHead>Investment</TableHead>
                 <TableHead>Color</TableHead>
                 <TableHead className="w-[100px] text-right">Actions</TableHead>
               </TableRow>
@@ -247,6 +277,28 @@ export default function ManageCategories() {
                         <Badge variant={category.type === 'income' ? 'default' : 'secondary'} className={category.type === 'income' ? 'bg-emerald-500 hover:bg-emerald-600' : category.type === 'transfer' ? 'bg-slate-500 hover:bg-slate-600' : ''}>
                           {category.type === 'income' ? 'Income' : category.type === 'expense' ? 'Expense' : 'Transfer'}
                         </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {category.type === 'expense' ? (
+                        isEditing ? (
+                          <div className="flex items-center gap-2">
+                            <Checkbox
+                              checked={editForm.excludeFromProjections}
+                              onCheckedChange={(checked) => setEditForm({ ...editForm, excludeFromProjections: checked === true })}
+                            />
+                            <span className="text-xs text-muted-foreground">Inv.</span>
+                          </div>
+                        ) : (
+                          category.excludeFromProjections && (
+                            <Badge variant="outline" className="gap-1 text-amber-600 border-amber-300">
+                              <TrendingUp size={12} />
+                              Inv.
+                            </Badge>
+                          )
+                        )
+                      ) : (
+                        <span className="text-muted-foreground text-xs">—</span>
                       )}
                     </TableCell>
                     <TableCell>

@@ -167,6 +167,7 @@ export const getCategoryFromRow = (row: CsvRow, mapping: Mapping): InsertCategor
         name,
         type,
         color,
-        icon: null
+        icon: null,
+        excludeFromProjections: false,
     };
 };

@@ -45,8 +45,8 @@ export function useDashboardCharts({
 
         let total = 0;
         categories.forEach(cat => {
-            // Filter by type and exclude 'trasferimenti'
-            if (cat.type === type && cat.id !== transferCategoryId) {
+            // Filter by type, exclude 'trasferimenti', and exclude investment categories
+            if (cat.type === type && cat.id !== transferCategoryId && !cat.excludeFromProjections) {
                 const catBudget = budgetSource.budgetData[cat.id];
                 if (catBudget && catBudget[monthIndex]) {
                     total += catBudget[monthIndex].total || 0;
@@ -54,7 +54,7 @@ export function useDashboardCharts({
             }
         });
         return total;
-    }, [categories, currentYearBudget, previousYearBudget, currentYear, transferCategoryId]);
+    }, [categories, currentYearBudget, previousYearBudget, nextYearBudget, currentYear, transferCategoryId]);
 
     // Global Monthly Flow (unaffected by filters)
     const globalMonthlyStats = useMemo(() => {
