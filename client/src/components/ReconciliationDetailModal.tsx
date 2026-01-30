@@ -9,9 +9,10 @@ interface ReconciliationDetailModalProps {
     onOpenChange: (open: boolean) => void;
     check: RecurringExpenseCheck | null;
     expense: RecurringExpense | null;
+    transactionType: 'income' | 'expense';
 }
 
-export function ReconciliationDetailModal({ open, onOpenChange, check, expense }: ReconciliationDetailModalProps) {
+export function ReconciliationDetailModal({ open, onOpenChange, check, expense, transactionType }: ReconciliationDetailModalProps) {
     if (!check || !expense) return null;
 
     const getStatusIcon = (status: string) => {
@@ -23,16 +24,19 @@ export function ReconciliationDetailModal({ open, onOpenChange, check, expense }
         }
     };
 
+    const typeLabel = transactionType === 'income' ? 'Income' : 'Expense';
+    const typeLabelLower = transactionType === 'income' ? 'income' : 'expense';
+
     const statusText = {
-        MATCHED: "Expense Matched",
-        MISSING: "Expense Missing",
+        MATCHED: `${typeLabel} Matched`,
+        MISSING: `${typeLabel} Missing`,
         PENDING: "Upcoming"
     }[check.status] || check.status;
 
     const statusDescription = {
-        MATCHED: "We found a matching transaction for this recurring expense.",
-        MISSING: "We could not find a transaction matching this expense within the expected window.",
-        PENDING: "This expense is expected later this month."
+        MATCHED: `We found a matching transaction for this recurring ${typeLabelLower}.`,
+        MISSING: `We could not find a transaction matching this ${typeLabelLower} within the expected window.`,
+        PENDING: `This ${typeLabelLower} is expected later this month.`
     }[check.status];
 
     return (
@@ -48,7 +52,7 @@ export function ReconciliationDetailModal({ open, onOpenChange, check, expense }
 
                 <div className="space-y-4 py-4">
                     <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div className="font-semibold">Recurring Expense</div>
+                        <div className="font-semibold">Recurring {typeLabel}</div>
                         <div className="text-right">{expense.name}</div>
 
                         <div className="font-semibold">Expected Date</div>

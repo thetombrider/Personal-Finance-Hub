@@ -12,9 +12,10 @@ interface RecurringTransactionsMonitoringProps {
     transactions: RecurringExpense[];
     title: string;
     description: string;
+    transactionType: 'income' | 'expense';
 }
 
-export function RecurringTransactionsMonitoring({ transactions, title, description }: RecurringTransactionsMonitoringProps) {
+export function RecurringTransactionsMonitoring({ transactions, title, description, transactionType }: RecurringTransactionsMonitoringProps) {
     const queryClient = useQueryClient();
     const [selectedCheck, setSelectedCheck] = useState<{ check: RecurringExpenseCheck, expense: RecurringExpense } | null>(null);
 
@@ -152,6 +153,7 @@ export function RecurringTransactionsMonitoring({ transactions, title, descripti
                 onOpenChange={(open) => !open && setSelectedCheck(null)}
                 check={selectedCheck?.check || null}
                 expense={selectedCheck?.expense || null}
+                transactionType={transactionType}
             />
         </div>
     );

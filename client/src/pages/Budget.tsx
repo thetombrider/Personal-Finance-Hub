@@ -322,11 +322,13 @@ export default function Budget() {
                                     title="Income Monitoring"
                                     description="Verify income history for the last 12 months"
                                     transactions={recurringIncome}
+                                    transactionType="income"
                                 />
                                 <RecurringTransactionsMonitoring
                                     title="Expenses Monitoring"
                                     description="Verify payment history for the last 12 months"
                                     transactions={recurringExpenses}
+                                    transactionType="expense"
                                 />
                             </section>
                         </div>
