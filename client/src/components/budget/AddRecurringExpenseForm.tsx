@@ -26,6 +26,7 @@ export function AddRecurringExpenseForm({ onSuccess, categories, accounts, initi
     const [categoryId, setCategoryId] = useState<string>(initialData?.categoryId?.toString() || "");
     const [accountId, setAccountId] = useState<string>(initialData?.accountId?.toString() || "");
     const [startDate, setStartDate] = useState(initialData?.startDate ? new Date(initialData.startDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
+    const [endDate, setEndDate] = useState(initialData?.endDate ? new Date(initialData.endDate).toISOString().split('T')[0] : "");
     const [matchPattern, setMatchPattern] = useState(initialData?.matchPattern || "");
     const [active, setActive] = useState(initialData?.active ?? true);
     const [interval, setInterval] = useState(initialData?.interval || "monthly");
@@ -75,12 +76,19 @@ export function AddRecurringExpenseForm({ onSuccess, categories, accounts, initi
             return;
         }
 
+        // Validate end date is after start date if provided
+        if (endDate && new Date(endDate) <= new Date(startDate)) {
+            showError(toast, "Error", "End date must be after start date.");
+            return;
+        }
+
         mutation.mutate({
             name,
             amount: amount.toString(), // Send as string for decimal type
             categoryId: parseInt(categoryId),
             accountId: parseInt(accountId),
             startDate: new Date(startDate).toISOString(), // Ensure ISO string
+            endDate: endDate ? new Date(endDate).toISOString() : null,
             interval,
             dayOfMonth: new Date(startDate).getDate(), // Derive from start date
             active,
@@ -115,6 +123,20 @@ export function AddRecurringExpenseForm({ onSuccess, categories, accounts, initi
                     <Label>Start Date</Label>
                     <Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
                 </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label>End Date (Optional)</Label>
+                    <Input
+                        type="date"
+                        value={endDate}
+                        onChange={e => setEndDate(e.target.value)}
+                        min={startDate}
+                    />
+                    <p className="text-xs text-muted-foreground">Leave empty for ongoing transactions.</p>
+                </div>
+                <div />
             </div>
 
             <div className="grid grid-cols-2 gap-4">

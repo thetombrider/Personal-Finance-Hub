@@ -38,6 +38,18 @@ export class ReconciliationService {
 
     private async checkExpense(expense: RecurringExpense, year: number, month: number, transactions: Transaction[], userId: string) {
         try {
+            // Skip if expense has ended before this month
+            if (expense.endDate) {
+                const endDate = new Date(expense.endDate);
+                const endYear = endDate.getFullYear();
+                const endMonth = endDate.getMonth() + 1; // 1-12
+
+                // Skip if this month is after the end date
+                if (year > endYear || (year === endYear && month > endMonth)) {
+                    return;
+                }
+            }
+
             // 1. Calculate expected date based on interval
             const expectedDates = this.calculateExpectedDates(expense, year, month);
 

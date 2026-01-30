@@ -151,6 +151,12 @@ export function RecurringTransactionsTable({
                                         <SortIcon column="startDate" />
                                     </div>
                                 </TableHead>
+                                <TableHead onClick={() => handleSort('endDate')} className="cursor-pointer hover:bg-muted/50">
+                                    <div className="flex items-center">
+                                        End Date
+                                        <SortIcon column="endDate" />
+                                    </div>
+                                </TableHead>
                                 <TableHead onClick={() => handleSort('active')} className="cursor-pointer hover:bg-muted/50">
                                     <div className="flex items-center">
                                         Status
@@ -188,6 +194,11 @@ export function RecurringTransactionsTable({
                                                     transaction.interval === 'yearly' ? 'Yearly' : transaction.interval}
                                     </TableCell>
                                     <TableCell>{formatForDisplay(new Date(transaction.startDate))}</TableCell>
+                                    <TableCell>
+                                        {transaction.endDate
+                                            ? formatForDisplay(new Date(transaction.endDate))
+                                            : <span className="text-muted-foreground">-</span>}
+                                    </TableCell>
                                     <TableCell>
                                         <Badge variant={transaction.active ? "default" : "outline"}>
                                             {transaction.active ? "Active" : "Inactive"}

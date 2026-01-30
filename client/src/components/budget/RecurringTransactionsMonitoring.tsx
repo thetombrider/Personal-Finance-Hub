@@ -104,28 +104,45 @@ export function RecurringTransactionsMonitoring({ transactions, title, descripti
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {activeTransactions.map(transaction => (
-                            <TableRow key={transaction.id}>
-                                <TableCell className="font-medium text-sm">{transaction.name}</TableCell>
-                                {months.map((m, i) => {
-                                    const check = getStatus(transaction.id, i);
-                                    return (
-                                        <TableCell
-                                            key={`${m.year}-${m.month}`}
-                                            className="text-center cursor-pointer hover:bg-muted/50 p-1"
-                                            onClick={() => handleCellClick(transaction, check)}
-                                        >
-                                            <div className="flex justify-center">
-                                                {!check && <span className="text-muted-foreground text-xs">-</span>}
-                                                {check?.status === 'MATCHED' && <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
-                                                {check?.status === 'MISSING' && <XCircle className="h-4 w-4 text-red-500" />}
-                                                {check?.status === 'PENDING' && <Clock className="h-4 w-4 text-amber-500" />}
-                                            </div>
-                                        </TableCell>
-                                    );
-                                })}
-                            </TableRow>
-                        ))}
+                        {activeTransactions.map(transaction => {
+                            // Pre-calculate date boundaries for this transaction
+                            const startDate = new Date(transaction.startDate);
+                            const endDate = transaction.endDate ? new Date(transaction.endDate) : null;
+
+                            return (
+                                <TableRow key={transaction.id}>
+                                    <TableCell className="font-medium text-sm">{transaction.name}</TableCell>
+                                    {months.map((m, i) => {
+                                        // Check if this month is within the valid range
+                                        const monthStart = new Date(m.year, m.month - 1, 1);
+                                        const monthEnd = new Date(m.year, m.month, 0);
+
+                                        // Check if month is before start date or after end date
+                                        const isBeforeStart = monthEnd < startDate;
+                                        const isAfterEnd = endDate && monthStart > endDate;
+                                        const isOutOfRange = isBeforeStart || isAfterEnd;
+
+                                        const check = getStatus(transaction.id, i);
+
+                                        return (
+                                            <TableCell
+                                                key={`${m.year}-${m.month}`}
+                                                className={`text-center p-1 ${isOutOfRange ? 'bg-muted/30' : 'cursor-pointer hover:bg-muted/50'}`}
+                                                onClick={() => !isOutOfRange && handleCellClick(transaction, check)}
+                                            >
+                                                <div className="flex justify-center">
+                                                    {isOutOfRange && <span className="text-muted-foreground/50 text-xs">N/A</span>}
+                                                    {!isOutOfRange && !check && <span className="text-muted-foreground text-xs">-</span>}
+                                                    {!isOutOfRange && check?.status === 'MATCHED' && <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
+                                                    {!isOutOfRange && check?.status === 'MISSING' && <XCircle className="h-4 w-4 text-red-500" />}
+                                                    {!isOutOfRange && check?.status === 'PENDING' && <Clock className="h-4 w-4 text-amber-500" />}
+                                                </div>
+                                            </TableCell>
+                                        );
+                                    })}
+                                </TableRow>
+                            );
+                        })}
                     </TableBody>
                 </Table>
             </div>
