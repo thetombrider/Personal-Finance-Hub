@@ -56,6 +56,7 @@ export function StockDetailModal({
 }: StockDetailModalProps) {
   const [isEditing, setIsEditing] = useState(initialIsEditing);
   const [ticker, setTicker] = useState(holding.ticker);
+  const [name, setName] = useState(holding.name);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -65,7 +66,8 @@ export function StockDetailModal({
 
   useEffect(() => {
     setTicker(holding.ticker);
-  }, [holding.ticker]);
+    setName(holding.name);
+  }, [holding.ticker, holding.name]);
 
   /*
   const updateHoldingMutation = useMutation({
@@ -90,10 +92,10 @@ export function StockDetailModal({
   const { updateHolding } = useTradeMutations();
 
   const handleSave = () => {
-    if (!ticker.trim()) return;
-    updateHolding.mutate({ id: holding.id, ticker: ticker.toUpperCase() }, {
+    if (!ticker.trim() || !name.trim()) return;
+    updateHolding.mutate({ id: holding.id, ticker: ticker.toUpperCase(), name: name }, {
       onSuccess: () => {
-        showSuccess(toast, "Holding updated", "Ticker updated successfully.");
+        showSuccess(toast, "Holding updated", "Holding details updated successfully.");
         setIsEditing(false);
       },
       onError: (error) => {
@@ -105,6 +107,7 @@ export function StockDetailModal({
 
   const handleCancel = () => {
     setTicker(holding.ticker);
+    setName(holding.name);
     setIsEditing(false);
   };
 
@@ -162,12 +165,19 @@ export function StockDetailModal({
         <DialogHeader>
           <div className="flex items-center justify-between mr-8">
             {isEditing ? (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 w-full mr-8">
                 <Input
                   value={ticker}
                   onChange={(e) => setTicker(e.target.value.toUpperCase())}
-                  className="w-32 font-bold text-xl uppercase"
+                  className="w-24 font-bold text-xl uppercase"
+                  placeholder="Ticker"
                   autoFocus
+                />
+                <Input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="flex-1 font-normal text-base"
+                  placeholder="Holding Name"
                 />
                 <Button size="icon" variant="ghost" onClick={handleSave} disabled={updateHolding.isPending}>
                   <Check className="h-4 w-4 text-green-600" />
