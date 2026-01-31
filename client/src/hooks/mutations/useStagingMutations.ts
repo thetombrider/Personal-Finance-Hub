@@ -27,8 +27,8 @@ export function useStagingMutations() {
 
     const dismissTransaction = useMutation({
         mutationFn: async (stagingId: number) => {
-            const res = await apiRequest("PUT", `/api/transactions/staging/${stagingId}/dismiss`);
-            return res.json();
+            const res = await apiRequest("POST", `/api/transactions/staging/${stagingId}/dismiss`);
+            return res;
         },
         onSuccess: invalidateStagingQueries,
     });
@@ -36,7 +36,7 @@ export function useStagingMutations() {
     const restoreTransaction = useMutation({
         mutationFn: async (stagingId: number) => {
             const res = await apiRequest("POST", `/api/transactions/staging/${stagingId}/restore`);
-            return res.json();
+            return res;
         },
         onSuccess: invalidateStagingQueries,
     });
@@ -57,8 +57,8 @@ export function useStagingMutations() {
 
     const bulkDismiss = useMutation({
         mutationFn: async (stagingIds: number[]) => {
-            const res = await apiRequest("PUT", "/api/transactions/staging/bulk-dismiss", { ids: stagingIds });
-            return res.json();
+            const res = await apiRequest("POST", "/api/transactions/staging/bulk-dismiss", { ids: stagingIds });
+            return res;
         },
         onSuccess: invalidateStagingQueries,
     });

@@ -26,30 +26,37 @@ This document defines development guidelines for AI and human developers working
 
 ```
 client/src/
-├── components/         # Reusable UI components
-│   ├── dashboard/      # Dashboard-specific charts and widgets
-│   ├── transactions/   # Transaction-related components
-│   ├── budget/         # Budget-related components
-│   └── ui/             # shadcn/ui components
-├── context/            # React Context providers
-├── hooks/              # Custom hooks (queries, mutations, utilities)
-│   └── queries/        # Data fetching hooks
-├── lib/                # Utility functions and helpers
-│   ├── api.ts          # Centralized API functions
-│   ├── toastHelpers.ts # Toast notification wrappers
-│   ├── dateFormatters.ts # Date formatting utilities
-│   └── queryInvalidation.ts # Cache invalidation helpers
-├── pages/              # Page components (route endpoints)
-└── types/              # TypeScript type definitions
+├── components/          # Reusable UI components
+│   ├── budget/          # Budget-related components
+│   ├── calendar/        # Calendar visualization
+│   ├── dashboard/       # Dashboard widgets and charts
+│   ├── import/          # Transaction import flows
+│   ├── onboarding/      # User onboarding flows
+│   ├── portfolio/       # Investment portfolio components
+│   ├── reports/         # Financial reporting components
+│   ├── transactions/    # Transaction lists and forms
+│   └── ui/              # shadcn/ui generic components
+├── context/             # React Context providers (Auth, etc.)
+├── hooks/               # Custom hooks
+│   ├── mutations/       # React Query mutations (useStagingMutations, etc.)
+│   ├── queries/         # React Query queries (useBudgetData, etc.)
+│   └── use*.ts          # Feature-specific hooks (useTransactionsData)
+├── lib/                 # Utility functions
+│   ├── api.ts           # Centralized API layer
+│   └── *.ts             # Utils (dateFormatters, toastHelpers)
+├── pages/               # Route components
+└── types/               # Local TypeScript definitions
 
 server/
-├── routes/             # Express route handlers
-├── services/           # Business logic and external integrations
-├── repositories/       # Data access layer (follow this pattern)
-└── lib/                # Server utilities (logger, responses)
+├── repositories/        # Data access layer (DB interaction)
+├── routes/              # Express API route definitions
+├── services/            # Business logic (GoCardless, Reconciliation)
+├── lib/                 # Server utilities (logger, helpers)
+├── auth.ts              # Passport authentication setup
+└── db.ts                # Database connection/schema info
 
 shared/
-└── schema.ts           # Shared TypeScript types and Zod schemas
+└── schema.ts            # Shared types and Drizzle schema
 ```
 
 ---

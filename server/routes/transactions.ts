@@ -117,7 +117,7 @@ export function registerTransactionRoutes(app: Express) {
         }
     });
 
-    app.delete("/api/transactions/staging/:id", async (req, res) => {
+    app.post("/api/transactions/staging/:id/dismiss", async (req, res) => {
         try {
             if (!req.user) return res.status(401).json({ error: "Unauthorized" });
 
@@ -132,9 +132,9 @@ export function registerTransactionRoutes(app: Express) {
             }
 
             await storage.updateImportStagingStatus(id, req.user.id, "dismissed");
-            res.status(204).send();
+            res.status(200).send();
         } catch (error) {
-            res.status(500).json({ error: "Failed to delete staged transaction" });
+            res.status(500).json({ error: "Failed to dismiss staged transaction" });
         }
     });
 
