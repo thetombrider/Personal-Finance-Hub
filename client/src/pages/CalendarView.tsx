@@ -418,7 +418,7 @@ export default function CalendarView() {
                                     {selectedDayData.planned.length > 0 && (
                                         <div>
                                             <h3 className="text-sm font-semibold mb-3 text-amber-600 dark:text-amber-400 flex items-center gap-2">
-                                                Planned Items
+                                                Expected Planned Items
                                                 <span className="text-xs font-normal bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded-full">
                                                     {selectedDayData.planned.length}
                                                 </span>
