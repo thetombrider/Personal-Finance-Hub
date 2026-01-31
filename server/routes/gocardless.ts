@@ -243,5 +243,33 @@ export function registerGoCardlessRoutes(app: Express) {
             res.status(500).json({ error: "Failed to link account" });
         }
     });
+
+    // ============ BACKGROUND SYNC ============
+
+    app.post("/api/gocardless/sync", async (req, res) => {
+        try {
+            if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+
+            // Trigger background sync (fire and forget)
+            gocardlessService.syncAllAccounts(req.user.id);
+
+            res.status(202).json({ message: "Sync started" });
+        } catch (error) {
+            logger.gocardless.error("Error starting background sync:", error);
+            res.status(500).json({ error: "Failed to start sync" });
+        }
+    });
+
+    app.get("/api/gocardless/sync/status", async (req, res) => {
+        try {
+            if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+
+            const status = gocardlessService.getSyncStatus(req.user.id);
+            res.json(status);
+        } catch (error) {
+            logger.gocardless.error("Error fetching sync status:", error);
+            res.status(500).json({ error: "Failed to fetch sync status" });
+        }
+    });
 }
 

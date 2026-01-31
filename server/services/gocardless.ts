@@ -20,6 +20,15 @@ if (!SECRET_ID || !SECRET_KEY) {
 class GoCardlessService {
     private client: any;
     private isConfigured: boolean;
+    // Map<UserId, SyncStatus>
+    private syncStatus: Map<string, {
+        isSyncing: boolean;
+        progress: number;
+        total: number;
+        completed: number;
+        currentAccount?: string;
+        lastError?: string;
+    }> = new Map();
 
     constructor() {
         this.isConfigured = !!(SECRET_ID && SECRET_KEY);
@@ -481,6 +490,74 @@ class GoCardlessService {
         } catch (error) {
             logger.gocardless.error(`Failed to sync balance for account ${localAccountId}:`, error);
             // Don't fail the whole sync if balance fails
+        }
+    }
+
+    getSyncStatus(userId: string) {
+        return this.syncStatus.get(userId) || { isSyncing: false, progress: 0, total: 0, completed: 0 };
+    }
+
+    async syncAllAccounts(userId: string) {
+        // Prevent concurrent syncs for same user
+        if (this.syncStatus.get(userId)?.isSyncing) {
+            return;
+        }
+
+        this.syncStatus.set(userId, {
+            isSyncing: true,
+            progress: 0,
+            total: 0,
+            completed: 0
+        });
+
+        try {
+            // Get all accounts linked to GoCardless for this user
+            const allAccounts = await storage.getAccounts(userId);
+            const linkedAccounts = allAccounts.filter(a => a.gocardlessAccountId);
+
+            this.syncStatus.set(userId, {
+                isSyncing: true,
+                progress: 0,
+                total: linkedAccounts.length,
+                completed: 0
+            });
+
+            for (const account of linkedAccounts) {
+                // Update status for current account
+                const currentStatus = this.syncStatus.get(userId)!;
+                this.syncStatus.set(userId, {
+                    ...currentStatus,
+                    currentAccount: account.name
+                });
+
+                try {
+                    await this.syncTransactions(userId, account.id);
+                    await this.syncBalances(account.id);
+                } catch (error: any) {
+                    logger.gocardless.error(`Background sync failed for account ${account.name}:`, error);
+                    const status = this.syncStatus.get(userId)!;
+                    this.syncStatus.set(userId, {
+                        ...status,
+                        lastError: `Failed to sync ${account.name}`
+                    });
+                }
+
+                // Update progress
+                const updatedStatus = this.syncStatus.get(userId)!;
+                const newCompleted = updatedStatus.completed + 1;
+                this.syncStatus.set(userId, {
+                    ...updatedStatus,
+                    completed: newCompleted,
+                    progress: (newCompleted / linkedAccounts.length) * 100
+                });
+            }
+        } catch (error) {
+            logger.gocardless.error("Fatal error in background sync:", error);
+        } finally {
+            // Clear status after a short delay so client can see 100%
+            setTimeout(() => {
+                this.syncStatus.delete(userId);
+            }, 5000);
         }
     }
 }
