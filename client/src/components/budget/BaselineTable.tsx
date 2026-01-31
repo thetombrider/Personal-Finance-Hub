@@ -129,91 +129,149 @@ export function BaselineTable({ categories, budgetData, onUpdateBaseline, monthR
         await Promise.all(updates);
     };
 
-    const handleKeyDown = (e: React.KeyboardEvent, catId: number, month: number) => {
+    // Prepare linear list of categories for row indexing
+    const incomeCategories = categories.filter(c => c.type === 'income');
+    const expenseCategories = categories.filter(c => c.type === 'expense');
+    const displayCategories = [...incomeCategories, ...expenseCategories];
+
+    const getRowIndex = (categoryId: number) => displayCategories.findIndex(c => c.id === categoryId);
+
+    const handleKeyDown = (e: React.KeyboardEvent, catId: number, monthIndex: number) => {
+        // Handle Enter
         if (e.key === "Enter") {
             (e.currentTarget as HTMLInputElement).blur();
+            return;
+        }
+
+        // Handle Arrow Navigation
+        if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+            // Allow default modifier behavior (like Cmd+Right for extending) if modifiers are pressed
+            // EXCEPT for simple navigation. 
+            // We only want to intercept clean arrow keys for navigation.
+            // But wait, the existing code checks for Cmd+ArrowRight. We must not block that.
+
+            const isCmd = e.metaKey || e.ctrlKey;
+
+            if (!isCmd) {
+                // Determine current position
+                const currentRow = getRowIndex(catId);
+                const currentCol = monthIndex; // 0-based visible index
+
+                let targetRow = currentRow;
+                let targetCol = currentCol;
+
+                if (e.key === "ArrowUp") targetRow--;
+                if (e.key === "ArrowDown") targetRow++;
+                if (e.key === "ArrowLeft") targetCol--;
+                if (e.key === "ArrowRight") targetCol++;
+
+                // Find target input
+                // We use data attributes: data-row and data-col
+                // Selector: input[data-row="X"][data-col="Y"]
+                const selector = `input[data-row="${targetRow}"][data-col="${targetCol}"]`;
+                const targetInput = document.querySelector(selector) as HTMLInputElement;
+
+                if (targetInput) {
+                    e.preventDefault();
+                    targetInput.focus();
+                    // Optional: select all text on focus for easier editing
+                    // targetInput.select(); 
+                }
+            }
         }
     };
 
     const renderRows = (type: 'income' | 'expense') => {
-        return categories.filter(c => c.type === type).map((category) => (
-            <TableRow key={category.id}>
-                <TableCell className="font-medium">
-                    <div className="flex items-center gap-2">
-                        <div
-                            className="w-3 h-3 rounded-full min-w-[12px]"
-                            style={{ backgroundColor: category.color }}
-                        />
-                        <span className="truncate">{category.name}</span>
-                    </div>
-                </TableCell>
-                {visibleMonths.map((_, index) => {
-                    const month = startMonthIndex + index + 1;
-                    const key = getKey(category.id, month);
-                    const isUpdating = updating === key;
-                    const currentValue = parseFloat(getValue(category.id, month) || "0");
+        // We must filter from the *same* list if we want consistent ordering, 
+        // but here we are rendering sections separately. 
+        // We rely on `displayCategories` for the index calculation.
 
-                    return (
-                        <TableCell key={index} className="p-2 relative group">
-                            <div className="relative">
-                                <Input
-                                    type="number"
-                                    min="0"
-                                    step="50"
-                                    className={`text-right h-8 pl-8 pr-2 text-xs sm:text-sm border-transparent hover:border-input focus:border-primary w-full [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${getValue(category.id, month) === "" ? "placeholder:text-muted-foreground/30" : ""
-                                        }`}
-                                    placeholder="0"
-                                    value={getValue(category.id, month)}
-                                    onChange={(e) => handleChange(category.id, month, e.target.value)}
-                                    onBlur={() => handleBlur(category.id, month)}
-                                    onKeyDown={(e) => {
-                                        handleKeyDown(e, category.id, month);
-                                        // Extend shortcuts
-                                        if ((e.metaKey || e.ctrlKey) && e.key === "ArrowRight") {
-                                            e.preventDefault();
-                                            if (e.shiftKey) {
-                                                // Cmd + Shift + ArrowRight -> Fill Rest of Year
-                                                handleExtendYear(category.id, month - 1, currentValue);
-                                            } else {
-                                                // Cmd + ArrowRight -> Extend Next
-                                                handleExtendNext(category.id, month - 1, currentValue);
+        const currentSectionCategories = type === 'income' ? incomeCategories : expenseCategories;
+
+        return currentSectionCategories.map((category) => {
+            const rowIndex = getRowIndex(category.id);
+
+            return (
+                <TableRow key={category.id}>
+                    <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                            <div
+                                className="w-3 h-3 rounded-full min-w-[12px]"
+                                style={{ backgroundColor: category.color }}
+                            />
+                            <span className="truncate">{category.name}</span>
+                        </div>
+                    </TableCell>
+                    {visibleMonths.map((_, index) => {
+                        const month = startMonthIndex + index + 1;
+                        const key = getKey(category.id, month);
+                        const isUpdating = updating === key;
+                        const currentValue = parseFloat(getValue(category.id, month) || "0");
+
+                        return (
+                            <TableCell key={index} className="p-2 relative group">
+                                <div className="relative">
+                                    <Input
+                                        type="number"
+                                        min="0"
+                                        step="50"
+                                        data-row={rowIndex}
+                                        data-col={index}
+                                        className={`text-right h-8 pl-8 pr-2 text-xs sm:text-sm border-transparent hover:border-input focus:border-primary w-full [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${getValue(category.id, month) === "" ? "placeholder:text-muted-foreground/30" : ""
+                                            }`}
+                                        placeholder="0"
+                                        value={getValue(category.id, month)}
+                                        onChange={(e) => handleChange(category.id, month, e.target.value)}
+                                        onBlur={() => handleBlur(category.id, month)}
+                                        onKeyDown={(e) => {
+                                            handleKeyDown(e, category.id, index);
+                                            // Extend shortcuts
+                                            if ((e.metaKey || e.ctrlKey) && e.key === "ArrowRight") {
+                                                e.preventDefault();
+                                                if (e.shiftKey) {
+                                                    // Cmd + Shift + ArrowRight -> Fill Rest of Year
+                                                    handleExtendYear(category.id, month - 1, currentValue);
+                                                } else {
+                                                    // Cmd + ArrowRight -> Extend Next
+                                                    handleExtendNext(category.id, month - 1, currentValue);
+                                                }
                                             }
-                                        }
-                                    }}
-                                    disabled={isUpdating}
-                                />
-                                {isUpdating && (
-                                    <div className="absolute inset-0 flex items-center justify-center bg-background/50">
-                                        <Loader2 className="h-3 w-3 animate-spin text-primary" />
-                                    </div>
-                                )}
-                                {!isUpdating && (
-                                    <BudgetSmartMenu
-                                        categoryId={category.id}
-                                        monthIndex={index} // 0-based index relative to visibleMonths? No, relative to YEAR? 
-                                        // visibleMonths is just a slice of names.
-                                        // The data logic needs true month index.
-                                        // 'month' variable in loop is 1-12 based?
-                                        // month = startMonthIndex + index + 1
-                                        // So true index 0-11 is (month - 1).
-                                        currentValue={currentValue}
-                                        onApply={(amount) => handleApplySuggestion(category.id, month, amount)}
-                                        onExtendNext={() => handleExtendNext(category.id, month - 1, currentValue)}
-                                        onExtendYear={() => handleExtendYear(category.id, month - 1, currentValue)}
+                                        }}
+                                        disabled={isUpdating}
                                     />
-                                )}
-                            </div>
-                        </TableCell>
-                    );
-                })}
-            </TableRow>
-        ));
+                                    {isUpdating && (
+                                        <div className="absolute inset-0 flex items-center justify-center bg-background/50">
+                                            <Loader2 className="h-3 w-3 animate-spin text-primary" />
+                                        </div>
+                                    )}
+                                    {!isUpdating && (
+                                        <BudgetSmartMenu
+                                            categoryId={category.id}
+                                            monthIndex={index} // 0-based index relative to visibleMonths? No, relative to YEAR? 
+                                            // visibleMonths is just a slice of names.
+                                            // The data logic needs true month index.
+                                            // 'month' variable in loop is 1-12 based?
+                                            // month = startMonthIndex + index + 1
+                                            // So true index 0-11 is (month - 1).
+                                            currentValue={currentValue}
+                                            onApply={(amount) => handleApplySuggestion(category.id, month, amount)}
+                                            onExtendNext={() => handleExtendNext(category.id, month - 1, currentValue)}
+                                            onExtendYear={() => handleExtendYear(category.id, month - 1, currentValue)}
+                                        />
+                                    )}
+                                </div>
+                            </TableCell>
+                        );
+                    })}
+                </TableRow>
+            );
+        });
     };
 
     return (
         <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-                Set the monthly baseline for each category. Press enter or click outside to save.
+                Set the monthly baseline for each category. Use arrow keys to navigate and <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">cmd</kbd> + <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">right arrow</kbd> or <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">cmd</kbd> + <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">shift</kbd> + <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">right arrow</kbd> to extend the baseline to the next month or to the end of the year. Press enter or click outside to save.
             </p>
             <div className="rounded-md border w-full">
                 <Table>
