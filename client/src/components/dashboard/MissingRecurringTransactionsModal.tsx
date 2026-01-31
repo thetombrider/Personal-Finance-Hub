@@ -75,50 +75,52 @@ export function MissingRecurringTransactionsModal({ isOpen, onOpenChange }: Miss
                 ) : data && data.missing.length > 0 ? (
                     <div className="space-y-4">
                         <div className="rounded-lg border overflow-hidden">
-                            <table className="w-full">
-                                <thead className="bg-muted/50">
-                                    <tr>
-                                        <th className="px-4 py-3 text-left text-sm font-medium">Transaction</th>
-                                        <th className="px-4 py-3 text-left text-sm font-medium">Status</th>
-                                        <th className="px-4 py-3 text-right text-sm font-medium">Expected Date</th>
-                                        <th className="px-4 py-3 text-right text-sm font-medium">Amount</th>
-                                        <th className="px-4 py-3 text-left text-sm font-medium">Account</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y">
-                                    {data.missing.map((item) => {
-                                        const daysOverdue = getDaysOverdue(item.year, item.month, item.dayOfMonth);
-                                        return (
-                                            <tr key={item.id} className="hover:bg-muted/30">
-                                                <td className="px-4 py-3">
-                                                    <div className="font-medium">{item.name || 'Unknown'}</div>
-                                                    <div className="text-xs text-muted-foreground">
-                                                        {item.year}/{String(item.month).padStart(2, '0')}
-                                                    </div>
-                                                </td>
-                                                <td className="px-4 py-3">
-                                                    {daysOverdue !== null && (
-                                                        <span className="text-xs text-amber-600 dark:text-amber-400">
-                                                            {daysOverdue > 0
-                                                                ? `${daysOverdue} day${daysOverdue !== 1 ? 's' : ''} ago`
-                                                                : 'Expected today'}
-                                                        </span>
-                                                    )}
-                                                </td>
-                                                <td className="px-4 py-3 text-right text-sm">
-                                                    <span>Expected: {item.dayOfMonth ? getExpectedDate(item.year, item.month, item.dayOfMonth)?.toLocaleDateString() : 'N/A'}</span>
-                                                </td>
-                                                <td className="px-4 py-3 text-right font-mono text-sm">
-                                                    {item.amount ? `€${parseFloat(item.amount).toFixed(2)}` : '—'}
-                                                </td>
-                                                <td className="px-4 py-3 text-sm">
-                                                    {item.accountName || 'Unknown'}
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
+                            <div className="max-h-[450px] overflow-y-auto">
+                                <table className="w-full">
+                                    <thead className="bg-muted sticky top-0 z-10 shadow-sm">
+                                        <tr>
+                                            <th className="px-4 py-3 text-left text-sm font-medium">Transaction</th>
+                                            <th className="px-4 py-3 text-left text-sm font-medium">Status</th>
+                                            <th className="px-4 py-3 text-right text-sm font-medium">Expected Date</th>
+                                            <th className="px-4 py-3 text-right text-sm font-medium">Amount</th>
+                                            <th className="px-4 py-3 text-left text-sm font-medium">Account</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y">
+                                        {data.missing.map((item) => {
+                                            const daysOverdue = getDaysOverdue(item.year, item.month, item.dayOfMonth);
+                                            return (
+                                                <tr key={item.id} className="hover:bg-muted/30">
+                                                    <td className="px-4 py-3">
+                                                        <div className="font-medium">{item.name || 'Unknown'}</div>
+                                                        <div className="text-xs text-muted-foreground">
+                                                            {item.year}/{String(item.month).padStart(2, '0')}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-4 py-3">
+                                                        {daysOverdue !== null && (
+                                                            <span className="text-xs text-amber-600 dark:text-amber-400">
+                                                                {daysOverdue > 0
+                                                                    ? `${daysOverdue} day${daysOverdue !== 1 ? 's' : ''} ago`
+                                                                    : 'Expected today'}
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-4 py-3 text-right text-sm">
+                                                        <span>Expected: {item.dayOfMonth ? getExpectedDate(item.year, item.month, item.dayOfMonth)?.toLocaleDateString() : 'N/A'}</span>
+                                                    </td>
+                                                    <td className="px-4 py-3 text-right font-mono text-sm">
+                                                        {item.amount ? `€${parseFloat(item.amount).toFixed(2)}` : '—'}
+                                                    </td>
+                                                    <td className="px-4 py-3 text-sm">
+                                                        {item.accountName || 'Unknown'}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
 
                         <div className="flex justify-end gap-2 pt-4 border-t">
