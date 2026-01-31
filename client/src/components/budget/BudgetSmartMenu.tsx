@@ -86,7 +86,7 @@ export function BudgetSmartMenu({
                         {/* Extend Next */}
                         <Button
                             variant="ghost"
-                            className="w-full justify-between h-8 px-2 text-sm"
+                            className="w-full justify-between h-8 px-2 text-sm hover:bg-primary/10 hover:text-primary"
                             onClick={() => {
                                 onExtendNext();
                                 setIsOpen(false);
@@ -103,7 +103,7 @@ export function BudgetSmartMenu({
                         {/* Extend Year */}
                         <Button
                             variant="ghost"
-                            className="w-full justify-between h-8 px-2 text-sm"
+                            className="w-full justify-between h-8 px-2 text-sm hover:bg-primary/10 hover:text-primary"
                             onClick={() => {
                                 onExtendYear();
                                 setIsOpen(false);
