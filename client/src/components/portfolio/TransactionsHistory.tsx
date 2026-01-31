@@ -13,7 +13,8 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Trash2, Download, Pencil, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { showSuccess, showError, toastPatterns } from "@/lib/toastHelpers";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
+import { useInvalidation } from "@/lib/queryInvalidation";
 import { format, parseISO } from "date-fns";
 import { it } from "date-fns/locale";
 import * as api from "@/lib/api";
@@ -27,7 +28,7 @@ interface TransactionsHistoryProps {
 
 export function TransactionsHistory({ trades, holdings, accounts }: TransactionsHistoryProps) {
     const { toast } = useToast();
-    const queryClient = useQueryClient();
+    const { invalidatePortfolio } = useInvalidation();
 
     const [tradesHoldingFilter, setTradesHoldingFilter] = useState<string>("all");
     const [selectedTradeIds, setSelectedTradeIds] = useState<Set<number>>(new Set());
@@ -95,7 +96,7 @@ export function TransactionsHistory({ trades, holdings, accounts }: Transactions
     const deleteTradesBulkMutation = useMutation({
         mutationFn: api.deleteTradesBulk,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["trades"] });
+            invalidatePortfolio();
             toastPatterns.deleted(toast, "Transactions");
             setSelectedTradeIds(new Set());
         },
@@ -105,7 +106,7 @@ export function TransactionsHistory({ trades, holdings, accounts }: Transactions
         mutationFn: ({ id, data }: { id: number; data: Parameters<typeof api.updateTrade>[1] }) =>
             api.updateTrade(id, data),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["trades"] });
+            invalidatePortfolio();
             toastPatterns.updated(toast, "Transaction", "Changes saved.");
             setEditingTrade(null);
         },
@@ -117,7 +118,7 @@ export function TransactionsHistory({ trades, holdings, accounts }: Transactions
     const deleteTradeMutation = useMutation({
         mutationFn: api.deleteTrade,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["trades"] });
+            invalidatePortfolio();
             toastPatterns.deleted(toast, "Transaction");
             setTradeToDelete(null);
         },

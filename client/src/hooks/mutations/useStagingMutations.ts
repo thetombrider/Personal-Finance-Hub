@@ -1,5 +1,6 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { useInvalidation } from "@/lib/queryInvalidation";
 
 interface ApproveTransactionData {
     stagingId: number;
@@ -9,12 +10,11 @@ interface ApproveTransactionData {
 }
 
 export function useStagingMutations() {
-    const queryClient = useQueryClient();
+    const { invalidateTransactions } = useInvalidation();
 
+    // invalidateTransactions handles staging, transactions, and accounts
     const invalidateStagingQueries = () => {
-        queryClient.invalidateQueries({ queryKey: ["/api/transactions/staging"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/accounts"] });
+        invalidateTransactions();
     };
 
     const approveTransaction = useMutation({

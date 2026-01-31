@@ -1,5 +1,6 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { useInvalidation } from "@/lib/queryInvalidation";
 
 interface WebhookData {
     name: string;
@@ -9,11 +10,7 @@ interface WebhookData {
 }
 
 export function useWebhookMutations() {
-    const queryClient = useQueryClient();
-
-    const invalidateWebhooks = () => {
-        queryClient.invalidateQueries({ queryKey: ["/api/webhooks"] });
-    };
+    const { invalidateWebhooks } = useInvalidation();
 
     const createWebhook = useMutation({
         mutationFn: async (data: WebhookData) => {

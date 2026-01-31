@@ -2,9 +2,10 @@
 import Layout from "@/components/Layout";
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useBudgetData } from "@/hooks/queries";
 import { useBudgetMutations } from "@/hooks/mutations";
+import { useInvalidation } from "@/lib/queryInvalidation";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -39,8 +40,8 @@ export default function Budget() {
     const [location, setLocation] = useLocation();
     const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
     const [viewHalf, setViewHalf] = useState<'first' | 'second'>('first');
-    const queryClient = useQueryClient();
     const { toast } = useToast();
+    const { invalidateBudget, invalidateRecurring } = useInvalidation();
     const { accounts, categories } = useFinance();
 
     // Dialog states
@@ -458,8 +459,7 @@ export default function Budget() {
                         <AddRecurringExpenseForm
                             onSuccess={() => {
                                 setIsAddRecurringOpen(false);
-                                queryClient.invalidateQueries({ queryKey: ['budget'] });
-                                queryClient.invalidateQueries({ queryKey: ['/api/budget/recurring/suggestions'] });
+                                invalidateRecurring();
                             }}
                             categories={categories}
                             accounts={accounts} // Passed from context
@@ -482,7 +482,7 @@ export default function Budget() {
                         <AddPlannedExpenseForm
                             onSuccess={() => {
                                 setIsAddPlannedOpen(false);
-                                queryClient.invalidateQueries({ queryKey: ['budget', currentYear] });
+                                invalidateBudget();
                             }}
                             categories={categories}
                             year={currentYear}

@@ -33,11 +33,12 @@ import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { format, addDays, isPast } from "date-fns";
 import { formatForDisplay, dateFormats } from "@/lib/dateFormatters";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { showSuccess, showError } from "@/lib/toastHelpers";
 import { useBankConnections } from "@/hooks/queries/useBankConnections";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useInvalidation } from "@/lib/queryInvalidation";
 
 const accountSchema = z.object({
   name: z.string().min(2, "Name is required"),
@@ -59,6 +60,7 @@ export default function ManageAccounts() {
   const [accountToDelete, setAccountToDelete] = useState<number | null>(null);
   const [accountToUnlink, setAccountToUnlink] = useState<number | null>(null);
   const { toast } = useToast();
+  const { invalidateAccounts } = useInvalidation();
 
   const { data: connections = [], refetch: refetchConnections } = useBankConnections();
 
@@ -117,7 +119,7 @@ export default function ManageAccounts() {
     if (accountToUnlink === null) return;
     try {
       await apiRequest("PATCH", `/api/accounts/${accountToUnlink}`, { gocardlessAccountId: null, bankConnectionId: null });
-      await queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      invalidateAccounts();
       showSuccess(toast, "Account unlinked", "The connection with the bank has been removed.");
     } catch (error) {
       showError(toast, "Error", "Unable to unlink the account.");

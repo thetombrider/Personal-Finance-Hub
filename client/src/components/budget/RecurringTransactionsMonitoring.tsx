@@ -1,5 +1,5 @@
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { RecurringExpense, RecurringExpenseCheck } from "@shared/schema";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { Loader2, CheckCircle2, XCircle, Clock, Check } from "lucide-react";
 import { useState } from "react";
 import { format, subMonths } from "date-fns";
 import { ReconciliationDetailModal } from "../ReconciliationDetailModal";
+import { useInvalidation } from "@/lib/queryInvalidation";
 
 interface RecurringTransactionsMonitoringProps {
     transactions: RecurringExpense[];
@@ -16,7 +17,7 @@ interface RecurringTransactionsMonitoringProps {
 }
 
 export function RecurringTransactionsMonitoring({ transactions, title, description, transactionType }: RecurringTransactionsMonitoringProps) {
-    const queryClient = useQueryClient();
+    const { invalidateReconciliation } = useInvalidation();
     const [selectedCheck, setSelectedCheck] = useState<{ check: RecurringExpenseCheck, expense: RecurringExpense } | null>(null);
 
     // Determine range: last 12 months + current
@@ -54,7 +55,7 @@ export function RecurringTransactionsMonitoring({ transactions, title, descripti
             if (!res.ok) throw new Error("Failed");
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['reconciliation'] });
+            invalidateReconciliation();
         }
     });
 

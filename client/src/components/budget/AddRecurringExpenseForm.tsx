@@ -6,10 +6,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Loader2 } from "lucide-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { type Category, type RecurringExpense, type Account } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { showSuccess, showError } from "@/lib/toastHelpers";
+import { useInvalidation } from "@/lib/queryInvalidation";
 
 interface AddRecurringExpenseFormProps {
     onSuccess: () => void;
@@ -20,7 +21,7 @@ interface AddRecurringExpenseFormProps {
 
 export function AddRecurringExpenseForm({ onSuccess, categories, accounts, initialData, type }: AddRecurringExpenseFormProps & { type?: 'income' | 'expense' }) {
     const { toast } = useToast();
-    const queryClient = useQueryClient();
+    const { invalidateBudget } = useInvalidation();
     const [name, setName] = useState(initialData?.name || "");
     const [amount, setAmount] = useState(initialData?.amount?.toString() || "");
     const [categoryId, setCategoryId] = useState<string>(initialData?.categoryId?.toString() || "");
@@ -68,7 +69,7 @@ export function AddRecurringExpenseForm({ onSuccess, categories, accounts, initi
             return res.json();
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['budget'] });
+            invalidateBudget();
             showSuccess(toast, isEditing ? "Expense updated" : "Recurring expense added");
             onSuccess();
         },

@@ -43,8 +43,8 @@ export const invalidationHelpers = {
      */
     portfolio: (queryClient: QueryClient) => {
         queryClient.invalidateQueries({ queryKey: ["/api/portfolio"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/portfolio/holdings"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/portfolio/trades"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/holdings"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/trades"] });
         queryClient.invalidateQueries({ queryKey: ["/api/accounts"] });
         queryClient.invalidateQueries({ queryKey: ["accounts"] });
     },
@@ -83,7 +83,23 @@ export const invalidationHelpers = {
     recurring: (queryClient: QueryClient) => {
         queryClient.invalidateQueries({ queryKey: ["/api/recurring"] });
         queryClient.invalidateQueries({ queryKey: ["/api/recurring/missing"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/budget/recurring/suggestions"] });
         queryClient.invalidateQueries({ queryKey: ["budget"] });
+    },
+
+    /**
+     * Invalidate reconciliation queries
+     */
+    reconciliation: (queryClient: QueryClient) => {
+        queryClient.invalidateQueries({ queryKey: ["reconciliation"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/reconciliation"] });
+    },
+
+    /**
+     * Invalidate webhook-related queries
+     */
+    webhooks: (queryClient: QueryClient) => {
+        queryClient.invalidateQueries({ queryKey: ["/api/webhooks"] });
     },
 
     /**
@@ -109,6 +125,8 @@ export function useInvalidation() {
         invalidateCategories: () => invalidationHelpers.categories(queryClient),
         invalidateTags: () => invalidationHelpers.tags(queryClient),
         invalidateRecurring: () => invalidationHelpers.recurring(queryClient),
+        invalidateReconciliation: () => invalidationHelpers.reconciliation(queryClient),
+        invalidateWebhooks: () => invalidationHelpers.webhooks(queryClient),
         invalidateAll: () => invalidationHelpers.all(queryClient),
     };
 }

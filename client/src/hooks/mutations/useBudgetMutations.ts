@@ -1,5 +1,6 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { useInvalidation } from "@/lib/queryInvalidation";
 
 interface BudgetCellUpdate {
     categoryId: number;
@@ -9,7 +10,7 @@ interface BudgetCellUpdate {
 }
 
 export function useBudgetMutations() {
-    const queryClient = useQueryClient();
+    const { invalidateBudget } = useInvalidation();
 
     const updateBudgetCell = useMutation({
         mutationFn: async (data: BudgetCellUpdate) => {
@@ -22,7 +23,7 @@ export function useBudgetMutations() {
             return res.json();
         },
         onSuccess: (_, variables) => {
-            queryClient.invalidateQueries({ queryKey: ["budget", variables.year] });
+            invalidateBudget(variables.year);
         },
     });
 
@@ -31,7 +32,7 @@ export function useBudgetMutations() {
             await apiRequest("DELETE", `/api/budget/recurring/${id}`);
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["budget"] });
+            invalidateBudget();
         },
     });
 
@@ -39,48 +40,17 @@ export function useBudgetMutations() {
         mutationFn: async (id: number) => {
             await apiRequest("DELETE", `/api/budget/planned/${id}`);
         },
-        onSuccess: (_, variables) => {
-            // We might not have access to year here easily if we don't pass it.
-            // But we can invalidate all budget queries or strict ones.
-            // Budget.tsx passes currentYear to invalidate.
-            // We'll trust react-query invalidation.
-            queryClient.invalidateQueries({ queryKey: ["budget"] });
+        onSuccess: () => {
+            invalidateBudget();
         },
     });
-
-    /*
-    // Backend endpoints not yet implemented
-    const copyBudgetFromYear = useMutation({
-      mutationFn: async ({ fromYear, toYear }: { fromYear: number; toYear: number }) => {
-        const res = await apiRequest("POST", "/api/budget/copy", { fromYear, toYear });
-        return res.json();
-      },
-      onSuccess: (_, variables) => {
-        queryClient.invalidateQueries({ queryKey: ["budget", variables.toYear] });
-      },
-    });
-  
-    const resetBudgetYear = useMutation({
-      mutationFn: async (year: number) => {
-        const res = await apiRequest("DELETE", `/api/budget/${year}`);
-        return res.json();
-      },
-      onSuccess: (_, year) => {
-        queryClient.invalidateQueries({ queryKey: ["budget", year] });
-      },
-    });
-    */
 
     return {
         updateBudgetCell,
         deleteRecurringExpense,
         deletePlannedExpense,
-        // copyBudgetFromYear,
-        // resetBudgetYear,
         isUpdating: updateBudgetCell.isPending,
         isDeletingRecurring: deleteRecurringExpense.isPending,
         isDeletingPlanned: deletePlannedExpense.isPending,
-        // isCopying: copyBudgetFromYear.isPending,
-        // isResetting: resetBudgetYear.isPending,
     };
 }

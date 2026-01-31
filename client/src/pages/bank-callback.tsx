@@ -6,12 +6,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { showSuccess, showError } from "@/lib/toastHelpers";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
 import { type Account } from "@shared/schema";
 import { Progress } from "@/components/ui/progress";
 import { getErrorMessage } from "@/lib/errors";
 import type { BankAccountData } from "@/types/imports";
+import { useInvalidation } from "@/lib/queryInvalidation";
 
 export default function BankCallbackPage() {
     const [, setLocation] = useLocation();
@@ -23,6 +24,7 @@ export default function BankCallbackPage() {
     const [bankConnectionId, setBankConnectionId] = useState<number | null>(null);
     const [progress, setProgress] = useState(0);
     const [statusMessage, setStatusMessage] = useState("");
+    const { invalidateAccounts } = useInvalidation();
 
     // Fetch local accounts
     const { data: localAccounts } = useQuery<Account[]>({
@@ -187,7 +189,7 @@ export default function BankCallbackPage() {
             await new Promise(resolve => setTimeout(resolve, 1000)); // Small delay to see 100%
 
             showSuccess(toast, "Success", "Bank accounts linked and synced successfully.");
-            queryClient.invalidateQueries({ queryKey: ["/api/accounts"] });
+            invalidateAccounts();
             setLocation("/settings/accounts");
         } catch (error) {
             console.error(error);

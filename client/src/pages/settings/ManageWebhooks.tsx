@@ -16,13 +16,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
 import { formatDateTime, dateFormats } from "@/lib/dateFormatters";
 import { Plus, Trash2, Edit2, ScrollText, Copy, Check, Eye, EyeOff, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useInvalidation } from "@/lib/queryInvalidation";
 
 // Types
 type Webhook = {
@@ -201,7 +202,7 @@ export default function ManageWebhooks() {
     const [showSecret, setShowSecret] = useState<Record<string, boolean>>({});
     const [webhookToDelete, setWebhookToDelete] = useState<string | null>(null);
     const { toast } = useToast();
-    const queryClient = useQueryClient();
+    const { invalidateWebhooks } = useInvalidation();
 
     const { data: webhooks = [], isLoading } = useQuery<Webhook[]>({
         queryKey: ["/api/webhooks"],
@@ -219,7 +220,7 @@ export default function ManageWebhooks() {
     const createMutation = useMutation({
         mutationFn: (data: WebhookFormValues) => apiRequest("POST", "/api/webhooks", data),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["/api/webhooks"] });
+            invalidateWebhooks();
             setIsDialogOpen(false);
             form.reset();
             toastPatterns.created(toast, "Webhook", "Webhook created successfully.");
@@ -234,7 +235,7 @@ export default function ManageWebhooks() {
         mutationFn: ({ id, data }: { id: string; data: Partial<WebhookFormValues> }) =>
             apiRequest("PATCH", `/api/webhooks/${id}`, data),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["/api/webhooks"] });
+            invalidateWebhooks();
             setIsDialogOpen(false);
             setEditingWebhook(null);
             form.reset();
@@ -249,7 +250,7 @@ export default function ManageWebhooks() {
     const deleteMutation = useMutation({
         mutationFn: (id: string) => apiRequest("DELETE", `/api/webhooks/${id}`),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["/api/webhooks"] });
+            invalidateWebhooks();
             toastPatterns.deleted(toast, "Webhook");
         },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -1,31 +1,21 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import type { Trade, Holding } from "@shared/schema";
+import { useInvalidation } from "@/lib/queryInvalidation";
 
 type CreateTradeData = Omit<Trade, "id" | "userId" | "createdAt" | "transactionId">;
 
 type CreateHoldingData = Omit<Holding, "id" | "userId" | "createdAt" | "currentPrice" | "lastPriceUpdate" | "sector" | "externalId">;
 
 export function useTradeMutations() {
-    const queryClient = useQueryClient();
-
-    const invalidatePortfolioQueries = () => {
-        queryClient.invalidateQueries({ queryKey: ["/api/portfolio"] }); // Keep generic key if used elsewhere or remove
-        queryClient.invalidateQueries({ queryKey: ["/api/holdings"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/trades"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/accounts"] });
-        queryClient.invalidateQueries({ queryKey: ["holdings"] }); // Legacy key?
-        queryClient.invalidateQueries({ queryKey: ["trades"] });
-        queryClient.invalidateQueries({ queryKey: ["transactions"] });
-        queryClient.invalidateQueries({ queryKey: ["portfolio-stats"] });
-    };
+    const { invalidatePortfolio } = useInvalidation();
 
     const createTrade = useMutation({
         mutationFn: async (data: CreateTradeData) => {
             const res = await apiRequest("POST", "/api/trades", data);
             return res.json();
         },
-        onSuccess: invalidatePortfolioQueries,
+        onSuccess: invalidatePortfolio,
     });
 
     const createHolding = useMutation({
@@ -50,7 +40,7 @@ export function useTradeMutations() {
 
             return res.json();
         },
-        onSuccess: invalidatePortfolioQueries,
+        onSuccess: invalidatePortfolio,
     });
 
     const updateHolding = useMutation({
@@ -58,7 +48,7 @@ export function useTradeMutations() {
             const res = await apiRequest("PATCH", `/api/holdings/${id}`, data);
             return res.json();
         },
-        onSuccess: invalidatePortfolioQueries,
+        onSuccess: invalidatePortfolio,
     });
 
     const updateTrade = useMutation({
@@ -66,7 +56,7 @@ export function useTradeMutations() {
             const res = await apiRequest("PUT", `/api/trades/${id}`, data);
             return res.json();
         },
-        onSuccess: invalidatePortfolioQueries,
+        onSuccess: invalidatePortfolio,
     });
 
     const deleteTrade = useMutation({
@@ -75,7 +65,7 @@ export function useTradeMutations() {
             // res.status is 204, so no JSON content
             return;
         },
-        onSuccess: invalidatePortfolioQueries,
+        onSuccess: invalidatePortfolio,
     });
 
 

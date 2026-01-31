@@ -12,6 +12,7 @@ import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { showSuccess, showError } from "@/lib/toastHelpers";
 import { Badge } from "@/components/ui/badge";
+import { useInvalidation } from "@/lib/queryInvalidation";
 
 interface StagedTransaction {
     id: number;
@@ -34,7 +35,7 @@ export function ManualReconciliationModal({ isOpen, onClose, stagedTransaction }
     const { formatCurrency, accounts, categories } = useFinance();
     const [searchTerm, setSearchTerm] = useState("");
     const { toast } = useToast();
-    const queryClient = useQueryClient();
+    const { invalidateTransactions } = useInvalidation();
 
     // Fetch all transactions to search locally (or could filter on backend if too many)
     // For now, fetching all is consistent with other parts of the app, assuming reasonable volume
@@ -84,8 +85,7 @@ export function ManualReconciliationModal({ isOpen, onClose, stagedTransaction }
         },
         onSuccess: () => {
             showSuccess(toast, "Transaction Linked", "The transaction has been successfully reconciled.");
-            queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
-            queryClient.invalidateQueries({ queryKey: ["/api/transactions/staging"] });
+            invalidateTransactions();
             onClose();
         },
         onError: () => {
