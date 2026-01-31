@@ -23,6 +23,7 @@ import { AddPlannedExpenseForm } from "@/components/budget/AddPlannedExpenseForm
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useFinance } from "@/context/FinanceContext";
 import { RecurringTransactionsMonitoring } from "@/components/budget/RecurringTransactionsMonitoring";
+import { RecurringSuggestions } from "@/components/budget/RecurringSuggestions";
 import { BudgetDrilldown } from "@/components/budget/BudgetDrilldown";
 import { format } from "date-fns";
 import type { Category } from "@shared/schema";
@@ -45,7 +46,7 @@ export default function Budget() {
     // Dialog states
     const [isAddRecurringOpen, setIsAddRecurringOpen] = useState(false);
     const [isAddPlannedOpen, setIsAddPlannedOpen] = useState(false);
-    const [editingRecurring, setEditingRecurring] = useState<RecurringExpense | null>(null);
+    const [editingRecurring, setEditingRecurring] = useState<Partial<RecurringExpense> | null>(null);
     const [editingPlanned, setEditingPlanned] = useState<PlannedExpense | null>(null);
 
     // Track which type we are adding (income or expense)
@@ -363,6 +364,23 @@ export default function Budget() {
                     {/* Recurring Transactions */}
                     {location === "/budget/recurring" && (
                         <div className="space-y-8">
+                            <RecurringSuggestions
+                                onAdd={(suggestion) => {
+                                    setEditingRecurring({
+                                        name: suggestion.name,
+                                        amount: String(suggestion.amount),
+                                        interval: suggestion.interval,
+                                        startDate: suggestion.firstDate, // Use oldest occurrence as start date
+                                        active: true,
+                                        matchPattern: suggestion.description,
+                                        categoryId: suggestion.categoryId,
+                                        accountId: suggestion.accountId
+                                    });
+                                    setAddRecurringType('expense'); // Default to expense, usually suggestions are bills
+                                    setIsAddRecurringOpen(true);
+                                }}
+                            />
+
                             <section className="space-y-6">
                                 <RecurringTransactionsTable
                                     title="Recurring Income"
@@ -441,6 +459,7 @@ export default function Budget() {
                             onSuccess={() => {
                                 setIsAddRecurringOpen(false);
                                 queryClient.invalidateQueries({ queryKey: ['budget'] });
+                                queryClient.invalidateQueries({ queryKey: ['/api/budget/recurring/suggestions'] });
                             }}
                             categories={categories}
                             accounts={accounts} // Passed from context

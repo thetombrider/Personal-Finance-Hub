@@ -15,7 +15,7 @@ interface AddRecurringExpenseFormProps {
     onSuccess: () => void;
     categories: Category[];
     accounts: Account[];
-    initialData?: RecurringExpense;
+    initialData?: Partial<RecurringExpense>;
 }
 
 export function AddRecurringExpenseForm({ onSuccess, categories, accounts, initialData, type }: AddRecurringExpenseFormProps & { type?: 'income' | 'expense' }) {
@@ -45,12 +45,12 @@ export function AddRecurringExpenseForm({ onSuccess, categories, accounts, initi
         ? categories.filter(c => c.type === type)
         : categories;
 
-    const isEditing = !!initialData;
+    const isEditing = !!initialData?.id;
 
     const mutation = useMutation({
         mutationFn: async (data: any) => {
             const url = isEditing
-                ? `/api/budget/recurring/${initialData.id}`
+                ? `/api/budget/recurring/${initialData!.id}`
                 : '/api/budget/recurring';
             const method = isEditing ? 'PATCH' : 'POST';
 

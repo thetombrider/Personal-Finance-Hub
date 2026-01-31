@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { storage } from "../storage";
 import { ReportService } from "../services/reports";
 import { marketDataService } from "../services/marketData";
+import { RecurringDetectionService } from "../services/recurringDetection"; // Import
 import { insertMonthlyBudgetSchema, insertRecurringExpenseSchema, insertPlannedExpenseSchema } from "@shared/schema";
 import { z } from "zod";
 import { parseNumericParam, checkOwnership } from "./middleware";
@@ -12,6 +13,19 @@ export function registerBudgetRoutes(app: Express) {
     // ============ BUDGET ============
 
     const reportService = new ReportService(storage, marketDataService);
+    const recurringDetectionService = new RecurringDetectionService(storage); // Initialize
+
+    // Suggestions Endpoint
+    app.get("/api/budget/recurring/suggestions", async (req, res) => {
+        try {
+            if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+            const suggestions = await recurringDetectionService.getSuggestions(req.user.id);
+            res.json(suggestions);
+        } catch (error) {
+            logger.api.error("Failed to fetch recurring suggestions:", error);
+            res.status(500).json({ error: "Failed to fetch recurring suggestions" });
+        }
+    });
 
     app.get("/api/budget/:year", async (req, res) => {
         try {
