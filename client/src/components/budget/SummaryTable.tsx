@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import {
     Table,
     TableBody,
@@ -7,6 +8,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import { Switch } from "@/components/ui/switch";
 import { type Category } from "@shared/schema";
 
 interface SummaryTableProps {
@@ -17,6 +19,7 @@ interface SummaryTableProps {
 }
 
 export function SummaryTable({ categories, budgetData, monthRange, onDrilldown }: SummaryTableProps) {
+    const [includeInvestments, setIncludeInvestments] = useState(false);
     const allMonths = [
         "Jan", "Feb", "Mar", "Apr", "May", "Jun",
         "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
@@ -156,15 +159,23 @@ export function SummaryTable({ categories, budgetData, monthRange, onDrilldown }
                     {/* NET ROW */}
                     <TableRow className="bg-muted/80 font-bold border-t-4 border-double">
                         <TableCell>
-                            <div className="flex flex-col">
-                                <span>Expected Balance</span>
-                                <span className="text-xs font-normal text-muted-foreground">(Net of Investments)</span>
+                            <div className="flex flex-row items-center justify-between gap-2">
+                                <div className="flex flex-col">
+                                    <span>Expected Balance</span>
+                                    <span className="text-xs font-normal text-muted-foreground">{includeInvestments ? "(With Investments)" : "(Net of Investments)"}</span>
+                                </div>
+                                <Switch
+                                    id="include-investments"
+                                    checked={includeInvestments}
+                                    onCheckedChange={setIncludeInvestments}
+                                    className="scale-75 origin-right"
+                                />
                             </div>
                         </TableCell>
                         {visibleMonths.map((_, index) => {
                             const monthDataIndex = startMonthIndex + index + 1;
                             const income = categories.filter(c => c.type === 'income').reduce((sum, cat) => sum + (budgetData[cat.id]?.[monthDataIndex]?.total || 0), 0);
-                            const expense = categories.filter(c => c.type === 'expense' && !c.excludeFromProjections).reduce((sum, cat) => sum + (budgetData[cat.id]?.[monthDataIndex]?.total || 0), 0);
+                            const expense = categories.filter(c => c.type === 'expense' && (includeInvestments || !c.excludeFromProjections)).reduce((sum, cat) => sum + (budgetData[cat.id]?.[monthDataIndex]?.total || 0), 0);
                             const net = income - expense;
                             return (
                                 <TableCell key={index} className={`text-right p-2 text-xs sm:text-sm ${net >= 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -176,7 +187,7 @@ export function SummaryTable({ categories, budgetData, monthRange, onDrilldown }
                             {/* Annual Net */}
                             {(() => {
                                 const totalIncome = categories.filter(c => c.type === 'income').reduce((sum, cat) => sum + calculateCategoryTotal(cat.id), 0);
-                                const totalExpense = categories.filter(c => c.type === 'expense' && !c.excludeFromProjections).reduce((sum, cat) => sum + calculateCategoryTotal(cat.id), 0);
+                                const totalExpense = categories.filter(c => c.type === 'expense' && (includeInvestments || !c.excludeFromProjections)).reduce((sum, cat) => sum + calculateCategoryTotal(cat.id), 0);
                                 const totalNet = totalIncome - totalExpense;
                                 return (
                                     <span className={totalNet >= 0 ? 'text-green-600' : 'text-red-600'}>
