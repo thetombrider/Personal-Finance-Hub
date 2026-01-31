@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import Layout from "@/components/Layout";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths, isSameDay, isAfter, isBefore, startOfWeek, endOfWeek, isSameMonth, getDate } from "date-fns";
 import { useFinance, Transaction } from "@/context/FinanceContext";
-import { useBudgetData } from "@/hooks/queries";
+import { useBudgetData, useReconciliationChecks } from "@/hooks/queries";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
@@ -40,6 +40,7 @@ export default function CalendarView() {
 
     const { transactions, formatCurrency, categories, accounts, updateTransaction } = useFinance();
     const { data: budgetData } = useBudgetData(currentMonth.getFullYear());
+    const { data: reconciliationChecks } = useReconciliationChecks();
     const queryClient = useQueryClient();
 
     // Edit handlers
@@ -118,16 +119,31 @@ export default function CalendarView() {
                     if (end && isAfter(day, end)) return false;
 
                     // Check day match
+                    let matchesDay = false;
                     if (r.interval === 'monthly') {
-                        return getDate(start) === getDate(day);
+                        matchesDay = getDate(start) === getDate(day);
                     } else if (r.interval === 'yearly') {
-                        return getDate(start) === getDate(day) && start.getMonth() === day.getMonth();
+                        matchesDay = getDate(start) === getDate(day) && start.getMonth() === day.getMonth();
                     } else if (r.interval === 'weekly') {
                         // simple weekly check
                         const diffDays = Math.floor((day.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-                        return diffDays % 7 === 0;
+                        matchesDay = diffDays % 7 === 0;
                     }
-                    return false;
+
+                    if (!matchesDay) return false;
+
+                    // Check if reconciled
+                    if (reconciliationChecks) {
+                        const check = reconciliationChecks.find(c =>
+                            c.recurringExpenseId === r.id &&
+                            c.month === day.getMonth() + 1 &&
+                            c.year === day.getFullYear() &&
+                            c.status === 'MATCHED'
+                        );
+                        if (check) return false; // Hide if matched
+                    }
+
+                    return true;
                 });
             }
 
@@ -172,7 +188,7 @@ export default function CalendarView() {
                 isCurrentMonth
             };
         });
-    }, [currentMonth, transactions, budgetData, categories]);
+    }, [currentMonth, transactions, budgetData, categories, reconciliationChecks]);
 
     const handleDayClick = (dayData: CalendarDayData) => {
         setSelectedDate(dayData.date);
@@ -248,11 +264,18 @@ export default function CalendarView() {
 
                                 {/* Items Preview */}
                                 <div className="flex-1 flex flex-col gap-1 mt-1 overflow-hidden">
-                                    {day.transactions.slice(0, 3).map(t => (
-                                        <div key={t.id} className="text-[10px] bg-background border rounded px-1 py-0.5 truncate text-muted-foreground">
-                                            {t.description}
-                                        </div>
-                                    ))}
+                                    {day.transactions.slice(0, 3).map(t => {
+                                        const isRecurring = reconciliationChecks?.some(c => c.transactionId === t.id && c.status === 'MATCHED');
+                                        return (
+                                            <div key={t.id} className={cn(
+                                                "text-[10px] bg-background border rounded px-1 py-0.5 truncate text-muted-foreground flex items-center gap-1",
+                                                isRecurring && "border-indigo-200 bg-indigo-50/50 dark:border-indigo-900 dark:bg-indigo-900/20"
+                                            )}>
+                                                {isRecurring && <span className="text-[8px] text-indigo-500">↻</span>}
+                                                {t.description}
+                                            </div>
+                                        );
+                                    })}
                                     {/* Show planned/recurring if space permits or if no actual transactions */}
                                     {day.transactions.length < 3 && day.recurring.slice(0, 3 - day.transactions.length).map((r, i) => (
                                         <div key={`r-${i}`} className="text-[10px] bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900 rounded px-1 py-0.5 truncate flex items-center gap-1">
@@ -320,10 +343,21 @@ export default function CalendarView() {
                                                 {selectedDayData.transactions.map(t => {
                                                     const category = categories.find(c => c.id === t.categoryId);
                                                     const account = accounts.find(a => a.id === t.accountId);
+                                                    const isRecurring = reconciliationChecks?.some(c => c.transactionId === t.id && c.status === 'MATCHED');
                                                     return (
-                                                        <div key={t.id} onClick={() => handleEditTransaction(t)} className="p-3 rounded-lg border bg-card/50 flex items-center justify-between cursor-pointer hover:bg-accent/50 transition-colors">
+                                                        <div key={t.id} onClick={() => handleEditTransaction(t)} className={cn(
+                                                            "p-3 rounded-lg border bg-card/50 flex items-center justify-between cursor-pointer hover:bg-accent/50 transition-colors",
+                                                            isRecurring && "border-indigo-200 bg-indigo-50/30 dark:border-indigo-900 dark:bg-indigo-900/10"
+                                                        )}>
                                                             <div className="flex flex-col gap-1">
-                                                                <span className="font-medium text-sm">{t.description}</span>
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="font-medium text-sm">{t.description}</span>
+                                                                    {isRecurring && (
+                                                                        <span className="text-[10px] px-1 py-0.5 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300 flex items-center gap-1">
+                                                                            <span className="text-[8px]">↻</span> Recurring
+                                                                        </span>
+                                                                    )}
+                                                                </div>
                                                                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                                                     {category && (
                                                                         <span className="flex items-center gap-1 bg-muted/50 px-1.5 py-0.5 rounded">
@@ -351,7 +385,7 @@ export default function CalendarView() {
                                     {selectedDayData.recurring.length > 0 && (
                                         <div>
                                             <h3 className="text-sm font-semibold mb-3 text-indigo-600 dark:text-indigo-400 flex items-center gap-2">
-                                                Recurring Items
+                                                Expected Recurring Items
                                                 <span className="text-xs font-normal bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded-full">
                                                     {selectedDayData.recurring.length}
                                                 </span>
