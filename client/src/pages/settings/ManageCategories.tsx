@@ -14,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 
 const categorySchema = z.object({
@@ -111,6 +112,7 @@ export default function ManageCategories() {
   return (
     <Layout>
       <div className="space-y-6">
+
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-heading font-bold text-foreground">Category Management</h1>
@@ -287,14 +289,23 @@ export default function ManageCategories() {
                               checked={editForm.excludeFromProjections}
                               onCheckedChange={(checked) => setEditForm({ ...editForm, excludeFromProjections: checked === true })}
                             />
-                            <span className="text-xs text-muted-foreground">Inv.</span>
+                            <span className="text-xs text-muted-foreground">Investment</span>
                           </div>
                         ) : (
                           category.excludeFromProjections && (
-                            <Badge variant="outline" className="gap-1 text-amber-600 border-amber-300">
-                              <TrendingUp size={12} />
-                              Inv.
-                            </Badge>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger>
+                                  <Badge variant="outline" className="gap-1 text-amber-600 border-amber-300">
+                                    <TrendingUp size={12} />
+                                    Investment
+                                  </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>This category is treated as an investment and is excluded from net worth projections</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           )
                         )
                       ) : (
