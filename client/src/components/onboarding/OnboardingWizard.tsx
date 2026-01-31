@@ -15,6 +15,7 @@ import { PortfolioStep } from "./steps/PortfolioStep";
 import { IntegrationsStep } from "./steps/IntegrationsStep";
 import { SetupAccountStep } from "./steps/SetupAccountStep";
 import { SetupCategoriesStep } from "./steps/SetupCategoriesStep";
+import { HotkeysStep } from "./steps/HotkeysStep";
 import { CompletionStep } from "./steps/CompletionStep";
 
 interface OnboardingWizardProps {
@@ -58,6 +59,8 @@ function OnboardingContent() {
                 return <SetupAccountStep />;
             case "setup-categories":
                 return <SetupCategoriesStep />;
+            case "hotkeys":
+                return <HotkeysStep />;
             case "completion":
                 return <CompletionStep />;
             default:

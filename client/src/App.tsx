@@ -27,6 +27,8 @@ import Settings from "@/pages/settings/Settings";
 import { FinanceProvider } from "@/context/FinanceContext";
 import BankCallbackPage from "@/pages/bank-callback";
 import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
+import { GlobalActionsProvider } from "@/context/GlobalActionsContext";
+import { GlobalActionDialogs } from "@/components/GlobalActionDialogs";
 import { useState, useEffect } from "react";
 
 function Router() {
@@ -67,31 +69,34 @@ function Router() {
           onOpenChange={setShowOnboarding}
         />
       )}
-      <Switch>
-        <Route path="/" component={Dashboard} />
-        <Route path="/calendar" component={CalendarView} />
-        <Route path="/reports/monthly" component={MonthlyReport} />
-        <Route path="/reports/net-worth" component={NetWorthReport} />
-        <Route path="/transactions" component={Transactions} />
-        <Route path="/import" component={ImportTransactions} />
-        <Route path="/budget/overview" component={Budget} />
-        <Route path="/budget/baseline" component={Budget} />
-        <Route path="/budget/recurring" component={Budget} />
-        <Route path="/budget/planned" component={Budget} />
-        <Route path="/budget" component={Budget} />
-        <Route path="/reports/income-statement" component={Reports} />
-        <Route path="/reports/balance-sheet" component={Reports} />
-        <Route path="/reports" component={Reports} />
-        <Route path="/portfolio" component={Portfolio} />
-        <Route path="/settings/accounts" component={ManageAccounts} />
-        <Route path="/settings/categories" component={ManageCategories} />
-        <Route path="/settings/tags" component={ManageTags} />
-        <Route path="/settings/webhooks" component={ManageWebhooks} />
-        <Route path="/settings/email-reports" component={EmailReports} />
-        <Route path="/settings" component={Settings} />
-        <Route path="/bank-callback" component={BankCallbackPage} />
-        <Route component={NotFound} />
-      </Switch>
+      <GlobalActionsProvider>
+        <GlobalActionDialogs />
+        <Switch>
+          <Route path="/" component={Dashboard} />
+          <Route path="/calendar" component={CalendarView} />
+          <Route path="/reports/monthly" component={MonthlyReport} />
+          <Route path="/reports/net-worth" component={NetWorthReport} />
+          <Route path="/transactions" component={Transactions} />
+          <Route path="/import" component={ImportTransactions} />
+          <Route path="/budget/overview" component={Budget} />
+          <Route path="/budget/baseline" component={Budget} />
+          <Route path="/budget/recurring" component={Budget} />
+          <Route path="/budget/planned" component={Budget} />
+          <Route path="/budget" component={Budget} />
+          <Route path="/reports/income-statement" component={Reports} />
+          <Route path="/reports/balance-sheet" component={Reports} />
+          <Route path="/reports" component={Reports} />
+          <Route path="/portfolio" component={Portfolio} />
+          <Route path="/settings/accounts" component={ManageAccounts} />
+          <Route path="/settings/categories" component={ManageCategories} />
+          <Route path="/settings/tags" component={ManageTags} />
+          <Route path="/settings/webhooks" component={ManageWebhooks} />
+          <Route path="/settings/email-reports" component={EmailReports} />
+          <Route path="/settings" component={Settings} />
+          <Route path="/bank-callback" component={BankCallbackPage} />
+          <Route component={NotFound} />
+        </Switch>
+      </GlobalActionsProvider>
     </FinanceProvider>
   );
 }

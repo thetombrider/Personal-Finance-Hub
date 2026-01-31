@@ -12,6 +12,7 @@ export type OnboardingStep =
     | "integrations"
     | "setup-account"
     | "setup-categories"
+    | "hotkeys"
     | "completion";
 
 const STEPS: OnboardingStep[] = [
@@ -24,6 +25,7 @@ const STEPS: OnboardingStep[] = [
     "integrations",
     "setup-account",
     "setup-categories",
+    "hotkeys",
     "completion",
 ];
 

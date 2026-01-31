@@ -8,11 +8,11 @@ import { useDashboardStats } from "@/hooks/dashboard/useDashboardStats";
 import { useDashboardCharts } from "@/hooks/dashboard/useDashboardCharts";
 import { usePendingStagingCount, useBudgetData, useMissingRecurringTransactions } from "@/hooks/queries";
 import { useTransferSubmit } from "@/hooks/useTransferSubmit";
+import { useGlobalActions } from "@/context/GlobalActionsContext";
 
 
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { StatsGrid } from "@/components/dashboard/StatsGrid";
-import { AccountDetailModal } from "@/components/dashboard/modals/AccountDetailModal";
 import { NetWorthEvolutionChart } from "@/components/dashboard/charts/NetWorthEvolutionChart";
 import { WealthDistributionChart } from "@/components/dashboard/charts/WealthDistributionChart";
 import { CashFlowChart } from "@/components/dashboard/charts/CashFlowChart";
@@ -21,33 +21,25 @@ import { BudgetComparisonChart } from "@/components/dashboard/charts/BudgetCompa
 import { CategoryTrendChart } from "@/components/dashboard/charts/CategoryTrendChart";
 import { NetWorthProjectionChart } from "@/components/dashboard/charts/NetWorthProjectionChart";
 import { SankeyChart } from "@/components/dashboard/charts/SankeyChart";
-import { TransactionForm, TransactionFormValues } from "@/components/transactions/TransactionForm";
-import { TransferForm, TransferFormValues } from "@/components/transactions/TransferForm";
-import { AddTradeModal } from "@/components/portfolio/AddTradeModal";
-import { ImportedTransactions } from "@/components/ImportedTransactions";
-import { MissingRecurringTransactionsModal } from "@/components/dashboard/MissingRecurringTransactionsModal";
+import { AccountDetailModal } from "@/components/dashboard/modals/AccountDetailModal";
 import { format } from "date-fns";
 import { apiRequest } from "@/lib/queryClient";
 
 export default function Dashboard() {
-  const { accounts, transactions, categories, formatCurrency, addTransaction } = useFinance();
+  const { accounts, transactions, categories, formatCurrency } = useFinance();
   const [, setLocation] = useLocation();
   const [categoryTrendId, setCategoryTrendId] = useState<string>("");
   const [privacyMode, setPrivacyMode] = useState(false);
   const [detailModal, setDetailModal] = useState<'total' | 'cash' | 'savings' | 'investments' | null>(null);
 
-  // Quick Action States
-  const [isTransactionOpen, setIsTransactionOpen] = useState(false);
-  const [isTransferOpen, setIsTransferOpen] = useState(false);
-  const [isAddTradeOpen, setIsAddTradeOpen] = useState(false);
-  const [isReviewStagingOpen, setIsReviewStagingOpen] = useState(false);
-  const [isMissingRecurringOpen, setIsMissingRecurringOpen] = useState(false);
-
-  // Hooks imported from @/hooks/queries - see imports below
-
-
-
-
+  // Global Actions
+  const {
+    openTransactionModal,
+    openTransferModal,
+    openTradeModal,
+    openStagingModal,
+    openRecurringModal
+  } = useGlobalActions();
 
   // Data Queries
   const currentYear = new Date().getFullYear();
@@ -58,26 +50,7 @@ export default function Dashboard() {
   const { data: missingRecurringData } = useMissingRecurringTransactions();
   const missingRecurringCount = missingRecurringData?.count || 0;
 
-  const { portfolioSummary, trades, holdings } = usePortfolioStats();
-
-  const investmentAccounts = accounts.filter(a => a.type === "investment");
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const onTransactionSubmit = async (data: TransactionFormValues | any) => {
-    const formattedData = {
-      ...data,
-      amount: data.amount.toString(),
-      date: format(data.date, "yyyy-MM-dd'T'HH:mm:ss"),
-    };
-    await addTransaction(formattedData);
-    setIsTransactionOpen(false);
-  };
-
-
-  const { submitTransfer } = useTransferSubmit({
-    onSuccess: () => setIsTransferOpen(false),
-  });
-
+  const { portfolioSummary, trades } = usePortfolioStats();
 
   // Custom Hooks
   const stats = useDashboardStats({
@@ -107,12 +80,12 @@ export default function Dashboard() {
           accounts={accounts}
           privacyMode={privacyMode}
           setPrivacyMode={setPrivacyMode}
-          onNewTransaction={() => setIsTransactionOpen(true)}
-          onNewTransfer={() => setIsTransferOpen(true)}
-          onNewTrade={() => setIsAddTradeOpen(true)}
-          onReviewStaging={() => setIsReviewStagingOpen(true)}
+          onNewTransaction={openTransactionModal}
+          onNewTransfer={openTransferModal}
+          onNewTrade={openTradeModal}
+          onReviewStaging={openStagingModal}
           pendingStagingCount={pendingStagingCount}
-          onReviewRecurring={() => setIsMissingRecurringOpen(true)}
+          onReviewRecurring={openRecurringModal}
           missingRecurringCount={missingRecurringCount}
         />
 
@@ -203,42 +176,6 @@ export default function Dashboard() {
           accounts={accounts}
           formatCurrency={formatCurrency}
           onNavigateToPortfolio={() => setLocation('/portfolio')}
-        />
-
-        <TransactionForm
-          isOpen={isTransactionOpen}
-          onOpenChange={setIsTransactionOpen}
-          onSubmit={onTransactionSubmit}
-          initialData={null}
-          accounts={accounts}
-          categories={categories}
-
-        />
-
-        <TransferForm
-          isOpen={isTransferOpen}
-          onOpenChange={setIsTransferOpen}
-          onSubmit={async (data) => { await submitTransfer(data); }}
-
-          accounts={accounts}
-        />
-
-        <AddTradeModal
-          isOpen={isAddTradeOpen}
-          onOpenChange={setIsAddTradeOpen}
-          accounts={investmentAccounts}
-          holdings={holdings}
-        />
-
-        <ImportedTransactions
-          isOpen={isReviewStagingOpen}
-          onOpenChange={setIsReviewStagingOpen}
-          accountId={null} // All accounts
-        />
-
-        <MissingRecurringTransactionsModal
-          isOpen={isMissingRecurringOpen}
-          onOpenChange={setIsMissingRecurringOpen}
         />
       </div>
     </Layout>
