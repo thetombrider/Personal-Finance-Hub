@@ -30,6 +30,8 @@ interface TransactionFiltersProps {
     setFilterStatus: (status: string) => void;
     filterTagIds: number[];
     setFilterTagIds: (ids: number[]) => void;
+    filterExcludedTagIds: number[];
+    setFilterExcludedTagIds: (ids: number[]) => void;
     hasActiveFilters: boolean;
     clearFilters: () => void;
     accounts: Account[];
@@ -71,6 +73,7 @@ export function TransactionFilters({
     filterCategoryId, setFilterCategoryId,
     filterStatus, setFilterStatus,
     filterTagIds, setFilterTagIds,
+    filterExcludedTagIds, setFilterExcludedTagIds,
     hasActiveFilters, clearFilters,
     accounts, categories, tags,
     resultCount, totalCount,
@@ -418,30 +421,43 @@ export function TransactionFilters({
 
                                 {selectedFilter === 'tags' && (
                                     <div>
-                                        <Label className="text-sm font-medium mb-2 block">Select Tags</Label>
+                                        <Label className="text-sm font-medium mb-1 block">Select Tags</Label>
+                                        <p className="text-xs text-muted-foreground mb-3">
+                                            Click once to include, again to exclude, and once more to clear.
+                                        </p>
                                         <div className="flex flex-wrap gap-2">
                                             {tags.length === 0 && <p className="text-sm text-muted-foreground">No tags available.</p>}
                                             {tags.map(tag => {
-                                                const isSelected = filterTagIds.includes(tag.id);
+                                                const isIncluded = filterTagIds.includes(tag.id);
+                                                const isExcluded = filterExcludedTagIds.includes(tag.id);
+
                                                 return (
                                                     <Badge
                                                         key={tag.id}
-                                                        variant={isSelected ? "default" : "outline"}
+                                                        variant={isIncluded || isExcluded ? "default" : "outline"}
                                                         className={cn(
-                                                            "cursor-pointer hover:opacity-80 transition-opacity pl-2 pr-2 py-1",
-                                                            isSelected ? "" : "bg-transparent text-foreground border-input"
+                                                            "cursor-pointer hover:opacity-80 transition-opacity pl-2 pr-2 py-1 select-none",
+                                                            !isIncluded && !isExcluded ? "bg-transparent text-foreground border-input" : "",
+                                                            isExcluded ? "bg-destructive border-destructive text-destructive-foreground hover:bg-destructive/90" : ""
                                                         )}
-                                                        style={isSelected ? { backgroundColor: tag.color, borderColor: tag.color, color: getContrastTextColor(tag.color) } : {}}
+                                                        style={isIncluded ? { backgroundColor: tag.color, borderColor: tag.color, color: getContrastTextColor(tag.color) } : {}}
                                                         onClick={() => {
-                                                            if (isSelected) {
+                                                            if (isIncluded) {
+                                                                // Cycle to Exclude
                                                                 setFilterTagIds(filterTagIds.filter(id => id !== tag.id));
+                                                                setFilterExcludedTagIds([...filterExcludedTagIds, tag.id]);
+                                                            } else if (isExcluded) {
+                                                                // Cycle to None
+                                                                setFilterExcludedTagIds(filterExcludedTagIds.filter(id => id !== tag.id));
                                                             } else {
+                                                                // Cycle to Include
                                                                 setFilterTagIds([...filterTagIds, tag.id]);
                                                             }
                                                         }}
                                                     >
                                                         {tag.name}
-                                                        {isSelected && <Check className="ml-1 h-3 w-3" />}
+                                                        {isIncluded && <Check className="ml-1 h-3 w-3" />}
+                                                        {isExcluded && <X className="ml-1 h-3 w-3" />}
                                                     </Badge>
                                                 );
                                             })}

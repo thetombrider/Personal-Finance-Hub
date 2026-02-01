@@ -20,6 +20,8 @@ export interface TransactionFiltersState {
     setFilterType: (type: string) => void;
     filterTagIds: number[];
     setFilterTagIds: (ids: number[]) => void;
+    filterExcludedTagIds: number[];
+    setFilterExcludedTagIds: (ids: number[]) => void;
     filterUntagged: boolean;
     setFilterUntagged: (value: boolean) => void;
     dateFrom: Date | undefined;
@@ -46,6 +48,7 @@ interface UseTransactionsDataProps {
         dateFrom: Date;
         dateTo: Date;
         tagIds: number[];
+        excludedTagIds: number[];
         untagged: boolean;
         excludeTransfers: boolean;
         searchQuery: string;
@@ -61,6 +64,7 @@ export function useTransactionsData({ transactions, accounts, categories, checks
     const [filterStatus, setFilterStatus] = useState<string>(initialFilters?.status || 'all');
     const [filterType, setFilterType] = useState<string>(initialFilters?.type || 'all');
     const [filterTagIds, setFilterTagIds] = useState<number[]>(initialFilters?.tagIds || []);
+    const [filterExcludedTagIds, setFilterExcludedTagIds] = useState<number[]>(initialFilters?.excludedTagIds || []);
     const [filterUntagged, setFilterUntagged] = useState<boolean>(initialFilters?.untagged || false);
     const [filterExcludeTransfers, setFilterExcludeTransfers] = useState<boolean>(initialFilters?.excludeTransfers || false);
     const [dateFrom, setDateFrom] = useState<Date | undefined>(initialFilters?.dateFrom);
@@ -136,14 +140,20 @@ export function useTransactionsData({ transactions, accounts, categories, checks
                 }
             }
 
-            // Tag filter
+            // Tag filter (Included)
             if (filterTagIds.length > 0) {
                 const transactionTagIds = t.tags?.map(tag => tag.id) || [];
-                // Check if transaction has ALL selected tags (or ANY? usually ALL for precision, but ANY is common too. Let's go with ANY for now as it's often more intuitive for "show me transactions related to X or Y")
-                // Actually, often filters are additive (AND). Let's stick to AND (must have all selected tags) for stricter filtering or OR (has at least one).
-                // "Filter by Tags": usually means "Has at least one of these tags".
+                // Check if transaction has ANY of the selected tags
                 const hasTag = filterTagIds.some(id => transactionTagIds.includes(id));
                 if (!hasTag) return false;
+            }
+
+            // Tag filter (Excluded)
+            if (filterExcludedTagIds.length > 0) {
+                const transactionTagIds = t.tags?.map(tag => tag.id) || [];
+                // Check if transaction has ANY of the excluded tags
+                const hasExcludedTag = filterExcludedTagIds.some(id => transactionTagIds.includes(id));
+                if (hasExcludedTag) return false;
             }
 
             // Date range filter
@@ -163,14 +173,6 @@ export function useTransactionsData({ transactions, accounts, categories, checks
                 }
             }
 
-            if (dateTo) {
-                const endOfDay = new Date(dateTo);
-                endOfDay.setHours(23, 59, 59, 999);
-                if (transactionDate > endOfDay) {
-                    return false;
-                }
-            }
-
             // Exclude Transfers filter
             if (filterExcludeTransfers) {
                 const category = categories.find(c => c.id === t.categoryId);
@@ -181,7 +183,7 @@ export function useTransactionsData({ transactions, accounts, categories, checks
 
             return true;
         });
-    }, [transactions, searchQuery, filterAccountId, filterAccountType, filterCategoryId, filterStatus, filterType, filterTagIds, filterExcludeTransfers, dateFrom, dateTo, matchedTransactions, accounts, categories]);
+    }, [transactions, searchQuery, filterAccountId, filterAccountType, filterCategoryId, filterStatus, filterType, filterTagIds, filterExcludedTagIds, filterExcludeTransfers, dateFrom, dateTo, matchedTransactions, accounts, categories]);
 
     const sortedTransactions = useMemo(() => {
         const sorted = [...filteredTransactions].sort((a, b) => {
@@ -238,6 +240,7 @@ export function useTransactionsData({ transactions, accounts, categories, checks
         setFilterStatus('all');
         setFilterType('all');
         setFilterTagIds([]);
+        setFilterExcludedTagIds([]);
         setFilterUntagged(false);
         setFilterExcludeTransfers(false);
         setDateFrom(undefined);
@@ -245,7 +248,7 @@ export function useTransactionsData({ transactions, accounts, categories, checks
         setCurrentPage(1);
     };
 
-    const hasActiveFilters = !!(searchQuery || filterAccountId !== 'all' || filterAccountType !== 'all' || filterCategoryId !== 'all' || filterStatus !== 'all' || filterType !== 'all' || filterTagIds.length > 0 || filterExcludeTransfers || dateFrom || dateTo);
+    const hasActiveFilters = !!(searchQuery || filterAccountId !== 'all' || filterAccountType !== 'all' || filterCategoryId !== 'all' || filterStatus !== 'all' || filterType !== 'all' || filterTagIds.length > 0 || filterExcludedTagIds.length > 0 || filterExcludeTransfers || dateFrom || dateTo);
 
     return {
         filteredTransactions,
@@ -260,6 +263,7 @@ export function useTransactionsData({ transactions, accounts, categories, checks
             filterStatus, setFilterStatus,
             filterType, setFilterType,
             filterTagIds, setFilterTagIds,
+            filterExcludedTagIds, setFilterExcludedTagIds,
             filterUntagged, setFilterUntagged,
             filterExcludeTransfers, setFilterExcludeTransfers,
             dateFrom, setDateFrom,
