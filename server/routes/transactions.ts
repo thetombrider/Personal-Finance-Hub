@@ -35,17 +35,51 @@ export function registerTransactionRoutes(app: Express) {
             }
 
             const status = req.query.status as string; // 'pending', 'dismissed', 'reconciled', or 'all'
+            const search = (req.query.search as string)?.toLowerCase();
+            const from = req.query.from ? new Date(req.query.from as string) : undefined;
+            const to = req.query.to ? new Date(req.query.to as string) : undefined;
+            const categoryId = req.query.categoryId ? parseInt(req.query.categoryId as string) : undefined;
+
             const staged = await storage.getImportStaging(req.user.id, accountId);
 
             let filtered = staged;
+
+            // 1. Status Filter
             if (status && status !== 'all') {
-                filtered = staged.filter(s => s.status === status);
+                filtered = filtered.filter(s => s.status === status);
             } else if (!status) {
                 // Default to 'pending' if no status specified, for backward compatibility
-                // But the requirement says "unified staging transactions review table... will show all transactions"
-                // For the new UI we will pass status='all' or specific status.
-                // Existing calls might rely on 'pending' default.
-                filtered = staged.filter(s => s.status === 'pending');
+                filtered = filtered.filter(s => s.status === 'pending');
+            }
+
+            // 2. Search Filter (Description or Amount)
+            if (search) {
+                filtered = filtered.filter(s =>
+                    s.description.toLowerCase().includes(search) ||
+                    s.amount.includes(search)
+                );
+            }
+
+            // 3. Date Range Filter
+            if (from) {
+                filtered = filtered.filter(s => new Date(s.date) >= from);
+            }
+            if (to) {
+                // Add one day to include the end date fully if it's just a date string,
+                // or if we rely on standard comparison, ensure 'to' covers the day.
+                // Assuming 'to' comes in as 'YYYY-MM-DD' or similar ISO.
+                // Let's assume strict comparison for now, consistent with common logic.
+                // If 'to' is T23:59:59 it works, if T00:00:00 it might miss.
+                // Usually frontend sends end of day or we handle it.
+                // For safety with simple dates:
+                const toDate = new Date(to);
+                toDate.setHours(23, 59, 59, 999);
+                filtered = filtered.filter(s => new Date(s.date) <= toDate);
+            }
+
+            // 4. Category Filter (Suggested Category)
+            if (categoryId) {
+                filtered = filtered.filter(s => s.suggestedCategoryId === categoryId);
             }
 
             // Sort by date desc

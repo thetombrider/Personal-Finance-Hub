@@ -37,6 +37,9 @@ interface TransactionFiltersProps {
     tags: Tag[];
     resultCount: number;
     totalCount: number;
+    hideFilters?: string[];
+    statusOptions?: { label: string, value: string }[];
+    availableYears?: number[];
 }
 
 function getContrastTextColor(hex: string): string {
@@ -70,7 +73,10 @@ export function TransactionFilters({
     filterTagIds, setFilterTagIds,
     hasActiveFilters, clearFilters,
     accounts, categories, tags,
-    resultCount, totalCount
+    resultCount, totalCount,
+    hideFilters = [],
+    statusOptions,
+    availableYears
 }: TransactionFiltersProps) {
     const [filtersOpen, setFiltersOpen] = useState(false);
     const [selectedFilter, setSelectedFilter] = useState<'date' | 'account' | 'category' | 'status' | 'tags'>('date');
@@ -113,61 +119,71 @@ export function TransactionFilters({
                                     <h4 className="font-semibold text-sm">Filters</h4>
                                 </div>
                                 <div className="space-y-1 text-sm flex-1">
-                                    <button
-                                        className={cn(
-                                            "w-full px-2 py-1.5 text-left font-medium rounded transition-colors",
-                                            selectedFilter === 'date'
-                                                ? "bg-primary text-primary-foreground"
-                                                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                                        )}
-                                        onClick={() => setSelectedFilter('date')}
-                                    >
-                                        Date
-                                    </button>
-                                    <button
-                                        className={cn(
-                                            "w-full px-2 py-1.5 text-left font-medium rounded transition-colors",
-                                            selectedFilter === 'account'
-                                                ? "bg-primary text-primary-foreground"
-                                                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                                        )}
-                                        onClick={() => setSelectedFilter('account')}
-                                    >
-                                        Account
-                                    </button>
-                                    <button
-                                        className={cn(
-                                            "w-full px-2 py-1.5 text-left font-medium rounded transition-colors",
-                                            selectedFilter === 'category'
-                                                ? "bg-primary text-primary-foreground"
-                                                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                                        )}
-                                        onClick={() => setSelectedFilter('category')}
-                                    >
-                                        Category
-                                    </button>
-                                    <button
-                                        className={cn(
-                                            "w-full px-2 py-1.5 text-left font-medium rounded transition-colors",
-                                            selectedFilter === 'status'
-                                                ? "bg-primary text-primary-foreground"
-                                                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                                        )}
-                                        onClick={() => setSelectedFilter('status')}
-                                    >
-                                        Status
-                                    </button>
-                                    <button
-                                        className={cn(
-                                            "w-full px-2 py-1.5 text-left font-medium rounded transition-colors",
-                                            selectedFilter === 'tags'
-                                                ? "bg-primary text-primary-foreground"
-                                                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                                        )}
-                                        onClick={() => setSelectedFilter('tags')}
-                                    >
-                                        Tags
-                                    </button>
+                                    {!hideFilters.includes('date') && (
+                                        <button
+                                            className={cn(
+                                                "w-full px-2 py-1.5 text-left font-medium rounded transition-colors",
+                                                selectedFilter === 'date'
+                                                    ? "bg-primary text-primary-foreground"
+                                                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                            )}
+                                            onClick={() => setSelectedFilter('date')}
+                                        >
+                                            Date
+                                        </button>
+                                    )}
+                                    {!hideFilters.includes('account') && (
+                                        <button
+                                            className={cn(
+                                                "w-full px-2 py-1.5 text-left font-medium rounded transition-colors",
+                                                selectedFilter === 'account'
+                                                    ? "bg-primary text-primary-foreground"
+                                                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                            )}
+                                            onClick={() => setSelectedFilter('account')}
+                                        >
+                                            Account
+                                        </button>
+                                    )}
+                                    {!hideFilters.includes('category') && (
+                                        <button
+                                            className={cn(
+                                                "w-full px-2 py-1.5 text-left font-medium rounded transition-colors",
+                                                selectedFilter === 'category'
+                                                    ? "bg-primary text-primary-foreground"
+                                                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                            )}
+                                            onClick={() => setSelectedFilter('category')}
+                                        >
+                                            Category
+                                        </button>
+                                    )}
+                                    {!hideFilters.includes('status') && (
+                                        <button
+                                            className={cn(
+                                                "w-full px-2 py-1.5 text-left font-medium rounded transition-colors",
+                                                selectedFilter === 'status'
+                                                    ? "bg-primary text-primary-foreground"
+                                                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                            )}
+                                            onClick={() => setSelectedFilter('status')}
+                                        >
+                                            Status
+                                        </button>
+                                    )}
+                                    {!hideFilters.includes('tags') && (
+                                        <button
+                                            className={cn(
+                                                "w-full px-2 py-1.5 text-left font-medium rounded transition-colors",
+                                                selectedFilter === 'tags'
+                                                    ? "bg-primary text-primary-foreground"
+                                                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                            )}
+                                            onClick={() => setSelectedFilter('tags')}
+                                        >
+                                            Tags
+                                        </button>
+                                    )}
                                 </div>
                                 {hasActiveFilters && (
                                     <Button
@@ -205,7 +221,10 @@ export function TransactionFilters({
                                                         <SelectValue placeholder="Year" />
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i + 1).map(year => (
+                                                        {(availableYears !== undefined
+                                                            ? availableYears
+                                                            : Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i + 1)
+                                                        ).map(year => (
                                                             <SelectItem key={year} value={year.toString()}>
                                                                 {year}
                                                             </SelectItem>
@@ -322,19 +341,21 @@ export function TransactionFilters({
 
                                 {selectedFilter === 'account' && (
                                     <div className="space-y-4">
-                                        <div>
-                                            <Label className="text-sm font-medium mb-2 block">Account Type</Label>
-                                            <Select value={filterAccountType} onValueChange={setFilterAccountType}>
-                                                <SelectTrigger data-testid="select-filter-account-type">
-                                                    <SelectValue placeholder="All Types" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="all">All Types</SelectItem>
-                                                    <SelectItem value="linked">Linked Accounts</SelectItem>
-                                                    <SelectItem value="manual">Manual Accounts</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
+                                        {!hideFilters.includes('accountType') && (
+                                            <div>
+                                                <Label className="text-sm font-medium mb-2 block">Account Type</Label>
+                                                <Select value={filterAccountType} onValueChange={setFilterAccountType}>
+                                                    <SelectTrigger data-testid="select-filter-account-type">
+                                                        <SelectValue placeholder="All Types" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="all">All Types</SelectItem>
+                                                        <SelectItem value="linked">Linked Accounts</SelectItem>
+                                                        <SelectItem value="manual">Manual Accounts</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                        )}
 
                                         <div>
                                             <Label className="text-sm font-medium mb-2 block">Select Account</Label>
@@ -378,10 +399,18 @@ export function TransactionFilters({
                                                 <SelectValue placeholder="All" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="all">All</SelectItem>
-                                                <SelectItem value="bank">Bank Reconciled</SelectItem>
-                                                <SelectItem value="not-bank">Not Bank Reconciled</SelectItem>
-                                                <SelectItem value="recurring">Recurring Expenses</SelectItem>
+                                                {statusOptions ? (
+                                                    statusOptions.map(opt => (
+                                                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                                    ))
+                                                ) : (
+                                                    <>
+                                                        <SelectItem value="all">All</SelectItem>
+                                                        <SelectItem value="bank">Bank Reconciled</SelectItem>
+                                                        <SelectItem value="not-bank">Not Bank Reconciled</SelectItem>
+                                                        <SelectItem value="recurring">Recurring Expenses</SelectItem>
+                                                    </>
+                                                )}
                                             </SelectContent>
                                         </Select>
                                     </div>

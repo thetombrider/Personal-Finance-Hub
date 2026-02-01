@@ -12,7 +12,7 @@ import { Check, X, Loader2, RefreshCw, Pencil, Undo, Link } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { showError } from "@/lib/toastHelpers";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TransactionFilters } from "./transactions/TransactionFilters";
 import { ManualReconciliationModal } from "./transactions/ManualReconciliationModal";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useStagingMutations } from "@/hooks/mutations";
@@ -40,7 +40,15 @@ export function ImportedTransactions({ accountId, isOpen, onOpenChange }: Import
     const { categories, accounts, formatCurrency } = useFinance();
     const queryClient = useQueryClient();
     const { toast } = useToast();
+
+    // Filter states
+    const [searchQuery, setSearchQuery] = useState("");
+    const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
+    const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
+    const [filterCategoryId, setFilterCategoryId] = useState<string>("all");
     const [statusFilter, setStatusFilter] = useState<string>("pending");
+    const [filterAccountId, setFilterAccountId] = useState<string>("all"); // Kept for compatibility but might be redundant if prop passed
+
     const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
     const [reconcileTx, setReconcileTx] = useState<StagedTransaction | null>(null);
     const [txToDismiss, setTxToDismiss] = useState<StagedTransaction | null>(null);
@@ -55,18 +63,31 @@ export function ImportedTransactions({ accountId, isOpen, onOpenChange }: Import
     }, [statusFilter, accountId, isOpen]);
 
     // Fetch staged transactions
-    const { data: transactions = [], isLoading } = useQuery<StagedTransaction[]>({
-        queryKey: ["/api/transactions/staging", accountId, statusFilter],
+    const { data, isLoading } = useQuery<{ transactions: StagedTransaction[], availableYears: number[] }>({
+        queryKey: ["/api/transactions/staging", accountId, statusFilter, searchQuery, dateFrom, dateTo, filterCategoryId, filterAccountId],
         queryFn: async () => {
             const params = new URLSearchParams();
-            if (accountId) params.append("accountId", accountId.toString());
+            // If prop provided, force it. Otherwise use filter
+            if (accountId) {
+                params.append("accountId", accountId.toString());
+            } else if (filterAccountId && filterAccountId !== "all") {
+                params.append("accountId", filterAccountId);
+            }
+
             params.append("status", statusFilter);
+            if (searchQuery) params.append("search", searchQuery);
+            if (dateFrom) params.append("from", dateFrom.toISOString());
+            if (dateTo) params.append("to", dateTo.toISOString());
+            if (filterCategoryId && filterCategoryId !== "all") params.append("categoryId", filterCategoryId);
 
             const res = await apiRequest("GET", `/api/transactions/staging?${params.toString()}`);
             return res.json();
         },
         enabled: isOpen,
     });
+
+    const transactions = data?.transactions || [];
+    const availableYears = data?.availableYears || [];
 
     const {
         approveTransaction,
@@ -197,14 +218,48 @@ export function ImportedTransactions({ accountId, isOpen, onOpenChange }: Import
                         </DialogDescription>
                     </DialogHeader>
 
-                    <Tabs value={statusFilter} onValueChange={setStatusFilter} className="w-full">
-                        <TabsList>
-                            <TabsTrigger value="pending">Pending</TabsTrigger>
-                            <TabsTrigger value="dismissed">Dismissed</TabsTrigger>
-                            <TabsTrigger value="reconciled">Reconciled</TabsTrigger>
-                            <TabsTrigger value="all">All</TabsTrigger>
-                        </TabsList>
-                    </Tabs>
+                    <div className="mb-4">
+                        <TransactionFilters
+                            searchQuery={searchQuery}
+                            setSearchQuery={setSearchQuery}
+                            dateFrom={dateFrom}
+                            setDateFrom={setDateFrom}
+                            dateTo={dateTo}
+                            setDateTo={setDateTo}
+                            filterAccountType="all"
+                            setFilterAccountType={() => { }}
+                            filterAccountId={filterAccountId}
+                            setFilterAccountId={setFilterAccountId}
+                            filterCategoryId={filterCategoryId}
+                            setFilterCategoryId={setFilterCategoryId}
+                            filterStatus={statusFilter}
+                            setFilterStatus={setStatusFilter}
+                            filterTagIds={[]}
+                            setFilterTagIds={() => { }}
+                            hasActiveFilters={!!searchQuery || !!dateFrom || !!dateTo || filterCategoryId !== "all" || statusFilter !== "pending" || filterAccountId !== "all"}
+                            clearFilters={() => {
+                                setSearchQuery("");
+                                setDateFrom(undefined);
+                                setDateTo(undefined);
+                                setFilterCategoryId("all");
+                                setStatusFilter("pending");
+                                setFilterAccountId("all");
+                            }}
+                            accounts={accounts}
+                            categories={categories}
+                            tags={[]}
+                            resultCount={transactions.length}
+                            totalCount={transactions.length} // Should be total from backend if paginated, but here same
+                            hideFilters={accountId ? ['tags', 'account', 'accountType', 'category'] : ['tags', 'accountType', 'category']}
+                            statusOptions={[
+                                { label: 'Pending', value: 'pending' },
+                                { label: 'Dismissed', value: 'dismissed' },
+                                { label: 'Reconciled', value: 'reconciled' },
+                                { label: 'All', value: 'all' }
+                            ]}
+                            availableYears={availableYears}
+                        />
+                    </div>
 
                     {/* Bulk Actions Indicator */}
                     {selectedIds.size > 0 && isPendingTab && (

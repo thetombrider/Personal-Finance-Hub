@@ -323,6 +323,7 @@ export default function Transactions() {
           tags={tags}
           resultCount={filteredTransactions.length}
           totalCount={transactions.length}
+          availableYears={Array.from(new Set(transactions.map(t => new Date(t.date).getFullYear()))).sort((a, b) => b - a)}
         />
 
         <TransactionsTable

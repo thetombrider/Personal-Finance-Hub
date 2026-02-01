@@ -398,6 +398,7 @@ export default function MonthlyReport() {
                                                 <TableHead key={m.key} className="text-center w-[10%] min-w-[80px] text-xs sm:text-sm p-1 capitalize">{m.label}</TableHead>
                                             ))}
                                             <TableHead className="text-center w-[10%] min-w-[100px] font-semibold p-1">Period Total</TableHead>
+                                            <TableHead className="text-center w-[10%] min-w-[100px] font-semibold p-1">Period Avg</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -459,6 +460,9 @@ export default function MonthlyReport() {
                                                         title="View all transactions for this period"
                                                     >
                                                         {total !== 0 ? formatCurrency(total) : '-'}
+                                                    </TableCell>
+                                                    <TableCell className={`text-center font-semibold ${total > 0 ? 'text-emerald-600' : total < 0 ? 'text-rose-600' : ''}`}>
+                                                        {total !== 0 ? formatCurrency(total / monthsList.length) : '-'}
                                                     </TableCell>
                                                 </TableRow>
                                             );
@@ -529,7 +533,33 @@ export default function MonthlyReport() {
                                                             sum + Object.values(row).reduce((s, v) => s + v, 0), 0
                                                         );
                                                     }
-                                                    return formatCurrency(grandTotal);
+                                                    return (
+                                                        <>
+                                                            <div className="font-bold">{formatCurrency(grandTotal)}</div>
+                                                        </>
+                                                    );
+                                                })()}
+                                            </TableCell>
+                                            <TableCell className="text-center font-bold">
+                                                {(() => {
+                                                    let grandTotal = 0;
+                                                    if (viewMode === 'tags') {
+                                                        transactions.forEach(t => {
+                                                            const tDate = parseISO(t.date);
+                                                            const tMonthKey = format(tDate, 'yyyy-MM');
+                                                            if (monthsList.some(m => m.key === tMonthKey)) {
+                                                                if (reportType === 'spending' && isTransfer(t)) return;
+                                                                const amount = parseFloat(t.amount) || 0;
+                                                                if (t.type === 'income') grandTotal += amount;
+                                                                else grandTotal -= amount;
+                                                            }
+                                                        });
+                                                    } else {
+                                                        grandTotal = Object.values(rowData).reduce((sum, row) =>
+                                                            sum + Object.values(row).reduce((s, v) => s + v, 0), 0
+                                                        );
+                                                    }
+                                                    return formatCurrency(grandTotal / monthsList.length);
                                                 })()}
                                             </TableCell>
                                         </TableRow>
