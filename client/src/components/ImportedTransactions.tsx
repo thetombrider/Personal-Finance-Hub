@@ -63,7 +63,7 @@ export function ImportedTransactions({ accountId, isOpen, onOpenChange }: Import
     }, [statusFilter, accountId, isOpen]);
 
     // Fetch staged transactions
-    const { data, isLoading } = useQuery<{ transactions: StagedTransaction[], availableYears: number[] }>({
+    const { data: transactions = [], isLoading } = useQuery<StagedTransaction[]>({
         queryKey: ["/api/transactions/staging", accountId, statusFilter, searchQuery, dateFrom, dateTo, filterCategoryId, filterAccountId],
         queryFn: async () => {
             const params = new URLSearchParams();
@@ -86,8 +86,11 @@ export function ImportedTransactions({ accountId, isOpen, onOpenChange }: Import
         enabled: isOpen,
     });
 
-    const transactions = data?.transactions || [];
-    const availableYears = data?.availableYears || [];
+    const availableYears = useMemo(() => {
+        if (!transactions.length) return [];
+        const years = new Set(transactions.map(t => new Date(t.date).getFullYear()));
+        return Array.from(years).sort((a, b) => b - a);
+    }, [transactions]);
 
     const {
         approveTransaction,
@@ -236,6 +239,8 @@ export function ImportedTransactions({ accountId, isOpen, onOpenChange }: Import
                             setFilterStatus={setStatusFilter}
                             filterTagIds={[]}
                             setFilterTagIds={() => { }}
+                            filterExcludedTagIds={[]}
+                            setFilterExcludedTagIds={() => { }}
                             hasActiveFilters={!!searchQuery || !!dateFrom || !!dateTo || filterCategoryId !== "all" || statusFilter !== "pending" || filterAccountId !== "all"}
                             clearFilters={() => {
                                 setSearchQuery("");
