@@ -105,6 +105,23 @@ export function registerBudgetRoutes(app: Express) {
                         if (m !== startMonth) {
                             continue;
                         }
+                    } else if (re.interval === 'quarterly') {
+                        // Only add every 3 months starting from startMonth
+                        const monthsSinceStart = (year - startYear) * 12 + (m - startMonth);
+                        if (monthsSinceStart < 0 || monthsSinceStart % 3 !== 0) {
+                            continue;
+                        }
+                    } else if (re.interval === 'weekly') {
+                        // Weekly transactions occur ~4-5 times per month
+                        // Calculate the number of occurrences in this specific month
+                        const daysInMonth = new Date(year, m, 0).getDate();
+                        const weeksInMonth = Math.ceil(daysInMonth / 7);
+
+                        // Multiply the amount by the number of weeks
+                        if (budgetData[re.categoryId]) {
+                            budgetData[re.categoryId][m].recurring += parseFloat(re.amount.toString()) * weeksInMonth;
+                        }
+                        continue; // Skip the default addition below
                     }
                     // 'monthly' items apply every month (no additional check needed)
 

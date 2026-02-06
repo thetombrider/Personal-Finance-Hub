@@ -166,22 +166,21 @@ export default function Budget() {
             const end = e.endDate ? new Date(e.endDate) : null;
 
             // Simple check: active if start <= monthEnd AND (!end || end >= monthStart)
-            // And also check interval? For now assume monthly items or items that hit this month.
-            // If interval is yearly, we'd need to check the specific month. 
-            // BUT, the budget calculation on server does this precise logic.
-            // Replicating it 100% here might be tricky without shared logic.
-            // However, most relevant is to show the user WHAT recurring expenses exist.
-            // 
-
             if (start > monthEnd) return false;
             if (end && end < monthStart) return false;
 
-            // If yearly, only show if it matches the month
+            // Handle different intervals
             if (e.interval === 'yearly') {
-                // e.startDate determines the month
-                // if e.g. 15th Jan, it repeats every Jan.
+                // Only show if it matches the month
                 if (start.getMonth() !== monthIndex) return false;
+            } else if (e.interval === 'quarterly') {
+                // Only show every 3 months starting from startMonth
+                const startYear = start.getFullYear();
+                const startMonth = start.getMonth() + 1; // 1-12
+                const monthsSinceStart = (currentYear - startYear) * 12 + (monthIndex + 1 - startMonth);
+                if (monthsSinceStart < 0 || monthsSinceStart % 3 !== 0) return false;
             }
+            // For weekly and monthly, show in all applicable months
 
             return true;
         });

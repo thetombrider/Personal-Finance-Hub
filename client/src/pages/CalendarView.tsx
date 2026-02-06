@@ -235,15 +235,19 @@ export default function CalendarView() {
                     </div>
 
                     {/* Days Grid */}
-                    <div className="grid grid-cols-7 flex-1 auto-rows-fr">
+                    <div
+                        className="grid grid-cols-7 flex-1 h-0"
+                        style={{ gridTemplateRows: `repeat(${calendarData.length / 7}, minmax(0, 1fr))` }}
+                    >
                         {calendarData.map((day, idx) => (
                             <div
                                 key={idx}
                                 onClick={() => handleDayClick(day)}
                                 className={cn(
-                                    "min-h-[100px] border-b border-r p-2 transition-colors hover:bg-accent/50 cursor-pointer relative flex flex-col gap-1",
+                                    "min-h-0 border-b border-r p-2 transition-colors hover:bg-accent/50 cursor-pointer relative flex flex-col gap-1",
                                     !day.isCurrentMonth && "bg-muted/10 text-muted-foreground",
                                     idx % 7 === 6 && "border-r-0", // Remove right border for last column
+                                    idx >= calendarData.length - 7 && "border-b-0", // Remove bottom border for last row
                                     isSameDay(day.date, new Date()) && "bg-primary/5 ring-1 ring-primary ring-inset"
                                 )}
                             >

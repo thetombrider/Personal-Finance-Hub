@@ -135,8 +135,14 @@ export function IncomeStatement() {
                 // If end date is set, it must be on or after month start
                 if (end && end < monthStart) return false;
 
-                // If yearly, only include if matches month
+                // Handle different intervals
                 if (e.interval === 'yearly' && start.getMonth() !== (month - 1)) return false;
+                if (e.interval === 'quarterly') {
+                    const startYear = start.getFullYear();
+                    const startMonth = start.getMonth() + 1; // 1-12
+                    const monthsSinceStart = (year - startYear) * 12 + (month - startMonth);
+                    if (monthsSinceStart < 0 || monthsSinceStart % 3 !== 0) return false;
+                }
 
                 return true;
             });

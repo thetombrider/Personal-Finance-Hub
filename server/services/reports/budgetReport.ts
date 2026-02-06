@@ -27,6 +27,17 @@ export async function getMonthlyBudget(storage: IStorage, userId: string, year: 
             if (endYear < year || (endYear === year && endMonth < month)) return false;
         }
 
+        // Check interval-specific logic
+        if (re.interval === 'yearly') {
+            // Only include if the month matches the start month
+            if (startMonth !== month) return false;
+        } else if (re.interval === 'quarterly') {
+            // Only include every 3 months from start
+            const monthsSinceStart = (year - startYear) * 12 + (month - startMonth);
+            if (monthsSinceStart < 0 || monthsSinceStart % 3 !== 0) return false;
+        }
+        // Weekly and monthly apply to all valid months
+
         return true;
     });
 
@@ -38,8 +49,17 @@ export async function getMonthlyBudget(storage: IStorage, userId: string, year: 
         const plannedTotal = categoryPlanned.reduce((sum, p) => sum + parseFloat(p.amount.toString()), 0);
 
         const categoryRecurring = validRecurringExpenses.filter(r => r.categoryId === category.id);
-        // Simple active check logic as per original
-        const recurringTotal = categoryRecurring.reduce((sum, r) => sum + parseFloat(r.amount.toString()), 0);
+        // Calculate total based on interval
+        const recurringTotal = categoryRecurring.reduce((sum, r) => {
+            const amount = parseFloat(r.amount.toString());
+            if (r.interval === 'weekly') {
+                // Weekly transactions occur ~4-5 times per month
+                const daysInMonth = new Date(year, month, 0).getDate();
+                const weeksInMonth = Math.ceil(daysInMonth / 7);
+                return sum + (amount * weeksInMonth);
+            }
+            return sum + amount;
+        }, 0);
 
         return {
             category,
@@ -98,8 +118,36 @@ export async function getYearlyBudgetTotal(storage: IStorage, userId: string, ye
                 if (endYear === year) effectiveEndMonth = endMonth;
             }
 
-            const monthsActive = Math.max(0, effectiveEndMonth - effectiveStartMonth + 1);
-            recurringTotal += parseFloat(re.amount.toString()) * monthsActive;
+            const amount = parseFloat(re.amount.toString());
+
+            // Calculate occurrences based on interval
+            if (re.interval === 'yearly') {
+                // Only once per year, in the start month
+                if (effectiveStartMonth <= 12 && effectiveEndMonth >= startMonth) {
+                    recurringTotal += amount;
+                }
+            } else if (re.interval === 'quarterly') {
+                // Count how many quarters fall within the active period
+                let occurrences = 0;
+                for (let m = effectiveStartMonth; m <= effectiveEndMonth; m++) {
+                    const monthsSinceStart = (year - startYear) * 12 + (m - startMonth);
+                    if (monthsSinceStart >= 0 && monthsSinceStart % 3 === 0) {
+                        occurrences++;
+                    }
+                }
+                recurringTotal += amount * occurrences;
+            } else if (re.interval === 'weekly') {
+                // Sum weeks for all active months
+                for (let m = effectiveStartMonth; m <= effectiveEndMonth; m++) {
+                    const daysInMonth = new Date(year, m - 1, 0).getDate();
+                    const weeksInMonth = Math.ceil(daysInMonth / 7);
+                    recurringTotal += amount * weeksInMonth;
+                }
+            } else {
+                // Monthly: multiply by number of active months
+                const monthsActive = Math.max(0, effectiveEndMonth - effectiveStartMonth + 1);
+                recurringTotal += amount * monthsActive;
+            }
         });
 
         return {
