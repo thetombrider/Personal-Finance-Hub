@@ -1,24 +1,31 @@
-
-import { MCPServer } from "mcp-use/server";
-import { z } from "zod-mcp";
+import express, { Request, Response, NextFunction } from "express";
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
+import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
+import { z } from "zod";
 import { db } from "./db";
 import { accounts, transactions } from "@shared/schema";
 import { eq, desc } from "drizzle-orm";
 import { createLogger } from "./lib/logger";
 
 const logger = createLogger("MCP");
+const app = express();
 
-const server = new MCPServer({
+const server = new Server({
     name: "Personal Finance MCP",
     version: "1.0.0",
-    host: "0.0.0.0",
+}, {
+    capabilities: {
+        tools: {}
+    }
 });
 
-// Authentication Middleware
-server.use((async (req: any, res: any, next: any) => {
+app.use((req: Request, res: Response, next: NextFunction) => {
     const authHeader = req.headers["authorization"];
     const apiKey = process.env.MCP_API_KEY;
 
+    // Allow requests without API key locally or if not configured strictly,
+    // but recommended to always set it.
     if (!apiKey) {
         logger.warn("MCP_API_KEY is not set. Authentication is disabled (NOT RECOMMENDED).");
         return next();
@@ -30,16 +37,75 @@ server.use((async (req: any, res: any, next: any) => {
     }
 
     next();
-}) as any);
+});
 
-// Tool: Get Accounts
-server.tool(
-    {
-        name: "get_accounts",
-        description: "List all finance accounts",
-        schema: z.object({}),
-    },
-    async () => {
+let transport: SSEServerTransport | null = null;
+
+app.get('/mcp/sse', async (req: Request, res: Response) => {
+    transport = new SSEServerTransport("/mcp/messages", res);
+    await server.connect(transport);
+    
+    res.on('close', () => {
+        logger.info("SSE connection closed");
+        transport = null;
+    });
+});
+
+app.post('/mcp/messages', async (req: Request, res: Response) => {
+    if (transport) {
+        await transport.handlePostMessage(req, res);
+    } else {
+        res.status(400).send("No active SSE connection");
+    }
+});
+
+server.setRequestHandler(ListToolsRequestSchema, async () => {
+    return {
+        tools: [
+            {
+                name: "get_accounts",
+                description: "List all finance accounts",
+                inputSchema: {
+                    type: "object",
+                    properties: {},
+                }
+            },
+            {
+                name: "get_transactions",
+                description: "List transactions with optional pagination",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        limit: { type: "number", default: 10 },
+                        offset: { type: "number", default: 0 }
+                    }
+                }
+            },
+            {
+                name: "create_transaction",
+                description: "Create a new transaction manually",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        date: { type: "string", description: "ISO date string" },
+                        amount: { type: "string", description: "Amount as string" },
+                        description: { type: "string" },
+                        accountId: { type: "number" },
+                        categoryId: { type: "number" },
+                        type: { type: "string", enum: ["income", "expense"] }
+                    },
+                    required: ["date", "amount", "description", "accountId", "categoryId", "type"]
+                }
+            }
+        ]
+    };
+});
+
+server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    const toolName = request.params.name;
+    const args = request.params.arguments || {};
+
+    if (toolName === "get_accounts") {
         try {
             const allAccounts = await db.select().from(accounts);
             return {
@@ -52,31 +118,24 @@ server.tool(
             };
         } catch (err: any) {
             return {
-                content: [{ type: "text", text: `Error fetching accounts: ${err.message}` }],
                 isError: true,
+                content: [{ type: "text", text: `Error fetching accounts: ${err.message}` }],
             };
         }
     }
-);
 
-// Tool: Get Transactions
-server.tool(
-    {
-        name: "get_transactions",
-        description: "List transactions with optional pagination",
-        schema: z.object({
-            limit: z.number().optional().default(10),
-            offset: z.number().optional().default(0),
-        }),
-    },
-    async ({ limit, offset }: { limit: number, offset: number }) => {
+    if (toolName === "get_transactions") {
         try {
+            const limit = typeof args.limit === 'number' ? args.limit : 10;
+            const offset = typeof args.offset === 'number' ? args.offset : 0;
+            
             const txs = await db
                 .select()
                 .from(transactions)
                 .orderBy(desc(transactions.date))
                 .limit(limit)
                 .offset(offset);
+                
             return {
                 content: [
                     {
@@ -87,29 +146,22 @@ server.tool(
             };
         } catch (err: any) {
             return {
-                content: [{ type: "text", text: `Error fetching transactions: ${err.message}` }],
                 isError: true,
+                content: [{ type: "text", text: `Error fetching transactions: ${err.message}` }],
             };
         }
     }
-);
 
-// Tool: Create Transaction
-server.tool(
-    {
-        name: "create_transaction",
-        description: "Create a new transaction manually",
-        schema: z.object({
-            date: z.string().describe("ISO date string"),
-            amount: z.string().describe("Amount as string"),
-            description: z.string(),
-            accountId: z.number(),
-            categoryId: z.number(),
-            type: z.enum(["income", "expense"]),
-        }),
-    },
-    async (input: any) => {
+    if (toolName === "create_transaction") {
         try {
+            const input = {
+                date: String(args.date),
+                amount: String(args.amount),
+                description: String(args.description),
+                accountId: Number(args.accountId),
+                categoryId: Number(args.categoryId),
+                type: String(args.type),
+            };
             const [newTx] = await db.insert(transactions).values(input).returning();
             return {
                 content: [
@@ -121,13 +173,15 @@ server.tool(
             };
         } catch (err: any) {
             return {
-                content: [{ type: "text", text: `Error creating transaction: ${err.message}` }],
                 isError: true,
+                content: [{ type: "text", text: `Error creating transaction: ${err.message}` }],
             };
         }
     }
-);
 
-server.listen(3001).then(() => {
-    logger.info("MCP Server running on port 3001");
+    throw new Error(`Unknown tool: ${toolName}`);
+});
+
+app.listen(3001, () => {
+    logger.info("MCP Server running on port 3001 (SSE on /mcp/sse, Messages on /mcp/messages)");
 });
