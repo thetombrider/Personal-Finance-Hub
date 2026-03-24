@@ -34,6 +34,8 @@ import {
   type InsertWebhook,
   type WebhookLog,
   type InsertWebhookLog,
+  type ApiToken,
+  type InsertApiToken,
   accounts,
   categories,
   transactions,
@@ -64,6 +66,7 @@ import {
   BankConnectionRepository,
   ImportStagingRepository,
   WebhookRepository,
+  ApiTokenRepository,
 } from "./repositories";
 
 export interface IStorage {
@@ -184,6 +187,13 @@ export interface IStorage {
   updateWebhookLastUsed(id: string): Promise<void>;
   getWebhookLogs(webhookId: string, limit?: number): Promise<WebhookLog[]>;
   createWebhookLog(log: InsertWebhookLog): Promise<WebhookLog>;
+
+  // API Tokens
+  getApiTokensByUser(userId: string): Promise<ApiToken[]>;
+  getApiTokenByHash(tokenHash: string): Promise<ApiToken | undefined>;
+  createApiToken(token: InsertApiToken): Promise<ApiToken>;
+  deleteApiToken(id: string, userId: string): Promise<boolean>;
+  updateApiTokenLastUsed(id: string): Promise<void>;
 
   // Data Management
   deleteUser(id: string): Promise<void>;
@@ -319,6 +329,14 @@ export class DatabaseStorage implements IStorage {
   updateWebhookLastUsed = (id: string) => this.webhookRepo.updateWebhookLastUsed(id);
   getWebhookLogs = (webhookId: string, limit?: number) => this.webhookRepo.getWebhookLogs(webhookId, limit);
   createWebhookLog = (log: InsertWebhookLog) => this.webhookRepo.createWebhookLog(log);
+
+  // API Token operations - delegate to ApiTokenRepository
+  private apiTokenRepo = new ApiTokenRepository();
+  getApiTokensByUser = (userId: string) => this.apiTokenRepo.getTokensByUser(userId);
+  getApiTokenByHash = (tokenHash: string) => this.apiTokenRepo.getTokenByHash(tokenHash);
+  createApiToken = (token: InsertApiToken) => this.apiTokenRepo.createToken(token);
+  deleteApiToken = (id: string, userId: string) => this.apiTokenRepo.deleteToken(id, userId);
+  updateApiTokenLastUsed = (id: string) => this.apiTokenRepo.updateLastUsed(id);
 
   // Complex cross-domain operations remain in this facade
 

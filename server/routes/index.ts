@@ -18,6 +18,7 @@ import { registerMarketRoutes } from "./market";
 
 
 import { registerTagRoutes } from "./tags";
+import { registerApiTokenRoutes } from "./api-tokens";
 
 export async function registerRoutes(
     httpServer: Server,
@@ -42,6 +43,7 @@ export async function registerRoutes(
     registerReportRoutes(app);
     registerBudgetRoutes(app);
     registerMarketRoutes(app);
+    registerApiTokenRoutes(app);
 
     return httpServer;
 }
