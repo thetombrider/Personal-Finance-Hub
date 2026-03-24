@@ -1,11 +1,17 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 
-const apiKey = process.env.MCP_API_KEY;
+// Authenticate with an API token generated in Settings > API Tokens
+const token = process.env.MCP_TOKEN;
 
-const transport = new SSEClientTransport(new URL("http://localhost:3001/mcp/sse"), {
+if (!token) {
+    console.error("Set MCP_TOKEN to your API token (starts with ft_).");
+    process.exit(1);
+}
+
+const transport = new StreamableHTTPClientTransport(new URL("http://localhost:3001/mcp"), {
     requestInit: {
-        headers: apiKey ? { Authorization: `Bearer ${apiKey}` } : {}
+        headers: { Authorization: `Bearer ${token}` }
     }
 });
 
@@ -18,24 +24,24 @@ const client = new Client({
 
 async function runTest() {
     try {
-        console.log("Connecting to MCP server at http://localhost:3001/mcp/sse...");
+        console.log("Connecting to MCP server at http://localhost:3001/mcp...");
         await client.connect(transport);
-        console.log("✅ Connected!");
+        console.log("Connected!");
 
         console.log("\nFetching tools...");
         const tools = await client.listTools();
-        console.log("✅ Available tools:", tools.tools.map(t => t.name).join(", "));
+        console.log("Available tools:", tools.tools.map(t => t.name).join(", "));
 
-        console.log("\nCalling get_accounts (limit 1 for testing)...");
+        console.log("\nCalling get_accounts...");
         const result = await client.callTool({
             name: "get_accounts",
             arguments: {}
         });
-        
+
         if (result.isError) {
-            console.error("❌ Tool execution returned an error:", result.content);
+            console.error("Tool execution returned an error:", result.content);
         } else {
-            console.log("✅ get_accounts executed successfully.");
+            console.log("get_accounts executed successfully.");
             const content = result.content[0] as any;
             if (content && content.text) {
                 const accounts = JSON.parse(content.text);
@@ -46,7 +52,7 @@ async function runTest() {
         console.log("\nAll tests passed successfully!");
         process.exit(0);
     } catch (err: any) {
-        console.error("❌ Test failed:", err?.message || err);
+        console.error("Test failed:", err?.message || err);
         process.exit(1);
     }
 }

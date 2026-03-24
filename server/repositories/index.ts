@@ -17,3 +17,4 @@ export { PlannedExpenseRepository } from "./plannedExpenseRepository";
 export { BankConnectionRepository } from "./bankConnectionRepository";
 export { ImportStagingRepository } from "./importStagingRepository";
 export { WebhookRepository } from "./webhookRepository";
+export { ApiTokenRepository } from "./apiTokenRepository";

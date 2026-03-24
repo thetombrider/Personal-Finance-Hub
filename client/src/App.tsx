@@ -23,6 +23,7 @@ import ManageCategories from "@/pages/settings/ManageCategories";
 import ManageTags from "@/pages/settings/ManageTags";
 import ManageWebhooks from "@/pages/settings/ManageWebhooks";
 import EmailReports from "@/pages/settings/EmailReports";
+import ManageApiTokens from "@/pages/settings/ManageApiTokens";
 import Settings from "@/pages/settings/Settings";
 import { FinanceProvider } from "@/context/FinanceContext";
 import BankCallbackPage from "@/pages/bank-callback";
@@ -92,6 +93,7 @@ function Router() {
           <Route path="/settings/tags" component={ManageTags} />
           <Route path="/settings/webhooks" component={ManageWebhooks} />
           <Route path="/settings/email-reports" component={EmailReports} />
+          <Route path="/settings/api-tokens" component={ManageApiTokens} />
           <Route path="/settings" component={Settings} />
           <Route path="/bank-callback" component={BankCallbackPage} />
           <Route component={NotFound} />

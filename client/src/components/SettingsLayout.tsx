@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { CreditCard, PieChart, ArrowLeft, Settings, Mail } from "lucide-react";
+import { CreditCard, PieChart, ArrowLeft, Settings, Mail, Key } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -14,6 +14,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
     { href: "/settings/accounts", label: "Gestione Conti", icon: CreditCard },
     { href: "/settings/categories", label: "Gestione Categorie", icon: PieChart },
     { href: "/settings/email-reports", label: "Report Email", icon: Mail },
+    { href: "/settings/api-tokens", label: "API Tokens", icon: Key },
   ];
 
   const NavContent = () => (
