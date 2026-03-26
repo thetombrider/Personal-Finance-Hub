@@ -1,0 +1,3 @@
+- add authorization headers to webhooks using the same API tokens generated for MCP client authentication
+- update documentation with new features
+- add chat bubble to integrate AI chat in the app itself
