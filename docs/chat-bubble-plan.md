@@ -1,6 +1,6 @@
 # Chat Bubble Implementation Plan
 
-A Notion AI-style floating chat bubble that lets users interact with their finance data through natural language, powered by Claude and the MCP tools.
+A Notion AI-style floating chat bubble that lets users interact with their finance data through natural language, powered by OpenRouter (Claude Sonnet) and the MCP tools.
 
 ## Architecture Overview
 
@@ -23,8 +23,8 @@ A Notion AI-style floating chat bubble that lets users interact with their finan
 │  ┌─────────────────────────────────────────────────┐ │
 │  │  POST /api/chat route                           │ │
 │  │  ┌───────────────┐    ┌───────────────────────┐ │ │
-│  │  │ Vercel AI SDK │◄──►│  Claude API           │ │ │
-│  │  │ streamText()  │    │  (tool_use loop)      │ │ │
+│  │  │ Vercel AI SDK │◄──►│  OpenRouter API        │ │ │
+│  │  │ streamText()  │    │  (tool_use loop)       │ │ │
 │  │  └───────┬───────┘    └───────────────────────┘ │ │
 │  │          │ execute()                             │ │
 │  │  ┌───────▼──────────────────────────────────┐   │ │
@@ -49,18 +49,18 @@ the MCP tools use. One source of truth, two interfaces (MCP for external, chat f
 
 ## Technology Choices
 
-### Vercel AI SDK (`ai` + `@ai-sdk/anthropic` + `@ai-sdk/react`)
+### Vercel AI SDK (`ai` + `@ai-sdk/openai` + `@ai-sdk/react`)
 
-**Why this over raw Anthropic SDK:**
-- `streamText()` handles the entire tool-use agentic loop automatically (Claude calls
-  tool → SDK executes → sends result back → Claude responds → repeat until done)
+**Why this over raw SDK calls:**
+- `streamText()` handles the entire tool-use agentic loop automatically (model calls
+  tool → SDK executes → sends result back → model responds → repeat until done)
 - `pipeUIMessageStreamToResponse(res)` works natively with Express (no Next.js needed)
 - `useChat()` hook manages all React state: messages, streaming, loading, abort, retry
 - Message parts API gives typed `tool-invocation` blocks with `pending`/`result` states
   for showing inline tool execution UI
 - 3 packages, ~200KB total, well-maintained
 
-**Why not raw `@anthropic-ai/sdk`:**
+**Why not raw API calls:**
 - Would need a manual while-loop for tool execution
 - Would need custom SSE streaming and client-side parsing
 - Would need manual React state management for messages
@@ -68,18 +68,20 @@ the MCP tools use. One source of truth, two interfaces (MCP for external, chat f
 
 ### LLM Provider
 
-Use Claude via `@ai-sdk/anthropic`. The provider is configured with `ANTHROPIC_API_KEY`.
-Model recommendation: `claude-sonnet-4-5-20250929` (fast, capable, cheap for chat).
+Use OpenRouter via `@ai-sdk/openai` with a custom base URL. The provider is configured
+with `OPENROUTER_API_KEY` (already used in the project for transaction categorization).
+Model recommendation: `anthropic/claude-sonnet-4` via OpenRouter (fast, capable, cheap
+for chat). OpenRouter gives flexibility to swap models without code changes.
 
-The existing `openai.ts` service uses OpenRouter for categorization — that stays
-independent. This is a separate feature.
+The existing `openai.ts` service already uses OpenRouter for categorization — the chat
+feature reuses the same API key and provider pattern for consistency.
 
 ## Implementation Steps
 
 ### 1. Install Dependencies
 
 ```bash
-npm install ai @ai-sdk/anthropic @ai-sdk/react
+npm install ai @ai-sdk/openai @ai-sdk/react
 ```
 
 ### 2. Backend: Chat Route (`server/routes/chat.ts`)
@@ -89,7 +91,7 @@ New file. Authenticated endpoint that streams Claude responses.
 ```typescript
 import type { Express } from "express";
 import { streamText, tool } from "ai";
-import { createAnthropic } from "@ai-sdk/anthropic";
+import { createOpenAI } from "@ai-sdk/openai";
 import { z } from "zod";
 import { storage } from "../storage";
 import { createLogger } from "../lib/logger";
@@ -103,16 +105,19 @@ export function registerChatRoutes(app: Express) {
     const userId = req.user.id;
     const { messages } = req.body;
 
-    const anthropicApiKey = process.env.ANTHROPIC_API_KEY;
-    if (!anthropicApiKey) {
-      return res.status(503).json({ error: "Chat is not configured (missing ANTHROPIC_API_KEY)" });
+    const openRouterApiKey = process.env.OPENROUTER_API_KEY;
+    if (!openRouterApiKey) {
+      return res.status(503).json({ error: "Chat is not configured (missing OPENROUTER_API_KEY)" });
     }
 
-    const anthropic = createAnthropic({ apiKey: anthropicApiKey });
+    const openrouter = createOpenAI({
+      baseURL: "https://openrouter.ai/api/v1",
+      apiKey: openRouterApiKey,
+    });
 
     try {
       const result = streamText({
-        model: anthropic("claude-sonnet-4-5-20250929"),
+        model: openrouter("anthropic/claude-sonnet-4"),
         system: `You are a helpful personal finance assistant for FinTrack.
 You help users understand their accounts, transactions, budgets, and portfolio.
 Be concise and direct. Format currency amounts clearly.
@@ -493,20 +498,23 @@ chat history storage — keeps it simple and avoids schema changes for v1.
 
 ## Environment Configuration
 
-Single new env var:
+Reuses the existing env var:
 ```
-ANTHROPIC_API_KEY=sk-ant-...
+OPENROUTER_API_KEY=sk-or-...
 ```
 
-Chat feature gracefully degrades: if `ANTHROPIC_API_KEY` is not set, the bubble
-still renders but shows a setup message. The backend returns 503.
+No new env var needed — the project already uses `OPENROUTER_API_KEY` for transaction
+categorization. Chat feature gracefully degrades: if `OPENROUTER_API_KEY` is not set,
+the bubble still renders but shows a setup message. The backend returns 503.
 
 ## Cost Considerations
 
-- Claude Sonnet is ~$3/M input tokens, $15/M output tokens
+- OpenRouter passes through model pricing (Claude Sonnet ~$3/M input, $15/M output)
+  plus a small OpenRouter markup
 - A typical chat turn with tool calls: ~2K input + 500 output tokens ≈ $0.01
 - Budget tool results can be large — consider truncating to essential fields
-  before returning to Claude (e.g., strip `createdAt`, `updatedAt` from accounts)
+  before returning to the model (e.g., strip `createdAt`, `updatedAt` from accounts)
+- OpenRouter supports model fallback — can configure cheaper models as fallbacks later
 
 ## File Manifest
 
@@ -519,7 +527,7 @@ still renders but shows a setup message. The backend returns 503.
 | `client/src/components/chat/ChatInput.tsx` | New | Input bar |
 | `client/src/App.tsx` | Modified | Add ChatBubble to authenticated layout |
 | `client/src/components/GlobalActionDialogs.tsx` | Modified | Add chat hotkey |
-| `package.json` | Modified | Add `ai`, `@ai-sdk/anthropic`, `@ai-sdk/react` |
+| `package.json` | Modified | Add `ai`, `@ai-sdk/openai`, `@ai-sdk/react` |
 
 ## Future Enhancements (out of scope for v1)
 
