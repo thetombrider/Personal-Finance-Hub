@@ -6,6 +6,8 @@ import { z } from "zod";
 import { storage } from "./storage";
 import { hashToken } from "./routes/api-tokens";
 import { createLogger } from "./lib/logger";
+import { ReportService } from "./services/reports";
+import { marketDataService } from "./services/marketData";
 
 const logger = createLogger("MCP");
 const app = express();
@@ -47,8 +49,18 @@ function createMcpServer(userId: string): McpServer {
         description: "List all finance accounts for the authenticated user, including computed current balance",
     }, async () => {
         try {
-            const userAccounts = await storage.getExportableAccounts(userId);
-            return { content: [{ type: "text", text: JSON.stringify(userAccounts, null, 2) }] };
+            const [userAccounts, allTxs] = await Promise.all([
+                storage.getAccounts(userId),
+                storage.getTransactions(userId),
+            ]);
+            const accountsWithBalance = userAccounts.map(acc => {
+                const startBal = parseFloat(acc.startingBalance?.toString() ?? "0");
+                const txSum = allTxs
+                    .filter(t => t.accountId === acc.id)
+                    .reduce((sum, t) => sum + (t.type === "income" ? 1 : -1) * parseFloat(t.amount.toString()), 0);
+                return { ...acc, currentBalance: (startBal + txSum).toFixed(2) };
+            });
+            return { content: [{ type: "text", text: JSON.stringify(accountsWithBalance, null, 2) }] };
         } catch (err: any) {
             return { isError: true, content: [{ type: "text", text: `Error: ${err.message}` }] };
         }
@@ -173,6 +185,96 @@ function createMcpServer(userId: string): McpServer {
             const filtered = Object.fromEntries(Object.entries(updates).filter(([_, v]) => v !== undefined));
             const updated = await storage.updateTransaction(id, filtered);
             return { content: [{ type: "text", text: JSON.stringify(updated, null, 2) }] };
+        } catch (err: any) {
+            return { isError: true, content: [{ type: "text", text: `Error: ${err.message}` }] };
+        }
+    });
+
+    mcpServer.registerTool("get_balance_sheet", {
+        description: "Get the balance sheet: assets, liabilities, and net worth. Answers questions like 'how much do I have in total?'",
+    }, async () => {
+        try {
+            const reportService = new ReportService(storage, marketDataService);
+            const data = await reportService.getBalanceSheet(userId);
+            return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+        } catch (err: any) {
+            return { isError: true, content: [{ type: "text", text: `Error: ${err.message}` }] };
+        }
+    });
+
+    mcpServer.registerTool("get_income_statement", {
+        description: "Get monthly income statement: income, expenses by category, and net savings for a given month. Answers questions like 'how much did I spend in March?'",
+        inputSchema: {
+            year: z.number().describe("Year (e.g. 2026)"),
+            month: z.number().min(1).max(12).describe("Month (1-12)"),
+        },
+    }, async ({ year, month }) => {
+        try {
+            const reportService = new ReportService(storage, marketDataService);
+            const data = await reportService.getMonthlyIncomeStatement(userId, year, month);
+            return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+        } catch (err: any) {
+            return { isError: true, content: [{ type: "text", text: `Error: ${err.message}` }] };
+        }
+    });
+
+    mcpServer.registerTool("create_transfer", {
+        description: "Transfer money between two accounts. Creates linked expense+income transactions.",
+        inputSchema: {
+            date: z.string().describe("ISO date string"),
+            amount: z.string().describe("Amount as string"),
+            description: z.string(),
+            fromAccountId: z.number().describe("Source account ID"),
+            toAccountId: z.number().describe("Destination account ID"),
+            categoryId: z.number().describe("Category ID for the transfer"),
+        },
+    }, async ({ date, amount, description, fromAccountId, toAccountId, categoryId }) => {
+        try {
+            if (fromAccountId === toAccountId) {
+                return { isError: true, content: [{ type: "text", text: "Source and destination accounts must be different" }] };
+            }
+            const fromAccount = await storage.getAccount(fromAccountId);
+            if (!fromAccount || fromAccount.userId !== userId) {
+                return { isError: true, content: [{ type: "text", text: "Source account not found or not owned by this user" }] };
+            }
+            const toAccount = await storage.getAccount(toAccountId);
+            if (!toAccount || toAccount.userId !== userId) {
+                return { isError: true, content: [{ type: "text", text: "Destination account not found or not owned by this user" }] };
+            }
+            const userCategories = await storage.getCategories(userId);
+            if (!userCategories.some(c => c.id === categoryId)) {
+                return { isError: true, content: [{ type: "text", text: "Category not found or not owned by this user" }] };
+            }
+
+            const result = await storage.createTransfer({ date, amount, description, fromAccountId, toAccountId, categoryId });
+            return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+        } catch (err: any) {
+            return { isError: true, content: [{ type: "text", text: `Error: ${err.message}` }] };
+        }
+    });
+
+    mcpServer.registerTool("get_holdings", {
+        description: "List all investment holdings (stocks, ETFs, etc.) for the authenticated user",
+    }, async () => {
+        try {
+            const holdings = await storage.getHoldings(userId);
+            return { content: [{ type: "text", text: JSON.stringify(holdings, null, 2) }] };
+        } catch (err: any) {
+            return { isError: true, content: [{ type: "text", text: `Error: ${err.message}` }] };
+        }
+    });
+
+    mcpServer.registerTool("get_budget", {
+        description: "Get budget data for a specific month: budgeted vs actual spending by category. Answers questions like 'how am I doing against my budget?'",
+        inputSchema: {
+            year: z.number().describe("Year (e.g. 2026)"),
+            month: z.number().min(1).max(12).describe("Month (1-12)"),
+        },
+    }, async ({ year, month }) => {
+        try {
+            const reportService = new ReportService(storage, marketDataService);
+            const data = await reportService.getMonthlyBudget(userId, year, month);
+            return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         } catch (err: any) {
             return { isError: true, content: [{ type: "text", text: `Error: ${err.message}` }] };
         }
