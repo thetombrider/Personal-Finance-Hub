@@ -149,12 +149,13 @@ app.all('/mcp', async (req: Request, res: Response) => {
         };
 
         await mcpServer.connect(transport);
-
-        const sid = transport.sessionId!;
-        sessions.set(sid, { transport, mcpServer, userId });
-        logger.info(`New MCP session for user ${userId} (session ${sid})`);
-
         await transport.handleRequest(req, res, req.body);
+
+        const sid = transport.sessionId;
+        if (sid) {
+            sessions.set(sid, { transport, mcpServer, userId });
+            logger.info(`New MCP session for user ${userId} (session ${sid})`);
+        }
         return;
     }
 
