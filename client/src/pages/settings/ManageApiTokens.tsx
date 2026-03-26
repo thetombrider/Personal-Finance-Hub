@@ -1,5 +1,5 @@
 import { useState } from "react";
-import SettingsLayout from "@/components/SettingsLayout";
+import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -86,7 +86,7 @@ export default function ManageApiTokens() {
     };
 
     return (
-        <SettingsLayout>
+        <Layout>
             <div className="space-y-6">
                 <div className="flex items-center justify-between">
                     <div>
@@ -228,6 +228,6 @@ export default function ManageApiTokens() {
                     }
                 }}
             />
-        </SettingsLayout>
+        </Layout>
     );
 }

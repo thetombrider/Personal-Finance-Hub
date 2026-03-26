@@ -121,6 +121,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         { href: "/settings/tags", label: "Tag Management" },
         { href: "/settings/webhooks", label: "Webhook Management" },
         { href: "/settings/email-reports", label: "Email Reports" },
+        { href: "/settings/api-tokens", label: "API Tokens" },
         { href: "/settings", label: "User Settings" },
       ]
     },
