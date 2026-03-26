@@ -1,6 +1,7 @@
 name: Build and Push App Docker Image
 
 on:
+  workflow_dispatch:
   push:
     branches: [ "main" ]
     tags: [ 'v*' ]
